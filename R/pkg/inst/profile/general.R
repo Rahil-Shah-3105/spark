@@ -16,8 +16,12 @@
 #
 
 .First <- function() {
+message(">>> Entering .First()")
   packageDir <- Sys.getenv("SPARKR_PACKAGE_DIR")
   dirs <- strsplit(packageDir, ",")[[1]]
   .libPaths(c(dirs, .libPaths()))
+message(sprintf(".First(): dirs → %s", dirs))
+message(sprintf(".First(): packageDir → %s", packageDir))
   Sys.setenv(NOAWT = 1)
+message("<<< Exiting .First()")
 }

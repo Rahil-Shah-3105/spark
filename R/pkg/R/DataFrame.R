@@ -57,30 +57,39 @@ setMethod("initialize", "SparkDataFrame", function(.Object, sdf, isCached) {
 #' Set options/mode and then return the write object
 #' @noRd
 setWriteOptions <- function(write, path = NULL, mode = "error", ...) {
+message(sprintf(">>> Entering setWriteOptions(write=%s,path=%s,mode=%s)", write, path, mode))
   options <- varargsToStrEnv(...)
   if (!is.null(path)) {
+	message(sprintf("setWriteOptions(write=%s,path=%s,mode=%s): options → %s", write, path, mode, options))
     options[["path"]] <- path
   }
   write <- setWriteMode(write, mode)
+message(sprintf("setWriteOptions(write=%s,path=%s,mode=%s): write → %s", write, path, mode, write))
   write <- callJMethod(write, "options", options)
   write
+message(sprintf("<<< Exiting setWriteOptions(write=%s,path=%s,mode=%s)", write, path, mode))
 }
 
 #' Set mode and then return the write object
 #' @noRd
 setWriteMode <- function(write, mode) {
+message(sprintf(">>> Entering setWriteMode(write=%s,mode=%s)", write, mode))
   if (!is.character(mode)) {
     stop("mode should be character or omitted. It is 'error' by default.")
   }
   write <- handledCallJMethod(write, "mode", mode)
+message(sprintf("setWriteMode(write=%s,mode=%s): write → %s", write, mode, write))
   write
+message(sprintf("<<< Exiting setWriteMode(write=%s,mode=%s)", write, mode))
 }
 
 #' @param sdf A Java object reference to the backing Scala DataFrame
 #' @param isCached TRUE if the SparkDataFrame is cached
 #' @noRd
 dataFrame <- function(sdf, isCached = FALSE) {
+message(sprintf(">>> Entering dataFrame(sdf=%s,isCached=%s)", sdf, isCached))
   new("SparkDataFrame", sdf, isCached)
+message(sprintf("<<< Exiting dataFrame(sdf=%s,isCached=%s)", sdf, isCached))
 }
 
 ############################ SparkDataFrame Methods ##############################################
@@ -1506,11 +1515,14 @@ setMethod("summarize",
           })
 
 dapplyInternal <- function(x, func, schema) {
+message(sprintf(">>> Entering dapplyInternal(x=%s,func=%s,schema=%s)", x, func, schema))
   if (is.character(schema)) {
+	message(sprintf("dapplyInternal(x=%s,func=%s,schema=%s): schema → %s", x, func, schema, schema))
     schema <- structType(schema)
   }
 
   arrowEnabled <- sparkR.conf("spark.sql.execution.arrow.sparkr.enabled")[[1]] == "true"
+message(sprintf("dapplyInternal(x=%s,func=%s,schema=%s): arrowEnabled → %s", x, func, schema, arrowEnabled))
   if (arrowEnabled) {
     if (inherits(schema, "structType")) {
       checkSchemaInArrow(schema)
@@ -1523,8 +1535,10 @@ dapplyInternal <- function(x, func, schema) {
   }
 
   packageNamesArr <- serialize(.sparkREnv[[".packages"]],
+							message(sprintf("dapplyInternal(x=%s,func=%s,schema=%s): connection → %s", x, func, schema, connection))
                                connection = NULL)
 
+message(sprintf("<<< Exiting dapplyInternal(x=%s,func=%s,schema=%s)", x, func, schema))
   broadcastArr <- lapply(ls(.broadcastNames),
                          function(name) { get(name, .broadcastNames) })
 
@@ -1927,12 +1941,16 @@ setMethod("foreachPartition",
 ############################## SELECT ##################################
 
 getColumn <- function(x, c) {
+message(sprintf(">>> Entering getColumn(x=%s,c=%s)", x, c))
   column(callJMethod(x@sdf, "col", c))
+message(sprintf("<<< Exiting getColumn(x=%s,c=%s)", x, c))
 }
 
 setColumn <- function(x, c, value) {
+message(sprintf(">>> Entering setColumn(x=%s,c=%s,value=%s)", x, c, value))
   if (class(value) != "Column" && !is.null(value)) {
     if (isAtomicLengthOne(value)) {
+	message(sprintf("setColumn(x=%s,c=%s,value=%s): value → %s", x, c, value, value))
       value <- lit(value)
     } else {
       stop("value must be a Column, literal value as atomic in length of 1, or NULL")
@@ -1940,11 +1958,13 @@ setColumn <- function(x, c, value) {
   }
 
   if (is.null(value)) {
+	message(sprintf("setColumn(x=%s,c=%s,value=%s): nx → %s", x, c, value, nx))
     nx <- drop(x, c)
   } else {
     nx <- withColumn(x, c, value)
   }
   nx
+message(sprintf("<<< Exiting setColumn(x=%s,c=%s,value=%s)", x, c, value))
 }
 
 #' @param name name of a Column (without being wrapped by \code{""}).

@@ -41,6 +41,7 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public class RocksDB implements KVStore {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(RocksDB.class);
 
   static {
     org.rocksdb.RocksDB.loadLibrary();
@@ -113,6 +114,7 @@ public class RocksDB implements KVStore {
 
   public RocksDB(File path) throws Exception {
     this(path, new KVStoreSerializer());
+	LOG.debug(">>> Entering RocksDB(path={})", path);
   }
 
   public RocksDB(File path, KVStoreSerializer serializer) throws Exception {
@@ -144,56 +146,74 @@ public class RocksDB implements KVStore {
 
   @Override
   public <T> T getMetadata(Class<T> klass) throws Exception {
+	LOG.debug(">>> Entering getMetadata(klass={})", klass);
     try {
       return get(METADATA_KEY, klass);
     } catch (NoSuchElementException nsee) {
+	LOG.error("Exception in getMetadata(klass={}): {}", klass, nsee.getMessage(), nsee);
+	LOG.debug("<<< Exiting getMetadata(klass={})", klass);
       return null;
     }
   }
 
   @Override
   public void setMetadata(Object value) throws Exception {
+	LOG.debug(">>> Entering setMetadata(value={})", value);
     if (value != null) {
       put(METADATA_KEY, value);
     } else {
       db().delete(METADATA_KEY);
     }
+	LOG.debug("<<< Exiting setMetadata(value={})", value);
   }
 
   <T> T get(byte[] key, Class<T> klass) throws Exception {
+	LOG.debug(">>> Entering get(key={},klass={})", key, klass);
     byte[] data = db().get(key);
     if (data == null) {
+	LOG.warn("Throwing NoSuchElementException from get(key={},klass={})", key, klass);
+	LOG.debug("<<< Exiting get(key={},klass={})", key, klass);
       throw new NoSuchElementException(new String(key, UTF_8));
     }
     return serializer.deserialize(data, klass);
   }
 
   private void put(byte[] key, Object value) throws Exception {
+	LOG.debug(">>> Entering put(key={},value={})", key, value);
     JavaUtils.checkArgument(value != null, "Null values are not allowed.");
     db().put(key, serializer.serialize(value));
+	LOG.debug("<<< Exiting put(key={},value={})", key, value);
   }
 
   @Override
   public <T> T read(Class<T> klass, Object naturalKey) throws Exception {
+	LOG.debug(">>> Entering read(klass={},naturalKey={})", klass, naturalKey);
     JavaUtils.checkArgument(naturalKey != null, "Null keys are not allowed.");
     byte[] key = getTypeInfo(klass).naturalIndex().start(null, naturalKey);
+	LOG.debug("<<< Exiting read(klass={},naturalKey={})", klass, naturalKey);
     return get(key, klass);
   }
 
   @Override
   public void write(Object value) throws Exception {
+	LOG.debug(">>> Entering write(value={})", value);
     JavaUtils.checkArgument(value != null, "Null values are not allowed.");
     RocksDBTypeInfo ti = getTypeInfo(value.getClass());
+	LOG.debug("<<< Exiting write(value={})", value);
+	LOG.debug("write(value={}): ti → {}", value, ti);
     byte[] data = serializer.serialize(value);
     synchronized (ti) {
       try (WriteBatch writeBatch = new WriteBatch()) {
         updateBatch(writeBatch, value, data, value.getClass(), ti.naturalIndex(), ti.indices());
         db().write(writeOptions, writeBatch);
       }
+	LOG.debug(">>> Entering synchronized(ti={})", ti);
+	LOG.debug("<<< Exiting synchronized(ti={})", ti);
     }
   }
 
   public void writeAll(List<?> values) throws Exception {
+	LOG.debug(">>> Entering writeAll(values={})", values);
     JavaUtils.checkArgument(values != null && !values.isEmpty(),
       "Non-empty values required.");
 
@@ -211,23 +231,32 @@ public class RocksDB implements KVStore {
       for (Object value : entry.getValue()) {
         list.add(serializer.serialize(value));
       }
+	LOG.debug("<<< Exiting writeAll(values={})", values);
       serializedValueIter = list.iterator();
 
+	LOG.debug("writeAll(values={}): serializedValueIter → {}", values, serializedValueIter);
       final Class<?> klass = entry.getKey();
+	LOG.debug("writeAll(values={}): klass → {}", values, klass);
       final RocksDBTypeInfo ti = getTypeInfo(klass);
+	LOG.debug("writeAll(values={}): ti → {}", values, ti);
 
       synchronized (ti) {
+		LOG.debug(">>> Entering synchronized(ti={})", ti);
         final RocksDBTypeInfo.Index naturalIndex = ti.naturalIndex();
         final Collection<RocksDBTypeInfo.Index> indices = ti.indices();
+		LOG.debug("synchronized(ti={}): indices → {}", ti, indices);
+		LOG.debug("synchronized(ti={}): naturalIndex → {}", ti, naturalIndex);
 
         try (WriteBatch writeBatch = new WriteBatch()) {
           while (valueIter.hasNext()) {
             assert serializedValueIter.hasNext();
             updateBatch(writeBatch, valueIter.next(), serializedValueIter.next(), klass,
                 naturalIndex, indices);
+				LOG.debug("<<< Exiting updateBatch(batch={},value={},data={},klass={},naturalIndex={},indices={})", batch, value, data, klass, naturalIndex, indices);
           }
           db().write(writeOptions, writeBatch);
         }
+		LOG.debug("<<< Exiting synchronized(ti={})", ti);
       }
     }
   }
@@ -256,9 +285,11 @@ public class RocksDB implements KVStore {
 
   @Override
   public void delete(Class<?> type, Object naturalKey) throws Exception {
+	LOG.debug(">>> Entering delete(type={},naturalKey={})", type, naturalKey);
     JavaUtils.checkArgument(naturalKey != null, "Null keys are not allowed.");
     try (WriteBatch writeBatch = new WriteBatch()) {
       RocksDBTypeInfo ti = getTypeInfo(type);
+	LOG.debug("<<< Exiting delete(type={},naturalKey={})", type, naturalKey);
       byte[] key = ti.naturalIndex().start(null, naturalKey);
       synchronized (ti) {
         byte[] data = db().get(key);
@@ -279,12 +310,17 @@ public class RocksDB implements KVStore {
 
   @Override
   public <T> KVStoreView<T> view(Class<T> type) throws Exception {
+	LOG.debug(">>> Entering view(type={})", type);
+	LOG.debug("<<< Exiting view(type={})", type);
     return new KVStoreView<T>() {
       @Override
       public Iterator<T> iterator() {
+		LOG.debug(">>> Entering iterator()");
         try {
           RocksDBIterator<T> it = new RocksDBIterator<>(type, RocksDB.this, this);
+		LOG.debug("iterator(): it → {}", it);
           iteratorTracker.add(new WeakReference<>(it));
+		LOG.debug("<<< Exiting iterator()");
           return it;
         } catch (Exception e) {
           if (e instanceof RuntimeException re) throw re;
@@ -299,28 +335,38 @@ public class RocksDB implements KVStore {
       Class<T> klass,
       String index,
       Collection<?> indexValues) throws Exception {
+	LOG.debug(">>> Entering removeAllByIndexValues(klass={},index={},indexValues={})", klass, index, indexValues);
     RocksDBTypeInfo.Index naturalIndex = getTypeInfo(klass).naturalIndex();
     boolean removed = false;
+	LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): removed → {}", klass, index, indexValues, removed);
     KVStoreView<T> view = view(klass).index(index);
+	LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): view → {}", klass, index, indexValues, view);
+	LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): naturalIndex → {}", klass, index, indexValues, naturalIndex);
 
     for (Object indexValue : indexValues) {
       try (KVStoreIterator<T> iterator =
         view.first(indexValue).last(indexValue).closeableIterator()) {
         while (iterator.hasNext()) {
           T value = iterator.next();
+		LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): value → {}", klass, index, indexValues, value);
           Object itemKey = naturalIndex.getValue(value);
+		LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): itemKey → {}", klass, index, indexValues, itemKey);
           delete(klass, itemKey);
           removed = true;
         }
       }
     }
 
+	LOG.debug("<<< Exiting removeAllByIndexValues(klass={},index={},indexValues={})", klass, index, indexValues);
     return removed;
   }
 
   @Override
   public long count(Class<?> type) throws Exception {
+	LOG.debug(">>> Entering count(type={})", type);
     RocksDBTypeInfo.Index idx = getTypeInfo(type).naturalIndex();
+	LOG.debug("count(type={}): idx → {}", type, idx);
+	LOG.debug("<<< Exiting count(type={})", type);
     return idx.getCount(idx.end(null));
   }
 
@@ -332,6 +378,7 @@ public class RocksDB implements KVStore {
 
   @Override
   public void close() throws IOException {
+	LOG.debug(">>> Entering close()");
     synchronized (this._db) {
       org.rocksdb.RocksDB _db = this._db.getAndSet(null);
       if (_db == null) {
@@ -361,6 +408,7 @@ public class RocksDB implements KVStore {
    * with a closed DB can cause JVM crashes, so this ensures that situation does not happen.
    */
   void closeIterator(RocksIterator it) {
+	LOG.debug(">>> Entering closeIterator(it={})", it);
     notifyIteratorClosed(it);
     synchronized (this._db) {
       org.rocksdb.RocksDB _db = this._db.get();
@@ -375,22 +423,27 @@ public class RocksDB implements KVStore {
    * iterator is closed.
    */
   void notifyIteratorClosed(RocksIterator rocksIterator) {
+	LOG.debug(">>> Entering notifyIteratorClosed(rocksIterator={})", rocksIterator);
     iteratorTracker.removeIf(ref -> {
       RocksDBIterator<?> rocksDBIterator = ref.get();
+	LOG.debug("<<< Exiting notifyIteratorClosed(rocksIterator={})", rocksIterator);
       return rocksDBIterator != null && rocksIterator.equals(rocksDBIterator.internalIterator());
     });
   }
 
   /** Returns metadata about indices for the given type. */
   RocksDBTypeInfo getTypeInfo(Class<?> type) throws Exception {
+	LOG.debug(">>> Entering getTypeInfo(type={})", type);
     RocksDBTypeInfo ti = types.get(type);
     if (ti == null) {
+	LOG.debug("getTypeInfo(type={}): ti → {}", type, ti);
       RocksDBTypeInfo tmp = new RocksDBTypeInfo(this, type, getTypeAlias(type));
       ti = types.putIfAbsent(type, tmp);
       if (ti == null) {
         ti = tmp;
       }
     }
+	LOG.debug("<<< Exiting getTypeInfo(type={})", type);
     return ti;
   }
 
@@ -400,14 +453,19 @@ public class RocksDB implements KVStore {
    * catch most cases; otherwise, we'll need some kind of locking.
    */
   org.rocksdb.RocksDB db() {
+	LOG.debug(">>> Entering db()");
     org.rocksdb.RocksDB _db = this._db.get();
     if (_db == null) {
+	LOG.warn("Throwing IllegalStateException from db()");
+	LOG.debug("db(): _db → {}", _db);
+	LOG.debug("<<< Exiting db()");
       throw new IllegalStateException("DB is closed.");
     }
     return _db;
   }
 
   private byte[] getTypeAlias(Class<?> klass) throws Exception {
+	LOG.debug(">>> Entering getTypeAlias(klass={})", klass);
     byte[] alias = typeAliases.get(klass.getName());
     if (alias == null) {
       synchronized (typeAliases) {
@@ -419,6 +477,7 @@ public class RocksDB implements KVStore {
         }
       }
     }
+	LOG.debug("<<< Exiting getTypeAlias(klass={})", klass);
     return alias;
   }
 
@@ -428,7 +487,10 @@ public class RocksDB implements KVStore {
     public Map<String, byte[]> aliases;
 
     TypeAliases(Map<String, byte[]> aliases) {
+	LOG.debug(">>> Entering TypeAliases(aliases={})", aliases);
       this.aliases = aliases;
+	LOG.debug("<<< Exiting TypeAliases(aliases={})", aliases);
+	LOG.debug("TypeAliases(aliases={}): aliases → {}", aliases, aliases);
     }
 
     TypeAliases() {
@@ -443,19 +505,25 @@ public class RocksDB implements KVStore {
     private final Map<RocksDBTypeInfo.Index, byte[]> prefixes;
 
     PrefixCache(Object entity) {
+	LOG.debug(">>> Entering PrefixCache(entity={})", entity);
       this.entity = entity;
+	LOG.debug("PrefixCache(entity={}): this.entity → {}", entity, this.entity);
       this.prefixes = new HashMap<>();
+	LOG.debug("<<< Exiting PrefixCache(entity={})", entity);
     }
 
     byte[] getPrefix(RocksDBTypeInfo.Index idx) throws Exception {
+	LOG.debug(">>> Entering getPrefix(idx={})", idx);
       byte[] prefix = null;
       if (idx.isChild()) {
         prefix = prefixes.get(idx.parent());
         if (prefix == null) {
           prefix = idx.parent().childPrefix(idx.parent().getValue(entity));
+		LOG.debug("getPrefix(idx={}): prefix → {}", idx, prefix);
           prefixes.put(idx.parent(), prefix);
         }
       }
+	LOG.debug("<<< Exiting getPrefix(idx={})", idx);
       return prefix;
     }
 

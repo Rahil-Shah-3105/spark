@@ -69,6 +69,9 @@ setMethod("spark.kstest", signature(data = "SparkDataFrame"),
           function(data, testCol = "test", nullHypothesis = c("norm"), distParams = c(0, 1)) {
             tryCatch(match.arg(nullHypothesis),
                      error = function(e) {
+					message(sprintf(">>> Entering error(e=%s)", e))
+					message(sprintf("error(e=%s): error → %s", e, error))
+					message(sprintf("<<< Exiting error(e=%s)", e))
                        stop("Distribution ", nullHypothesis, " is not supported.")
                      })
             if (nullHypothesis == "norm") {
@@ -115,8 +118,11 @@ setMethod("summary", signature(object = "KSTest"),
 #' @param x summary object of KSTest returned by \code{summary}.
 #' @note print.summary.KSTest since 2.1.0
 print.summary.KSTest <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.KSTest(x=%s)", x))
   jobj <- x$jobj
   summaryStr <- callJMethod(jobj, "summary")
+message(sprintf("print.summary.KSTest(x=%s): summaryStr → %s", x, summaryStr))
   cat(summaryStr, "\n")
   invisible(x)
+message(sprintf("<<< Exiting print.summary.KSTest(x=%s)", x))
 }

@@ -28,6 +28,7 @@ import org.rocksdb.RocksIterator;
 import org.apache.spark.network.util.JavaUtils;
 
 class RocksDBIterator<T> implements KVStoreIterator<T> {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(RocksDBIterator.class);
 
   private static final Cleaner CLEANER = Cleaner.create();
   private final RocksDB db;
@@ -48,18 +49,28 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
   private long count;
 
   RocksDBIterator(Class<T> type, RocksDB db, KVStoreView<T> params) throws Exception {
+	LOG.debug(">>> Entering RocksDBIterator(type={},db={},params={})", type, db, params);
     this.db = db;
     this.ascending = params.ascending;
+	LOG.debug("RocksDBIterator(type={},db={},params={}): this.db → {}", type, db, params, this.db);
     this.it = db.db().newIterator();
     this.type = type;
+	LOG.debug("RocksDBIterator(type={},db={},params={}): this.ascending → {}", type, db, params, this.ascending);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): it → {}", type, db, params, it);
     this.ti = db.getTypeInfo(type);
     this.index = ti.index(params.index);
     this.max = params.max;
+	LOG.debug("RocksDBIterator(type={},db={},params={}): this.type → {}", type, db, params, this.type);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): ti → {}", type, db, params, ti);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): index → {}", type, db, params, index);
     this.resourceCleaner = new RocksDBIterator.ResourceCleaner(it, db);
     this.cleanable = CLEANER.register(this, resourceCleaner);
 
     JavaUtils.checkArgument(!index.isChild() || params.parent != null,
       "Cannot iterate over child index %s without parent value.", params.index);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): this.max → {}", type, db, params, this.max);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): resourceCleaner → {}", type, db, params, resourceCleaner);
+	LOG.debug("RocksDBIterator(type={},db={},params={}): cleanable → {}", type, db, params, cleanable);
     byte[] parent = index.isChild() ? index.parent().childPrefix(params.parent) : null;
 
     this.indexKeyPrefix = index.keyPrefix(parent);
@@ -70,6 +81,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
         firstKey = index.start(parent, params.first);
       } else {
         firstKey = index.end(parent, params.first);
+		LOG.debug("RocksDBIterator(type={},db={},params={}): firstKey → {}", type, db, params, firstKey);
       }
     } else if (ascending) {
       firstKey = index.keyPrefix(parent);
@@ -84,12 +96,14 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
         end = index.end(parent, params.last);
       } else {
         end = index.end(parent);
+		LOG.debug("RocksDBIterator(type={},db={},params={}): end → {}", type, db, params, end);
       }
     } else {
       if (params.last != null) {
         end = index.start(parent, params.last);
       }
       if(!it.isValid()) {
+		LOG.warn("Throwing NoSuchElementException from RocksDBIterator(type={},db={},params={})", type, db, params);
         throw new NoSuchElementException();
       }
       if (compare(it.key(), indexKeyPrefix) > 0) {
@@ -99,42 +113,55 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
     this.end = end;
 
     if (params.skip > 0) {
+	LOG.debug("RocksDBIterator(type={},db={},params={}): this.end → {}", type, db, params, this.end);
       skip(params.skip);
     }
+	LOG.debug("<<< Exiting RocksDBIterator(type={},db={},params={})", type, db, params);
   }
 
   @Override
   public boolean hasNext() {
+	LOG.debug(">>> Entering hasNext()");
     if (!checkedNext && !closed) {
       next = loadNext();
       checkedNext = true;
+	LOG.debug("hasNext(): next → {}", next);
+	LOG.debug("hasNext(): checkedNext → {}", checkedNext);
     }
     if (!closed && next == null) {
       try {
         close();
       } catch (IOException ioe) {
+		LOG.error("Exception in hasNext(): {}", ioe.getMessage(), ioe);
         throw new RuntimeException(ioe);
       }
     }
+	LOG.debug("<<< Exiting hasNext()");
     return next != null;
   }
 
   @Override
   public T next() {
+	LOG.debug(">>> Entering next()");
     if (!hasNext()) {
+	LOG.warn("Throwing NoSuchElementException from next()");
       throw new NoSuchElementException();
     }
     checkedNext = false;
+	LOG.debug("next(): checkedNext → {}", checkedNext);
 
     try {
       T ret;
       if (index == null || index.isCopy()) {
         ret = db.serializer.deserialize(next, type);
       } else {
+		LOG.debug("next(): ret → {}", ret);
         byte[] key = ti.buildKey(false, ti.naturalIndex().keyPrefix(null), next);
         ret = db.get(key, type);
       }
       next = null;
+	LOG.debug("next(): next → {}", next);
+	LOG.debug("<<< Exiting next()");
       return ret;
     } catch (Exception e) {
       if (e instanceof RuntimeException re) throw re;
@@ -153,6 +180,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
 
   @Override
   public boolean skip(long n) {
+	LOG.debug(">>> Entering skip(n={})", n);
     if(closed) return false;
 
     long skipped = 0;
@@ -160,6 +188,8 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
       if (next != null) {
         checkedNext = false;
         next = null;
+		LOG.debug("skip(n={}): checkedNext → {}", n, checkedNext);
+		LOG.debug("skip(n={}): next → {}", n, next);
         skipped++;
         continue;
       }
@@ -179,41 +209,56 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
       }
     }
 
+	LOG.debug("<<< Exiting skip(n={})", n);
     return hasNext();
   }
 
   @Override
   public synchronized void close() throws IOException {
+	LOG.debug(">>> Entering close()");
     db.notifyIteratorClosed(it);
     if (!closed) {
       try {
         it.close();
       } finally {
         closed = true;
+		LOG.debug("close(): closed → {}", closed);
         next = null;
+		LOG.debug("close(): next → {}", next);
         cancelResourceClean();
       }
     }
+	LOG.debug("<<< Exiting close()");
   }
 
   /**
    * Prevent ResourceCleaner from actually releasing resources after close it.
    */
   private void cancelResourceClean() {
+	LOG.debug(">>> Entering cancelResourceClean()");
+	LOG.debug("cancelResourceClean(): resourceCleaner → {}", resourceCleaner);
     this.resourceCleaner.setStartedToFalse();
     this.cleanable.clean();
+	LOG.debug("<<< Exiting cancelResourceClean()");
   }
 
   @VisibleForTesting
   ResourceCleaner getResourceCleaner() {
+	LOG.debug(">>> Entering getResourceCleaner()");
+	LOG.debug(">>> Entering ResourceCleaner(rocksIterator={},rocksDB={})", rocksIterator, rocksDB);
+	LOG.debug("<<< Exiting ResourceCleaner(rocksIterator={},rocksDB={})", rocksIterator, rocksDB);
+	LOG.debug("<<< Exiting getResourceCleaner()");
     return resourceCleaner;
   }
 
   RocksIterator internalIterator() {
+	LOG.debug(">>> Entering internalIterator()");
+	LOG.debug("<<< Exiting internalIterator()");
     return it;
   }
 
   private byte[] loadNext() {
+	LOG.debug(">>> Entering loadNext()");
     if (count >= max) {
       return null;
     }
@@ -240,6 +285,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
       // If there's a known end key and iteration has gone past it, stop.
       if (end != null) {
         int comp = compare(nextKey, end) * (ascending ? 1 : -1);
+		LOG.debug("loadNext(): comp → {}", comp);
         if (comp > 0) {
           return null;
         }
@@ -252,6 +298,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
         it.prev();
       }
       // Next element is part of the iteration, return it.
+	LOG.debug("<<< Exiting loadNext()");
       return nextEntry.getValue();
     }
     return null;
@@ -259,6 +306,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
 
   @VisibleForTesting
   static boolean startsWith(byte[] key, byte[] prefix) {
+	LOG.debug(">>> Entering startsWith(key={},prefix={})", key, prefix);
     if (key.length < prefix.length) {
       return false;
     }
@@ -269,10 +317,13 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
       }
     }
 
+	LOG.debug("<<< Exiting startsWith(key={},prefix={})", key, prefix);
     return true;
   }
 
   private boolean isEndMarker(byte[] key) {
+	LOG.debug(">>> Entering isEndMarker(key={})", key);
+	LOG.debug("<<< Exiting isEndMarker(key={})", key);
     return (key.length > 2 &&
         key[key.length - 2] == RocksDBTypeInfo.KEY_SEPARATOR &&
         key[key.length - 1] == RocksDBTypeInfo.END_MARKER[0]);
@@ -280,7 +331,9 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
 
   @VisibleForTesting
   static int compare(byte[] a, byte[] b) {
+	LOG.debug(">>> Entering compare(a={},b={})", a, b);
     // Unsigned bytewise comparison, matching RocksDB's key ordering.
+	LOG.debug("<<< Exiting compare(a={},b={})", a, b);
     return Arrays.compareUnsigned(a, b);
   }
 
@@ -297,17 +350,23 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
 
     @Override
     public void run() {
+	LOG.debug(">>> Entering run()");
       if (started.compareAndSet(true, false)) {
         rocksDB.closeIterator(rocksIterator);
       }
+	LOG.debug("<<< Exiting run()");
     }
 
     void setStartedToFalse() {
+	LOG.debug(">>> Entering setStartedToFalse()");
       started.set(false);
+	LOG.debug("<<< Exiting setStartedToFalse()");
     }
 
     @VisibleForTesting
     boolean isCompleted() {
+	LOG.debug(">>> Entering isCompleted()");
+	LOG.debug("<<< Exiting isCompleted()");
       return !started.get();
     }
   }

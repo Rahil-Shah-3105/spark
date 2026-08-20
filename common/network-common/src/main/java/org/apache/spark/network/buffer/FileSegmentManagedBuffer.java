@@ -37,34 +37,43 @@ import org.apache.spark.network.util.TransportConf;
  * A {@link ManagedBuffer} backed by a segment in a file.
  */
 public final class FileSegmentManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(FileSegmentManagedBuffer.class);
   private final TransportConf conf;
   private final File file;
   private final long offset;
   private final long length;
 
   public FileSegmentManagedBuffer(TransportConf conf, File file, long offset, long length) {
+	logger.debug(">>> Entering FileSegmentManagedBuffer(conf={},file={},offset={},length={})", conf, file, offset, length);
     this.conf = conf;
+	logger.debug("FileSegmentManagedBuffer(conf={},file={},offset={},length={}): this.conf → {}", conf, file, offset, length, this.conf);
     this.file = file;
     this.offset = offset;
     this.length = length;
+	logger.debug("<<< Exiting FileSegmentManagedBuffer(conf={},file={},offset={},length={})", conf, file, offset, length);
   }
 
   @Override
   public long size() {
+	logger.debug(">>> Entering size()");
     return length;
   }
 
   @Override
   public ByteBuffer nioByteBuffer() throws IOException {
+	logger.debug(">>> Entering nioByteBuffer()");
     FileChannel channel = null;
     try {
       channel = new RandomAccessFile(file, "r").getChannel();
+	logger.debug("nioByteBuffer(): channel → {}", channel);
       // Just copy the buffer if it's sufficiently small, as memory mapping has a high overhead.
       if (length < conf.memoryMapBytes()) {
         ByteBuffer buf = ByteBuffer.allocate((int) length);
+		logger.debug("nioByteBuffer(): buf → {}", buf);
         channel.position(offset);
         while (buf.remaining() != 0) {
           if (channel.read(buf) == -1) {
+			logger.warn("Throwing IOException from nioByteBuffer()");
             throw new IOException(String.format("Reached EOF before filling buffer\n" +
               "offset=%s\nfile=%s\nbuf.remaining=%s",
               offset, file.getAbsoluteFile(), buf.remaining()));
@@ -73,6 +82,7 @@ public final class FileSegmentManagedBuffer extends ManagedBuffer {
         buf.flip();
         return buf;
       } else {
+		logger.debug("<<< Exiting nioByteBuffer()");
         return channel.map(FileChannel.MapMode.READ_ONLY, offset, length);
       }
     } catch (IOException e) {
@@ -93,13 +103,18 @@ public final class FileSegmentManagedBuffer extends ManagedBuffer {
 
   @Override
   public InputStream createInputStream() throws IOException {
+	logger.debug(">>> Entering createInputStream()");
     FileInputStream is = null;
     boolean shouldClose = true;
+	logger.debug("createInputStream(): shouldClose → {}", shouldClose);
+	logger.debug("createInputStream(): is → {}", is);
     try {
       is = new FileInputStream(file);
       is.skipNBytes(offset);
       InputStream r = new LimitedInputStream(is, length);
+	logger.debug("createInputStream(): r → {}", r);
       shouldClose = false;
+	logger.debug("<<< Exiting createInputStream()");
       return r;
     } catch (IOException e) {
       String errorMessage = "Error in reading " + this;
@@ -117,27 +132,36 @@ public final class FileSegmentManagedBuffer extends ManagedBuffer {
 
   @Override
   public ManagedBuffer retain() {
+	logger.debug(">>> Entering retain()");
+	logger.debug("<<< Exiting retain()");
     return this;
   }
 
   @Override
   public ManagedBuffer release() {
+	logger.debug(">>> Entering release()");
+	logger.debug("<<< Exiting release()");
     return this;
   }
 
   @Override
   public Object convertToNetty() throws IOException {
+	logger.debug(">>> Entering convertToNetty()");
     if (conf.lazyFileDescriptor()) {
       return new DefaultFileRegion(file, offset, length);
     } else {
       FileChannel fileChannel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
+	logger.debug("convertToNetty(): fileChannel → {}", fileChannel);
+	logger.debug("<<< Exiting convertToNetty()");
       return new DefaultFileRegion(fileChannel, offset, length);
     }
   }
 
   @Override
   public Object convertToNettyForSsl() throws IOException {
+	logger.debug(">>> Entering convertToNettyForSsl()");
     // Cannot use zero-copy with HTTPS
+	logger.debug("<<< Exiting convertToNettyForSsl()");
     return new ChunkedStream(createInputStream(), conf.sslShuffleChunkSize());
   }
 
@@ -149,6 +173,8 @@ public final class FileSegmentManagedBuffer extends ManagedBuffer {
 
   @Override
   public String toString() {
+	logger.debug(">>> Entering toString()");
+	logger.debug("<<< Exiting toString()");
     return "FileSegmentManagedBuffer[file=" + file + ",offset=" + offset +
         ",length=" + length + "]";
   }

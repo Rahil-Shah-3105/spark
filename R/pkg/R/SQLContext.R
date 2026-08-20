@@ -20,6 +20,7 @@
 
 # Map top level R type to SQL type
 getInternalType <- function(x) {
+message(sprintf(">>> Entering getInternalType(x=%s)", x))
   # class of POSIXlt is c("POSIXlt" "POSIXt")
   switch(class(x)[[1]],
          integer = "integer",
@@ -34,6 +35,19 @@ getInternalType <- function(x) {
          Date = "date",
          POSIXlt = "timestamp",
          POSIXct = "timestamp",
+		message(sprintf("getInternalType(x=%s): Date → %s", x, Date))
+		message(sprintf("getInternalType(x=%s): numeric → %s", x, numeric))
+		message(sprintf("getInternalType(x=%s): double → %s", x, double))
+		message(sprintf("getInternalType(x=%s): POSIXct → %s", x, POSIXct))
+		message(sprintf("getInternalType(x=%s): raw → %s", x, raw))
+		message(sprintf("getInternalType(x=%s): logical → %s", x, logical))
+		message(sprintf("getInternalType(x=%s): environment → %s", x, environment))
+		message(sprintf("getInternalType(x=%s): list → %s", x, list))
+		message(sprintf("getInternalType(x=%s): struct → %s", x, struct))
+		message(sprintf("getInternalType(x=%s): POSIXlt → %s", x, POSIXlt))
+		message(sprintf("getInternalType(x=%s): character → %s", x, character))
+		message(sprintf("getInternalType(x=%s): integer → %s", x, integer))
+		message(sprintf("<<< Exiting getInternalType(x=%s)", x))
          stop("Unsupported type for SparkDataFrame: ", class(x)))
 }
 
@@ -45,20 +59,25 @@ getSparkSession <- function() {
   } else {
     stop("SparkSession not initialized")
   }
+message(">>> Entering getSparkSession()")
+message("<<< Exiting getSparkSession()")
 }
 
 #' infer the SQL type
 #' @noRd
 infer_type <- function(x) {
+message(sprintf(">>> Entering infer_type(x=%s)", x))
   if (is.null(x)) {
     stop("can not infer type from NULL")
   }
 
   type <- getInternalType(x)
+message(sprintf("infer_type(x=%s): type → %s", x, type))
 
   if (type == "map") {
     stopifnot(length(x) > 0)
     key <- ls(x)[[1]]
+	message(sprintf("[WARN] infer_type(x=%s): key → %s", x, key))
     paste0("map<string,", infer_type(get(key, x)), ">")
   } else if (type == "array") {
     stopifnot(length(x) > 0)
@@ -67,6 +86,7 @@ infer_type <- function(x) {
   } else if (type == "struct") {
     stopifnot(length(x) > 0)
     names <- names(x)
+	message(sprintf("infer_type(x=%s): names → %s", x, names))
     stopifnot(!is.null(names))
 
     type <- lapply(seq_along(x), function(i) {
@@ -79,6 +99,7 @@ infer_type <- function(x) {
   } else {
     type
   }
+message(sprintf("<<< Exiting infer_type(x=%s)", x))
 }
 
 #' Get Runtime Config from the current active SparkSession
@@ -101,20 +122,29 @@ infer_type <- function(x) {
 #' }
 #' @note sparkR.conf since 2.0.0
 sparkR.conf <- function(key, defaultValue) {
+message(sprintf(">>> Entering sparkR.conf(key=%s,defaultValue=%s)", key, defaultValue))
   sparkSession <- getSparkSession()
   if (missing(key)) {
+	message(sprintf("sparkR.conf(key=%s,defaultValue=%s): sparkSession → %s", key, defaultValue, sparkSession))
+	message(sprintf("sparkR.conf(key=%s,defaultValue=%s): m → %s", key, defaultValue, m))
     m <- callJStatic("org.apache.spark.sql.api.r.SQLUtils", "getSessionConf", sparkSession)
     as.list(m, all.names = TRUE, sorted = TRUE)
   } else {
     conf <- callJMethod(sparkSession, "conf")
+	message(sprintf("sparkR.conf(key=%s,defaultValue=%s): conf → %s", key, defaultValue, conf))
+	message(sprintf("sparkR.conf(key=%s,defaultValue=%s): value → %s", key, defaultValue, value))
     value <- if (missing(defaultValue)) {
       tryCatch(callJMethod(conf, "get", key),
               error = function(e) {
+			message(sprintf("<<< Exiting sparkR.conf(key=%s,defaultValue=%s)", key, defaultValue))
                 estr <- as.character(e)
                 if (any(grepl("SQL_CONF_NOT_FOUND", estr, fixed = TRUE))) {
+				message(sprintf("error(e=%s): error → %s", e, error))
+				message(sprintf("error(e=%s): estr → %s", e, estr))
                   stop("Config '", key, "' is not set")
                 } else {
                   stop("Unknown error: ", estr)
+				message(sprintf("<<< Exiting error(e=%s)", e))
                 }
               })
     } else {
@@ -139,18 +169,26 @@ sparkR.conf <- function(key, defaultValue) {
 #' }
 #' @note sparkR.version since 2.0.1
 sparkR.version <- function() {
+message(">>> Entering sparkR.version()")
   sparkSession <- getSparkSession()
   callJMethod(sparkSession, "version")
+message(sprintf("sparkR.version(): sparkSession → %s", sparkSession))
+message("<<< Exiting sparkR.version()")
 }
 
 getDefaultSqlSource <- function() {
+message(">>> Entering getDefaultSqlSource()")
   l <- sparkR.conf("spark.sql.sources.default", "org.apache.spark.sql.parquet")
   l[["spark.sql.sources.default"]]
+message(sprintf("getDefaultSqlSource(): l → %s", l))
+message("<<< Exiting getDefaultSqlSource()")
 }
 
 writeToFileInArrow <- function(fileName, rdf, numPartitions) {
+message(sprintf(">>> Entering writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s)", fileName, rdf, numPartitions))
   if (requireNamespace("arrow", quietly = TRUE)) {
     numPartitions <- if (!is.null(numPartitions)) {
+	message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): numPartitions → %s", fileName, rdf, numPartitions, numPartitions))
       numToInt(numPartitions)
     } else {
       # If numPartitions is not set, chunk the R DataFrame based on the batch size.
@@ -159,17 +197,22 @@ writeToFileInArrow <- function(fileName, rdf, numPartitions) {
     }
 
     rdf_slices <- if (numPartitions > 1) {
+	message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): rdf_slices → %s", fileName, rdf, numPartitions, rdf_slices))
       split(rdf, makeSplits(numPartitions, nrow(rdf)))
     } else {
       list(rdf)
     }
 
     stream_writer <- NULL
+	message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): stream_writer → %s", fileName, rdf, numPartitions, stream_writer))
     tryCatch({
       for (rdf_slice in rdf_slices) {
+		message(sprintf("[ERROR] Exception in writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): %s", fileName, rdf, numPartitions, conditionMessage(e)))
+		message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): batch → %s", fileName, rdf, numPartitions, batch))
         batch <- arrow::record_batch(rdf_slice)
         if (is.null(stream_writer)) {
           stream <- arrow::FileOutputStream$create(fileName)
+		message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): stream → %s", fileName, rdf, numPartitions, stream))
           schema <- batch$schema
           stream_writer <- arrow::RecordBatchStreamWriter$create(stream, schema)
         }
@@ -179,6 +222,7 @@ writeToFileInArrow <- function(fileName, rdf, numPartitions) {
     },
     finally = {
       if (!is.null(stream_writer)) {
+		message(sprintf("writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s): finally → %s", fileName, rdf, numPartitions, finally))
         stream_writer$close()
       }
     })
@@ -186,15 +230,19 @@ writeToFileInArrow <- function(fileName, rdf, numPartitions) {
   } else {
     stop("'arrow' package should be installed.")
   }
+message(sprintf("<<< Exiting writeToFileInArrow(fileName=%s,rdf=%s,numPartitions=%s)", fileName, rdf, numPartitions))
 }
 
 getSchema <- function(schema, firstRow = NULL, rdd = NULL) {
+message(sprintf(">>> Entering getSchema(schema=%s,firstRow=%s,rdd=%s)", schema, firstRow, rdd))
   if (is.null(schema) || (!inherits(schema, "structType") && is.null(names(schema)))) {
     if (is.null(firstRow)) {
       stopifnot(!is.null(rdd))
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): firstRow → %s", schema, firstRow, rdd, firstRow))
       firstRow <- firstRDD(rdd)
     }
     names <- if (is.null(schema)) {
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): names → %s", schema, firstRow, rdd, names))
       names(firstRow)
     } else {
       as.list(schema)
@@ -209,6 +257,7 @@ getSchema <- function(schema, firstRow = NULL, rdd = NULL) {
     # TODO(davies): remove this once SPARK-2775 is fixed
     names <- lapply(names, function(n) {
       nn <- gsub(".", "_", n, fixed = TRUE)
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): nn → %s", schema, firstRow, rdd, nn))
       if (nn != n) {
         warning("Use ", nn, " instead of ", n, " as column name")
       }
@@ -216,13 +265,17 @@ getSchema <- function(schema, firstRow = NULL, rdd = NULL) {
     })
 
     types <- lapply(firstRow, infer_type)
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): types → %s", schema, firstRow, rdd, types))
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): fields → %s", schema, firstRow, rdd, fields))
     fields <- lapply(seq_len(length(firstRow)), function(i) {
       structField(names[[i]], types[[i]], TRUE)
     })
+	message(sprintf("getSchema(schema=%s,firstRow=%s,rdd=%s): schema → %s", schema, firstRow, rdd, schema))
     schema <- do.call(structType, fields)
   } else {
     schema
   }
+message(sprintf("<<< Exiting getSchema(schema=%s,firstRow=%s,rdd=%s)", schema, firstRow, rdd))
 }
 
 #' Create a SparkDataFrame
@@ -248,24 +301,31 @@ getSchema <- function(schema, firstRow = NULL, rdd = NULL) {
 #' @note createDataFrame since 1.4.0
 # TODO(davies): support sampling and infer type from NA
 createDataFrame <- function(data, schema = NULL, samplingRatio = 1.0,
+							message(sprintf(">>> Entering createDataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s)", data, schema, samplingRatio, numPartitions))
+							message(sprintf("<<< Exiting createDataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s)", data, schema, samplingRatio, numPartitions))
                             numPartitions = NULL) {
   sparkSession <- getSparkSession()
   arrowEnabled <- sparkR.conf("spark.sql.execution.arrow.sparkr.enabled")[[1]] == "true"
+message(sprintf("createDataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s): arrowEnabled → %s", data, schema, samplingRatio, numPartitions, arrowEnabled))
+message(sprintf("createDataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s): sparkSession → %s", data, schema, samplingRatio, numPartitions, sparkSession))
   useArrow <- FALSE
   firstRow <- NULL
 
   if (is.data.frame(data)) {
     # get the names of columns, they will be put into RDD
     if (is.null(schema)) {
+	message(sprintf("createDataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s): schema → %s", data, schema, samplingRatio, numPartitions, schema))
       schema <- names(data)
     }
 
     # get rid of factor type
     cleanCols <- function(x) {
+	message(sprintf(">>> Entering cleanCols(x=%s)", x))
       if (is.factor(x)) {
         as.character(x)
       } else {
         x
+	message(sprintf("<<< Exiting cleanCols(x=%s)", x))
       }
     }
     data[] <- lapply(data, cleanCols)
@@ -350,7 +410,9 @@ createDataFrame <- function(data, schema = NULL, samplingRatio = 1.0,
 #' @aliases createDataFrame
 #' @note as.DataFrame since 1.6.0
 as.DataFrame <- function(data, schema = NULL, samplingRatio = 1.0, numPartitions = NULL) {
+message(sprintf(">>> Entering as.DataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s)", data, schema, samplingRatio, numPartitions))
   createDataFrame(data, schema, samplingRatio, numPartitions)
+message(sprintf("<<< Exiting as.DataFrame(data=%s,schema=%s,samplingRatio=%s,numPartitions=%s)", data, schema, samplingRatio, numPartitions))
 }
 
 #' toDF
@@ -399,14 +461,21 @@ setMethod("toDF", signature(x = "RDD"),
 #' @name read.json
 #' @note read.json since 1.6.0
 read.json <- function(path, ...) {
+message(sprintf(">>> Entering read.json(path=%s)", path))
   sparkSession <- getSparkSession()
   options <- varargsToStrEnv(...)
+message(sprintf("read.json(path=%s): options → %s", path, options))
+message(sprintf("read.json(path=%s): sparkSession → %s", path, sparkSession))
+message(sprintf("read.json(path=%s): paths → %s", path, paths))
+message(sprintf("read.json(path=%s): read → %s", path, read))
   # Allow the user to have a more flexible definition of the text file path
   paths <- as.list(suppressWarnings(normalizePath(path)))
   read <- callJMethod(sparkSession, "read")
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "json", paths)
+message(sprintf("read.json(path=%s): sdf → %s", path, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.json(path=%s)", path))
 }
 
 #' Create a SparkDataFrame from an ORC file.
@@ -424,14 +493,21 @@ read.json <- function(path, ...) {
 #' @name read.orc
 #' @note read.orc since 2.0.0
 read.orc <- function(path, ...) {
+message(sprintf(">>> Entering read.orc(path=%s)", path))
   sparkSession <- getSparkSession()
   options <- varargsToStrEnv(...)
+message(sprintf("read.orc(path=%s): options → %s", path, options))
+message(sprintf("read.orc(path=%s): sparkSession → %s", path, sparkSession))
+message(sprintf("read.orc(path=%s): path → %s", path, path))
+message(sprintf("read.orc(path=%s): read → %s", path, read))
   # Allow the user to have a more flexible definition of the ORC file path
   path <- suppressWarnings(normalizePath(path))
   read <- callJMethod(sparkSession, "read")
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "orc", path)
+message(sprintf("read.orc(path=%s): sdf → %s", path, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.orc(path=%s)", path))
 }
 
 #' Create a SparkDataFrame from a Parquet file.
@@ -449,14 +525,21 @@ read.orc <- function(path, ...) {
 #' @name read.parquet
 #' @note read.parquet since 1.6.0
 read.parquet <- function(path, ...) {
+message(sprintf(">>> Entering read.parquet(path=%s)", path))
   sparkSession <- getSparkSession()
   options <- varargsToStrEnv(...)
+message(sprintf("read.parquet(path=%s): options → %s", path, options))
+message(sprintf("read.parquet(path=%s): sparkSession → %s", path, sparkSession))
+message(sprintf("read.parquet(path=%s): paths → %s", path, paths))
+message(sprintf("read.parquet(path=%s): read → %s", path, read))
   # Allow the user to have a more flexible definition of the Parquet file path
   paths <- as.list(suppressWarnings(normalizePath(path)))
   read <- callJMethod(sparkSession, "read")
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "parquet", paths)
+message(sprintf("read.parquet(path=%s): sdf → %s", path, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.parquet(path=%s)", path))
 }
 
 #' Create a SparkDataFrame from a text file.
@@ -484,14 +567,21 @@ read.parquet <- function(path, ...) {
 #' @name read.text
 #' @note read.text since 1.6.1
 read.text <- function(path, ...) {
+message(sprintf(">>> Entering read.text(path=%s)", path))
   sparkSession <- getSparkSession()
   options <- varargsToStrEnv(...)
+message(sprintf("read.text(path=%s): options → %s", path, options))
+message(sprintf("read.text(path=%s): sparkSession → %s", path, sparkSession))
+message(sprintf("read.text(path=%s): paths → %s", path, paths))
+message(sprintf("read.text(path=%s): read → %s", path, read))
   # Allow the user to have a more flexible definition of the text file path
   paths <- as.list(suppressWarnings(normalizePath(path)))
   read <- callJMethod(sparkSession, "read")
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "text", paths)
+message(sprintf("read.text(path=%s): sdf → %s", path, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.text(path=%s)", path))
 }
 
 #' SQL Query
@@ -512,9 +602,13 @@ read.text <- function(path, ...) {
 #' @name sql
 #' @note sql since 1.4.0
 sql <- function(sqlQuery) {
+message(sprintf(">>> Entering sql(sqlQuery=%s)", sqlQuery))
   sparkSession <- getSparkSession()
   sdf <- callJMethod(sparkSession, "sql", sqlQuery)
+message(sprintf("sql(sqlQuery=%s): sdf → %s", sqlQuery, sdf))
+message(sprintf("sql(sqlQuery=%s): sparkSession → %s", sqlQuery, sparkSession))
   dataFrame(sdf)
+message(sprintf("<<< Exiting sql(sqlQuery=%s)", sqlQuery))
 }
 
 #' Create a SparkDataFrame from a SparkSQL table or view
@@ -539,9 +633,13 @@ sql <- function(sqlQuery) {
 #' }
 #' @note tableToDF since 2.0.0
 tableToDF <- function(tableName) {
+message(sprintf(">>> Entering tableToDF(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   sdf <- callJMethod(sparkSession, "table", tableName)
+message(sprintf("tableToDF(tableName=%s): sdf → %s", tableName, sdf))
+message(sprintf("tableToDF(tableName=%s): sparkSession → %s", tableName, sparkSession))
   dataFrame(sdf)
+message(sprintf("<<< Exiting tableToDF(tableName=%s)", tableName))
 }
 
 #' Load a SparkDataFrame
@@ -576,6 +674,7 @@ tableToDF <- function(tableName) {
 #' }
 #' @note read.df since 1.4.0
 read.df <- function(path = NULL, source = NULL, schema = NULL, na.strings = "NA", ...) {
+message(sprintf(">>> Entering read.df(path=%s,source=%s,schema=%s)", path, source, schema))
   if (!is.null(path) && !is.character(path)) {
     stop("path should be character, NULL or omitted.")
   }
@@ -584,17 +683,21 @@ read.df <- function(path = NULL, source = NULL, schema = NULL, na.strings = "NA"
          "in 'spark.sql.sources.default' configuration by default.")
   }
   sparkSession <- getSparkSession()
+message(sprintf("read.df(path=%s,source=%s,schema=%s): sparkSession → %s", path, source, schema, sparkSession))
+message(sprintf("read.df(path=%s,source=%s,schema=%s): options → %s", path, source, schema, options))
   options <- varargsToStrEnv(...)
   if (!is.null(path)) {
     options[["path"]] <- path
   }
   if (is.null(source)) {
+	message(sprintf("read.df(path=%s,source=%s,schema=%s): source → %s", path, source, schema, source))
     source <- getDefaultSqlSource()
   }
   if (source == "csv" && is.null(options[["nullValue"]])) {
     options[["nullValue"]] <- na.strings
   }
   read <- callJMethod(sparkSession, "read")
+message(sprintf("read.df(path=%s,source=%s,schema=%s): read → %s", path, source, schema, read))
   read <- callJMethod(read, "format", source)
   if (!is.null(schema)) {
     if (class(schema) == "structType") {
@@ -607,14 +710,18 @@ read.df <- function(path = NULL, source = NULL, schema = NULL, na.strings = "NA"
   }
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "load")
+message(sprintf("read.df(path=%s,source=%s,schema=%s): sdf → %s", path, source, schema, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.df(path=%s,source=%s,schema=%s)", path, source, schema))
 }
 
 #' @rdname read.df
 #' @name loadDF
 #' @note loadDF since 1.6.0
 loadDF <- function(path = NULL, source = NULL, schema = NULL, ...) {
+message(sprintf(">>> Entering loadDF(path=%s,source=%s,schema=%s)", path, source, schema))
   read.df(path, source, schema, ...)
+message(sprintf("<<< Exiting loadDF(path=%s,source=%s,schema=%s)", path, source, schema))
 }
 
 #' Create a SparkDataFrame representing the database table accessible via JDBC URL
@@ -657,9 +764,15 @@ loadDF <- function(path = NULL, source = NULL, schema = NULL, ...) {
 #' @note read.jdbc since 2.0.0
 read.jdbc <- function(url, tableName,
                       partitionColumn = NULL, lowerBound = NULL, upperBound = NULL,
+					message(sprintf(">>> Entering read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s)", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates))
                       numPartitions = 0L, predicates = list(), ...) {
   jprops <- varargsToJProperties(...)
   sparkSession <- getSparkSession()
+message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): jprops → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, jprops))
+message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): sparkSession → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, sparkSession))
+message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): read → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, read))
+message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): numPartitions → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, numPartitions))
+message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): sc → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, sc))
   read <- callJMethod(sparkSession, "read")
   if (!is.null(partitionColumn)) {
     if (is.null(numPartitions) || numPartitions == 0) {
@@ -669,6 +782,7 @@ read.jdbc <- function(url, tableName,
       numPartitions <- numToInt(numPartitions)
     }
     sdf <- handledCallJMethod(read, "jdbc", url, tableName, as.character(partitionColumn),
+							message(sprintf("read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s): sdf → %s", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates, sdf))
                               numToInt(lowerBound), numToInt(upperBound), numPartitions, jprops)
   } else if (length(predicates) > 0) {
     sdf <- handledCallJMethod(read, "jdbc", url, tableName, as.list(as.character(predicates)),
@@ -677,6 +791,7 @@ read.jdbc <- function(url, tableName,
     sdf <- handledCallJMethod(read, "jdbc", url, tableName, jprops)
   }
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.jdbc(url=%s,tableName=%s,partitionColumn=%s,lowerBound=%s,upperBound=%s,numPartitions=%s,predicates=%s)", url, tableName, partitionColumn, lowerBound, upperBound, numPartitions, predicates))
 }
 
 #' Load a streaming SparkDataFrame
@@ -711,15 +826,20 @@ read.jdbc <- function(url, tableName,
 #' @note read.stream since 2.2.0
 #' @note experimental
 read.stream <- function(source = NULL, schema = NULL, ...) {
+message(sprintf(">>> Entering read.stream(source=%s,schema=%s)", source, schema))
   sparkSession <- getSparkSession()
   if (!is.null(source) && !is.character(source)) {
+	message(sprintf("read.stream(source=%s,schema=%s): sparkSession → %s", source, schema, sparkSession))
     stop("source should be character, NULL or omitted. It is the data source specified ",
          "in 'spark.sql.sources.default' configuration by default.")
   }
   if (is.null(source)) {
+	message(sprintf("read.stream(source=%s,schema=%s): source → %s", source, schema, source))
     source <- getDefaultSqlSource()
   }
   options <- varargsToStrEnv(...)
+message(sprintf("read.stream(source=%s,schema=%s): options → %s", source, schema, options))
+message(sprintf("read.stream(source=%s,schema=%s): read → %s", source, schema, read))
   read <- callJMethod(sparkSession, "readStream")
   read <- callJMethod(read, "format", source)
   if (!is.null(schema)) {
@@ -733,5 +853,7 @@ read.stream <- function(source = NULL, schema = NULL, ...) {
   }
   read <- callJMethod(read, "options", options)
   sdf <- handledCallJMethod(read, "load")
+message(sprintf("read.stream(source=%s,schema=%s): sdf → %s", source, schema, sdf))
   dataFrame(sdf)
+message(sprintf("<<< Exiting read.stream(source=%s,schema=%s)", source, schema))
 }

@@ -23,9 +23,11 @@ import org.apache.spark.network.buffer.ManagedBuffer;
  * Abstract class for response messages.
  */
 public abstract class AbstractResponseMessage extends AbstractMessage implements ResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AbstractResponseMessage.class);
 
   protected AbstractResponseMessage(ManagedBuffer body, boolean isBodyInFrame) {
     super(body, isBodyInFrame);
+	logger.debug("<<< Exiting AbstractResponseMessage(body={},isBodyInFrame={})", body, isBodyInFrame);
   }
 
   public abstract ResponseMessage createFailureResponse(String error);

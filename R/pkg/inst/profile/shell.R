@@ -16,19 +16,26 @@
 #
 
 .First <- function() {
+message(">>> Entering .First()")
   home <- Sys.getenv("SPARK_HOME")
   .libPaths(c(file.path(home, "R", "lib"), .libPaths()))
+message(sprintf(".First(): home → %s", home))
+message(sprintf(".First(): Sys → %s", Sys))
   Sys.setenv(NOAWT = 1)
 
   # Make sure SparkR package is the last loaded one
   old <- getOption("defaultPackages")
+message(sprintf(".First(): old → %s", old))
   options(defaultPackages = c(old, "SparkR"))
 
   spark <- SparkR::sparkR.session()
+message(sprintf(".First(): spark → %s", spark))
   assign("spark", spark, envir = .GlobalEnv)
   sc <- SparkR:::callJStatic("org.apache.spark.sql.api.r.SQLUtils", "getJavaSparkContext", spark)
+message(sprintf(".First(): sc → %s", sc))
   assign("sc", sc, envir = .GlobalEnv)
   sparkVer <- SparkR:::callJMethod(sc, "version")
+message(sprintf(".First(): sparkVer → %s", sparkVer))
   cat("\nWelcome to")
   cat("\n")
   cat("      ____              __", "\n")

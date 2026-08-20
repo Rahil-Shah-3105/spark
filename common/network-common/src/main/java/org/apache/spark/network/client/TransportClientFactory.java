@@ -64,6 +64,7 @@ import org.apache.spark.network.util.*;
  * TransportClient, all given {@link TransportClientBootstrap}s will be run.
  */
 public class TransportClientFactory implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportClientFactory.class);
 
   /** A simple data structure to track the pool of clients between two peer nodes. */
   private static class ClientPool {
@@ -72,12 +73,16 @@ public class TransportClientFactory implements Closeable {
     volatile long lastConnectionFailed;
 
     ClientPool(int size) {
+	logger.debug(">>> Entering ClientPool(size={})", size);
       clients = new TransportClient[size];
       locks = new Object[size];
+	logger.debug("ClientPool(size={}): locks → {}", size, locks);
+	logger.debug("ClientPool(size={}): clients → {}", size, clients);
       for (int i = 0; i < size; i++) {
         locks[i] = new Object();
       }
       lastConnectionFailed = 0;
+	logger.debug("<<< Exiting ClientPool(size={})", size);
     }
   }
 
@@ -122,19 +127,29 @@ public class TransportClientFactory implements Closeable {
   public TransportClientFactory(
       TransportContext context,
       List<TransportClientBootstrap> clientBootstraps) {
+	logger.debug(">>> Entering TransportClientFactory(context={},clientBootstraps={})", context, clientBootstraps);
     this.context = Objects.requireNonNull(context);
     this.conf = context.getConf();
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): conf → {}", context, clientBootstraps, conf);
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): context → {}", context, clientBootstraps, context);
     this.clientBootstraps = new ArrayList<>(Objects.requireNonNull(clientBootstraps));
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): clientBootstraps → {}", context, clientBootstraps, clientBootstraps);
     this.connectionPool = new ConcurrentHashMap<>();
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): connectionPool → {}", context, clientBootstraps, connectionPool);
     this.numConnectionsPerPeer = conf.numConnectionsPerPeer();
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): numConnectionsPerPeer → {}", context, clientBootstraps, numConnectionsPerPeer);
     this.rand = new Random();
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): rand → {}", context, clientBootstraps, rand);
 
     this.ioMode = IOMode.valueOf(conf.ioMode());
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): ioMode → {}", context, clientBootstraps, ioMode);
     this.socketChannelClass = NettyUtils.getClientChannelClass(ioMode);
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): socketChannelClass → {}", context, clientBootstraps, socketChannelClass);
     this.workerGroup = NettyUtils.createEventLoop(
         ioMode,
         conf.clientThreads(),
         conf.getModuleName() + "-client");
+		logger.debug("TransportClientFactory(context={},clientBootstraps={}): workerGroup → {}", context, clientBootstraps, workerGroup);
     if (conf.sharedByteBufAllocators()) {
       this.pooledAllocator = NettyUtils.getSharedPooledByteBufAllocator(
           conf.preferDirectBufsForSharedByteBufAllocators(), false /* allowCache */);
@@ -144,16 +159,23 @@ public class TransportClientFactory implements Closeable {
     }
     this.metrics = new NettyMemoryMetrics(
       this.pooledAllocator, conf.getModuleName() + "-client", conf);
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): metrics → {}", context, clientBootstraps, metrics);
     this.recreateWorkerGroupOnDeadEventLoop = conf.recreateWorkerGroupOnDeadEventLoop();
     fastFailTimeWindow = (int)(conf.ioRetryWaitTimeMs() * 0.95);
+	logger.debug("TransportClientFactory(context={},clientBootstraps={}): recreateWorkerGroupOnDeadEventLoop → {}", context, clientBootstraps, recreateWorkerGroupOnDeadEventLoop);
+	logger.debug("<<< Exiting TransportClientFactory(context={},clientBootstraps={})", context, clientBootstraps);
   }
 
   public MetricSet getAllMetrics() {
+	logger.debug(">>> Entering getAllMetrics()");
+	logger.debug("<<< Exiting getAllMetrics()");
     return metrics;
   }
 
   @VisibleForTesting
   EventLoopGroup getWorkerGroup() {
+	logger.debug(">>> Entering getWorkerGroup()");
+	logger.debug("<<< Exiting getWorkerGroup()");
     return workerGroup;
   }
 
@@ -202,7 +224,9 @@ public class TransportClientFactory implements Closeable {
         .get(TransportChannelHandler.class);
       if (handler != null) {
         synchronized (handler) {
+		logger.debug(">>> Entering synchronized(handler={})", handler);
           handler.getResponseHandler().updateTimeOfLastRequest();
+		logger.debug("<<< Exiting synchronized(handler={})", handler);
         }
       }
 
@@ -310,9 +334,12 @@ public class TransportClientFactory implements Closeable {
     bootstrap.handler(new ChannelInitializer<SocketChannel>() {
       @Override
       public void initChannel(SocketChannel ch) {
+		logger.debug(">>> Entering initChannel(ch={})", ch);
         TransportChannelHandler clientHandler = context.initializePipeline(ch, true);
         clientRef.set(clientHandler.getClient());
+		logger.debug("initChannel(ch={}): clientHandler → {}", ch, clientHandler);
         channelRef.set(ch);
+		logger.debug("<<< Exiting initChannel(ch={})", ch);
       }
     });
 
@@ -351,6 +378,7 @@ public class TransportClientFactory implements Closeable {
         new GenericFutureListener<Future<Channel>>() {
           @Override
           public void operationComplete(final Future<Channel> handshakeFuture) {
+			logger.debug(">>> Entering operationComplete(handshakeFuture={})", handshakeFuture);
             if (handshakeFuture.isSuccess()) {
               logger.debug("{} successfully completed TLS handshake to ", address);
             } else {
@@ -405,10 +433,12 @@ public class TransportClientFactory implements Closeable {
    * SPARK-58292.
    */
   private void recreateWorkerGroupIfEventLoopDead(EventLoopGroup connectGroup, Throwable cause) {
+	logger.debug(">>> Entering recreateWorkerGroupIfEventLoopDead(connectGroup={},cause={})", connectGroup, cause);
     if (!recreateWorkerGroupOnDeadEventLoop) {
       return;
     }
     boolean eventLoopDead = false;
+	logger.debug("recreateWorkerGroupIfEventLoopDead(connectGroup={},cause={}): eventLoopDead → {}", connectGroup, cause, eventLoopDead);
     for (Throwable t = cause; t != null; t = t.getCause()) {
       // Match ONLY the terminated-loop rejection, not a transient task-queue-full rejection.
       // netty's SingleThreadEventExecutor.reject() throws exactly this message when isShutdown();
@@ -422,6 +452,7 @@ public class TransportClientFactory implements Closeable {
     if (eventLoopDead) {
       recreateWorkerGroup(connectGroup);
     }
+	logger.debug("<<< Exiting recreateWorkerGroupIfEventLoopDead(connectGroup={},cause={})", connectGroup, cause);
   }
 
   /**
@@ -433,6 +464,7 @@ public class TransportClientFactory implements Closeable {
    * same dead group replace it exactly once rather than spawning many groups.
    */
   private synchronized void recreateWorkerGroup(EventLoopGroup connectGroup) {
+	logger.debug(">>> Entering recreateWorkerGroup(connectGroup={})", connectGroup);
     // The factory is closed (or closing): its worker group was shut down by close(), so a
     // createClient() racing or following close() must not recreate a fresh group and resurrect a
     // closed factory (which would leak threads that close() will never reap again).
@@ -451,6 +483,7 @@ public class TransportClientFactory implements Closeable {
     workerGroupRecreationCount++;
     workerGroup = NettyUtils.createEventLoop(ioMode, conf.clientThreads(),
         conf.getModuleName() + "-client-recreated-" + workerGroupRecreationCount);
+		logger.debug("recreateWorkerGroup(connectGroup={}): workerGroup → {}", connectGroup, workerGroup);
     deprecatedWorkerGroups.add(new WeakReference<>(connectGroup));
     logger.warn("Detected a dead netty client event loop; replaced the worker group. The " +
       "previous group is retained until its open channels drain (SPARK-58292).");
@@ -459,6 +492,7 @@ public class TransportClientFactory implements Closeable {
   /** Close all connections in the connection pool, and shutdown the worker thread pool. */
   @Override
   public void close() {
+	logger.debug(">>> Entering close()");
     // Go through all clients and close them if they are active.
     for (ClientPool clientPool : connectionPool.values()) {
       for (int i = 0; i < clientPool.clients.length; i++) {
@@ -473,6 +507,7 @@ public class TransportClientFactory implements Closeable {
 
     // Mark closed under the recreateWorkerGroup lock before shutting the group down, so a
     // concurrent createClient() hitting the dead-event-loop path cannot recreate a fresh group
+	logger.debug("<<< Exiting close()");
     // after we have decided to close (which would leak threads). See SPARK-58292.
     synchronized (this) {
       closed = true;

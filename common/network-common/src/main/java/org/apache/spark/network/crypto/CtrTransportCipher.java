@@ -42,6 +42,7 @@ import org.apache.spark.network.util.JavaUtils;
  * Cipher for encryption and decryption.
  */
 public class CtrTransportCipher implements TransportCipher {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(CtrTransportCipher.class);
   @VisibleForTesting
   static final String ENCRYPTION_HANDLER_NAME = "CtrTransportEncryption";
   private static final String DECRYPTION_HANDLER_NAME = "CtrTransportDecryption";
@@ -61,8 +62,10 @@ public class CtrTransportCipher implements TransportCipher {
       byte[] outIv) {
     this.conf = conf;
     this.key = key;
+	logger.debug(">>> Entering CtrTransportCipher(conf={},key={},inIv={},outIv={})", conf, key, inIv, outIv);
     this.inIv = inIv;
     this.outIv = outIv;
+	logger.debug("CtrTransportCipher(conf={},key={},inIv={},outIv={}): this.conf → {}", conf, key, inIv, outIv, this.conf);
   }
 
   /*
@@ -70,31 +73,43 @@ public class CtrTransportCipher implements TransportCipher {
    */
   @VisibleForTesting
   public String getKeyId() throws GeneralSecurityException {
+	logger.debug(">>> Entering getKeyId()");
+	logger.debug("<<< Exiting getKeyId()");
     return TransportCipherUtil.getKeyId(key);
   }
 
   @VisibleForTesting
   SecretKeySpec getKey() {
+	logger.debug(">>> Entering getKey()");
+	logger.debug("<<< Exiting getKey()");
     return key;
   }
 
   /** The IV for the input channel (i.e. output channel of the remote side). */
   public byte[] getInputIv() {
+	logger.debug(">>> Entering getInputIv()");
+	logger.debug("<<< Exiting getInputIv()");
     return inIv;
   }
 
   /** The IV for the output channel (i.e. input channel of the remote side). */
   public byte[] getOutputIv() {
+	logger.debug(">>> Entering getOutputIv()");
+	logger.debug("<<< Exiting getOutputIv()");
     return outIv;
   }
 
   @VisibleForTesting
   CryptoOutputStream createOutputStream(WritableByteChannel ch) throws IOException {
+	logger.debug(">>> Entering createOutputStream(ch={})", ch);
+	logger.debug("<<< Exiting createOutputStream(ch={})", ch);
     return new CryptoOutputStream(CIPHER_ALGORITHM, conf, ch, key, new IvParameterSpec(outIv));
   }
 
   @VisibleForTesting
   CryptoInputStream createInputStream(ReadableByteChannel ch) throws IOException {
+	logger.debug(">>> Entering createInputStream(ch={})", ch);
+	logger.debug("<<< Exiting createInputStream(ch={})", ch);
     return new CryptoInputStream(CIPHER_ALGORITHM, conf, ch, key, new IvParameterSpec(inIv));
   }
 
@@ -105,9 +120,11 @@ public class CtrTransportCipher implements TransportCipher {
    * @throws IOException
    */
   public void addToChannel(Channel ch) throws IOException {
+	logger.debug(">>> Entering addToChannel(ch={})", ch);
     ch.pipeline()
       .addFirst(ENCRYPTION_HANDLER_NAME, new EncryptionHandler(this))
       .addFirst(DECRYPTION_HANDLER_NAME, new DecryptionHandler(this));
+	logger.debug("<<< Exiting addToChannel(ch={})", ch);
   }
 
   @VisibleForTesting
@@ -118,10 +135,15 @@ public class CtrTransportCipher implements TransportCipher {
     private boolean isCipherValid;
 
     EncryptionHandler(CtrTransportCipher cipher) throws IOException {
+	logger.debug(">>> Entering EncryptionHandler(cipher={})", cipher);
       byteEncChannel = new ByteArrayWritableChannel(STREAM_BUFFER_SIZE);
+	logger.debug("EncryptionHandler(cipher={}): byteEncChannel → {}", cipher, byteEncChannel);
       cos = cipher.createOutputStream(byteEncChannel);
+	logger.debug("EncryptionHandler(cipher={}): cos → {}", cipher, cos);
       byteRawChannel = new ByteArrayWritableChannel(STREAM_BUFFER_SIZE);
+	logger.debug("EncryptionHandler(cipher={}): byteRawChannel → {}", cipher, byteRawChannel);
       isCipherValid = true;
+	logger.debug("<<< Exiting EncryptionHandler(cipher={})", cipher);
     }
 
     @Override
@@ -132,11 +154,15 @@ public class CtrTransportCipher implements TransportCipher {
 
     @VisibleForTesting
     EncryptedMessage createEncryptedMessage(Object msg) {
+	logger.debug(">>> Entering createEncryptedMessage(msg={})", msg);
+	logger.debug(">>> Entering EncryptedMessage(handler={},cos={},msg={},byteEncChannel={},byteRawChannel={})", handler, cos, msg, byteEncChannel, byteRawChannel);
+	logger.debug("<<< Exiting createEncryptedMessage(msg={})", msg);
       return new EncryptedMessage(this, cos, msg, byteEncChannel, byteRawChannel);
     }
 
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+	logger.debug(">>> Entering close(ctx={},promise={})", ctx, promise);
       try {
         if (isCipherValid) {
           cos.close();
@@ -144,6 +170,7 @@ public class CtrTransportCipher implements TransportCipher {
       } finally {
         super.close(ctx, promise);
       }
+	logger.debug("<<< Exiting close(ctx={},promise={})", ctx, promise);
     }
 
     /**
@@ -151,10 +178,14 @@ public class CtrTransportCipher implements TransportCipher {
      * after an error occurs.
      */
     void reportError() {
+	logger.debug(">>> Entering reportError()");
       this.isCipherValid = false;
+	logger.debug("<<< Exiting reportError()");
     }
 
     boolean isCipherValid() {
+	logger.debug(">>> Entering isCipherValid()");
+	logger.debug("<<< Exiting isCipherValid()");
       return isCipherValid;
     }
   }
@@ -165,17 +196,24 @@ public class CtrTransportCipher implements TransportCipher {
     private boolean isCipherValid;
 
     DecryptionHandler(CtrTransportCipher cipher) throws IOException {
+	logger.debug(">>> Entering DecryptionHandler(cipher={})", cipher);
       byteChannel = new ByteArrayReadableChannel();
+	logger.debug("DecryptionHandler(cipher={}): byteChannel → {}", cipher, byteChannel);
       cis = cipher.createInputStream(byteChannel);
+	logger.debug("DecryptionHandler(cipher={}): cis → {}", cipher, cis);
       isCipherValid = true;
+	logger.debug("<<< Exiting DecryptionHandler(cipher={})", cipher);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object data) throws Exception {
+	logger.debug(">>> Entering channelRead(ctx={},data={})", ctx, data);
       ByteBuf buffer = (ByteBuf) data;
 
+	logger.debug("channelRead(ctx={},data={}): buffer → {}", ctx, data, buffer);
       try {
         if (!isCipherValid) {
+		logger.warn("Throwing IOException from channelRead(ctx={},data={})", ctx, data);
           throw new IOException("Cipher is in invalid state.");
         }
         byte[] decryptedData = new byte[buffer.readableBytes()];
@@ -187,7 +225,9 @@ public class CtrTransportCipher implements TransportCipher {
           try {
             offset += cis.read(decryptedData, offset, decryptedData.length - offset);
           } catch (InternalError ie) {
+			logger.error("Exception in channelRead(ctx={},data={}): {}", ctx, data, ie.getMessage(), ie);
             isCipherValid = false;
+			logger.debug("channelRead(ctx={},data={}): isCipherValid → {}", ctx, data, isCipherValid);
             throw ie;
           }
         }
@@ -196,10 +236,12 @@ public class CtrTransportCipher implements TransportCipher {
       } finally {
         buffer.release();
       }
+	logger.debug("<<< Exiting channelRead(ctx={},data={})", ctx, data);
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+	logger.debug(">>> Entering handlerRemoved(ctx={})", ctx);
       // We do the closing of the stream / channel in handlerRemoved(...) as
       // this method will be called in all cases:
       //
@@ -212,6 +254,7 @@ public class CtrTransportCipher implements TransportCipher {
       } finally {
         super.handlerRemoved(ctx);
       }
+	logger.debug("<<< Exiting handlerRemoved(ctx={})", ctx);
     }
   }
 
@@ -254,21 +297,27 @@ public class CtrTransportCipher implements TransportCipher {
 
     @Override
     public long count() {
+	logger.debug(">>> Entering count()");
       return count;
     }
 
     @Override
     public long position() {
+	logger.debug(">>> Entering position()");
+	logger.debug("<<< Exiting position()");
       return 0;
     }
 
     @Override
     public long transferred() {
+	logger.debug(">>> Entering transferred()");
+	logger.debug("<<< Exiting transferred()");
       return transferred;
     }
 
     @Override
     public EncryptedMessage touch(Object o) {
+	logger.debug(">>> Entering touch(o={})", o);
       super.touch(o);
       if (region != null) {
         region.touch(o);
@@ -276,11 +325,13 @@ public class CtrTransportCipher implements TransportCipher {
       if (buf != null) {
         buf.touch(o);
       }
+	logger.debug("<<< Exiting touch(o={})", o);
       return this;
     }
 
     @Override
     public EncryptedMessage retain(int increment) {
+	logger.debug(">>> Entering retain(increment={})", increment);
       super.retain(increment);
       if (region != null) {
         region.retain(increment);
@@ -288,22 +339,26 @@ public class CtrTransportCipher implements TransportCipher {
       if (buf != null) {
         buf.retain(increment);
       }
+	logger.debug("<<< Exiting retain(increment={})", increment);
       return this;
     }
 
     @Override
     public boolean release(int decrement) {
+	logger.debug(">>> Entering release(decrement={})", decrement);
       if (region != null) {
         region.release(decrement);
       }
       if (buf != null) {
         buf.release(decrement);
       }
+	logger.debug("<<< Exiting release(decrement={})", decrement);
       return super.release(decrement);
     }
 
     @Override
     public long transferTo(WritableByteChannel target, long position) throws IOException {
+	logger.debug(">>> Entering transferTo(target={},position={})", target, position);
       JavaUtils.checkArgument(position == transferred(), "Invalid position.");
 
       if (transferred == count) {
@@ -317,16 +372,19 @@ public class CtrTransportCipher implements TransportCipher {
         }
 
         long remaining = currentEncrypted.remaining();
+		logger.debug("transferTo(target={},position={}): remaining → {}", target, position, remaining);
         if (remaining == 0)  {
           // Just for safety to avoid endless loop. It usually won't happen, but since the
           // underlying `region.transferTo` is allowed to transfer 0 bytes, we should handle it for
           // safety.
           currentEncrypted = null;
           byteEncChannel.reset();
+		logger.debug("transferTo(target={},position={}): currentEncrypted → {}", target, position, currentEncrypted);
           return totalBytesWritten;
         }
 
         long bytesWritten = target.write(currentEncrypted);
+		logger.debug("transferTo(target={},position={}): bytesWritten → {}", target, position, bytesWritten);
         totalBytesWritten += bytesWritten;
         transferred += bytesWritten;
         if (bytesWritten < remaining) {
@@ -337,17 +395,21 @@ public class CtrTransportCipher implements TransportCipher {
         byteEncChannel.reset();
       } while (transferred < count);
 
+	logger.debug("<<< Exiting transferTo(target={},position={})", target, position);
       return totalBytesWritten;
     }
 
     private void encryptMore() throws IOException {
+	logger.debug(">>> Entering encryptMore()");
       if (!handler.isCipherValid()) {
+		logger.warn("Throwing IOException from encryptMore()");
         throw new IOException("Cipher is in invalid state.");
       }
       byteRawChannel.reset();
 
       if (isByteBuf) {
         int copied = byteRawChannel.write(buf.nioBuffer());
+		logger.debug("encryptMore(): copied → {}", copied);
         buf.skipBytes(copied);
       } else {
         region.transferTo(byteRawChannel, region.transferred());
@@ -357,16 +419,20 @@ public class CtrTransportCipher implements TransportCipher {
         cos.write(byteRawChannel.getData(), 0, byteRawChannel.length());
         cos.flush();
       } catch (InternalError ie) {
+		logger.error("Exception in encryptMore(): {}", ie.getMessage(), ie);
         handler.reportError();
         throw ie;
       }
 
       currentEncrypted = ByteBuffer.wrap(byteEncChannel.getData(),
         0, byteEncChannel.length());
+		logger.debug("encryptMore(): currentEncrypted → {}", currentEncrypted);
+		logger.debug("<<< Exiting encryptMore()");
     }
 
     @Override
     protected void deallocate() {
+	logger.debug(">>> Entering deallocate()");
       byteRawChannel.reset();
       byteEncChannel.reset();
       if (region != null) {
@@ -375,6 +441,7 @@ public class CtrTransportCipher implements TransportCipher {
       if (buf != null) {
         buf.release();
       }
+	logger.debug("<<< Exiting deallocate()");
     }
   }
 

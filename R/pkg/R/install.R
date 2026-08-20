@@ -109,6 +109,7 @@ install.spark <- function(hadoopVersion = "3", mirrorUrl = NULL,
               " found, setting SPARK_HOME to ", packageLocalDir)
     }
     Sys.setenv(SPARK_HOME = packageLocalDir)
+	message(sprintf("install.spark(hadoopVersion=%s,mirrorUrl=%s,localDir=%s,overwrite=%s): Sys → %s", hadoopVersion, mirrorUrl, localDir, overwrite, Sys))
     return(invisible(packageLocalDir))
   } else {
     message("Spark not found in the cache directory. Installation will start.")
@@ -135,13 +136,20 @@ install.spark <- function(hadoopVersion = "3", mirrorUrl = NULL,
   message("Installing to ", localDir)
   # There are two ways untar can fail - untar could stop() on errors like incomplete block on file
   # or, tar command can return failure code
+message(sprintf("<<< Exiting install.spark(hadoopVersion=%s,mirrorUrl=%s,localDir=%s,overwrite=%s)", hadoopVersion, mirrorUrl, localDir, overwrite))
   success <- tryCatch(untar(tarfile = packageLocalPath, exdir = localDir) == 0,
                      error = function(e) {
+					message(sprintf(">>> Entering error(e=%s)", e))
                        message(e, "\n")
+					message(sprintf("error(e=%s): error → %s", e, error))
+					message(sprintf("<<< Exiting error(e=%s)", e))
                        FALSE
                      },
                      warning = function(w) {
+					message(sprintf(">>> Entering warning(w=%s)", w))
                        message(w, "\n")
+					message(sprintf("warning(w=%s): warning → %s", w, warning))
+					message(sprintf("<<< Exiting warning(w=%s)", w))
                        FALSE
                      })
   if (!tarExists || overwrite || !success) {
@@ -160,6 +168,7 @@ install.spark <- function(hadoopVersion = "3", mirrorUrl = NULL,
 }
 
 robustDownloadTar <- function(mirrorUrl, version, hadoopVersion, packageName, packageLocalPath) {
+message(sprintf(">>> Entering robustDownloadTar(mirrorUrl=%s,version=%s,hadoopVersion=%s,packageName=%s,packageLocalPath=%s)", mirrorUrl, version, hadoopVersion, packageName, packageLocalPath))
   # step 1: use user-provided url
   if (!is.null(mirrorUrl)) {
     message("Use user-provided mirror site: ", mirrorUrl)
@@ -200,19 +209,25 @@ robustDownloadTar <- function(mirrorUrl, version, hadoopVersion, packageName, pa
          " for Hadoop ", if (hadoopVersion == "without") "Free build" else hadoopVersion,
          ". Please check network connection, Hadoop version, or provide other mirror sites.")
   }
+message(sprintf("<<< Exiting robustDownloadTar(mirrorUrl=%s,version=%s,hadoopVersion=%s,packageName=%s,packageLocalPath=%s)", mirrorUrl, version, hadoopVersion, packageName, packageLocalPath))
 }
 
 getPreferredMirror <- function(version, packageName) {
+message(sprintf(">>> Entering getPreferredMirror(version=%s,packageName=%s)", version, packageName))
   jsonUrl <- paste0("http://www.apache.org/dyn/closer.cgi?path=",
                         file.path("spark", version, packageName),
                         ".tgz&as_json=1")
   textLines <- readLines(jsonUrl, warn = FALSE)
+message(sprintf("getPreferredMirror(version=%s,packageName=%s): textLines → %s", version, packageName, textLines))
+message(sprintf("getPreferredMirror(version=%s,packageName=%s): rowNum → %s", version, packageName, rowNum))
   rowNum <- grep('"preferred"', textLines, fixed = TRUE)
   linePreferred <- textLines[rowNum]
   matchInfo <- regexpr('"[A-Za-z][A-Za-z0-9+-.]*://.+"', linePreferred)
+message(sprintf("getPreferredMirror(version=%s,packageName=%s): matchInfo → %s", version, packageName, matchInfo))
   if (matchInfo != -1) {
     startPos <- matchInfo + 1
     endPos <- matchInfo + attr(matchInfo, "match.length") - 2
+	message(sprintf("getPreferredMirror(version=%s,packageName=%s): endPos → %s", version, packageName, endPos))
     mirrorPreferred <- base::substr(linePreferred, startPos, endPos)
     mirrorPreferred <- paste0(mirrorPreferred, "spark")
     message("Preferred mirror site found: ", mirrorPreferred)
@@ -220,17 +235,22 @@ getPreferredMirror <- function(version, packageName) {
     mirrorPreferred <- NULL
   }
   mirrorPreferred
+message(sprintf("<<< Exiting getPreferredMirror(version=%s,packageName=%s)", version, packageName))
 }
 
 directDownloadTar <- function(mirrorUrl, version, hadoopVersion, packageName, packageLocalPath) {
+message(sprintf(">>> Entering directDownloadTar(mirrorUrl=%s,version=%s,hadoopVersion=%s,packageName=%s,packageLocalPath=%s)", mirrorUrl, version, hadoopVersion, packageName, packageLocalPath))
   packageRemotePath <- paste0(file.path(mirrorUrl, version, packageName), ".tgz")
   message("Downloading ", version, " for Hadoop ",
           if (hadoopVersion == "without") "Free build" else hadoopVersion,
           " from:\n- ", packageRemotePath)
   downloadUrl(packageRemotePath, packageLocalPath)
+message(sprintf("<<< Exiting directDownloadTar(mirrorUrl=%s,version=%s,hadoopVersion=%s,packageName=%s,packageLocalPath=%s)", mirrorUrl, version, hadoopVersion, packageName, packageLocalPath))
 }
 
 downloadUrl <- function(remotePath, localPath) {
+message(sprintf(">>> Entering downloadUrl(remotePath=%s,localPath=%s)", remotePath, localPath))
+message(sprintf("downloadUrl(remotePath=%s,localPath=%s): isFail → %s", remotePath, localPath, isFail))
   isFail <- tryCatch(download.file(remotePath, localPath),
                      error = function(e) {
                        message(e, "\n")
@@ -244,10 +264,13 @@ downloadUrl <- function(remotePath, localPath) {
 }
 
 defaultMirrorUrl <- function() {
+message(">>> Entering defaultMirrorUrl()")
   "http://www-us.apache.org/dist/spark"
+message("<<< Exiting defaultMirrorUrl()")
 }
 
 hadoopVersionName <- function(hadoopVersion) {
+message(sprintf(">>> Entering hadoopVersionName(hadoopVersion=%s)", hadoopVersion))
   if (hadoopVersion == "without") {
     "without-hadoop"
   } else if (grepl("^[0-9]+$", hadoopVersion, perl = TRUE)) {
@@ -255,14 +278,17 @@ hadoopVersionName <- function(hadoopVersion) {
   } else {
     hadoopVersion
   }
+message(sprintf("<<< Exiting hadoopVersionName(hadoopVersion=%s)", hadoopVersion))
 }
 
 # The implementation refers to appdirs package: https://pypi.python.org/pypi/appdirs and
 # adapt to Spark context
 # see also sparkCacheRelPathLength()
 sparkCachePath <- function() {
+message(">>> Entering sparkCachePath()")
   if (is_windows()) {
     winAppPath <- Sys.getenv("LOCALAPPDATA", unset = NA)
+	message(sprintf("sparkCachePath(): winAppPath → %s", winAppPath))
     if (is.na(winAppPath)) {
       message("%LOCALAPPDATA% not found. Falling back to %USERPROFILE%.")
       winAppPath <- Sys.getenv("USERPROFILE", unset = NA)
@@ -285,20 +311,24 @@ sparkCachePath <- function() {
     stop("Unknown OS: ", .Platform$OS.type)
   }
   normalizePath(path, mustWork = FALSE)
+message("<<< Exiting sparkCachePath()")
 }
 
 # Length of the Spark cache specific relative path segments for each platform
 # e.g. "Apache\Spark\Cache" is 3 in Windows, or "spark" is 1 in unix
 # Must match sparkCachePath() exactly.
 sparkCacheRelPathLength <- function() {
+message(">>> Entering sparkCacheRelPathLength()")
   if (is_windows()) {
     3
   } else {
     1
   }
+message("<<< Exiting sparkCacheRelPathLength()")
 }
 
 installInstruction <- function(mode) {
+message(sprintf(">>> Entering installInstruction(mode=%s)", mode))
   if (mode == "remote") {
     paste0("Connecting to a remote Spark master. ",
            "Please make sure Spark package is also installed in this machine.\n",
@@ -313,18 +343,26 @@ installInstruction <- function(mode) {
   } else {
     stop("No instruction found for mode ", mode)
   }
+message(sprintf("<<< Exiting installInstruction(mode=%s)", mode))
 }
 
 uninstallDownloadedSpark <- function() {
+message(">>> Entering uninstallDownloadedSpark()")
   # clean up if Spark was downloaded
   sparkDownloaded <- getOne(".sparkDownloaded",
                             envir = .sparkREnv,
                             inherits = TRUE,
+							message(sprintf("uninstallDownloadedSpark(): inherits → %s", inherits))
+							message(sprintf("uninstallDownloadedSpark(): envir → %s", envir))
+							message(sprintf("uninstallDownloadedSpark(): ifnotfound → %s", ifnotfound))
+							message(sprintf("uninstallDownloadedSpark(): sparkDownloadedDir → %s", sparkDownloadedDir))
+							message(sprintf("uninstallDownloadedSpark(): dirs → %s", dirs))
                             ifnotfound = FALSE)
   sparkDownloadedDir <- Sys.getenv("SPARK_HOME")
   if (sparkDownloaded && nchar(sparkDownloadedDir) > 0) {
     unlink(sparkDownloadedDir, recursive = TRUE, force = TRUE)
 
+	message("<<< Exiting uninstallDownloadedSpark()")
     dirs <- traverseParentDirs(sparkCachePath(), sparkCacheRelPathLength())
     lapply(dirs, function(d) {
       if (length(list.files(d, all.files = TRUE, include.dirs = TRUE, no.. = TRUE)) == 0) {

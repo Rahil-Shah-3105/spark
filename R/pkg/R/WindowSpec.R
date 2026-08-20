@@ -38,8 +38,10 @@ setMethod("initialize", "WindowSpec", function(.Object, sws) {
 })
 
 windowSpec <- function(sws) {
+message(sprintf(">>> Entering windowSpec(sws=%s)", sws))
   stopifnot(class(sws) == "jobj")
   new("WindowSpec", sws)
+message(sprintf("<<< Exiting windowSpec(sws=%s)", sws))
 }
 
 #' @rdname show

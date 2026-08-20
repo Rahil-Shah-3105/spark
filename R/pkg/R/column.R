@@ -75,10 +75,12 @@ column_functions1 <- c(
 column_functions2 <- c("like", "rlike", "ilike", "getField", "getItem", "contains")
 
 createOperator <- function(op) {
+message(sprintf(">>> Entering createOperator(op=%s)", op))
   setMethod(op,
             signature(e1 = "Column"),
             function(e1, e2) {
               jc <- if (missing(e2)) {
+				message(sprintf("createOperator(op=%s): jc → %s", op, jc))
                 if (op == "-") {
                   callJMethod(e1@jc, "unary_$minus")
                 } else {
@@ -95,30 +97,38 @@ createOperator <- function(op) {
                 }
               }
               column(jc)
+			message(sprintf("<<< Exiting createOperator(op=%s)", op))
             })
 }
 
 createColumnFunction1 <- function(name) {
+message(sprintf(">>> Entering createColumnFunction1(name=%s)", name))
   setMethod(name,
             signature(x = "Column"),
             function(x) {
               column(callJMethod(x@jc, name))
+			message(sprintf("<<< Exiting createColumnFunction1(name=%s)", name))
             })
 }
 
 createColumnFunction2 <- function(name) {
+message(sprintf(">>> Entering createColumnFunction2(name=%s)", name))
   setMethod(name,
             signature(x = "Column"),
             function(x, data) {
               if (inherits(data, "Column")) {
+				message(sprintf("createColumnFunction2(name=%s): data → %s", name, data))
                 data <- data@jc
               }
               jc <- callJMethod(x@jc, name, data)
+			message(sprintf("createColumnFunction2(name=%s): jc → %s", name, jc))
               column(jc)
+			message(sprintf("<<< Exiting createColumnFunction2(name=%s)", name))
             })
 }
 
 createMethods <- function() {
+message(">>> Entering createMethods()")
   for (op in names(operators)) {
     createOperator(op)
   }
@@ -128,6 +138,7 @@ createMethods <- function() {
   for (name in column_functions2) {
     createColumnFunction2(name)
   }
+message("<<< Exiting createMethods()")
 }
 
 createMethods()

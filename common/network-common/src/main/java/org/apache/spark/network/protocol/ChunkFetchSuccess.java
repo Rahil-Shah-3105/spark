@@ -32,11 +32,13 @@ import org.apache.spark.network.buffer.NettyManagedBuffer;
  * Similarly, the client-side decoding will reuse the Netty ByteBuf as the buffer.
  */
 public final class ChunkFetchSuccess extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ChunkFetchSuccess.class);
   public final StreamChunkId streamChunkId;
 
   public ChunkFetchSuccess(StreamChunkId streamChunkId, ManagedBuffer buffer) {
     super(buffer, true);
     this.streamChunkId = streamChunkId;
+	logger.debug("<<< Exiting ChunkFetchSuccess(streamChunkId={},buffer={})", streamChunkId, buffer);
   }
 
   @Override
@@ -44,36 +46,50 @@ public final class ChunkFetchSuccess extends AbstractResponseMessage {
 
   @Override
   public int encodedLength() {
+	logger.debug(">>> Entering encodedLength()");
+	logger.debug("<<< Exiting encodedLength()");
     return streamChunkId.encodedLength();
   }
 
   /** Encoding does NOT include 'buffer' itself. See {@link MessageEncoder}. */
   @Override
   public void encode(ByteBuf buf) {
+	logger.debug(">>> Entering encode(buf={})", buf);
     streamChunkId.encode(buf);
+	logger.debug("<<< Exiting encode(buf={})", buf);
   }
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.debug(">>> Entering createFailureResponse(error={})", error);
+	logger.debug("<<< Exiting createFailureResponse(error={})", error);
     return new ChunkFetchFailure(streamChunkId, error);
   }
 
   /** Decoding uses the given ByteBuf as our data, and will retain() it. */
   public static ChunkFetchSuccess decode(ByteBuf buf) {
+	logger.debug(">>> Entering decode(buf={})", buf);
     StreamChunkId streamChunkId = StreamChunkId.decode(buf);
     buf.retain();
+	logger.debug("decode(buf={}): streamChunkId → {}", buf, streamChunkId);
     NettyManagedBuffer managedBuf = new NettyManagedBuffer(buf.duplicate());
+	logger.debug("decode(buf={}): managedBuf → {}", buf, managedBuf);
+	logger.debug("<<< Exiting decode(buf={})", buf);
     return new ChunkFetchSuccess(streamChunkId, managedBuf);
   }
 
   @Override
   public int hashCode() {
+	logger.debug(">>> Entering hashCode()");
+	logger.debug("<<< Exiting hashCode()");
     return Objects.hash(streamChunkId, body());
   }
 
   @Override
   public boolean equals(Object other) {
+	logger.debug(">>> Entering equals(other={})", other);
     if (other instanceof ChunkFetchSuccess o) {
+	logger.debug("<<< Exiting equals(other={})", other);
       return streamChunkId.equals(o.streamChunkId) && super.equals(o);
     }
     return false;
@@ -81,6 +97,8 @@ public final class ChunkFetchSuccess extends AbstractResponseMessage {
 
   @Override
   public String toString() {
+	logger.debug(">>> Entering toString()");
+	logger.debug("<<< Exiting toString()");
     return "ChunkFetchSuccess[streamChunkId=" + streamChunkId + ",body=" + body() + "]";
   }
 }

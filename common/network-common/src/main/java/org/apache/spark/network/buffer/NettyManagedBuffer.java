@@ -28,51 +28,70 @@ import io.netty.buffer.ByteBufInputStream;
  * A {@link ManagedBuffer} backed by a Netty {@link ByteBuf}.
  */
 public class NettyManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NettyManagedBuffer.class);
   private final ByteBuf buf;
 
   public NettyManagedBuffer(ByteBuf buf) {
+	logger.debug(">>> Entering NettyManagedBuffer(buf={})", buf);
     this.buf = buf;
+	logger.debug("<<< Exiting NettyManagedBuffer(buf={})", buf);
   }
 
   @Override
   public long size() {
+	logger.debug(">>> Entering size()");
+	logger.debug("<<< Exiting size()");
     return buf.readableBytes();
   }
 
   @Override
   public ByteBuffer nioByteBuffer() throws IOException {
+	logger.debug(">>> Entering nioByteBuffer()");
+	logger.debug("<<< Exiting nioByteBuffer()");
     return buf.nioBuffer();
   }
 
   @Override
   public InputStream createInputStream() throws IOException {
+	logger.debug(">>> Entering createInputStream()");
+	logger.debug("<<< Exiting createInputStream()");
     return new ByteBufInputStream(buf);
   }
 
   @Override
   public ManagedBuffer retain() {
+	logger.debug(">>> Entering retain()");
     buf.retain();
+	logger.debug("<<< Exiting retain()");
     return this;
   }
 
   @Override
   public ManagedBuffer release() {
+	logger.debug(">>> Entering release()");
     buf.release();
+	logger.debug("<<< Exiting release()");
     return this;
   }
 
   @Override
   public Object convertToNetty() throws IOException {
+	logger.debug(">>> Entering convertToNetty()");
+	logger.debug("<<< Exiting convertToNetty()");
     return buf.duplicate().retain();
   }
 
   @Override
   public Object convertToNettyForSsl() throws IOException {
+	logger.debug(">>> Entering convertToNettyForSsl()");
+	logger.debug("<<< Exiting convertToNettyForSsl()");
     return buf.duplicate().retain();
   }
 
   @Override
   public String toString() {
+	logger.debug(">>> Entering toString()");
+	logger.debug("<<< Exiting toString()");
     return "NettyManagedBuffer[buf=" + buf + "]";
   }
 }

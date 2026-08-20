@@ -34,19 +34,26 @@ import org.apache.spark.network.util.TransportConf;
  * callers only need to install this bootstrap when authentication is enabled.
  */
 public class AuthServerBootstrap implements TransportServerBootstrap {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AuthServerBootstrap.class);
 
   private final TransportConf conf;
   private final SecretKeyHolder secretKeyHolder;
 
   public AuthServerBootstrap(TransportConf conf, SecretKeyHolder secretKeyHolder) {
+	logger.debug(">>> Entering AuthServerBootstrap(conf={},secretKeyHolder=<redacted>)", conf);
     this.conf = conf;
+	logger.debug("AuthServerBootstrap(conf={},secretKeyHolder=<redacted>): this.conf → {}", conf, this.conf);
     this.secretKeyHolder = secretKeyHolder;
+	logger.debug("<<< Exiting AuthServerBootstrap(conf={},secretKeyHolder=<redacted>)", conf);
   }
 
   @Override
   public RpcHandler doBootstrap(Channel channel, RpcHandler rpcHandler) {
+	logger.debug(">>> Entering doBootstrap(channel={},rpcHandler={})", channel, rpcHandler);
     if (!conf.encryptionEnabled()) {
       TransportServerBootstrap sasl = new SaslServerBootstrap(conf, secretKeyHolder);
+	logger.debug("doBootstrap(channel={},rpcHandler={}): sasl → {}", channel, rpcHandler, sasl);
+	logger.debug("<<< Exiting doBootstrap(channel={},rpcHandler={})", channel, rpcHandler);
       return sasl.doBootstrap(channel, rpcHandler);
     }
 

@@ -38,6 +38,7 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public abstract class KVStoreView<T> implements Iterable<T> {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(KVStoreView.class);
 
   boolean ascending = true;
   String index = KVIndex.NATURAL_INDEX_NAME;
@@ -51,7 +52,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Reverses the order of iteration. By default, iterates in ascending order.
    */
   public KVStoreView<T> reverse() {
+	LOG.debug(">>> Entering reverse()");
     ascending = !ascending;
+	LOG.debug("reverse(): ascending → {}", ascending);
+	LOG.debug("<<< Exiting reverse()");
     return this;
   }
 
@@ -59,7 +63,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Iterates according to the given index.
    */
   public KVStoreView<T> index(String name) {
+	LOG.debug(">>> Entering index(name={})", name);
     this.index = Objects.requireNonNull(name);
+	LOG.debug("index(name={}): index → {}", name, index);
+	LOG.debug("<<< Exiting index(name={})", name);
     return this;
   }
 
@@ -73,7 +80,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * </p>
    */
   public KVStoreView<T> parent(Object value) {
+	LOG.debug(">>> Entering parent(value={})", value);
     this.parent = value;
+	LOG.debug("parent(value={}): this.parent → {}", value, this.parent);
+	LOG.debug("<<< Exiting parent(value={})", value);
     return this;
   }
 
@@ -81,7 +91,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Iterates starting at the given value of the chosen index (inclusive).
    */
   public KVStoreView<T> first(Object value) {
+	LOG.debug(">>> Entering first(value={})", value);
     this.first = value;
+	LOG.debug("first(value={}): this.first → {}", value, this.first);
+	LOG.debug("<<< Exiting first(value={})", value);
     return this;
   }
 
@@ -89,7 +102,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Stops iteration at the given value of the chosen index (inclusive).
    */
   public KVStoreView<T> last(Object value) {
+	LOG.debug(">>> Entering last(value={})", value);
     this.last = value;
+	LOG.debug("last(value={}): this.last → {}", value, this.last);
+	LOG.debug("<<< Exiting last(value={})", value);
     return this;
   }
 
@@ -97,8 +113,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Stops iteration after a number of elements has been retrieved.
    */
   public KVStoreView<T> max(long max) {
+	LOG.debug(">>> Entering max(max={})", max);
     JavaUtils.checkArgument(max > 0L, "max must be positive.");
     this.max = max;
+	LOG.debug("<<< Exiting max(max={})", max);
     return this;
   }
 
@@ -107,7 +125,10 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * when using {@link #max(long)}.
    */
   public KVStoreView<T> skip(long n) {
+	LOG.debug(">>> Entering skip(n={})", n);
     this.skip = n;
+	LOG.debug("skip(n={}): this.skip → {}", n, this.skip);
+	LOG.debug("<<< Exiting skip(n={})", n);
     return this;
   }
 
@@ -115,6 +136,8 @@ public abstract class KVStoreView<T> implements Iterable<T> {
    * Returns an iterator for the current configuration.
    */
   public KVStoreIterator<T> closeableIterator() throws Exception {
+	LOG.debug(">>> Entering closeableIterator()");
+	LOG.debug("<<< Exiting closeableIterator()");
     return (KVStoreIterator<T>) iterator();
   }
 

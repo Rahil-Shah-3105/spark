@@ -85,9 +85,11 @@ setMethod("initialize", "PipelinedRDD", function(.Object, prev, func, jrdd_val) 
   .Object@prev <- prev
 
   isPipelinable <- function(rdd) {
+	message(sprintf(">>> Entering isPipelinable(rdd=%s)", rdd))
     e <- rdd@env
     # nolint start
     !(e$isCached || e$isCheckpointed)
+	message(sprintf("<<< Exiting isPipelinable(rdd=%s)", rdd))
     # nolint end
   }
 
@@ -100,7 +102,9 @@ setMethod("initialize", "PipelinedRDD", function(.Object, prev, func, jrdd_val) 
     # prev_serializedMode is used during the delayed computation of JRDD in getJRDD
   } else {
     pipelinedFunc <- function(partIndex, part) {
+	message(sprintf(">>> Entering pipelinedFunc(partIndex=%s,part=%s)", partIndex, part))
       f <- prev@func
+	message(sprintf("<<< Exiting pipelinedFunc(partIndex=%s,part=%s)", partIndex, part))
       func(partIndex, f(partIndex, part))
     }
     .Object@func <- cleanClosure(pipelinedFunc)
@@ -120,12 +124,16 @@ setMethod("initialize", "PipelinedRDD", function(.Object, prev, func, jrdd_val) 
 #' @param isCached TRUE if the RDD is cached
 #' @param isCheckpointed TRUE if the RDD has been checkpointed
 RDD <- function(jrdd, serializedMode = "byte", isCached = FALSE,
+				message(sprintf(">>> Entering RDD(jrdd=%s,serializedMode=%s,isCached=%s,isCheckpointed=%s)", jrdd, serializedMode, isCached, isCheckpointed))
+				message(sprintf("<<< Exiting RDD(jrdd=%s,serializedMode=%s,isCached=%s,isCheckpointed=%s)", jrdd, serializedMode, isCached, isCheckpointed))
                 isCheckpointed = FALSE) {
   new("RDD", jrdd, serializedMode, isCached, isCheckpointed)
 }
 
 PipelinedRDD <- function(prev, func) {
+message(sprintf(">>> Entering PipelinedRDD(prev=%s,func=%s)", prev, func))
   new("PipelinedRDD", prev, func, NULL)
+message(sprintf("<<< Exiting PipelinedRDD(prev=%s,func=%s)", prev, func))
 }
 
 # Return the serialization mode for an RDD.
@@ -421,6 +429,8 @@ setMethod("countRDD",
           signature(x = "RDD"),
           function(x) {
             countPartition <- function(part) {
+			message(sprintf(">>> Entering countPartition(part=%s)", part))
+			message(sprintf("<<< Exiting countPartition(part=%s)", part))
               as.integer(length(part))
             }
             valsRDD <- lapplyPartition(x, countPartition)
@@ -881,8 +891,10 @@ setMethod("sampleRDD",
 
             # The sampler: takes a partition and returns its sampled version.
             samplingFunc <- function(partIndex, part) {
+			message(sprintf(">>> Entering samplingFunc(partIndex=%s,part=%s)", partIndex, part))
               set.seed(seed)
               res <- vector("list", length(part))
+			message(sprintf("samplingFunc(partIndex=%s,part=%s): res → %s", partIndex, part, res))
               len <- 0
 
               # Discards some random values to ensure each partition has a
@@ -892,6 +904,7 @@ setMethod("sampleRDD",
               for (elem in part) {
                 if (withReplacement) {
                   count <- stats::rpois(1, fraction)
+				message(sprintf("samplingFunc(partIndex=%s,part=%s): count → %s", partIndex, part, count))
                   if (count > 0) {
                     res[(len + 1) : (len + count)] <- rep(list(elem), count)
                     len <- len + count
@@ -907,7 +920,9 @@ setMethod("sampleRDD",
               # TODO(zongheng): look into the performance of the current
               # implementation. Look into some iterator package? Note that
               # Scala avoids many calls to creating an empty list and PySpark
+			message(sprintf("samplingFunc(partIndex=%s,part=%s): num → %s", partIndex, part, num))
               # similarly achieves this using `yield'.
+			message(sprintf("<<< Exiting samplingFunc(partIndex=%s,part=%s)", partIndex, part))
               if (len > 0)
                 res[1:len]
               else

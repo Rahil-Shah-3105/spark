@@ -36,6 +36,7 @@ import org.apache.spark.network.util.JavaUtils;
  * The header must be a ByteBuf, while the body can be any InputStream or ChunkedStream
  */
 public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(EncryptedMessageWithHeader.class);
 
   @Nullable private final ManagedBuffer managedBuffer;
   private final ByteBuf header;
@@ -60,18 +61,24 @@ public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
 
   public EncryptedMessageWithHeader(
       @Nullable ManagedBuffer managedBuffer, ByteBuf header, Object body, long bodyLength) {
+	logger.debug(">>> Entering EncryptedMessageWithHeader(managedBuffer={},header={},body={},bodyLength={})", managedBuffer, header, body, bodyLength);
     JavaUtils.checkArgument(body instanceof InputStream || body instanceof ChunkedStream,
       "Body must be an InputStream or a ChunkedStream.");
     this.managedBuffer = managedBuffer;
     this.header = header;
+	logger.debug("EncryptedMessageWithHeader(managedBuffer={},header={},body={},bodyLength={}): this.managedBuffer → {}", managedBuffer, header, body, bodyLength, this.managedBuffer);
     this.headerLength = header.readableBytes();
     this.body = body;
+	logger.debug("EncryptedMessageWithHeader(managedBuffer={},header={},body={},bodyLength={}): this.header → {}", managedBuffer, header, body, bodyLength, this.header);
+	logger.debug("EncryptedMessageWithHeader(managedBuffer={},header={},body={},bodyLength={}): headerLength → {}", managedBuffer, header, body, bodyLength, headerLength);
     this.bodyLength = bodyLength;
     this.totalBytesTransferred = 0;
+	logger.debug("<<< Exiting EncryptedMessageWithHeader(managedBuffer={},header={},body={},bodyLength={})", managedBuffer, header, body, bodyLength);
   }
 
   @Override
   public ByteBuf readChunk(ChannelHandlerContext ctx) throws Exception {
+	logger.debug(">>> Entering readChunk(ctx={})", ctx);
     return readChunk(ctx.alloc());
   }
 
@@ -118,21 +125,28 @@ public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
 
   @Override
   public long length() {
+	logger.debug(">>> Entering length()");
+	logger.debug("<<< Exiting length()");
     return headerLength + bodyLength;
   }
 
   @Override
   public long progress() {
+	logger.debug(">>> Entering progress()");
+	logger.debug("<<< Exiting progress()");
     return totalBytesTransferred;
   }
 
   @Override
   public boolean isEndOfInput() throws Exception {
+	logger.debug(">>> Entering isEndOfInput()");
+	logger.debug("<<< Exiting isEndOfInput()");
     return (headerLength + bodyLength) == totalBytesTransferred;
   }
 
   @Override
   public void close() throws Exception {
+	logger.debug(">>> Entering close()");
     header.release();
     if (managedBuffer != null) {
       managedBuffer.release();
@@ -142,5 +156,6 @@ public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
     } else if (body instanceof ChunkedStream stream) {
       stream.close();
     }
+	logger.debug("<<< Exiting close()");
   }
 }

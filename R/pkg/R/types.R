@@ -75,17 +75,23 @@ rToSQLTypes <- as.environment(list(
 # @param A type returned from the JVM backend.
 # @return A type is the key of the PRIMITIVE_TYPES.
 specialtypeshandle <- function(type) {
+message(sprintf(">>> Entering specialtypeshandle(type=%s)", type))
   returntype <- NULL
   m <- regexec("^decimal(.+)$", type)
+message(sprintf("specialtypeshandle(type=%s): m → %s", type, m))
+message(sprintf("specialtypeshandle(type=%s): matchedStrings → %s", type, matchedStrings))
+message(sprintf("specialtypeshandle(type=%s): returntype → %s", type, returntype))
   matchedStrings <- regmatches(type, m)
   if (length(matchedStrings[[1]]) >= 2) {
     returntype <- "double"
   }
   returntype
+message(sprintf("<<< Exiting specialtypeshandle(type=%s)", type))
 }
 
 # Helper function that checks supported types in Arrow.
 checkSchemaInArrow <- function(schema) {
+message(sprintf(">>> Entering checkSchemaInArrow(schema=%s)", schema))
   stopifnot(inherits(schema, "structType"))
 
   if (!requireNamespace("arrow", quietly = TRUE)) {
@@ -94,6 +100,7 @@ checkSchemaInArrow <- function(schema) {
 
   # Both cases below produce a corrupt value for unknown reason. It needs to be investigated.
   field_strings <- sapply(schema$fields(), function(x) x$dataType.toString())
+message(sprintf("checkSchemaInArrow(schema=%s): field_strings → %s", schema, field_strings))
   if (any(field_strings == "FloatType")) {
     stop("Arrow optimization in R does not support float type yet.")
   }
@@ -111,4 +118,5 @@ checkSchemaInArrow <- function(schema) {
   if (any(startsWith(field_strings, "MapType"))) {
     stop("Arrow optimization in R does not support map type yet.")
   }
+message(sprintf("<<< Exiting checkSchemaInArrow(schema=%s)", schema))
 }

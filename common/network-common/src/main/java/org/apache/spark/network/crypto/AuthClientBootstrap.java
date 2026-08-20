@@ -56,8 +56,10 @@ public class AuthClientBootstrap implements TransportClientBootstrap {
       TransportConf conf,
       String appId,
       SecretKeyHolder secretKeyHolder) {
+	LOG.debug(">>> Entering AuthClientBootstrap(conf={},appId={},secretKeyHolder=<redacted>)", conf, appId);
     this.conf = conf;
     // TODO: right now this behaves like the SASL backend, because when executors start up
+	LOG.debug("AuthClientBootstrap(conf={},appId={},secretKeyHolder=<redacted>): this.conf → {}", conf, appId, this.conf);
     // they don't necessarily know the app ID. So they send a hardcoded "user" that is defined
     // in the SecurityManager, which will also always return the same secret (regardless of the
     // user name). All that's needed here is for this "user" to match on both sides, since that's
@@ -65,10 +67,12 @@ public class AuthClientBootstrap implements TransportClientBootstrap {
     // to be provided here.
     this.appId = appId;
     this.secretKeyHolder = secretKeyHolder;
+	LOG.debug("<<< Exiting AuthClientBootstrap(conf={},appId={},secretKeyHolder=<redacted>)", conf, appId);
   }
 
   @Override
   public void doBootstrap(TransportClient client, Channel channel) {
+	LOG.debug(">>> Entering doBootstrap(client={},channel={})", client, channel);
     if (!conf.encryptionEnabled()) {
       LOG.debug("AES encryption disabled, using old auth protocol.");
       doSaslAuth(client, channel);
@@ -78,7 +82,9 @@ public class AuthClientBootstrap implements TransportClientBootstrap {
     try {
       doSparkAuth(client, channel);
       client.setClientId(appId);
+	LOG.debug("doBootstrap(client={},channel={}): client → {}", client, channel, client);
     } catch (GeneralSecurityException | IOException e) {
+	LOG.error("Exception in doBootstrap(client={},channel={}): {}", client, channel, e.getMessage(), e);
       throw new RuntimeException(e);
     } catch (RuntimeException e) {
       // There isn't a good exception that can be caught here to know whether it's really
@@ -86,17 +92,20 @@ public class AuthClientBootstrap implements TransportClientBootstrap {
       // try it anyway, unless it's a timeout, which is locally fatal. In the worst case
       // things will fail again.
       if (!conf.saslFallback() || e.getCause() instanceof TimeoutException) {
+		LOG.warn("Throwing e from doBootstrap(client={},channel={})", client, channel);
         throw e;
       }
 
       if (LOG.isDebugEnabled()) {
         Throwable cause = e.getCause() != null ? e.getCause() : e;
+		LOG.debug("doBootstrap(client={},channel={}): cause → {}", client, channel, cause);
         LOG.debug("New auth protocol failed, trying SASL.", cause);
       } else {
         LOG.info("New auth protocol failed, trying SASL.");
       }
       doSaslAuth(client, channel);
     }
+	LOG.debug("<<< Exiting doBootstrap(client={},channel={})", client, channel);
   }
 
   private void doSparkAuth(TransportClient client, Channel channel)
@@ -118,8 +127,11 @@ public class AuthClientBootstrap implements TransportClientBootstrap {
   }
 
   private void doSaslAuth(TransportClient client, Channel channel) {
+	LOG.debug(">>> Entering doSaslAuth(client={},channel={})", client, channel);
     SaslClientBootstrap sasl = new SaslClientBootstrap(conf, appId, secretKeyHolder);
+	LOG.debug("doSaslAuth(client={},channel={}): sasl → {}", client, channel, sasl);
     sasl.doBootstrap(client, channel);
+	LOG.debug("<<< Exiting doSaslAuth(client={},channel={})", client, channel);
   }
 
 }

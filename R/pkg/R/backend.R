@@ -22,6 +22,7 @@
 isInstanceOf <- function(jobj, className) {
   stopifnot(class(jobj) == "jobj")
   cls <- callJStatic("java.lang.Class", "forName", className)
+message(sprintf("isInstanceOf(jobj=%s,className=<redacted>): cls → %s", jobj, cls))
   callJMethod(cls, "isInstance", jobj)
 }
 
@@ -29,17 +30,21 @@ isInstanceOf <- function(jobj, className) {
 # specified by objId. objId should be a "jobj" returned
 # from the SparkRBackend.
 callJMethod <- function(objId, methodName, ...) {
+message(sprintf(">>> Entering callJMethod(objId=%s,methodName=%s)", objId, methodName))
   stopifnot(class(objId) == "jobj")
   if (!isValidJobj(objId)) {
     stop("Invalid jobj ", objId$id,
          ". If SparkR was restarted, Spark operations need to be re-executed.")
   }
   invokeJava(isStatic = FALSE, objId$id, methodName, ...)
+message(sprintf("<<< Exiting callJMethod(objId=%s,methodName=%s)", objId, methodName))
 }
 
 # Call a static method on a specified className
 callJStatic <- function(className, methodName, ...) {
+message(sprintf(">>> Entering callJStatic(className=<redacted>,methodName=%s)", methodName))
   invokeJava(isStatic = TRUE, className, methodName, ...)
+message(sprintf("<<< Exiting callJStatic(className=<redacted>,methodName=%s)", methodName))
 }
 
 # Create a new object of the specified class name
@@ -50,11 +55,15 @@ newJObject <- function(className, ...) {
 # Remove an object from the SparkR backend. This is done
 # automatically when a jobj is garbage collected.
 removeJObject <- function(objId) {
+message(sprintf(">>> Entering removeJObject(objId=%s)", objId))
   invokeJava(isStatic = TRUE, "SparkRHandler", "rm", objId)
+message(sprintf("<<< Exiting removeJObject(objId=%s)", objId))
 }
 
 isRemoveMethod <- function(isStatic, objId, methodName) {
+message(sprintf(">>> Entering isRemoveMethod(isStatic=%s,objId=%s,methodName=%s)", isStatic, objId, methodName))
   isStatic == TRUE && objId == "SparkRHandler" && methodName == "rm"
+message(sprintf("<<< Exiting isRemoveMethod(isStatic=%s,objId=%s,methodName=%s)", isStatic, objId, methodName))
 }
 
 # Invoke a Java method on the SparkR backend. Users
@@ -67,6 +76,7 @@ isRemoveMethod <- function(isStatic, objId, methodName) {
 #         for static methods
 # methodName - name of method to be invoked
 invokeJava <- function(isStatic, objId, methodName, ...) {
+message(sprintf(">>> Entering invokeJava(isStatic=%s,objId=%s,methodName=%s)", isStatic, objId, methodName))
   if (!exists(".sparkRCon", .sparkREnv)) {
     stop("No connection to backend found. Please re-run sparkR.session()")
   }
@@ -74,7 +84,9 @@ invokeJava <- function(isStatic, objId, methodName, ...) {
   # If this isn't a removeJObject call
   if (!isRemoveMethod(isStatic, objId, methodName)) {
     objsToRemove <- ls(.toRemoveJobjs)
+	message(sprintf("invokeJava(isStatic=%s,objId=%s,methodName=%s): objsToRemove → %s", isStatic, objId, methodName, objsToRemove))
     if (length(objsToRemove) > 0) {
+	message(sprintf("<<< Exiting invokeJava(isStatic=%s,objId=%s,methodName=%s)", isStatic, objId, methodName))
       sapply(objsToRemove,
             function(e) {
               removeJObject(e)
@@ -123,6 +135,7 @@ invokeJava <- function(isStatic, objId, methodName, ...) {
 
 # Helper function to check for returned errors and print appropriate error message to user
 handleErrors <- function(returnStatus, conn) {
+message(sprintf(">>> Entering handleErrors(returnStatus=%s,conn=%s)", returnStatus, conn))
   if (length(returnStatus) == 0) {
     stop("No status is returned. Java SparkR backend might have failed.")
   }
@@ -131,4 +144,5 @@ handleErrors <- function(returnStatus, conn) {
   if (returnStatus < 0) {
     stop(readString(conn))
   }
+message(sprintf("<<< Exiting handleErrors(returnStatus=%s,conn=%s)", returnStatus, conn))
 }

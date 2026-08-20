@@ -55,8 +55,10 @@ setClass("DecisionTreeClassificationModel", representation(jobj = "jobj"))
 
 # Create the summary of a tree ensemble model (e.g. Random Forest, GBT)
 summary.treeEnsemble <- function(model) {
+message(sprintf(">>> Entering summary.treeEnsemble(model=%s)", model))
   jobj <- model@jobj
   formula <- callJMethod(jobj, "formula")
+message(sprintf("summary.treeEnsemble(model=%s): formula → %s", model, formula))
   numFeatures <- callJMethod(jobj, "numFeatures")
   features <-  callJMethod(jobj, "features")
   featureImportances <- callJMethod(callJMethod(jobj, "featureImportances"), "toString")
@@ -70,6 +72,14 @@ summary.treeEnsemble <- function(model) {
        maxDepth = maxDepth,
        numTrees = numTrees,
        treeWeights = treeWeights,
+	message(sprintf("summary.treeEnsemble(model=%s): features → %s", model, features))
+	message(sprintf("summary.treeEnsemble(model=%s): numFeatures → %s", model, numFeatures))
+	message(sprintf("summary.treeEnsemble(model=%s): numTrees → %s", model, numTrees))
+	message(sprintf("summary.treeEnsemble(model=%s): featureImportances → %s", model, featureImportances))
+	message(sprintf("summary.treeEnsemble(model=%s): jobj → %s", model, jobj))
+	message(sprintf("summary.treeEnsemble(model=%s): treeWeights → %s", model, treeWeights))
+	message(sprintf("summary.treeEnsemble(model=%s): maxDepth → %s", model, maxDepth))
+	message(sprintf("<<< Exiting summary.treeEnsemble(model=%s)", model))
        jobj = jobj)
 }
 
@@ -79,20 +89,25 @@ print.summary.treeEnsemble <- function(x) {
   cat("Formula: ", x$formula)
   cat("\nNumber of features: ", x$numFeatures)
   cat("\nFeatures: ", unlist(x$features))
+message(sprintf(">>> Entering print.summary.treeEnsemble(x=%s)", x))
   cat("\nFeature importances: ", x$featureImportances)
   cat("\nMax Depth: ", x$maxDepth)
   cat("\nNumber of trees: ", x$numTrees)
   cat("\nTree weights: ", unlist(x$treeWeights))
 
   summaryStr <- callJMethod(jobj, "summary")
+message(sprintf("print.summary.treeEnsemble(x=%s): summaryStr → %s", x, summaryStr))
   cat("\n", summaryStr, "\n")
   invisible(x)
+message(sprintf("<<< Exiting print.summary.treeEnsemble(x=%s)", x))
 }
 
 # Create the summary of a decision tree model
 summary.decisionTree <- function(model) {
+message(sprintf(">>> Entering summary.decisionTree(model=%s)", model))
   jobj <- model@jobj
   formula <- callJMethod(jobj, "formula")
+message(sprintf("summary.decisionTree(model=%s): formula → %s", model, formula))
   numFeatures <- callJMethod(jobj, "numFeatures")
   features <-  callJMethod(jobj, "features")
   featureImportances <- callJMethod(callJMethod(jobj, "featureImportances"), "toString")
@@ -102,6 +117,12 @@ summary.decisionTree <- function(model) {
        features = features,
        featureImportances = featureImportances,
        maxDepth = maxDepth,
+	message(sprintf("summary.decisionTree(model=%s): jobj → %s", model, jobj))
+	message(sprintf("summary.decisionTree(model=%s): features → %s", model, features))
+	message(sprintf("summary.decisionTree(model=%s): maxDepth → %s", model, maxDepth))
+	message(sprintf("summary.decisionTree(model=%s): featureImportances → %s", model, featureImportances))
+	message(sprintf("summary.decisionTree(model=%s): numFeatures → %s", model, numFeatures))
+	message(sprintf("<<< Exiting summary.decisionTree(model=%s)", model))
        jobj = jobj)
 }
 
@@ -109,14 +130,17 @@ summary.decisionTree <- function(model) {
 print.summary.decisionTree <- function(x) {
   jobj <- x$jobj
   cat("Formula: ", x$formula)
+message(sprintf(">>> Entering print.summary.decisionTree(x=%s)", x))
   cat("\nNumber of features: ", x$numFeatures)
   cat("\nFeatures: ", unlist(x$features))
   cat("\nFeature importances: ", x$featureImportances)
   cat("\nMax Depth: ", x$maxDepth)
 
   summaryStr <- callJMethod(jobj, "summary")
+message(sprintf("print.summary.decisionTree(x=%s): summaryStr → %s", x, summaryStr))
   cat("\n", summaryStr, "\n")
   invisible(x)
+message(sprintf("<<< Exiting print.summary.decisionTree(x=%s)", x))
 }
 
 #' Gradient Boosted Tree Model for Regression and Classification
@@ -269,7 +293,9 @@ setMethod("summary", signature(object = "GBTRegressionModel"),
 #' @rdname spark.gbt
 #' @note print.summary.GBTRegressionModel since 2.1.0
 print.summary.GBTRegressionModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.GBTRegressionModel(x=%s)", x))
   print.summary.treeEnsemble(x)
+message(sprintf("<<< Exiting print.summary.GBTRegressionModel(x=%s)", x))
 }
 
 #  Get the summary of a Gradient Boosted Tree Classification Model
@@ -289,7 +315,9 @@ setMethod("summary", signature(object = "GBTClassificationModel"),
 #' @rdname spark.gbt
 #' @note print.summary.GBTClassificationModel since 2.1.0
 print.summary.GBTClassificationModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.GBTClassificationModel(x=%s)", x))
   print.summary.treeEnsemble(x)
+message(sprintf("<<< Exiting print.summary.GBTClassificationModel(x=%s)", x))
 }
 
 #  Makes predictions from a Gradient Boosted Tree Regression model or Classification model
@@ -493,7 +521,9 @@ setMethod("summary", signature(object = "RandomForestRegressionModel"),
 #' @rdname spark.randomForest
 #' @note print.summary.RandomForestRegressionModel since 2.1.0
 print.summary.RandomForestRegressionModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.RandomForestRegressionModel(x=%s)", x))
   print.summary.treeEnsemble(x)
+message(sprintf("<<< Exiting print.summary.RandomForestRegressionModel(x=%s)", x))
 }
 
 #  Get the summary of a Random Forest Classification Model
@@ -513,7 +543,9 @@ setMethod("summary", signature(object = "RandomForestClassificationModel"),
 #' @rdname spark.randomForest
 #' @note print.summary.RandomForestClassificationModel since 2.1.0
 print.summary.RandomForestClassificationModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.RandomForestClassificationModel(x=%s)", x))
   print.summary.treeEnsemble(x)
+message(sprintf("<<< Exiting print.summary.RandomForestClassificationModel(x=%s)", x))
 }
 
 #  Makes predictions from a Random Forest Regression model or Classification model
@@ -694,7 +726,9 @@ setMethod("summary", signature(object = "DecisionTreeRegressionModel"),
 #' @rdname spark.decisionTree
 #' @note print.summary.DecisionTreeRegressionModel since 2.3.0
 print.summary.DecisionTreeRegressionModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.DecisionTreeRegressionModel(x=%s)", x))
   print.summary.decisionTree(x)
+message(sprintf("<<< Exiting print.summary.DecisionTreeRegressionModel(x=%s)", x))
 }
 
 #  Get the summary of a Decision Tree Classification Model
@@ -714,7 +748,9 @@ setMethod("summary", signature(object = "DecisionTreeClassificationModel"),
 #' @rdname spark.decisionTree
 #' @note print.summary.DecisionTreeClassificationModel since 2.3.0
 print.summary.DecisionTreeClassificationModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.DecisionTreeClassificationModel(x=%s)", x))
   print.summary.decisionTree(x)
+message(sprintf("<<< Exiting print.summary.DecisionTreeClassificationModel(x=%s)", x))
 }
 
 #  Makes predictions from a Decision Tree Regression model or Classification model

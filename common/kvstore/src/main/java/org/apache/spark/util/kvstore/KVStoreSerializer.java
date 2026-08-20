@@ -37,6 +37,7 @@ import org.apache.spark.annotation.Private;
  */
 @Private
 public class KVStoreSerializer {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(KVStoreSerializer.class);
 
   /**
    * Object mapper used to process app-specific types. If an application requires a specific
@@ -46,27 +47,34 @@ public class KVStoreSerializer {
   protected final ObjectMapper mapper;
 
   public KVStoreSerializer() {
+	LOG.debug(">>> Entering KVStoreSerializer()");
     this.mapper = new ObjectMapper();
+	LOG.debug("<<< Exiting KVStoreSerializer()");
   }
 
   public byte[] serialize(Object o) throws Exception {
+	LOG.debug(">>> Entering serialize(o={})", o);
     if (o instanceof String str) {
       return str.getBytes(UTF_8);
     } else {
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+	LOG.debug("serialize(o={}): bytes → {}", o, bytes);
       try (GZIPOutputStream out = new GZIPOutputStream(bytes)) {
         mapper.writeValue(out, o);
       }
+	LOG.debug("<<< Exiting serialize(o={})", o);
       return bytes.toByteArray();
     }
   }
 
   @SuppressWarnings("unchecked")
   public <T> T deserialize(byte[] data, Class<T> klass) throws Exception {
+	LOG.debug(">>> Entering deserialize(data={},klass={})", data, klass);
     if (klass.equals(String.class)) {
       return (T) new String(data, UTF_8);
     } else {
       try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(data))) {
+		LOG.debug("<<< Exiting deserialize(data={},klass={})", data, klass);
         return mapper.readValue(in, klass);
       }
     }
@@ -77,6 +85,8 @@ public class KVStoreSerializer {
   }
 
   final long deserializeLong(byte[] data) {
+	LOG.debug(">>> Entering deserializeLong(data={})", data);
+	LOG.debug("<<< Exiting deserializeLong(data={})", data);
     return Long.parseLong(new String(data, UTF_8));
   }
 

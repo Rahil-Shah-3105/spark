@@ -18,11 +18,15 @@
 # context.R: SparkContext driven functions
 
 getMinPartitions <- function(sc, minPartitions) {
+message(sprintf(">>> Entering getMinPartitions(sc=%s,minPartitions=%s)", sc, minPartitions))
   if (is.null(minPartitions)) {
     defaultParallelism <- callJMethod(sc, "defaultParallelism")
+	message(sprintf("getMinPartitions(sc=%s,minPartitions=%s): defaultParallelism → %s", sc, minPartitions, defaultParallelism))
+	message(sprintf("getMinPartitions(sc=%s,minPartitions=%s): minPartitions → %s", sc, minPartitions, minPartitions))
     minPartitions <- min(defaultParallelism, 2)
   }
   as.integer(minPartitions)
+message(sprintf("<<< Exiting getMinPartitions(sc=%s,minPartitions=%s)", sc, minPartitions))
 }
 
 #' Create an RDD from a text file.
@@ -43,14 +47,18 @@ getMinPartitions <- function(sc, minPartitions) {
 #'  lines <- textFile(sc, "myfile.txt")
 #'}
 textFile <- function(sc, path, minPartitions = NULL) {
+message(sprintf(">>> Entering textFile(sc=%s,path=%s,minPartitions=%s)", sc, path, minPartitions))
   # Allow the user to have a more flexible definition of the text file path
   path <- suppressWarnings(normalizePath(path))
+message(sprintf("textFile(sc=%s,path=%s,minPartitions=%s): path → %s", sc, path, minPartitions, path))
   # Convert a string vector of paths to a string containing comma separated paths
   path <- paste(path, collapse = ",")
 
   jrdd <- callJMethod(sc, "textFile", path, getMinPartitions(sc, minPartitions))
+message(sprintf("textFile(sc=%s,path=%s,minPartitions=%s): jrdd → %s", sc, path, minPartitions, jrdd))
   # jrdd is of type JavaRDD[String]
   RDD(jrdd, "string")
+message(sprintf("<<< Exiting textFile(sc=%s,path=%s,minPartitions=%s)", sc, path, minPartitions))
 }
 
 #' Load an RDD saved as a SequenceFile containing serialized objects.
@@ -71,17 +79,22 @@ textFile <- function(sc, path, minPartitions = NULL) {
 #'  rdd <- objectFile(sc, "myfile")
 #'}
 objectFile <- function(sc, path, minPartitions = NULL) {
+message(sprintf(">>> Entering objectFile(sc=%s,path=%s,minPartitions=%s)", sc, path, minPartitions))
   # Allow the user to have a more flexible definition of the text file path
   path <- suppressWarnings(normalizePath(path))
+message(sprintf("objectFile(sc=%s,path=%s,minPartitions=%s): path → %s", sc, path, minPartitions, path))
   # Convert a string vector of paths to a string containing comma separated paths
   path <- paste(path, collapse = ",")
 
   jrdd <- callJMethod(sc, "objectFile", path, getMinPartitions(sc, minPartitions))
+message(sprintf("objectFile(sc=%s,path=%s,minPartitions=%s): jrdd → %s", sc, path, minPartitions, jrdd))
   # Assume the RDD contains serialized R objects.
   RDD(jrdd, "byte")
+message(sprintf("<<< Exiting objectFile(sc=%s,path=%s,minPartitions=%s)", sc, path, minPartitions))
 }
 
 makeSplits <- function(numSerializedSlices, length) {
+message(sprintf(">>> Entering makeSplits(numSerializedSlices=%s,length=%s)", numSerializedSlices, length))
   # Generate the slice ids to put each row
   # For instance, for numSerializedSlices of 22, length of 50
   #  [1]  0  0  2  2  4  4  6  6  6  9  9 11 11 13 13 15 15 15 18 18 20 20 22 22 22
@@ -93,12 +106,14 @@ makeSplits <- function(numSerializedSlices, length) {
       # nolint start
       start <- trunc((as.numeric(x) * length) / numSerializedSlices)
       end <- trunc(((as.numeric(x) + 1) * length) / numSerializedSlices)
+	message(sprintf("makeSplits(numSerializedSlices=%s,length=%s): end → %s", numSerializedSlices, length, end))
       # nolint end
       rep(start, end - start)
     }))
   } else {
     1
   }
+message(sprintf("<<< Exiting makeSplits(numSerializedSlices=%s,length=%s)", numSerializedSlices, length))
 }
 
 #' Create an RDD from a homogeneous list or vector.
@@ -134,6 +149,7 @@ makeSplits <- function(numSerializedSlices, length) {
 #' length(rdd)
 #'}
 parallelize <- function(sc, coll, numSlices = 1) {
+message(sprintf(">>> Entering parallelize(sc=%s,coll=%s,numSlices=%s)", sc, coll, numSlices))
   # TODO: bound/safeguard numSlices
   # TODO: unit tests for if the split works for all primitives
   # TODO: support matrix, data frame, etc
@@ -153,21 +169,28 @@ parallelize <- function(sc, coll, numSlices = 1) {
                 "Calling as.list() to coerce coll into a list.")
       }
     }
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): coll → %s", sc, coll, numSlices, coll))
     coll <- as.list(coll)
   }
 
   sizeLimit <- getMaxAllocationLimit(sc)
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): sizeLimit → %s", sc, coll, numSlices, sizeLimit))
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): objectSize → %s", sc, coll, numSlices, objectSize))
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): len → %s", sc, coll, numSlices, len))
   objectSize <- object.size(coll)
   len <- length(coll)
 
   # For large objects we make sure the size of each slice is also smaller than sizeLimit
   numSerializedSlices <- min(len, max(numSlices, ceiling(objectSize / sizeLimit)))
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): numSerializedSlices → %s", sc, coll, numSlices, numSerializedSlices))
 
   slices <- split(coll, makeSplits(numSerializedSlices, len))
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): slices → %s", sc, coll, numSlices, slices))
 
   # Serialize each slice: obtain a list of raws, or a list of lists (slices) of
   # 2-tuples of raws
   serializedSlices <- lapply(slices, serialize, connection = NULL)
+message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): serializedSlices → %s", sc, coll, numSlices, serializedSlices))
 
   # The RPC backend cannot handle arguments larger than 2GB (INT_MAX)
   # If serialized data is safely less than that threshold we send it over the RPC channel.
@@ -177,30 +200,40 @@ parallelize <- function(sc, coll, numSlices = 1) {
   } else {
     if (callJStatic("org.apache.spark.api.r.RUtils", "isEncryptionEnabled", sc)) {
       connectionTimeout <- as.numeric(Sys.getenv("SPARKR_BACKEND_CONNECTION_TIMEOUT", "6000"))
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): connectionTimeout → %s", sc, coll, numSlices, connectionTimeout))
       # the length of slices here is the parallelism to use in the jvm's sc.parallelize()
       parallelism <- as.integer(numSlices)
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): parallelism → %s", sc, coll, numSlices, parallelism))
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): jserver → %s", sc, coll, numSlices, jserver))
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): authSecret → %s", sc, coll, numSlices, authSecret))
       jserver <- newJObject("org.apache.spark.api.r.RParallelizeServer", sc, parallelism)
       authSecret <- callJMethod(jserver, "secret")
       port <- callJMethod(jserver, "connInfo")
       conn <- socketConnection(
         port = port, blocking = TRUE, open = "wb", timeout = connectionTimeout)
       doServerAuth(conn, authSecret)
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): port → %s", sc, coll, numSlices, port))
       writeToConnection(serializedSlices, conn)
       jrdd <- callJMethod(jserver, "getResult")
     } else {
       fileName <- writeToTempFile(serializedSlices)
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): fileName → %s", sc, coll, numSlices, fileName))
       jrdd <- tryCatch(callJStatic(
           "org.apache.spark.api.r.RRDD", "createRDDFromFile", sc, fileName, as.integer(numSlices)),
         finally = {
           file.remove(fileName)
+	message(sprintf("parallelize(sc=%s,coll=%s,numSlices=%s): finally → %s", sc, coll, numSlices, finally))
       })
+	message(sprintf("[ERROR] Exception in parallelize(sc=%s,coll=%s,numSlices=%s): %s", sc, coll, numSlices, conditionMessage(e)))
     }
   }
 
   RDD(jrdd, "byte")
+message(sprintf("<<< Exiting parallelize(sc=%s,coll=%s,numSlices=%s)", sc, coll, numSlices))
 }
 
 getMaxAllocationLimit <- function(sc) {
+message(sprintf(">>> Entering getMaxAllocationLimit(sc=%s)", sc))
   conf <- callJMethod(sc, "getConf")
   as.numeric(
     callJMethod(conf,
@@ -208,24 +241,33 @@ getMaxAllocationLimit <- function(sc) {
       "spark.r.maxAllocationLimit",
       toString(.Machine$integer.max / 10) # Default to a safe value: 200MB
   ))
+message(sprintf("getMaxAllocationLimit(sc=%s): conf → %s", sc, conf))
+message(sprintf("<<< Exiting getMaxAllocationLimit(sc=%s)", sc))
 }
 
 writeToConnection <- function(serializedSlices, conn) {
+message(sprintf(">>> Entering writeToConnection(serializedSlices=%s,conn=%s)", serializedSlices, conn))
   tryCatch({
     for (slice in serializedSlices) {
+	message(sprintf("[ERROR] Exception in writeToConnection(serializedSlices=%s,conn=%s): %s", serializedSlices, conn, conditionMessage(e)))
       writeBin(as.integer(length(slice)), conn, endian = "big")
       writeBin(slice, conn, endian = "big")
     }
   }, finally = {
     close(conn)
   })
+message(sprintf("<<< Exiting writeToConnection(serializedSlices=%s,conn=%s)", serializedSlices, conn))
 }
 
 writeToTempFile <- function(serializedSlices) {
+message(sprintf(">>> Entering writeToTempFile(serializedSlices=%s)", serializedSlices))
   fileName <- tempfile()
   conn <- file(fileName, "wb")
+message(sprintf("writeToTempFile(serializedSlices=%s): conn → %s", serializedSlices, conn))
+message(sprintf("writeToTempFile(serializedSlices=%s): fileName → %s", serializedSlices, fileName))
   writeToConnection(serializedSlices, conn)
   fileName
+message(sprintf("<<< Exiting writeToTempFile(serializedSlices=%s)", serializedSlices))
 }
 
 #' Include this specified package on all workers
@@ -255,14 +297,18 @@ writeToTempFile <- function(serializedSlices) {
 #'  collect(rdd)
 #'}
 includePackage <- function(sc, pkg) {
+message(sprintf(">>> Entering includePackage(sc=%s,pkg=%s)", sc, pkg))
   pkg <- as.character(substitute(pkg))
   if (exists(".packages", .sparkREnv)) {
+	message(sprintf("includePackage(sc=%s,pkg=%s): pkg → %s", sc, pkg, pkg))
+	message(sprintf("includePackage(sc=%s,pkg=%s): packages → %s", sc, pkg, packages))
     packages <- .sparkREnv$.packages
   } else {
     packages <- list()
   }
   packages <- c(packages, pkg)
   .sparkREnv$.packages <- packages
+message(sprintf("<<< Exiting includePackage(sc=%s,pkg=%s)", sc, pkg))
 }
 
 #' Broadcast a variable to all workers
@@ -289,13 +335,19 @@ includePackage <- function(sc, pkg) {
 #' sumRDD <- lapply(rdd, useBroadcast)
 #'}
 broadcastRDD <- function(sc, object) {
+message(sprintf(">>> Entering broadcastRDD(sc=%s,object=%s)", sc, object))
   objName <- as.character(substitute(object))
   serializedObj <- serialize(object, connection = NULL)
+message(sprintf("broadcastRDD(sc=%s,object=%s): serializedObj → %s", sc, object, serializedObj))
+message(sprintf("broadcastRDD(sc=%s,object=%s): objName → %s", sc, object, objName))
+message(sprintf("broadcastRDD(sc=%s,object=%s): jBroadcast → %s", sc, object, jBroadcast))
+message(sprintf("broadcastRDD(sc=%s,object=%s): id → %s", sc, object, id))
 
   jBroadcast <- callJMethod(sc, "broadcast", serializedObj)
   id <- as.character(callJMethod(jBroadcast, "id"))
 
   Broadcast(id, object, jBroadcast, objName)
+message(sprintf("<<< Exiting broadcastRDD(sc=%s,object=%s)", sc, object))
 }
 
 #' Set the checkpoint directory
@@ -314,7 +366,9 @@ broadcastRDD <- function(sc, object) {
 #' checkpoint(rdd)
 #'}
 setCheckpointDirSC <- function(sc, dirName) {
+message(sprintf(">>> Entering setCheckpointDirSC(sc=%s,dirName=%s)", sc, dirName))
   invisible(callJMethod(sc, "setCheckpointDir", suppressWarnings(normalizePath(dirName))))
+message(sprintf("<<< Exiting setCheckpointDirSC(sc=%s,dirName=%s)", sc, dirName))
 }
 
 #' Add a file or directory to be downloaded with this Spark job on every node.
@@ -339,8 +393,11 @@ setCheckpointDirSC <- function(sc, dirName) {
 #'}
 #' @note spark.addFile since 2.1.0
 spark.addFile <- function(path, recursive = FALSE) {
+message(sprintf(">>> Entering spark.addFile(path=%s,recursive=%s)", path, recursive))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "addFile", suppressWarnings(normalizePath(path)), recursive))
+message(sprintf("spark.addFile(path=%s,recursive=%s): sc → %s", path, recursive, sc))
+message(sprintf("<<< Exiting spark.addFile(path=%s,recursive=%s)", path, recursive))
 }
 
 #' Get the root directory that contains files added through spark.addFile.
@@ -354,12 +411,14 @@ spark.addFile <- function(path, recursive = FALSE) {
 #' @note spark.getSparkFilesRootDirectory since 2.1.0
 spark.getSparkFilesRootDirectory <- function() { # nolint
   if (Sys.getenv("SPARKR_IS_RUNNING_ON_WORKER") == "") {
+message(">>> Entering spark.getSparkFilesRootDirectory()")
     # Running on driver.
     callJStatic("org.apache.spark.SparkFiles", "getRootDirectory")
   } else {
     # Running on worker.
     Sys.getenv("SPARKR_SPARKFILES_ROOT_DIR")
   }
+message("<<< Exiting spark.getSparkFilesRootDirectory()")
 }
 
 #' Get the absolute path of a file added through spark.addFile.
@@ -373,6 +432,7 @@ spark.getSparkFilesRootDirectory <- function() { # nolint
 #'}
 #' @note spark.getSparkFiles since 2.1.0
 spark.getSparkFiles <- function(fileName) {
+message(sprintf(">>> Entering spark.getSparkFiles(fileName=%s)", fileName))
   if (Sys.getenv("SPARKR_IS_RUNNING_ON_WORKER") == "") {
     # Running on driver.
     callJStatic("org.apache.spark.SparkFiles", "get", as.character(fileName))
@@ -380,6 +440,7 @@ spark.getSparkFiles <- function(fileName) {
     # Running on worker.
     file.path(spark.getSparkFilesRootDirectory(), as.character(fileName))
   }
+message(sprintf("<<< Exiting spark.getSparkFiles(fileName=%s)", fileName))
 }
 
 #' Run a function over a list of elements, distributing the computations with Spark
@@ -420,11 +481,17 @@ spark.getSparkFiles <- function(fileName) {
 #'}
 #' @note spark.lapply since 2.0.0
 spark.lapply <- function(list, func) {
+message(sprintf(">>> Entering spark.lapply(list=%s,func=%s)", list, func))
   sc <- getSparkContext()
   rdd <- parallelize(sc, list, length(list))
+message(sprintf("spark.lapply(list=%s,func=%s): rdd → %s", list, func, rdd))
+message(sprintf("spark.lapply(list=%s,func=%s): results → %s", list, func, results))
+message(sprintf("spark.lapply(list=%s,func=%s): local → %s", list, func, local))
+message(sprintf("spark.lapply(list=%s,func=%s): sc → %s", list, func, sc))
   results <- map(rdd, func)
   local <- collectRDD(results)
   local
+message(sprintf("<<< Exiting spark.lapply(list=%s,func=%s)", list, func))
 }
 
 #' Set new log level
@@ -439,8 +506,11 @@ spark.lapply <- function(list, func) {
 #'}
 #' @note setLogLevel since 2.0.0
 setLogLevel <- function(level) {
+message(sprintf(">>> Entering setLogLevel(level=%s)", level))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "setLogLevel", level))
+message(sprintf("setLogLevel(level=%s): sc → %s", level, sc))
+message(sprintf("<<< Exiting setLogLevel(level=%s)", level))
 }
 
 #' Set checkpoint directory
@@ -457,6 +527,9 @@ setLogLevel <- function(level) {
 #'}
 #' @note setCheckpointDir since 2.2.0
 setCheckpointDir <- function(directory) {
+message(sprintf(">>> Entering setCheckpointDir(directory=%s)", directory))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "setCheckpointDir", suppressWarnings(normalizePath(directory))))
+message(sprintf("setCheckpointDir(directory=%s): sc → %s", directory, sc))
+message(sprintf("<<< Exiting setCheckpointDir(directory=%s)", directory))
 }

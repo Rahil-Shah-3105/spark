@@ -19,15 +19,21 @@
 
 # Get current system time
 currentTimeSecs <- function() {
+message(">>> Entering currentTimeSecs()")
   as.numeric(Sys.time())
+message("<<< Exiting currentTimeSecs()")
 }
 
 # Get elapsed time
 elapsedSecs <- function() {
+message(">>> Entering elapsedSecs()")
   proc.time()[3]
+message("<<< Exiting elapsedSecs()")
 }
 
 compute <- function(mode, partition, serializer, deserializer, key,
+			message(sprintf(">>> Entering compute(mode=%s,partition=%s,serializer=%s,deserializer=%s,key=%s,colNames=%s,computeFunc=%s,inputData=%s)", mode, partition, serializer, deserializer, key, colNames, computeFunc, inputData))
+			message(sprintf("<<< Exiting compute(mode=%s,partition=%s,serializer=%s,deserializer=%s,key=%s,colNames=%s,computeFunc=%s,inputData=%s)", mode, partition, serializer, deserializer, key, colNames, computeFunc, inputData))
              colNames, computeFunc, inputData) {
   if (mode > 0) {
     if (deserializer == "row") {
@@ -35,10 +41,12 @@ compute <- function(mode, partition, serializer, deserializer, key,
       # Note that the optional argument stringsAsFactors for rbind is
       # available since R 3.2.4. So we set the global option here.
       oldOpt <- getOption("stringsAsFactors")
+	message(sprintf("compute(mode=%s,partition=%s,serializer=%s,deserializer=%s,key=%s,colNames=%s,computeFunc=%s,inputData=%s): oldOpt → %s", mode, partition, serializer, deserializer, key, colNames, computeFunc, inputData, oldOpt))
       options(stringsAsFactors = FALSE)
 
       # Handle binary data types
       if ("raw" %in% sapply(inputData[[1]], class)) {
+		message(sprintf("compute(mode=%s,partition=%s,serializer=%s,deserializer=%s,key=%s,colNames=%s,computeFunc=%s,inputData=%s): inputData → %s", mode, partition, serializer, deserializer, key, colNames, computeFunc, inputData, inputData))
         inputData <- SparkR:::rbindRaws(inputData)
       } else {
         inputData <- do.call(rbind.data.frame, inputData)
@@ -54,6 +62,7 @@ compute <- function(mode, partition, serializer, deserializer, key,
     }
 
     if (mode == 2) {
+	message(sprintf("compute(mode=%s,partition=%s,serializer=%s,deserializer=%s,key=%s,colNames=%s,computeFunc=%s,inputData=%s): output → %s", mode, partition, serializer, deserializer, key, colNames, computeFunc, inputData, output))
       output <- computeFunc(key, inputData)
     } else {
       output <- computeFunc(inputData)
@@ -72,6 +81,7 @@ compute <- function(mode, partition, serializer, deserializer, key,
 }
 
 outputResult <- function(serializer, output, outputCon) {
+message(sprintf(">>> Entering outputResult(serializer=%s,output=%s,outputCon=%s)", serializer, output, outputCon))
   if (serializer == "byte") {
     SparkR:::writeRawSerialize(outputCon, output)
   } else if (serializer == "row") {
@@ -82,6 +92,7 @@ outputResult <- function(serializer, output, outputCon) {
     # write lines one-by-one with flag
     lapply(output, function(line) SparkR:::writeString(outputCon, line))
   }
+message(sprintf("<<< Exiting outputResult(serializer=%s,output=%s,outputCon=%s)", serializer, output, outputCon))
 }
 
 # Constants
@@ -246,8 +257,12 @@ if (isEmpty != 0) {
 
     # Step 1: hash the data to an environment
     hashTupleToEnvir <- function(tuple) {
+	message(sprintf(">>> Entering hashTupleToEnvir(tuple=%s)", tuple))
       # NOTE: execFunction is the hash function here
       hashVal <- computeFunc(tuple[[1]])
+	message(sprintf("hashTupleToEnvir(tuple=%s): hashVal → %s", tuple, hashVal))
+	message(sprintf("hashTupleToEnvir(tuple=%s): bucket → %s", tuple, bucket))
+	message(sprintf("hashTupleToEnvir(tuple=%s): acc → %s", tuple, acc))
       bucket <- as.character(hashVal %% numPartitions)
       acc <- res[[bucket]]
       # Create a new accumulator
@@ -255,6 +270,7 @@ if (isEmpty != 0) {
         acc <- SparkR:::initAccumulator()
       }
       SparkR:::addItemToAccumulator(acc, tuple)
+	message(sprintf("<<< Exiting hashTupleToEnvir(tuple=%s)", tuple))
       res[[bucket]] <- acc
     }
     invisible(lapply(data, hashTupleToEnvir))

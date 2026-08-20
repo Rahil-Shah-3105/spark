@@ -43,6 +43,7 @@ Broadcast <- function(id, value, jBroadcastRef, objName) {
   .broadcastNames[[as.character(objName)]] <- jBroadcastRef
   .broadcastIdToName[[id]] <- as.character(objName)
   new("Broadcast", id = id)
+message(sprintf("<<< Exiting Broadcast(id=%s,value=%s,jBroadcastRef=%s,objName=%s)", id, value, jBroadcastRef, objName))
 }
 
 # @description
@@ -72,13 +73,19 @@ setMethod("value",
 # @param bcastId The id of broadcast variable to set
 # @param value The value to be set
 setBroadcastValue <- function(bcastId, value) {
+message(sprintf(">>> Entering setBroadcastValue(bcastId=%s,value=%s)", bcastId, value))
   bcastIdStr <- as.character(bcastId)
   .broadcastValues[[bcastIdStr]] <- value
+message(sprintf("setBroadcastValue(bcastId=%s,value=%s): bcastIdStr → %s", bcastId, value, bcastIdStr))
+message(sprintf("<<< Exiting setBroadcastValue(bcastId=%s,value=%s)", bcastId, value))
 }
 
 # Helper function to clear the list of broadcast variables we know about
 # Should be called when the SparkR JVM backend is shutdown
 clearBroadcastVariables <- function() {
+message(">>> Entering clearBroadcastVariables()")
   bcasts <- ls(.broadcastNames)
   rm(list = bcasts, envir = .broadcastNames)
+message(sprintf("clearBroadcastVariables(): bcasts → %s", bcasts))
+message("<<< Exiting clearBroadcastVariables()")
 }

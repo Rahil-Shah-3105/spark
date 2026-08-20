@@ -27,4 +27,5 @@
       )
     )
   }
+message("<<< Exiting .onAttach()")
 }

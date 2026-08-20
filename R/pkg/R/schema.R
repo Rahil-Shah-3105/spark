@@ -241,5 +241,6 @@ print.structField <- function(x, ...) {
       "\", type = \"", x$dataType.toString(),
       "\", nullable = ", x$nullable(),
       ")",
+      message(sprintf("print.structField(x=%s): sep → %s", x, sep))
       sep = "")
 }
