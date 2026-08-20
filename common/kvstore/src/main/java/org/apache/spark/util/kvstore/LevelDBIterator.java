@@ -56,18 +56,28 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
   private long count;
 
   LevelDBIterator(Class<T> type, LevelDB db, KVStoreView<T> params) throws Exception {
+	LOG.debug(">>> Entering LevelDBIterator(type={},db={},params={})", type, db, params);
     this.db = db;
     this.ascending = params.ascending;
+	LOG.debug("LevelDBIterator(type={},db={},params={}): this.db → {}", type, db, params, this.db);
     this.it = db.db().iterator();
     this.type = type;
+	LOG.debug("LevelDBIterator(type={},db={},params={}): this.ascending → {}", type, db, params, this.ascending);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): it → {}", type, db, params, it);
     this.ti = db.getTypeInfo(type);
     this.index = ti.index(params.index);
     this.max = params.max;
+	LOG.debug("LevelDBIterator(type={},db={},params={}): this.type → {}", type, db, params, this.type);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): ti → {}", type, db, params, ti);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): index → {}", type, db, params, index);
     this.resourceCleaner = new ResourceCleaner(it, db);
     this.cleanable = CLEANER.register(this, this.resourceCleaner);
 
     JavaUtils.checkArgument(!index.isChild() || params.parent != null,
       "Cannot iterate over child index %s without parent value.", params.index);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): resourceCleaner → {}", type, db, params, resourceCleaner);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): this.max → {}", type, db, params, this.max);
+	LOG.debug("LevelDBIterator(type={},db={},params={}): cleanable → {}", type, db, params, cleanable);
     byte[] parent = index.isChild() ? index.parent().childPrefix(params.parent) : null;
 
     this.indexKeyPrefix = index.keyPrefix(parent);
@@ -78,6 +88,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
         firstKey = index.start(parent, params.first);
       } else {
         firstKey = index.end(parent, params.first);
+		LOG.debug("LevelDBIterator(type={},db={},params={}): firstKey → {}", type, db, params, firstKey);
       }
     } else if (ascending) {
       firstKey = index.keyPrefix(parent);
@@ -92,6 +103,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
         end = index.end(parent, params.last);
       } else {
         end = index.end(parent);
+		LOG.debug("LevelDBIterator(type={},db={},params={}): end → {}", type, db, params, end);
       }
     } else {
       if (params.last != null) {
@@ -113,42 +125,55 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
     this.end = end;
 
     if (params.skip > 0) {
+	LOG.debug("LevelDBIterator(type={},db={},params={}): this.end → {}", type, db, params, this.end);
       skip(params.skip);
     }
+	LOG.debug("<<< Exiting LevelDBIterator(type={},db={},params={})", type, db, params);
   }
 
   @Override
   public boolean hasNext() {
+	LOG.debug(">>> Entering hasNext()");
     if (!checkedNext && !closed) {
       next = loadNext();
       checkedNext = true;
+	LOG.debug("hasNext(): next → {}", next);
+	LOG.debug("hasNext(): checkedNext → {}", checkedNext);
     }
     if (!closed && next == null) {
       try {
         close();
       } catch (IOException ioe) {
+		LOG.error("Exception in hasNext(): {}", ioe.getMessage(), ioe);
         throw new RuntimeException(ioe);
       }
     }
+	LOG.debug("<<< Exiting hasNext()");
     return next != null;
   }
 
   @Override
   public T next() {
+	LOG.debug(">>> Entering next()");
     if (!hasNext()) {
+	LOG.warn("Throwing NoSuchElementException from next()");
       throw new NoSuchElementException();
     }
     checkedNext = false;
+	LOG.debug("next(): checkedNext → {}", checkedNext);
 
     try {
       T ret;
       if (index == null || index.isCopy()) {
         ret = db.serializer.deserialize(next, type);
       } else {
+		LOG.debug("next(): ret → {}", ret);
         byte[] key = ti.buildKey(false, ti.naturalIndex().keyPrefix(null), next);
         ret = db.get(key, type);
       }
       next = null;
+	LOG.debug("next(): next → {}", next);
+	LOG.debug("<<< Exiting next()");
       return ret;
     } catch (Exception e) {
       if (e instanceof RuntimeException re) throw re;
@@ -167,6 +192,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
 
   @Override
   public boolean skip(long n) {
+	LOG.debug(">>> Entering skip(n={})", n);
     if (closed) return false;
 
     long skipped = 0;
@@ -174,63 +200,83 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
       if (next != null) {
         checkedNext = false;
         next = null;
+		LOG.debug("skip(n={}): checkedNext → {}", n, checkedNext);
+		LOG.debug("skip(n={}): next → {}", n, next);
         skipped++;
         continue;
       }
 
       boolean hasNext = ascending ? it.hasNext() : it.hasPrev();
+	LOG.debug("skip(n={}): hasNext → {}", n, hasNext);
       if (!hasNext) {
         checkedNext = true;
         return false;
       }
 
       Map.Entry<byte[], byte[]> e = ascending ? it.next() : it.prev();
+	LOG.debug("skip(n={}): e → {}", n, e);
       if (!isEndMarker(e.getKey())) {
         skipped++;
       }
     }
 
+	LOG.debug("<<< Exiting skip(n={})", n);
     return hasNext();
   }
 
   @Override
   public synchronized void close() throws IOException {
+	LOG.debug(">>> Entering close()");
     db.notifyIteratorClosed(it);
     if (!closed) {
       try {
         it.close();
       } finally {
         closed = true;
+		LOG.debug("close(): closed → {}", closed);
         next = null;
+		LOG.debug("close(): next → {}", next);
         cancelResourceClean();
       }
     }
+	LOG.debug("<<< Exiting close()");
   }
 
   /**
    * Prevent ResourceCleaner from trying to release resources after close.
    */
   private void cancelResourceClean() {
+	LOG.debug(">>> Entering cancelResourceClean()");
+	LOG.debug("cancelResourceClean(): resourceCleaner → {}", resourceCleaner);
     this.resourceCleaner.setStartedToFalse();
     this.cleanable.clean();
+	LOG.debug("<<< Exiting cancelResourceClean()");
   }
 
   DBIterator internalIterator() {
+	LOG.debug(">>> Entering internalIterator()");
+	LOG.debug("<<< Exiting internalIterator()");
     return it;
   }
 
   @VisibleForTesting
   ResourceCleaner getResourceCleaner() {
+	LOG.debug(">>> Entering getResourceCleaner()");
+	LOG.debug(">>> Entering ResourceCleaner(dbIterator={},levelDB={})", dbIterator, levelDB);
+	LOG.debug("<<< Exiting ResourceCleaner(dbIterator={},levelDB={})", dbIterator, levelDB);
+	LOG.debug("<<< Exiting getResourceCleaner()");
     return resourceCleaner;
   }
 
   private byte[] loadNext() {
+	LOG.debug(">>> Entering loadNext()");
     if (count >= max) {
       return null;
     }
 
     while (true) {
       boolean hasNext = ascending ? it.hasNext() : it.hasPrev();
+	LOG.debug("loadNext(): hasNext → {}", hasNext);
       if (!hasNext) {
         return null;
       }
@@ -240,6 +286,8 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
         // Avoid races if another thread is updating the DB.
         nextEntry = ascending ? it.next() : it.prev();
       } catch (NoSuchElementException e) {
+		LOG.error("Exception in loadNext(): {}", e.getMessage(), e);
+		LOG.debug("loadNext(): nextEntry → {}", nextEntry);
         return null;
       }
 
@@ -257,6 +305,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
       // If there's a known end key and iteration has gone past it, stop.
       if (end != null) {
         int comp = compare(nextKey, end) * (ascending ? 1 : -1);
+		LOG.debug("loadNext(): comp → {}", comp);
         if (comp > 0) {
           return null;
         }
@@ -265,12 +314,14 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
       count++;
 
       // Next element is part of the iteration, return it.
+	LOG.debug("<<< Exiting loadNext()");
       return nextEntry.getValue();
     }
   }
 
   @VisibleForTesting
   static boolean startsWith(byte[] key, byte[] prefix) {
+	LOG.debug(">>> Entering startsWith(key={},prefix={})", key, prefix);
     if (key.length < prefix.length) {
       return false;
     }
@@ -281,10 +332,13 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
       }
     }
 
+	LOG.debug("<<< Exiting startsWith(key={},prefix={})", key, prefix);
     return true;
   }
 
   private boolean isEndMarker(byte[] key) {
+	LOG.debug(">>> Entering isEndMarker(key={})", key);
+	LOG.debug("<<< Exiting isEndMarker(key={})", key);
     return (key.length > 2 &&
         key[key.length - 2] == LevelDBTypeInfo.KEY_SEPARATOR &&
         key[key.length - 1] == LevelDBTypeInfo.END_MARKER[0]);
@@ -292,7 +346,9 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
 
   @VisibleForTesting
   static int compare(byte[] a, byte[] b) {
+	LOG.debug(">>> Entering compare(a={},b={})", a, b);
     // Unsigned bytewise comparison, matching LevelDB's key ordering.
+	LOG.debug("<<< Exiting compare(a={},b={})", a, b);
     return Arrays.compareUnsigned(a, b);
   }
 
@@ -312,6 +368,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
 
     @Override
     public void run() {
+	LOG.debug(">>> Entering run()");
       if (started.compareAndSet(true, false)) {
         try {
           levelDB.closeIterator(dbIterator);
@@ -319,14 +376,19 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
           LOG.warn("Failed to close iterator", e);
         }
       }
+	LOG.debug("<<< Exiting run()");
     }
 
     void setStartedToFalse() {
+	LOG.debug(">>> Entering setStartedToFalse()");
       started.set(false);
+	LOG.debug("<<< Exiting setStartedToFalse()");
     }
 
     @VisibleForTesting
     boolean isCompleted() {
+	LOG.debug(">>> Entering isCompleted()");
+	LOG.debug("<<< Exiting isCompleted()");
       return !started.get();
     }
   }

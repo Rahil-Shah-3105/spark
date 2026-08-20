@@ -27,6 +27,8 @@ import com.google.protobuf.TextFormat;
 
 import org.apache.spark.config.protobuf.ConfigEntries;
 import org.apache.spark.config.protobuf.ConfigEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A registry for Spark configuration entries.
@@ -44,6 +46,7 @@ import org.apache.spark.config.protobuf.ConfigEntry;
  * </ul>
  */
 public class ConfigRegistry {
+private static final Logger log = LoggerFactory.getLogger(ConfigRegistry.class);
 
   // Explicit list of config files to load for production (package-private for testing)
   static final String[] DEFAULT_CONFIG_FILES = {
@@ -65,7 +68,9 @@ public class ConfigRegistry {
    * @param configFiles the resource paths of .textproto files to load
    */
   public ConfigRegistry(String... configFiles) {
+	log.debug(">>> Entering ConfigRegistry(configFiles={})", configFiles);
     this.configMap = loadConfigs(configFiles);
+	log.debug("<<< Exiting ConfigRegistry(configFiles={})", configFiles);
   }
 
   /**
@@ -75,6 +80,8 @@ public class ConfigRegistry {
    * @return the ConfigEntry if found, null otherwise
    */
   public ConfigEntry get(String key) {
+	log.debug(">>> Entering get(key={})", key);
+	log.debug("<<< Exiting get(key={})", key);
     return configMap.get(key);
   }
 
@@ -85,6 +92,8 @@ public class ConfigRegistry {
    * @return true if the key exists, false otherwise
    */
   public boolean contains(String key) {
+	log.debug(">>> Entering contains(key={})", key);
+	log.debug("<<< Exiting contains(key={})", key);
     return configMap.containsKey(key);
   }
 
@@ -94,6 +103,8 @@ public class ConfigRegistry {
    * @return an unmodifiable set of all config keys
    */
   public Set<String> keys() {
+	log.debug(">>> Entering keys()");
+	log.debug("<<< Exiting keys()");
     return configMap.keySet();
   }
 
@@ -103,6 +114,8 @@ public class ConfigRegistry {
    * @return an unmodifiable collection of all config entries
    */
   public Collection<ConfigEntry> all() {
+	log.debug(">>> Entering all()");
+	log.debug("<<< Exiting all()");
     return configMap.values();
   }
 
@@ -116,6 +129,8 @@ public class ConfigRegistry {
    * @return the default ConfigRegistry instance
    */
   public static ConfigRegistry getInstance() {
+	log.debug(">>> Entering getInstance()");
+	log.debug("<<< Exiting getInstance()");
     return DefaultInstanceHolder.INSTANCE;
   }
 
@@ -126,6 +141,8 @@ public class ConfigRegistry {
    * @return the ConfigEntry if found, null otherwise
    */
   public static ConfigEntry getConfig(String key) {
+	log.debug(">>> Entering getConfig(key={})", key);
+	log.debug("<<< Exiting getConfig(key={})", key);
     return getInstance().get(key);
   }
 
@@ -136,6 +153,8 @@ public class ConfigRegistry {
    * @return true if the key exists, false otherwise
    */
   public static boolean containsConfig(String key) {
+	log.debug(">>> Entering containsConfig(key={})", key);
+	log.debug("<<< Exiting containsConfig(key={})", key);
     return getInstance().contains(key);
   }
 
@@ -145,6 +164,8 @@ public class ConfigRegistry {
    * @return an unmodifiable set of all config keys
    */
   public static Set<String> allKeys() {
+	log.debug(">>> Entering allKeys()");
+	log.debug("<<< Exiting allKeys()");
     return getInstance().keys();
   }
 
@@ -154,6 +175,8 @@ public class ConfigRegistry {
    * @return an unmodifiable collection of all config entries
    */
   public static Collection<ConfigEntry> allConfigs() {
+	log.debug(">>> Entering allConfigs()");
+	log.debug("<<< Exiting allConfigs()");
     return getInstance().all();
   }
 
@@ -165,16 +188,21 @@ public class ConfigRegistry {
    * Load configs from .textproto files.
    */
   private static Map<String, ConfigEntry> loadConfigs(String[] configFiles) {
+	log.debug(">>> Entering loadConfigs(configFiles={})", configFiles);
     Map<String, ConfigEntry> result = new HashMap<>();
     ClassLoader classLoader = ConfigRegistry.class.getClassLoader();
+	log.debug("loadConfigs(configFiles={}): classLoader → {}", configFiles, classLoader);
+	log.debug("loadConfigs(configFiles={}): result → {}", configFiles, result);
 
     for (String file : configFiles) {
       List<ConfigEntry> configs = loadConfigFile(classLoader, file);
+	log.debug("loadConfigs(configFiles={}): configs → {}", configFiles, configs);
       for (ConfigEntry config : configs) {
         result.put(config.getKey(), config);
       }
     }
 
+	log.debug("<<< Exiting loadConfigs(configFiles={})", configFiles);
     return Collections.unmodifiableMap(result);
   }
 
@@ -185,8 +213,11 @@ public class ConfigRegistry {
   static List<ConfigEntry> loadConfigFile(
       ClassLoader classLoader,
       String resourcePath) {
+	log.debug(">>> Entering loadConfigFile(classLoader={},resourcePath={})", classLoader, resourcePath);
     InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
     if (inputStream == null) {
+	log.warn("Throwing internalError from loadConfigFile(classLoader={},resourcePath={})", classLoader, resourcePath);
+	log.debug("loadConfigFile(classLoader={},resourcePath={}): inputStream → {}", classLoader, resourcePath, inputStream);
       throw internalError("Config file not found on classpath: " + resourcePath);
     }
 
@@ -194,8 +225,11 @@ public class ConfigRegistry {
         new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
       ConfigEntries.Builder builder = ConfigEntries.newBuilder();
       TextFormat.getParser().merge(reader, builder);
+	log.debug("<<< Exiting loadConfigFile(classLoader={},resourcePath={})", classLoader, resourcePath);
       return builder.build().getConfigsList();
     } catch (Exception e) {
+	log.debug(">>> Entering internalError(message={})", message);
+	log.debug("<<< Exiting internalError(message={})", message);
       throw internalError("Failed to load config file: " + resourcePath, e);
     }
   }

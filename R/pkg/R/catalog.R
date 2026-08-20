@@ -31,9 +31,13 @@
 #' }
 #' @note since 3.4.0
 currentCatalog <- function() {
+message(">>> Entering currentCatalog()")
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("currentCatalog(): catalog → %s", catalog))
+message(sprintf("currentCatalog(): sparkSession → %s", sparkSession))
   callJMethod(catalog, "currentCatalog")
+message("<<< Exiting currentCatalog()")
 }
 
 #' Sets the current default catalog
@@ -50,12 +54,16 @@ currentCatalog <- function() {
 #' }
 #' @note since 3.4.0
 setCurrentCatalog <- function(catalogName) {
+message(sprintf(">>> Entering setCurrentCatalog(catalogName=%s)", catalogName))
   sparkSession <- getSparkSession()
   if (class(catalogName) != "character") {
+	message(sprintf("setCurrentCatalog(catalogName=%s): sparkSession → %s", catalogName, sparkSession))
     stop("catalogName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("setCurrentCatalog(catalogName=%s): catalog → %s", catalogName, catalog))
   invisible(handledCallJMethod(catalog, "setCurrentCatalog", catalogName))
+message(sprintf("<<< Exiting setCurrentCatalog(catalogName=%s)", catalogName))
 }
 
 #' Returns a list of catalog available
@@ -72,9 +80,13 @@ setCurrentCatalog <- function(catalogName) {
 #' }
 #' @note since 3.4.0
 listCatalogs <- function() {
+message(">>> Entering listCatalogs()")
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("listCatalogs(): catalog → %s", catalog))
+message(sprintf("listCatalogs(): sparkSession → %s", sparkSession))
   dataFrame(callJMethod(callJMethod(catalog, "listCatalogs"), "toDF"))
+message("<<< Exiting listCatalogs()")
 }
 
 #' (Deprecated) Create an external table
@@ -104,6 +116,7 @@ listCatalogs <- function() {
 createExternalTable <- function(tableName, path = NULL, source = NULL, schema = NULL, ...) {
   .Deprecated("createTable", old = "createExternalTable")
   createTable(tableName, path, source, schema, ...)
+message(sprintf("<<< Exiting createExternalTable(tableName=%s,path=%s,source=%s,schema=%s)", tableName, path, source, schema))
 }
 
 #' Creates a table based on the dataset in a data source
@@ -136,16 +149,22 @@ createExternalTable <- function(tableName, path = NULL, source = NULL, schema = 
 #' @name createTable
 #' @note createTable since 2.2.0
 createTable <- function(tableName, path = NULL, source = NULL, schema = NULL, ...) {
+message(sprintf(">>> Entering createTable(tableName=%s,path=%s,source=%s,schema=%s)", tableName, path, source, schema))
   sparkSession <- getSparkSession()
   options <- varargsToStrEnv(...)
+message(sprintf("createTable(tableName=%s,path=%s,source=%s,schema=%s): options → %s", tableName, path, source, schema, options))
+message(sprintf("createTable(tableName=%s,path=%s,source=%s,schema=%s): sparkSession → %s", tableName, path, source, schema, sparkSession))
   if (!is.null(path)) {
     options[["path"]] <- path
   }
   if (is.null(source)) {
+	message(sprintf("createTable(tableName=%s,path=%s,source=%s,schema=%s): source → %s", tableName, path, source, schema, source))
     source <- getDefaultSqlSource()
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("createTable(tableName=%s,path=%s,source=%s,schema=%s): catalog → %s", tableName, path, source, schema, catalog))
   if (is.null(schema)) {
+	message(sprintf("createTable(tableName=%s,path=%s,source=%s,schema=%s): sdf → %s", tableName, path, source, schema, sdf))
     sdf <- callJMethod(catalog, "createTable", tableName, source, options)
   } else if (class(schema) == "structType") {
     sdf <- callJMethod(catalog, "createTable", tableName, source, schema$jobj, options)
@@ -153,6 +172,7 @@ createTable <- function(tableName, path = NULL, source = NULL, schema = NULL, ..
     stop("schema must be a structType.")
   }
   dataFrame(sdf)
+message(sprintf("<<< Exiting createTable(tableName=%s,path=%s,source=%s,schema=%s)", tableName, path, source, schema))
 }
 
 #' Cache Table
@@ -175,9 +195,13 @@ createTable <- function(tableName, path = NULL, source = NULL, schema = NULL, ..
 #' @name cacheTable
 #' @note cacheTable since 1.4.0
 cacheTable <- function(tableName) {
+message(sprintf(">>> Entering cacheTable(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("cacheTable(tableName=%s): catalog → %s", tableName, catalog))
+message(sprintf("cacheTable(tableName=%s): sparkSession → %s", tableName, sparkSession))
   invisible(handledCallJMethod(catalog, "cacheTable", tableName))
+message(sprintf("<<< Exiting cacheTable(tableName=%s)", tableName))
 }
 
 #' Uncache Table
@@ -200,9 +224,13 @@ cacheTable <- function(tableName) {
 #' @name uncacheTable
 #' @note uncacheTable since 1.4.0
 uncacheTable <- function(tableName) {
+message(sprintf(">>> Entering uncacheTable(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("uncacheTable(tableName=%s): catalog → %s", tableName, catalog))
+message(sprintf("uncacheTable(tableName=%s): sparkSession → %s", tableName, sparkSession))
   invisible(handledCallJMethod(catalog, "uncacheTable", tableName))
+message(sprintf("<<< Exiting uncacheTable(tableName=%s)", tableName))
 }
 
 #' Clear Cache
@@ -217,9 +245,13 @@ uncacheTable <- function(tableName) {
 #' @name clearCache
 #' @note clearCache since 1.4.0
 clearCache <- function() {
+message(">>> Entering clearCache()")
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("clearCache(): catalog → %s", catalog))
+message(sprintf("clearCache(): sparkSession → %s", sparkSession))
   invisible(callJMethod(catalog, "clearCache"))
+message("<<< Exiting clearCache()")
 }
 
 #' (Deprecated) Drop Temporary Table
@@ -245,6 +277,7 @@ dropTempTable <- function(tableName) {
     stop("tableName must be a string.")
   }
   dropTempView(tableName)
+message(sprintf("<<< Exiting dropTempTable(tableName=%s)", tableName))
 }
 
 #' Drops the temporary view with the given view name in the catalog.
@@ -265,12 +298,16 @@ dropTempTable <- function(tableName) {
 #' }
 #' @note since 2.0.0
 dropTempView <- function(viewName) {
+message(sprintf(">>> Entering dropTempView(viewName=%s)", viewName))
   sparkSession <- getSparkSession()
   if (class(viewName) != "character") {
+	message(sprintf("dropTempView(viewName=%s): sparkSession → %s", viewName, sparkSession))
     stop("viewName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("dropTempView(viewName=%s): catalog → %s", viewName, catalog))
   callJMethod(catalog, "dropTempView", viewName)
+message(sprintf("<<< Exiting dropTempView(viewName=%s)", viewName))
 }
 
 #' Tables
@@ -290,8 +327,10 @@ dropTempView <- function(viewName) {
 #' @name tables
 #' @note tables since 1.4.0
 tables <- function(databaseName = NULL) {
+message(sprintf(">>> Entering tables(databaseName=%s)", databaseName))
   # rename column to match previous output schema
   withColumnRenamed(listTables(databaseName), "name", "tableName")
+message(sprintf("<<< Exiting tables(databaseName=%s)", databaseName))
 }
 
 #' Table Names
@@ -310,10 +349,13 @@ tables <- function(databaseName = NULL) {
 #' @name tableNames
 #' @note tableNames since 1.4.0
 tableNames <- function(databaseName = NULL) {
+message(sprintf(">>> Entering tableNames(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   callJStatic("org.apache.spark.sql.api.r.SQLUtils",
               "getTableNames",
               sparkSession,
+			message(sprintf("tableNames(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
+			message(sprintf("<<< Exiting tableNames(databaseName=%s)", databaseName))
               databaseName)
 }
 
@@ -331,9 +373,13 @@ tableNames <- function(databaseName = NULL) {
 #' }
 #' @note since 2.2.0
 currentDatabase <- function() {
+message(">>> Entering currentDatabase()")
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("currentDatabase(): catalog → %s", catalog))
+message(sprintf("currentDatabase(): sparkSession → %s", sparkSession))
   callJMethod(catalog, "currentDatabase")
+message("<<< Exiting currentDatabase()")
 }
 
 #' Sets the current default database
@@ -350,12 +396,16 @@ currentDatabase <- function() {
 #' }
 #' @note since 2.2.0
 setCurrentDatabase <- function(databaseName) {
+message(sprintf(">>> Entering setCurrentDatabase(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   if (class(databaseName) != "character") {
+	message(sprintf("setCurrentDatabase(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("setCurrentDatabase(databaseName=%s): catalog → %s", databaseName, catalog))
   invisible(handledCallJMethod(catalog, "setCurrentDatabase", databaseName))
+message(sprintf("<<< Exiting setCurrentDatabase(databaseName=%s)", databaseName))
 }
 
 #' Checks if the database with the specified name exists.
@@ -372,12 +422,16 @@ setCurrentDatabase <- function(databaseName) {
 #' }
 #' @note since 3.4.0
 databaseExists <- function(databaseName) {
+message(sprintf(">>> Entering databaseExists(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   if (class(databaseName) != "character") {
+	message(sprintf("databaseExists(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("databaseExists(databaseName=%s): catalog → %s", databaseName, catalog))
   callJMethod(catalog, "databaseExists", databaseName)
+message(sprintf("<<< Exiting databaseExists(databaseName=%s)", databaseName))
 }
 
 #' Returns a list of databases available
@@ -394,9 +448,13 @@ databaseExists <- function(databaseName) {
 #' }
 #' @note since 2.2.0
 listDatabases <- function() {
+message(">>> Entering listDatabases()")
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("listDatabases(): catalog → %s", catalog))
+message(sprintf("listDatabases(): sparkSession → %s", sparkSession))
   dataFrame(callJMethod(callJMethod(catalog, "listDatabases"), "toDF"))
+message("<<< Exiting listDatabases()")
 }
 
 #' Get the database with the specified name
@@ -414,14 +472,20 @@ listDatabases <- function() {
 #' }
 #' @note since 3.4.0
 getDatabase <- function(databaseName) {
+message(sprintf(">>> Entering getDatabase(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   if (class(databaseName) != "character") {
+	message(sprintf("getDatabase(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("getDatabase(databaseName=%s): catalog → %s", databaseName, catalog))
+message(sprintf("getDatabase(databaseName=%s): jdb → %s", databaseName, jdb))
   jdb <- handledCallJMethod(catalog, "getDatabase", databaseName)
 
   ret <- list(name = callJMethod(jdb, "name"))
+message(sprintf("getDatabase(databaseName=%s): ret → %s", databaseName, ret))
+message(sprintf("getDatabase(databaseName=%s): jcata → %s", databaseName, jcata))
   jcata <- callJMethod(jdb, "catalog")
   if (is.null(jcata)) {
     ret$catalog <- NA
@@ -430,6 +494,7 @@ getDatabase <- function(databaseName) {
   }
 
   jdesc <- callJMethod(jdb, "description")
+message(sprintf("getDatabase(databaseName=%s): jdesc → %s", databaseName, jdesc))
   if (is.null(jdesc)) {
     ret$description <- NA
   } else {
@@ -438,6 +503,7 @@ getDatabase <- function(databaseName) {
 
   ret$locationUri <- callJMethod(jdb, "locationUri")
   ret
+message(sprintf("<<< Exiting getDatabase(databaseName=%s)", databaseName))
 }
 
 #' Returns a list of tables or views in the specified database
@@ -459,17 +525,22 @@ getDatabase <- function(databaseName) {
 #' }
 #' @note since 2.2.0
 listTables <- function(databaseName = NULL) {
+message(sprintf(">>> Entering listTables(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   if (!is.null(databaseName) && class(databaseName) != "character") {
+	message(sprintf("listTables(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("listTables(databaseName=%s): catalog → %s", databaseName, catalog))
+message(sprintf("listTables(databaseName=%s): jdst → %s", databaseName, jdst))
   jdst <- if (is.null(databaseName)) {
     callJMethod(catalog, "listTables")
   } else {
     handledCallJMethod(catalog, "listTables", databaseName)
   }
   dataFrame(callJMethod(jdst, "toDF"))
+message(sprintf("<<< Exiting listTables(databaseName=%s)", databaseName))
 }
 
 #' Checks if the table with the specified name exists.
@@ -486,12 +557,16 @@ listTables <- function(databaseName = NULL) {
 #' }
 #' @note since 3.4.0
 tableExists <- function(tableName) {
+message(sprintf(">>> Entering tableExists(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   if (class(tableName) != "character") {
+	message(sprintf("tableExists(tableName=%s): sparkSession → %s", tableName, sparkSession))
     stop("tableName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("tableExists(tableName=%s): catalog → %s", tableName, catalog))
   callJMethod(catalog, "tableExists", tableName)
+message(sprintf("<<< Exiting tableExists(tableName=%s)", tableName))
 }
 
 #' Get the table with the specified name
@@ -510,14 +585,20 @@ tableExists <- function(tableName) {
 #' }
 #' @note since 3.4.0
 getTable <- function(tableName) {
+message(sprintf(">>> Entering getTable(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   if (class(tableName) != "character") {
+	message(sprintf("getTable(tableName=%s): sparkSession → %s", tableName, sparkSession))
     stop("tableName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("getTable(tableName=%s): catalog → %s", tableName, catalog))
+message(sprintf("getTable(tableName=%s): jtbl → %s", tableName, jtbl))
   jtbl <- handledCallJMethod(catalog, "getTable", tableName)
 
   ret <- list(name = callJMethod(jtbl, "name"))
+message(sprintf("getTable(tableName=%s): ret → %s", tableName, ret))
+message(sprintf("getTable(tableName=%s): jcata → %s", tableName, jcata))
   jcata <- callJMethod(jtbl, "catalog")
   if (is.null(jcata)) {
     ret$catalog <- NA
@@ -526,6 +607,7 @@ getTable <- function(tableName) {
   }
 
   jns <- callJMethod(jtbl, "namespace")
+message(sprintf("getTable(tableName=%s): jns → %s", tableName, jns))
   if (is.null(jns)) {
     ret$namespace <- NA
   } else {
@@ -533,6 +615,7 @@ getTable <- function(tableName) {
   }
 
   jdesc <- callJMethod(jtbl, "description")
+message(sprintf("getTable(tableName=%s): jdesc → %s", tableName, jdesc))
   if (is.null(jdesc)) {
     ret$description <- NA
   } else {
@@ -542,6 +625,7 @@ getTable <- function(tableName) {
   ret$tableType <- callJMethod(jtbl, "tableType")
   ret$isTemporary <- callJMethod(jtbl, "isTemporary")
   ret
+message(sprintf("<<< Exiting getTable(tableName=%s)", tableName))
 }
 
 #' Returns a list of columns for the given table/view in the specified database
@@ -564,17 +648,22 @@ getTable <- function(tableName) {
 #' }
 #' @note since 2.2.0
 listColumns <- function(tableName, databaseName = NULL) {
+message(sprintf(">>> Entering listColumns(tableName=%s,databaseName=%s)", tableName, databaseName))
   sparkSession <- getSparkSession()
   if (!is.null(databaseName) && class(databaseName) != "character") {
+	message(sprintf("listColumns(tableName=%s,databaseName=%s): sparkSession → %s", tableName, databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("listColumns(tableName=%s,databaseName=%s): catalog → %s", tableName, databaseName, catalog))
+message(sprintf("listColumns(tableName=%s,databaseName=%s): jdst → %s", tableName, databaseName, jdst))
   jdst <- if (is.null(databaseName)) {
     handledCallJMethod(catalog, "listColumns", tableName)
   } else {
     handledCallJMethod(catalog, "listColumns", databaseName, tableName)
   }
   dataFrame(callJMethod(jdst, "toDF"))
+message(sprintf("<<< Exiting listColumns(tableName=%s,databaseName=%s)", tableName, databaseName))
 }
 
 #' Returns a list of functions registered in the specified database
@@ -594,17 +683,22 @@ listColumns <- function(tableName, databaseName = NULL) {
 #' }
 #' @note since 2.2.0
 listFunctions <- function(databaseName = NULL) {
+message(sprintf(">>> Entering listFunctions(databaseName=%s)", databaseName))
   sparkSession <- getSparkSession()
   if (!is.null(databaseName) && class(databaseName) != "character") {
+	message(sprintf("listFunctions(databaseName=%s): sparkSession → %s", databaseName, sparkSession))
     stop("databaseName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("listFunctions(databaseName=%s): catalog → %s", databaseName, catalog))
+message(sprintf("listFunctions(databaseName=%s): jdst → %s", databaseName, jdst))
   jdst <- if (is.null(databaseName)) {
     callJMethod(catalog, "listFunctions")
   } else {
     handledCallJMethod(catalog, "listFunctions", databaseName)
   }
   dataFrame(callJMethod(jdst, "toDF"))
+message(sprintf("<<< Exiting listFunctions(databaseName=%s)", databaseName))
 }
 
 #' Checks if the function with the specified name exists.
@@ -621,12 +715,16 @@ listFunctions <- function(databaseName = NULL) {
 #' }
 #' @note since 3.4.0
 functionExists <- function(functionName) {
+message(sprintf(">>> Entering functionExists(functionName=%s)", functionName))
   sparkSession <- getSparkSession()
   if (class(functionName) != "character") {
+	message(sprintf("functionExists(functionName=%s): sparkSession → %s", functionName, sparkSession))
     stop("functionName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("functionExists(functionName=%s): catalog → %s", functionName, catalog))
   callJMethod(catalog, "functionExists", functionName)
+message(sprintf("<<< Exiting functionExists(functionName=%s)", functionName))
 }
 
 #' Get the function with the specified name
@@ -645,14 +743,20 @@ functionExists <- function(functionName) {
 #' @note since 3.4.0. Use different name with the scala/python side, to avoid the
 #'       signature conflict with built-in "getFunction".
 getFunc <- function(functionName) {
+message(sprintf(">>> Entering getFunc(functionName=%s)", functionName))
   sparkSession <- getSparkSession()
   if (class(functionName) != "character") {
+	message(sprintf("getFunc(functionName=%s): sparkSession → %s", functionName, sparkSession))
     stop("functionName must be a string.")
   }
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("getFunc(functionName=%s): catalog → %s", functionName, catalog))
+message(sprintf("getFunc(functionName=%s): jfunc → %s", functionName, jfunc))
   jfunc <- handledCallJMethod(catalog, "getFunction", functionName)
 
   ret <- list(name = callJMethod(jfunc, "name"))
+message(sprintf("getFunc(functionName=%s): ret → %s", functionName, ret))
+message(sprintf("getFunc(functionName=%s): jcata → %s", functionName, jcata))
   jcata <- callJMethod(jfunc, "catalog")
   if (is.null(jcata)) {
     ret$catalog <- NA
@@ -661,6 +765,7 @@ getFunc <- function(functionName) {
   }
 
   jns <- callJMethod(jfunc, "namespace")
+message(sprintf("getFunc(functionName=%s): jns → %s", functionName, jns))
   if (is.null(jns)) {
     ret$namespace <- NA
   } else {
@@ -668,6 +773,7 @@ getFunc <- function(functionName) {
   }
 
   jdesc <- callJMethod(jfunc, "description")
+message(sprintf("getFunc(functionName=%s): jdesc → %s", functionName, jdesc))
   if (is.null(jdesc)) {
     ret$description <- NA
   } else {
@@ -677,6 +783,7 @@ getFunc <- function(functionName) {
   ret$className <- callJMethod(jfunc, "className")
   ret$isTemporary <- callJMethod(jfunc, "isTemporary")
   ret
+message(sprintf("<<< Exiting getFunc(functionName=%s)", functionName))
 }
 
 #' Recovers all the partitions in the directory of a table and update the catalog
@@ -696,9 +803,13 @@ getFunc <- function(functionName) {
 #' }
 #' @note since 2.2.0
 recoverPartitions <- function(tableName) {
+message(sprintf(">>> Entering recoverPartitions(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("recoverPartitions(tableName=%s): catalog → %s", tableName, catalog))
+message(sprintf("recoverPartitions(tableName=%s): sparkSession → %s", tableName, sparkSession))
   invisible(handledCallJMethod(catalog, "recoverPartitions", tableName))
+message(sprintf("<<< Exiting recoverPartitions(tableName=%s)", tableName))
 }
 
 #' Invalidates and refreshes all the cached data and metadata of the given table
@@ -723,9 +834,13 @@ recoverPartitions <- function(tableName) {
 #' }
 #' @note since 2.2.0
 refreshTable <- function(tableName) {
+message(sprintf(">>> Entering refreshTable(tableName=%s)", tableName))
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("refreshTable(tableName=%s): catalog → %s", tableName, catalog))
+message(sprintf("refreshTable(tableName=%s): sparkSession → %s", tableName, sparkSession))
   invisible(handledCallJMethod(catalog, "refreshTable", tableName))
+message(sprintf("<<< Exiting refreshTable(tableName=%s)", tableName))
 }
 
 #' Invalidates and refreshes all the cached data and metadata for SparkDataFrame containing path
@@ -744,7 +859,11 @@ refreshTable <- function(tableName) {
 #' }
 #' @note since 2.2.0
 refreshByPath <- function(path) {
+message(sprintf(">>> Entering refreshByPath(path=%s)", path))
   sparkSession <- getSparkSession()
   catalog <- callJMethod(sparkSession, "catalog")
+message(sprintf("refreshByPath(path=%s): catalog → %s", path, catalog))
+message(sprintf("refreshByPath(path=%s): sparkSession → %s", path, sparkSession))
   invisible(handledCallJMethod(catalog, "refreshByPath", path))
+message(sprintf("<<< Exiting refreshByPath(path=%s)", path))
 }

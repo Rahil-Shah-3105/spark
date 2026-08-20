@@ -56,15 +56,20 @@ NULL
 NULL
 
 write_internal <- function(object, path, overwrite = FALSE) {
+message(sprintf(">>> Entering write_internal(object=%s,path=%s,overwrite=%s)", object, path, overwrite))
   writer <- callJMethod(object@jobj, "write")
   if (overwrite) {
+	message(sprintf("write_internal(object=%s,path=%s,overwrite=%s): writer → %s", object, path, overwrite, writer))
     writer <- callJMethod(writer, "overwrite")
   }
   invisible(callJMethod(writer, "save", path))
+message(sprintf("<<< Exiting write_internal(object=%s,path=%s,overwrite=%s)", object, path, overwrite))
 }
 
 predict_internal <- function(object, newData) {
+message(sprintf(">>> Entering predict_internal(object=%s,newData=%s)", object, newData))
   dataFrame(callJMethod(object@jobj, "transform", newData@sdf))
+message(sprintf("<<< Exiting predict_internal(object=%s,newData=%s)", object, newData))
 }
 
 #' Load a fitted MLlib model from the input path.
@@ -81,8 +86,12 @@ predict_internal <- function(object, newData) {
 #' }
 #' @note read.ml since 2.0.0
 read.ml <- function(path) {
+message(sprintf(">>> Entering read.ml(path=%s)", path))
   path <- suppressWarnings(normalizePath(path))
   sparkSession <- getSparkSession()
+message(sprintf("read.ml(path=%s): sparkSession → %s", path, sparkSession))
+message(sprintf("read.ml(path=%s): path → %s", path, path))
+message(sprintf("read.ml(path=%s): jobj → %s", path, jobj))
   callJStatic("org.apache.spark.ml.r.RWrappers", "session", sparkSession)
   jobj <- callJStatic("org.apache.spark.ml.r.RWrappers", "load", path)
   if (isInstanceOf(jobj, "org.apache.spark.ml.r.NaiveBayesWrapper")) {
@@ -132,4 +141,5 @@ read.ml <- function(path) {
   } else {
     stop("Unsupported model: ", jobj)
   }
+message(sprintf("<<< Exiting read.ml(path=%s)", path))
 }

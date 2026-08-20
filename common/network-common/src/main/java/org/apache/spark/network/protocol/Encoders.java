@@ -27,24 +27,32 @@ import org.roaringbitmap.RoaringBitmap;
 
 /** Provides a canonical set of Encoders for simple types. */
 public class Encoders {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(Encoders.class);
 
   /** Strings are encoded with their length followed by UTF-8 bytes. */
   public static class Strings {
     public static int encodedLength(String s) {
+	logger.debug(">>> Entering encodedLength(s={})", s);
+	logger.debug("<<< Exiting encodedLength(s={})", s);
       return 4 + s.getBytes(StandardCharsets.UTF_8).length;
     }
 
     public static void encode(ByteBuf buf, String s) {
+	logger.debug(">>> Entering encode(buf={},s={})", buf, s);
       byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
       buf.writeInt(bytes.length);
       buf.writeBytes(bytes);
+	logger.debug("<<< Exiting encode(buf={},s={})", buf, s);
     }
 
     public static String decode(ByteBuf buf) {
+	logger.debug(">>> Entering decode(buf={})", buf);
       int length = buf.readInt();
       Objects.checkFromIndexSize(0, length, buf.readableBytes());
+	logger.debug("decode(buf={}): length → {}", buf, length);
       byte[] bytes = new byte[length];
       buf.readBytes(bytes);
+	logger.debug("<<< Exiting decode(buf={})", buf);
       return new String(bytes, StandardCharsets.UTF_8);
     }
   }

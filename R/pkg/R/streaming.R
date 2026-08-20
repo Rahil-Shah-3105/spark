@@ -39,8 +39,10 @@ setMethod("initialize", "StreamingQuery", function(.Object, ssq) {
 })
 
 streamingQuery <- function(ssq) {
+message(sprintf(">>> Entering streamingQuery(ssq=%s)", ssq))
   stopifnot(class(ssq) == "jobj")
   new("StreamingQuery", ssq)
+message(sprintf("<<< Exiting streamingQuery(ssq=%s)", ssq))
 }
 
 #' @rdname show

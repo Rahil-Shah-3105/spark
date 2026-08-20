@@ -35,9 +35,11 @@ import org.apache.spark.network.util.JavaUtils;
  * generally used as indices and keys in a KVStore.
  */
 class ArrayWrappers {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ArrayWrappers.class);
 
   @SuppressWarnings("unchecked")
   public static Comparable<Object> forArray(Object a) {
+	LOG.debug(">>> Entering forArray(a={})", a);
     JavaUtils.checkArgument(a.getClass().isArray(), "Input should be an array");
     Comparable<?> ret;
     if (a instanceof int[] ia) {
@@ -51,6 +53,7 @@ class ArrayWrappers {
         "Array element is primitive");
       ret = new ComparableObjectArray((Object[]) a);
     }
+	LOG.debug("<<< Exiting forArray(a={})", a);
     return (Comparable<Object>) ret;
   }
 
@@ -59,12 +62,15 @@ class ArrayWrappers {
     private final int[] array;
 
     ComparableIntArray(int[] array) {
+	LOG.debug(">>> Entering ComparableIntArray(array={})", array);
       this.array = array;
+	LOG.debug("<<< Exiting ComparableIntArray(array={})", array);
     }
 
     @Override
     public boolean equals(Object other) {
       if (!(other instanceof ComparableIntArray comparableIntArray)) {
+	LOG.debug("<<< Exiting equals(other={})", other);
         return false;
       }
       return Arrays.equals(array, comparableIntArray.array);
@@ -76,21 +82,26 @@ class ArrayWrappers {
       for (int j : array) {
         code = (code * 31) + j;
       }
+	LOG.debug("<<< Exiting hashCode()");
       return code;
     }
 
     @Override
     public int compareTo(ComparableIntArray other) {
+	LOG.debug(">>> Entering compareTo(other={})", other);
       int len = Math.min(array.length, other.array.length);
       for (int i = 0; i < len; i++) {
+		LOG.debug("compareTo(other={}): len → {}", other, len);
         // Use Integer.compare; subtraction overflows for large opposite-sign values
         // (e.g. Integer.MIN_VALUE vs Integer.MAX_VALUE) and returns the wrong ordering.
         int diff = Integer.compare(array[i], other.array[i]);
+		LOG.debug("compareTo(other={}): diff → {}", other, diff);
         if (diff != 0) {
           return diff;
         }
       }
 
+	LOG.debug("<<< Exiting compareTo(other={})", other);
       return Integer.compare(array.length, other.array.length);
     }
   }
@@ -100,7 +111,9 @@ class ArrayWrappers {
     private final long[] array;
 
     ComparableLongArray(long[] array) {
+	LOG.debug(">>> Entering ComparableLongArray(array={})", array);
       this.array = array;
+	LOG.debug("<<< Exiting ComparableLongArray(array={})", array);
     }
 
     @Override
@@ -141,7 +154,9 @@ class ArrayWrappers {
     private final byte[] array;
 
     ComparableByteArray(byte[] array) {
+	LOG.debug(">>> Entering ComparableByteArray(array={})", array);
       this.array = array;
+	LOG.debug("<<< Exiting ComparableByteArray(array={})", array);
     }
 
     @Override
@@ -180,7 +195,9 @@ class ArrayWrappers {
     private final Object[] array;
 
     ComparableObjectArray(Object[] array) {
+	LOG.debug(">>> Entering ComparableObjectArray(array={})", array);
       this.array = array;
+	LOG.debug("<<< Exiting ComparableObjectArray(array={})", array);
     }
 
     @Override

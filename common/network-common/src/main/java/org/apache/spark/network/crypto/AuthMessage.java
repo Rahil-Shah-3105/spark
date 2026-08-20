@@ -31,11 +31,14 @@ import org.apache.spark.network.protocol.Encoders;
  * Please see crypto/README.md for more details of implementation.
  */
 record AuthMessage(String appId, byte[] salt, byte[] ciphertext) implements Encodable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AuthMessage.class);
   /** Serialization tag used to catch incorrect payloads. */
   private static final byte TAG_BYTE = (byte) 0xFB;
 
   @Override
   public int encodedLength() {
+	logger.debug(">>> Entering encodedLength()");
+	logger.debug("<<< Exiting encodedLength()");
     return 1 +
       Encoders.Strings.encodedLength(appId) +
       Encoders.ByteArrays.encodedLength(salt) +
@@ -44,16 +47,22 @@ record AuthMessage(String appId, byte[] salt, byte[] ciphertext) implements Enco
 
   @Override
   public void encode(ByteBuf buf) {
+	logger.debug(">>> Entering encode(buf={})", buf);
     buf.writeByte(TAG_BYTE);
     Encoders.Strings.encode(buf, appId);
     Encoders.ByteArrays.encode(buf, salt);
     Encoders.ByteArrays.encode(buf, ciphertext);
+	logger.debug("<<< Exiting encode(buf={})", buf);
   }
 
   public static AuthMessage decodeMessage(ByteBuffer buffer) {
+	logger.debug(">>> Entering decodeMessage(buffer={})", buffer);
     ByteBuf buf = Unpooled.wrappedBuffer(buffer);
 
+	logger.debug("decodeMessage(buffer={}): buf → {}", buffer, buf);
     if (buf.readByte() != TAG_BYTE) {
+	logger.warn("Throwing IllegalArgumentException from decodeMessage(buffer={})", buffer);
+	logger.debug("<<< Exiting decodeMessage(buffer={})", buffer);
       throw new IllegalArgumentException("Expected ClientChallenge, received something else.");
     }
 

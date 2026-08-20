@@ -31,6 +31,7 @@ import org.apache.spark.network.util.TransportFrameDecoder;
  * callback.
  */
 public class StreamInterceptor<T extends Message> implements TransportFrameDecoder.Interceptor {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(StreamInterceptor.class);
 
   private final MessageHandler<T> handler;
   private final String streamId;
@@ -45,37 +46,50 @@ public class StreamInterceptor<T extends Message> implements TransportFrameDecod
       StreamCallback callback) {
     this.handler = handler;
     this.streamId = streamId;
+	logger.debug(">>> Entering StreamInterceptor(handler={},streamId={},byteCount={},callback={})", handler, streamId, byteCount, callback);
     this.byteCount = byteCount;
     this.callback = callback;
+	logger.debug("StreamInterceptor(handler={},streamId={},byteCount={},callback={}): this.handler → {}", handler, streamId, byteCount, callback, this.handler);
+	logger.debug("StreamInterceptor(handler={},streamId={},byteCount={},callback={}): streamId → {}", handler, streamId, byteCount, callback, streamId);
     this.bytesRead = 0;
   }
 
   @Override
   public void exceptionCaught(Throwable cause) throws Exception {
+	logger.debug(">>> Entering exceptionCaught(cause={})", cause);
     deactivateStream();
     callback.onFailure(streamId, cause);
+	logger.debug("<<< Exiting exceptionCaught(cause={})", cause);
   }
 
   @Override
   public void channelInactive() throws Exception {
+	logger.debug(">>> Entering channelInactive()");
     deactivateStream();
     callback.onFailure(streamId, new ClosedChannelException());
+	logger.debug("<<< Exiting channelInactive()");
   }
 
   private void deactivateStream() {
+	logger.debug(">>> Entering deactivateStream()");
     if (handler instanceof TransportResponseHandler transportResponseHandler) {
       // we only have to do this for TransportResponseHandler as it exposes numOutstandingFetches
       // (there is no extra cleanup that needs to happen)
       transportResponseHandler.deactivateStream();
     }
+	logger.debug("<<< Exiting deactivateStream()");
   }
 
   @Override
   public boolean handle(ByteBuf buf) throws Exception {
+	logger.debug(">>> Entering handle(buf={})", buf);
     int toRead = (int) Math.min(buf.readableBytes(), byteCount - bytesRead);
     ByteBuffer nioBuffer = buf.readSlice(toRead).nioBuffer();
+	logger.debug("handle(buf={}): nioBuffer → {}", buf, nioBuffer);
+	logger.debug("handle(buf={}): toRead → {}", buf, toRead);
 
     int available = nioBuffer.remaining();
+	logger.debug("handle(buf={}): available → {}", buf, available);
     callback.onData(streamId, nioBuffer);
     bytesRead += available;
     if (bytesRead > byteCount) {
@@ -83,12 +97,14 @@ public class StreamInterceptor<T extends Message> implements TransportFrameDecod
         "Read too many bytes? Expected %d, but read %d.", byteCount, bytesRead));
       callback.onFailure(streamId, re);
       deactivateStream();
+	logger.warn("Throwing re from handle(buf={})", buf);
       throw re;
     } else if (bytesRead == byteCount) {
       deactivateStream();
       callback.onComplete(streamId);
     }
 
+	logger.debug("<<< Exiting handle(buf={})", buf);
     return bytesRead != byteCount;
   }
 

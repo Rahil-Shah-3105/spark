@@ -43,6 +43,7 @@ import org.apache.spark.network.util.TransportConf;
  * Exchange, using a pre-shared key to derive an AES-GCM key encrypting key.
  */
 class AuthEngine implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AuthEngine.class);
   public static final byte[] DERIVED_KEY_INFO = "derivedKey".getBytes(UTF_8);
   public static final byte[] INPUT_IV_INFO = "inputIv".getBytes(UTF_8);
   public static final byte[] OUTPUT_IV_INFO = "outputIv".getBytes(UTF_8);
@@ -63,18 +64,26 @@ class AuthEngine implements Closeable {
   private TransportCipher sessionCipher;
 
   AuthEngine(String appId, String preSharedSecret, TransportConf conf) {
+	logger.debug(">>> Entering AuthEngine(appId={},preSharedSecret=<redacted>,conf={})", appId, conf);
     this.appId = Objects.requireNonNull(appId);
     this.preSharedSecret = Objects.requireNonNull(preSharedSecret).getBytes(UTF_8);
+	logger.debug("AuthEngine(appId={},preSharedSecret=<redacted>,conf={}): preSharedSecret → {}", appId, conf, preSharedSecret);
     this.conf = conf;
     this.cryptoConf = conf.cryptoConf();
+	logger.debug("AuthEngine(appId={},preSharedSecret=<redacted>,conf={}): this.conf → {}", appId, conf, this.conf);
+	logger.debug("AuthEngine(appId={},preSharedSecret=<redacted>,conf={}): cryptoConf → {}", appId, conf, cryptoConf);
+	logger.debug("AuthEngine(appId={},preSharedSecret=<redacted>,conf={}): appId → {}", appId, conf, appId);
     // This is for backward compatibility with version 1.0 of this protocol,
     // which did not perform a final HKDF round.
     this.unsafeSkipFinalHkdf = conf.authEngineVersion() == UNSAFE_SKIP_HKDF_VERSION;
+	logger.debug("<<< Exiting AuthEngine(appId={},preSharedSecret=<redacted>,conf={})", appId, conf);
   }
 
   @VisibleForTesting
   void setClientPrivateKey(byte[] privateKey) {
+	logger.debug(">>> Entering setClientPrivateKey(privateKey=<redacted>)");
     this.clientPrivateKey = privateKey;
+	logger.debug("<<< Exiting setClientPrivateKey(privateKey=<redacted>)");
   }
 
   /**
@@ -148,7 +157,9 @@ class AuthEngine implements Closeable {
    * @return An encrypted client ephemeral public key to be sent to the server.
    */
   AuthMessage challenge() throws GeneralSecurityException {
+	logger.debug(">>> Entering challenge()");
     setClientPrivateKey(X25519.generatePrivateKey());
+	logger.debug("<<< Exiting challenge()");
     return encryptEphemeralPublicKey(
         X25519.publicFromPrivate(clientPrivateKey),
         EMPTY_TRANSCRIPT);
@@ -162,6 +173,7 @@ class AuthEngine implements Closeable {
    * @return An encrypted server ephemeral public key to be sent to the client.
    */
   AuthMessage response(AuthMessage encryptedClientPublicKey) throws GeneralSecurityException {
+	logger.debug(">>> Entering response(encryptedClientPublicKey={})", encryptedClientPublicKey);
     JavaUtils.checkArgument(appId.equals(encryptedClientPublicKey.appId()), "appId is different.");
     // Compute a shared secret given the client public key and the server private key
     byte[] clientPublicKey =
@@ -179,6 +191,7 @@ class AuthEngine implements Closeable {
         getTranscript(encryptedClientPublicKey, ephemeralServerPublicKey);
     this.sessionCipher =
         generateTransportCipher(sharedSecret, false, challengeResponseTranscript);
+	logger.debug("<<< Exiting response(encryptedClientPublicKey={})", encryptedClientPublicKey);
     return ephemeralServerPublicKey;
   }
 
@@ -190,6 +203,7 @@ class AuthEngine implements Closeable {
    */
   void deriveSessionCipher(AuthMessage encryptedClientPublicKey,
                            AuthMessage encryptedServerPublicKey) throws GeneralSecurityException {
+						logger.debug(">>> Entering deriveSessionCipher(encryptedClientPublicKey={},encryptedServerPublicKey={})", encryptedClientPublicKey, encryptedServerPublicKey);
     JavaUtils.checkArgument(appId.equals(encryptedClientPublicKey.appId()), "appId is different.");
     // Compute a shared secret given the server public key and the client private key,
     // mixing in the protocol transcript.
@@ -202,6 +216,7 @@ class AuthEngine implements Closeable {
         getTranscript(encryptedClientPublicKey, encryptedServerPublicKey);
     this.sessionCipher =
         generateTransportCipher(sharedSecret, true, challengeResponseTranscript);
+		logger.debug("<<< Exiting deriveSessionCipher(encryptedClientPublicKey={},encryptedServerPublicKey={})", encryptedClientPublicKey, encryptedServerPublicKey);
   }
 
   private TransportCipher generateTransportCipher(
@@ -237,6 +252,7 @@ class AuthEngine implements Closeable {
     } else if (CIPHER_ALGORITHM.equalsIgnoreCase(conf.cipherTransformation())) {
       return new GcmTransportCipher(sessionKey);
     } else {
+	logger.debug("<<< Exiting generateTransportCipher(sharedSecret=<redacted>,isClient={},transcript={})", isClient, transcript);
       throw new IllegalArgumentException(
               String.format("Unsupported cipher mode: %s. %s and %s are supported.",
                       conf.cipherTransformation(), CIPHER_ALGORITHM, LEGACY_CIPHER_ALGORITHM));
@@ -244,19 +260,25 @@ class AuthEngine implements Closeable {
   }
 
   private byte[] getTranscript(AuthMessage... encryptedPublicKeys) {
+	logger.debug(">>> Entering getTranscript(encryptedPublicKeys={})", encryptedPublicKeys);
     ByteBuf transcript = Unpooled.buffer(
         Arrays.stream(encryptedPublicKeys).mapToInt(k -> k.encodedLength()).sum());
     Arrays.stream(encryptedPublicKeys).forEachOrdered(k -> k.encode(transcript));
+	logger.debug("<<< Exiting getTranscript(encryptedPublicKeys={})", encryptedPublicKeys);
     return transcript.array();
   }
 
   TransportCipher sessionCipher() {
+	logger.debug(">>> Entering sessionCipher()");
     JavaUtils.checkState(sessionCipher != null, "sessionCipher is null.");
+	logger.debug("<<< Exiting sessionCipher()");
     return sessionCipher;
   }
 
   @Override
   public void close() {
+logger.debug(">>> Entering close()");
 
+logger.debug("<<< Exiting close()");
   }
 }

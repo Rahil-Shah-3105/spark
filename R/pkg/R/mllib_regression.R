@@ -298,6 +298,7 @@ setMethod("summary", signature(object = "GeneralizedLinearRegressionModel"),
 #' @param x summary object of fitted generalized linear model returned by \code{summary} function.
 #' @note print.summary.GeneralizedLinearRegressionModel since 2.0.0
 print.summary.GeneralizedLinearRegressionModel <- function(x, ...) {
+message(sprintf(">>> Entering print.summary.GeneralizedLinearRegressionModel(x=%s)", x))
   if (x$is.loaded) {
     cat("\nSaved-loaded model does not support output 'Deviance Residuals'.\n")
   } else {
@@ -320,6 +321,7 @@ print.summary.GeneralizedLinearRegressionModel <- function(x, ...) {
   cat("AIC: ", format(x$aic, digits = 4L), "\n\n",
     "Number of Fisher Scoring iterations: ", x$iter, "\n\n", sep = "")
   invisible(x)
+message(sprintf("<<< Exiting print.summary.GeneralizedLinearRegressionModel(x=%s)", x))
   }
 
 #  Makes predictions from a generalized linear model produced by glm() or spark.glm(),

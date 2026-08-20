@@ -26,16 +26,19 @@ import com.google.crypto.tink.subtle.Hex;
 import com.google.crypto.tink.subtle.Hkdf;
 
 class TransportCipherUtil {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportCipherUtil.class);
   /**
    * This method is used for testing to verify key derivation.
    */
   @VisibleForTesting
   static String getKeyId(SecretKeySpec key) throws GeneralSecurityException {
+	logger.debug(">>> Entering getKeyId(key={})", key);
     byte[] keyIdBytes = Hkdf.computeHkdf("HmacSha256",
         key.getEncoded(),
         null,
         "keyID".getBytes(StandardCharsets.UTF_8),
         32);
+	logger.debug("<<< Exiting getKeyId(key={})", key);
     return Hex.encode(keyIdBytes);
   }
 }

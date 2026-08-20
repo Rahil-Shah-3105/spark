@@ -70,6 +70,8 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
     super(delegate);
     this.conf = conf;
     this.channel = channel;
+	LOG.debug(">>> Entering AuthRpcHandler(conf={},channel={},delegate={},secretKeyHolder=<redacted>)", conf, channel, delegate);
+	LOG.debug("AuthRpcHandler(conf={},channel={},delegate={},secretKeyHolder=<redacted>): conf → {}", conf, channel, delegate, conf);
     this.secretKeyHolder = secretKeyHolder;
   }
 
@@ -78,6 +80,7 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
       TransportClient client,
       ByteBuffer message,
       RpcResponseCallback callback) {
+	LOG.debug(">>> Entering doAuthChallenge(client={},message={},callback={})", client, message, callback);
     if (saslHandler != null) {
       return saslHandler.doAuthChallenge(client, message, callback);
     }
@@ -88,12 +91,14 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
     AuthMessage challenge;
     try {
       challenge = AuthMessage.decodeMessage(message);
+	LOG.debug("doAuthChallenge(client={},message={},callback={}): challenge → {}", client, message, callback, challenge);
       LOG.debug("Received new auth challenge for client {}.", channel.remoteAddress());
     } catch (RuntimeException e) {
       if (conf.saslFallback()) {
         LOG.warn("Failed to parse new auth challenge, reverting to SASL for client {}.",
           MDC.of(LogKeys.HOST_PORT, channel.remoteAddress()));
         saslHandler = new SaslRpcHandler(conf, channel, null, secretKeyHolder);
+		LOG.debug("doAuthChallenge(client={},message={},callback={}): saslHandler → {}", client, message, callback, saslHandler);
         message.position(position);
         message.limit(limit);
         return saslHandler.doAuthChallenge(client, message, callback);
@@ -120,6 +125,7 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
       callback.onSuccess(responseData.nioBuffer());
       engine.sessionCipher().addToChannel(channel);
       client.setClientId(challenge.appId());
+	LOG.debug("doAuthChallenge(client={},message={},callback={}): client → {}", client, message, callback, client);
     } catch (Exception e) {
       // This is a fatal error: authentication has failed. Close the channel explicitly.
       LOG.debug("Authentication failed for client {}, closing channel.", channel.remoteAddress());
@@ -138,6 +144,7 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
     }
 
     LOG.debug("Authorization successful for client {}.", channel.remoteAddress());
+	LOG.debug("<<< Exiting doAuthChallenge(client={},message={},callback={})", client, message, callback);
     return true;
   }
 

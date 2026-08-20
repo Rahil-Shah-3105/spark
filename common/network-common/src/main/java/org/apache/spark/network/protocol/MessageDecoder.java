@@ -42,11 +42,15 @@ public final class MessageDecoder extends MessageToMessageDecoder<ByteBuf> {
 
   @Override
   public void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+	logger.debug(">>> Entering decode(ctx={},in={},out={})", ctx, in, out);
     Message.Type msgType = Message.Type.decode(in);
     Message decoded = decode(msgType, in);
+	logger.debug("decode(ctx={},in={},out={}): decoded → {}", ctx, in, out, decoded);
+	logger.debug("decode(ctx={},in={},out={}): msgType → {}", ctx, in, out, msgType);
     assert decoded.type() == msgType;
     logger.trace("Received message {}: {}", msgType, decoded);
     out.add(decoded);
+	logger.debug("<<< Exiting decode(ctx={},in={},out={})", ctx, in, out);
   }
 
   private Message decode(Message.Type msgType, ByteBuf in) {

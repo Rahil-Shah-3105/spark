@@ -38,6 +38,7 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 
 public class GcmTransportCipher implements TransportCipher {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(GcmTransportCipher.class);
     private static final String HKDF_ALG = "HmacSha256";
     private static final int LENGTH_HEADER_BYTES = 8;
     @VisibleForTesting
@@ -51,10 +52,14 @@ public class GcmTransportCipher implements TransportCipher {
     private final SecretKeySpec aesKey;
 
     public GcmTransportCipher(SecretKeySpec aesKey)  {
+		logger.debug(">>> Entering GcmTransportCipher(aesKey={})", aesKey);
         this.aesKey = aesKey;
+		logger.debug("<<< Exiting GcmTransportCipher(aesKey={})", aesKey);
     }
 
     AesGcmHkdfStreaming getAesGcmHkdfStreaming() throws InvalidAlgorithmParameterException {
+		logger.debug(">>> Entering getAesGcmHkdfStreaming()");
+		logger.debug("<<< Exiting getAesGcmHkdfStreaming()");
         return new AesGcmHkdfStreaming(
             aesKey.getEncoded(),
             HKDF_ALG,
@@ -68,23 +73,35 @@ public class GcmTransportCipher implements TransportCipher {
      */
     @VisibleForTesting
     public String getKeyId() throws GeneralSecurityException {
+		logger.debug(">>> Entering getKeyId()");
+		logger.debug("<<< Exiting getKeyId()");
         return TransportCipherUtil.getKeyId(aesKey);
     }
 
     @VisibleForTesting
     EncryptionHandler getEncryptionHandler() throws GeneralSecurityException {
+		logger.debug(">>> Entering getEncryptionHandler()");
+		logger.debug(">>> Entering EncryptionHandler()");
+		logger.debug("<<< Exiting EncryptionHandler()");
+		logger.debug("<<< Exiting getEncryptionHandler()");
         return new EncryptionHandler();
     }
 
     @VisibleForTesting
     DecryptionHandler getDecryptionHandler() throws GeneralSecurityException {
+		logger.debug(">>> Entering getDecryptionHandler()");
+		logger.debug(">>> Entering DecryptionHandler()");
+		logger.debug("<<< Exiting DecryptionHandler()");
+		logger.debug("<<< Exiting getDecryptionHandler()");
         return new DecryptionHandler();
     }
 
     public void addToChannel(Channel ch) throws GeneralSecurityException {
+		logger.debug(">>> Entering addToChannel(ch={})", ch);
         ch.pipeline()
             .addFirst("GcmTransportEncryption", getEncryptionHandler())
             .addFirst("GcmTransportDecryption", getDecryptionHandler());
+			logger.debug("<<< Exiting addToChannel(ch={})", ch);
     }
 
     @VisibleForTesting
@@ -115,12 +132,14 @@ public class GcmTransportCipher implements TransportCipher {
 
         GcmEncryptedMessage(AesGcmHkdfStreaming aesGcmHkdfStreaming,
                             Object plaintextMessage) throws GeneralSecurityException {
+							logger.debug(">>> Entering GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={})", aesGcmHkdfStreaming, plaintextMessage);
             JavaUtils.checkArgument(
                     plaintextMessage instanceof ByteBuf || plaintextMessage instanceof FileRegion,
                     "Unrecognized message type: %s", plaintextMessage.getClass().getName());
             this.plaintextMessage = plaintextMessage;
             this.plaintextBuffer =
                 ByteBuffer.allocate(aesGcmHkdfStreaming.getPlaintextSegmentSize());
+				logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): this.plaintextMessage → {}", aesGcmHkdfStreaming, plaintextMessage, this.plaintextMessage);
             this.ciphertextBuffer =
                 ByteBuffer.allocate(aesGcmHkdfStreaming.getCiphertextSegmentSize());
             // If the ciphertext buffer cannot be fully written the target, transferTo may
@@ -129,8 +148,11 @@ public class GcmTransportCipher implements TransportCipher {
             this.ciphertextBuffer.limit(0);
 
             this.bytesToRead = getReadableBytes();
+			logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): bytesToRead → {}", aesGcmHkdfStreaming, plaintextMessage, bytesToRead);
             int plaintextSegmentSize = aesGcmHkdfStreaming.getPlaintextSegmentSize();
+			logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): plaintextSegmentSize → {}", aesGcmHkdfStreaming, plaintextMessage, plaintextSegmentSize);
             int ciphertextSegmentSize = aesGcmHkdfStreaming.getCiphertextSegmentSize();
+			logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): ciphertextSegmentSize → {}", aesGcmHkdfStreaming, plaintextMessage, ciphertextSegmentSize);
             int tagSize = ciphertextSegmentSize - plaintextSegmentSize;
             long fullSegments = bytesToRead / plaintextSegmentSize;
             long partialBytes = bytesToRead % plaintextSegmentSize;
@@ -147,15 +169,21 @@ public class GcmTransportCipher implements TransportCipher {
                     + aesGcmHkdfStreaming.getHeaderLength()
                     + fullSegments * ciphertextSegmentSize
                     + (partialBytes > 0 ? partialBytes + tagSize : 0);
+					logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): this.encryptedCount → {}", aesGcmHkdfStreaming, plaintextMessage, this.encryptedCount);
             byte[] lengthAad = Longs.toByteArray(encryptedCount);
             this.encrypter = aesGcmHkdfStreaming.newStreamSegmentEncrypter(lengthAad);
+			logger.debug("GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={}): encrypter → {}", aesGcmHkdfStreaming, plaintextMessage, encrypter);
             this.headerByteBuffer = createHeaderByteBuffer();
+			logger.debug("<<< Exiting GcmEncryptedMessage(aesGcmHkdfStreaming={},plaintextMessage={})", aesGcmHkdfStreaming, plaintextMessage);
         }
 
         // The format of the output is:
         // [8 byte length][Internal IV and header][Ciphertext][Auth Tag]
         private ByteBuffer createHeaderByteBuffer() {
+			logger.debug(">>> Entering createHeaderByteBuffer()");
             ByteBuffer encrypterHeader = encrypter.getHeader();
+			logger.debug("createHeaderByteBuffer(): encrypterHeader → {}", encrypterHeader);
+			logger.debug("<<< Exiting createHeaderByteBuffer()");
             return ByteBuffer
                     .allocate(encrypterHeader.remaining() + LENGTH_HEADER_BYTES)
                     .putLong(encryptedCount)
@@ -165,57 +193,71 @@ public class GcmTransportCipher implements TransportCipher {
 
         @Override
         public long position() {
+			logger.debug(">>> Entering position()");
+			logger.debug("<<< Exiting position()");
             return 0;
         }
 
         @Override
         public long transferred() {
+			logger.debug(">>> Entering transferred()");
+			logger.debug("<<< Exiting transferred()");
             return transferred;
         }
 
         @Override
         public long count() {
+			logger.debug(">>> Entering count()");
+			logger.debug("<<< Exiting count()");
             return encryptedCount;
         }
 
         @Override
         public GcmEncryptedMessage touch(Object o) {
+			logger.debug(">>> Entering touch(o={})", o);
             super.touch(o);
             if (plaintextMessage instanceof ByteBuf byteBuf) {
                 byteBuf.touch(o);
             } else if (plaintextMessage instanceof FileRegion fileRegion) {
                 fileRegion.touch(o);
             }
+			logger.debug("<<< Exiting touch(o={})", o);
             return this;
         }
 
         @Override
         public GcmEncryptedMessage retain(int increment) {
+			logger.debug(">>> Entering retain(increment={})", increment);
             super.retain(increment);
             if (plaintextMessage instanceof ByteBuf byteBuf) {
                 byteBuf.retain(increment);
             } else if (plaintextMessage instanceof FileRegion fileRegion) {
                 fileRegion.retain(increment);
             }
+			logger.debug("<<< Exiting retain(increment={})", increment);
             return this;
         }
 
         @Override
         public boolean release(int decrement) {
+			logger.debug(">>> Entering release(decrement={})", decrement);
             if (plaintextMessage instanceof ByteBuf byteBuf) {
                 byteBuf.release(decrement);
             } else if (plaintextMessage instanceof FileRegion fileRegion) {
                 fileRegion.release(decrement);
             }
+			logger.debug("<<< Exiting release(decrement={})", decrement);
             return super.release(decrement);
         }
 
         @Override
         public long transferTo(WritableByteChannel target, long position) throws IOException {
+			logger.debug(">>> Entering transferTo(target={},position={})", target, position);
             int transferredThisCall = 0;
             // If the header has is not empty, try to write it out to the target.
             if (headerByteBuffer.hasRemaining()) {
                 int written = target.write(headerByteBuffer);
+				logger.debug("transferTo(target={},position={}): written → {}", target, position, written);
                 transferredThisCall += written;
                 this.transferred += written;
                 if (headerByteBuffer.hasRemaining()) {
@@ -233,6 +275,7 @@ public class GcmTransportCipher implements TransportCipher {
             }
             while (bytesRead < bytesToRead) {
                 long readableBytes = getReadableBytes();
+				logger.debug("transferTo(target={},position={}): readableBytes → {}", target, position, readableBytes);
                 int readLimit =
                         (int) Math.min(readableBytes, plaintextBuffer.remaining());
                 if (plaintextMessage instanceof ByteBuf byteBuf) {
@@ -254,12 +297,14 @@ public class GcmTransportCipher implements TransportCipher {
                     }
                 }
                 boolean lastSegment = getReadableBytes() == 0;
+				logger.debug("transferTo(target={},position={}): lastSegment → {}", target, position, lastSegment);
                 plaintextBuffer.flip();
                 bytesRead += plaintextBuffer.remaining();
                 ciphertextBuffer.clear();
                 try {
                     encrypter.encryptSegment(plaintextBuffer, lastSegment, ciphertextBuffer);
                 } catch (GeneralSecurityException e) {
+					logger.error("Exception in transferTo(target={},position={}): {}", target, position, e.getMessage(), e);
                     throw new IllegalStateException("GeneralSecurityException from encrypter", e);
                 }
                 plaintextBuffer.clear();
@@ -273,15 +318,19 @@ public class GcmTransportCipher implements TransportCipher {
                     return transferredThisCall;
                 }
             }
+			logger.debug("<<< Exiting transferTo(target={},position={})", target, position);
             return transferredThisCall;
         }
 
         private long getReadableBytes() {
+			logger.debug(">>> Entering getReadableBytes()");
             if (plaintextMessage instanceof ByteBuf byteBuf) {
                 return byteBuf.readableBytes();
             } else if (plaintextMessage instanceof FileRegion fileRegion) {
                 return fileRegion.count() - fileRegion.transferred();
             } else {
+				logger.warn("Throwing IllegalArgumentException from getReadableBytes()");
+			logger.debug("<<< Exiting getReadableBytes()");
                 throw new IllegalArgumentException("Unsupported message type: " +
                         plaintextMessage.getClass().getName());
             }
@@ -289,11 +338,13 @@ public class GcmTransportCipher implements TransportCipher {
 
         @Override
         protected void deallocate() {
+			logger.debug(">>> Entering deallocate()");
             if (plaintextMessage instanceof ReferenceCounted referenceCounted) {
                 referenceCounted.release();
             }
             plaintextBuffer.clear();
             ciphertextBuffer.clear();
+			logger.debug("<<< Exiting deallocate()");
         }
     }
 
@@ -339,19 +390,28 @@ public class GcmTransportCipher implements TransportCipher {
          * be decrypted with a fresh StreamSegmentDecrypter.
          */
         private void resetForNextMessage() throws GeneralSecurityException {
+			logger.debug(">>> Entering resetForNextMessage()");
             expectedLength = -1;
             expectedLengthBuffer.clear();
+			logger.debug("resetForNextMessage(): expectedLength → {}", expectedLength);
             headerBuffer.clear();
             ciphertextBuffer.clear();
+			logger.debug("resetForNextMessage(): decrypter → {}", decrypter);
+			logger.debug("resetForNextMessage(): completed → {}", completed);
+			logger.debug("resetForNextMessage(): segmentNumber → {}", segmentNumber);
+			logger.debug("resetForNextMessage(): ciphertextRead → {}", ciphertextRead);
             decrypterInit = false;
+			logger.debug("resetForNextMessage(): decrypterInit → {}", decrypterInit);
             completed = false;
             segmentNumber = 0;
             ciphertextRead = 0;
             decrypter = aesGcmHkdfStreaming.newStreamSegmentDecrypter();
             plaintextAccumulator = null; // defensive; should already be null after fireChannelRead
+			logger.debug("<<< Exiting resetForNextMessage()");
         }
 
         private boolean initializeExpectedLength(ByteBuf ciphertextNettyBuf) {
+			logger.debug(">>> Entering initializeExpectedLength(ciphertextNettyBuf={})", ciphertextNettyBuf);
             if (expectedLength < 0) {
                 // ByteBuf.readBytes(ByteBuffer) throws if fewer than dst.remaining() bytes
                 // are available, so temporarily narrow the limit to what is actually present.
@@ -359,6 +419,7 @@ public class GcmTransportCipher implements TransportCipher {
                         expectedLengthBuffer.remaining());
                 if (toRead > 0) {
                     int savedLimit = expectedLengthBuffer.limit();
+					logger.debug("initializeExpectedLength(ciphertextNettyBuf={}): savedLimit → {}", ciphertextNettyBuf, savedLimit);
                     expectedLengthBuffer.limit(expectedLengthBuffer.position() + toRead);
                     ciphertextNettyBuf.readBytes(expectedLengthBuffer);
                     expectedLengthBuffer.limit(savedLimit);
@@ -370,10 +431,13 @@ public class GcmTransportCipher implements TransportCipher {
                 expectedLengthBuffer.flip();
                 expectedLength = expectedLengthBuffer.getLong();
                 if (expectedLength < 0) {
+					logger.warn("Throwing IllegalStateException from initializeExpectedLength(ciphertextNettyBuf={})", ciphertextNettyBuf);
+					logger.debug("initializeExpectedLength(ciphertextNettyBuf={}): expectedLength → {}", ciphertextNettyBuf, expectedLength);
                     throw new IllegalStateException("Invalid expected ciphertext length.");
                 }
                 ciphertextRead += LENGTH_HEADER_BYTES;
             }
+			logger.debug("<<< Exiting initializeExpectedLength(ciphertextNettyBuf={})", ciphertextNettyBuf);
             return true;
         }
 
@@ -517,29 +581,39 @@ public class GcmTransportCipher implements TransportCipher {
         }
 
         private void flushAccumulator(ChannelHandlerContext ctx) {
+			logger.debug(">>> Entering flushAccumulator(ctx={})", ctx);
             CompositeByteBuf out = plaintextAccumulator;
             // null the accumulator before firing
             plaintextAccumulator = null;
+			logger.debug("flushAccumulator(ctx={}): plaintextAccumulator → {}", ctx, plaintextAccumulator);
             ctx.fireChannelRead(out);
+			logger.debug("<<< Exiting flushAccumulator(ctx={})", ctx);
         }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+			logger.debug(">>> Entering channelInactive(ctx={})", ctx);
             releaseAccumulator();
             ctx.fireChannelInactive();
+			logger.debug("<<< Exiting channelInactive(ctx={})", ctx);
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+			logger.debug(">>> Entering exceptionCaught(ctx={},cause={})", ctx, cause);
             releaseAccumulator();
             super.exceptionCaught(ctx, cause);
+			logger.debug("<<< Exiting exceptionCaught(ctx={},cause={})", ctx, cause);
         }
 
         private void releaseAccumulator() {
+			logger.debug(">>> Entering releaseAccumulator()");
             if (plaintextAccumulator != null) {
                 plaintextAccumulator.release();
                 plaintextAccumulator = null;
+				logger.debug("releaseAccumulator(): plaintextAccumulator → {}", plaintextAccumulator);
             }
+			logger.debug("<<< Exiting releaseAccumulator()");
         }
     }
 }

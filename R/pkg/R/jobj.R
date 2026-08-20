@@ -30,31 +30,38 @@ NULL
 
 # Check if jobj was created with the current SparkContext
 isValidJobj <- function(jobj) {
+message(sprintf(">>> Entering isValidJobj(jobj=%s)", jobj))
   if (exists(".scStartTime", envir = .sparkREnv)) {
     jobj$appId == get(".scStartTime", envir = .sparkREnv)
   } else {
     FALSE
   }
+message(sprintf("<<< Exiting isValidJobj(jobj=%s)", jobj))
 }
 
 getJobj <- function(objId) {
+message(sprintf(">>> Entering getJobj(objId=%s)", objId))
   newObj <- jobj(objId)
   if (exists(objId, .validJobjs)) {
+	message(sprintf("getJobj(objId=%s): newObj → %s", objId, newObj))
     .validJobjs[[objId]] <- .validJobjs[[objId]] + 1
   } else {
     .validJobjs[[objId]] <- 1
   }
   newObj
+message(sprintf("<<< Exiting getJobj(objId=%s)", objId))
 }
 
 # Handler for a java object that exists on the backend.
 jobj <- function(objId) {
+message(sprintf(">>> Entering jobj(objId=%s)", objId))
   if (!is.character(objId)) {
     stop("object id must be a character")
   }
   # NOTE: We need a new env for a jobj as we can only register
   # finalizers for environments or external references pointers.
   obj <- structure(new.env(parent = emptyenv()), class = "jobj")
+message(sprintf("jobj(objId=%s): obj → %s", objId, obj))
   obj$id <- objId
   obj$appId <- get(".scStartTime", envir = .sparkREnv)
 
@@ -62,6 +69,7 @@ jobj <- function(objId) {
   # is garbage collected in R
   reg.finalizer(obj, cleanup.jobj)
   obj
+message(sprintf("<<< Exiting jobj(objId=%s)", objId))
 }
 
 #' Print a JVM object reference.
@@ -74,16 +82,23 @@ jobj <- function(objId) {
 #' @note print.jobj since 1.4.0
 #' @keywords internal
 print.jobj <- function(x, ...) {
+message(sprintf(">>> Entering print.jobj(x=%s)", x))
   name <- getClassName.jobj(x)
   cat("Java ref type", name, "id", x$id, "\n", sep = " ")
+message(sprintf("print.jobj(x=%s): name → %s", x, name))
+message(sprintf("<<< Exiting print.jobj(x=%s)", x))
 }
 
 getClassName.jobj <- function(x) {
+message(sprintf(">>> Entering getClassName.jobj(x=%s)", x))
   cls <- callJMethod(x, "getClass")
   callJMethod(cls, "getName")
+message(sprintf("getClassName.jobj(x=%s): cls → %s", x, cls))
+message(sprintf("<<< Exiting getClassName.jobj(x=%s)", x))
 }
 
 cleanup.jobj <- function(jobj) {
+message(sprintf(">>> Entering cleanup.jobj(jobj=%s)", jobj))
   if (isValidJobj(jobj)) {
     objId <- jobj$id
     # If we don't know anything about this jobj, ignore it
@@ -99,12 +114,17 @@ cleanup.jobj <- function(jobj) {
       }
     }
   }
+message(sprintf("<<< Exiting cleanup.jobj(jobj=%s)", jobj))
 }
 
 clearJobjs <- function() {
+message(">>> Entering clearJobjs()")
   valid <- ls(.validJobjs)
   rm(list = valid, envir = .validJobjs)
+message(sprintf("clearJobjs(): valid → %s", valid))
 
   removeList <- ls(.toRemoveJobjs)
+message(sprintf("clearJobjs(): removeList → %s", removeList))
   rm(list = removeList, envir = .toRemoveJobjs)
+message("<<< Exiting clearJobjs()")
 }

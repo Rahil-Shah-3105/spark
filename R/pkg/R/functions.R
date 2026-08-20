@@ -761,7 +761,9 @@ setMethod("coalesce",
 #' package and we also have "column" function exported which is an alias of "col".
 #' @noRd
 col <- function(x) {
+message(sprintf(">>> Entering col(x=%s)", x))
   column(callJStatic("org.apache.spark.sql.functions", "col", x))
+message(sprintf("<<< Exiting col(x=%s)", x))
 }
 
 #' Returns a Column based on the given column name
@@ -3966,11 +3968,13 @@ setMethod("row_number",
 #' @return Column object wrapping JVM UnresolvedNamedLambdaVariable
 #' @keywords internal
 unresolved_named_lambda_var <- function(name) {
+message(sprintf(">>> Entering unresolved_named_lambda_var(name=%s)", name))
   jc <- handledCallJStatic(
     "org.apache.spark.sql.api.python.PythonSQLUtils",
     "unresolvedNamedLambdaVariable",
     name)
   column(jc)
+message(sprintf("<<< Exiting unresolved_named_lambda_var(name=%s)", name))
 }
 
 #' Create o.a.s.sql.expressions.LambdaFunction corresponding
@@ -3982,9 +3986,12 @@ unresolved_named_lambda_var <- function(name) {
 #' @return JVM \code{LambdaFunction} object
 #' @keywords internal
 create_lambda <- function(fun) {
+message(sprintf(">>> Entering create_lambda(fun=%s)", fun))
 
   # Process function arguments
   parameters <- formals(fun)
+message(sprintf("create_lambda(fun=%s): parameters → %s", fun, parameters))
+message(sprintf("create_lambda(fun=%s): nparameters → %s", fun, nparameters))
   nparameters <- length(parameters)
 
   stopifnot(
@@ -3994,11 +4001,13 @@ create_lambda <- function(fun) {
   )
 
   args <- lapply(c("x", "y", "z")[seq_along(parameters)], function(p) {
+	message(sprintf("create_lambda(fun=%s): args → %s", fun, args))
       unresolved_named_lambda_var(p)
   })
 
   # Invoke function and validate return type
   result <- do.call(fun, args)
+message(sprintf("create_lambda(fun=%s): result → %s", fun, result))
   stopifnot(class(result) == "Column")
 
   # Convert both Columns to Scala expressions
@@ -4026,10 +4035,14 @@ create_lambda <- function(fun) {
 #' @return a \code{Column} representing name applied to cols with funs
 #' @keywords internal
 invoke_higher_order_function <- function(name, cols, funs) {
+message(sprintf(">>> Entering invoke_higher_order_function(name=%s,cols=%s,funs=%s)", name, cols, funs))
   as_col <- function(x) {
+	message(sprintf(">>> Entering as_col(x=%s)", x))
     if (class(x) == "character") {
+	message(sprintf("as_col(x=%s): x → %s", x, x))
       x <- column(x)
     }
+	message(sprintf("<<< Exiting as_col(x=%s)", x))
     x@jc
   }
   jcol <- handledCallJStatic(

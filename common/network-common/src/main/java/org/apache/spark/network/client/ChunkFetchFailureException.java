@@ -21,8 +21,11 @@ package org.apache.spark.network.client;
  * General exception caused by a remote exception while fetching a chunk.
  */
 public class ChunkFetchFailureException extends RuntimeException {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ChunkFetchFailureException.class);
   public ChunkFetchFailureException(String errorMsg, Throwable cause) {
     super(errorMsg, cause);
+	logger.debug("<<< Exiting ChunkFetchFailureException(errorMsg={},cause={})", errorMsg, cause);
+	logger.debug("<<< Exiting ChunkFetchFailureException(errorMsg={})", errorMsg);
   }
 
   public ChunkFetchFailureException(String errorMsg) {

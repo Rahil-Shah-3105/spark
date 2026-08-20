@@ -108,6 +108,7 @@ import org.apache.spark.network.util.JavaUtils;
  * </pre>
  */
 class LevelDBTypeInfo {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(LevelDBTypeInfo.class);
 
   static final byte[] END_MARKER = new byte[] { '-' };
   static final byte ENTRY_PREFIX = (byte) '+';
@@ -128,11 +129,16 @@ class LevelDBTypeInfo {
   private final byte[] typePrefix;
 
   LevelDBTypeInfo(LevelDB db, Class<?> type, byte[] alias) throws Exception {
+	LOG.debug(">>> Entering LevelDBTypeInfo(db={},type={},alias={})", db, type, alias);
     this.db = db;
     this.type = type;
+	LOG.debug("LevelDBTypeInfo(db={},type={},alias={}): this.db → {}", db, type, alias, this.db);
     this.indices = new HashMap<>();
 
+	LOG.debug("LevelDBTypeInfo(db={},type={},alias={}): this.type → {}", db, type, alias, this.type);
+	LOG.debug("LevelDBTypeInfo(db={},type={},alias={}): indices → {}", db, type, alias, indices);
     KVTypeInfo ti = new KVTypeInfo(type);
+	LOG.debug("LevelDBTypeInfo(db={},type={},alias={}): ti → {}", db, type, alias, ti);
 
     // First create the parent indices, then the child indices.
     ti.indices().forEach(idx -> {
@@ -149,17 +155,27 @@ class LevelDBTypeInfo {
     });
 
     this.typePrefix = alias;
+	LOG.debug("<<< Exiting LevelDBTypeInfo(db={},type={},alias={})", db, type, alias);
   }
 
   Class<?> type() {
+	LOG.debug(">>> Entering type()");
+	LOG.debug("<<< Exiting type()");
     return type;
   }
 
   byte[] keyPrefix() {
+	LOG.debug(">>> Entering keyPrefix()");
+	LOG.debug("<<< Exiting keyPrefix()");
     return typePrefix;
   }
 
   Index naturalIndex() {
+	LOG.debug(">>> Entering naturalIndex()");
+	LOG.debug(">>> Entering index(name={})", name);
+	LOG.debug("<<< Exiting index(name={})", name);
+	LOG.debug("<<< Exiting Index(self={},accessor={},parent={})", self, accessor, parent);
+	LOG.debug("<<< Exiting naturalIndex()");
     return index(KVIndex.NATURAL_INDEX_NAME);
   }
 
@@ -171,10 +187,13 @@ class LevelDBTypeInfo {
   }
 
   Collection<Index> indices() {
+	LOG.debug(">>> Entering indices()");
+	LOG.debug("<<< Exiting indices()");
     return indices.values();
   }
 
   byte[] buildKey(byte[]... components) {
+	LOG.debug(">>> Entering buildKey(components={})", components);
     return buildKey(true, components);
   }
 
@@ -230,14 +249,19 @@ class LevelDBTypeInfo {
     }
 
     boolean isCopy() {
+	LOG.debug(">>> Entering isCopy()");
       return copy;
     }
 
     boolean isChild() {
+	LOG.debug(">>> Entering isChild()");
+	LOG.debug("<<< Exiting isChild()");
       return parent != null;
     }
 
     Index parent() {
+	LOG.debug(">>> Entering parent()");
+	LOG.debug("<<< Exiting parent()");
       return parent;
     }
 
@@ -247,7 +271,9 @@ class LevelDBTypeInfo {
      * same parent index exist.
      */
     byte[] childPrefix(Object value) {
+	LOG.debug(">>> Entering childPrefix(value={})", value);
       JavaUtils.checkState(parent == null, "Not a parent index.");
+	LOG.debug("<<< Exiting childPrefix(value={})", value);
       return buildKey(name, toParentKey(value));
     }
 
@@ -257,15 +283,19 @@ class LevelDBTypeInfo {
      * entity (or its id) is stored.
      */
     Object getValue(Object entity) throws Exception {
+	LOG.debug(">>> Entering getValue(entity={})", entity);
+	LOG.debug("<<< Exiting getValue(entity={})", entity);
       return accessor.get(entity);
     }
 
     private void checkParent(byte[] prefix) {
+	LOG.debug(">>> Entering checkParent(prefix={})", prefix);
       if (prefix != null) {
         JavaUtils.checkState(parent != null, "Parent prefix provided for parent index.");
       } else {
         JavaUtils.checkState(parent == null, "Parent prefix missing for child index.");
       }
+	LOG.debug("<<< Exiting checkParent(prefix={})", prefix);
     }
 
     /** The prefix for all keys that belong to this index. */
@@ -279,14 +309,18 @@ class LevelDBTypeInfo {
      * match the given value.
      */
     byte[] start(byte[] prefix, Object value) {
+	LOG.debug(">>> Entering start(prefix={},value={})", prefix, value);
       checkParent(prefix);
+	LOG.debug("<<< Exiting start(prefix={},value={})", prefix, value);
       return (parent != null) ? buildKey(false, prefix, name, toKey(value))
         : buildKey(name, toKey(value));
     }
 
     /** The key for the index's end marker. */
     byte[] end(byte[] prefix) {
+	LOG.debug(">>> Entering end(prefix={})", prefix);
       checkParent(prefix);
+	LOG.debug("<<< Exiting end(prefix={})", prefix);
       return (parent != null) ? buildKey(false, prefix, name, END_MARKER)
         : buildKey(name, END_MARKER);
     }
@@ -300,24 +334,31 @@ class LevelDBTypeInfo {
 
     /** The full key in the index that identifies the given entity. */
     byte[] entityKey(byte[] prefix, Object entity) throws Exception {
+	LOG.debug(">>> Entering entityKey(prefix={},entity={})", prefix, entity);
       Object indexValue = getValue(entity);
       Objects.requireNonNull(indexValue, () ->
         String.format(
           "Null index value for %s in type %s.", Arrays.toString(name), type.getName()));
+		LOG.debug("entityKey(prefix={},entity={}): indexValue → {}", prefix, entity, indexValue);
       byte[] entityKey = start(prefix, indexValue);
       if (!isNatural) {
         entityKey = buildKey(false, entityKey, toKey(naturalIndex().getValue(entity)));
       }
+	LOG.debug("entityKey(prefix={},entity={}): entityKey → {}", prefix, entity, entityKey);
+	LOG.debug("<<< Exiting entityKey(prefix={},entity={})", prefix, entity);
       return entityKey;
     }
 
     private void updateCount(WriteBatch batch, byte[] key, long delta) {
+	LOG.debug(">>> Entering updateCount(batch={},key={},delta={})", batch, key, delta);
       long updated = getCount(key) + delta;
       if (updated > 0) {
+		LOG.debug("updateCount(batch={},key={},delta={}): updated → {}", batch, key, delta, updated);
         batch.put(key, db.serializer.serialize(updated));
       } else {
         batch.delete(key);
       }
+	LOG.debug("<<< Exiting updateCount(batch={},key={},delta={})", batch, key, delta);
     }
 
     private void addOrRemove(
@@ -327,7 +368,9 @@ class LevelDBTypeInfo {
         byte[] data,
         byte[] naturalKey,
         byte[] prefix) throws Exception {
+		LOG.debug(">>> Entering addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={})", batch, entity, existing, data, naturalKey, prefix);
       Object indexValue = getValue(entity);
+	LOG.debug("addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={}): indexValue → {}", batch, entity, existing, data, naturalKey, prefix, indexValue);
       Objects.requireNonNull(indexValue, () ->
         String.format(
           "Null index value for %s in type %s.", Arrays.toString(name), type.getName()));
@@ -336,8 +379,10 @@ class LevelDBTypeInfo {
       if (!isNatural) {
         entityKey = buildKey(false, entityKey, naturalKey);
       }
+	LOG.debug("addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={}): entityKey → {}", batch, entity, existing, data, naturalKey, prefix, entityKey);
 
       boolean needCountUpdate = (existing == null);
+	LOG.debug("addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={}): needCountUpdate → {}", batch, entity, existing, data, naturalKey, prefix, needCountUpdate);
 
       // Check whether there's a need to update the index. The index needs to be updated in two
       // cases:
@@ -356,7 +401,9 @@ class LevelDBTypeInfo {
       if (existing != null && !isNatural) {
         byte[] oldPrefix = null;
         Object oldIndexedValue = getValue(existing);
+		LOG.debug("addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={}): oldIndexedValue → {}", batch, entity, existing, data, naturalKey, prefix, oldIndexedValue);
         boolean removeExisting = !indexValue.equals(oldIndexedValue);
+		LOG.debug("addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={}): removeExisting → {}", batch, entity, existing, data, naturalKey, prefix, removeExisting);
         if (!removeExisting && isChild()) {
           oldPrefix = parent().childPrefix(parent().getValue(existing));
           removeExisting = LevelDBIterator.compare(prefix, oldPrefix) != 0;
@@ -392,6 +439,7 @@ class LevelDBTypeInfo {
         byte[] countKey = isNatural ? end(prefix) : end(prefix, indexValue);
         updateCount(batch, countKey, delta);
       }
+	LOG.debug("<<< Exiting addOrRemove(batch={},entity={},existing={},data={},naturalKey={},prefix={})", batch, entity, existing, data, naturalKey, prefix);
     }
 
     /**
@@ -411,7 +459,9 @@ class LevelDBTypeInfo {
         byte[] data,
         byte[] naturalKey,
         byte[] prefix) throws Exception {
+		LOG.debug(">>> Entering add(batch={},entity={},existing={},data={},naturalKey={},prefix={})", batch, entity, existing, data, naturalKey, prefix);
       addOrRemove(batch, entity, existing, data, naturalKey, prefix);
+	LOG.debug("<<< Exiting add(batch={},entity={},existing={},data={},naturalKey={},prefix={})", batch, entity, existing, data, naturalKey, prefix);
     }
 
     /**
@@ -427,19 +477,27 @@ class LevelDBTypeInfo {
         Object entity,
         byte[] naturalKey,
         byte[] prefix) throws Exception {
+		LOG.debug(">>> Entering remove(batch={},entity={},naturalKey={},prefix={})", batch, entity, naturalKey, prefix);
       addOrRemove(batch, entity, null, null, naturalKey, prefix);
+	LOG.debug("<<< Exiting remove(batch={},entity={},naturalKey={},prefix={})", batch, entity, naturalKey, prefix);
     }
 
     long getCount(byte[] key) {
+	LOG.debug(">>> Entering getCount(key={})", key);
       byte[] data = db.db().get(key);
+	LOG.debug("<<< Exiting getCount(key={})", key);
       return data != null ? db.serializer.deserializeLong(data) : 0;
     }
 
     byte[] toParentKey(Object value) {
+	LOG.debug(">>> Entering toParentKey(value={})", value);
+	LOG.debug("<<< Exiting toParentKey(value={})", value);
       return toKey(value, SECONDARY_IDX_PREFIX);
     }
 
     byte[] toKey(Object value) {
+	LOG.debug(">>> Entering toKey(value={})", value);
+	LOG.debug("<<< Exiting toKey(value={})", value);
       return toKey(value, ENTRY_PREFIX);
     }
 

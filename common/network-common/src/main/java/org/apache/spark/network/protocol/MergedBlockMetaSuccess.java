@@ -31,6 +31,7 @@ import org.apache.spark.network.buffer.NettyManagedBuffer;
  * @since 3.2.0
  */
 public class MergedBlockMetaSuccess extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(MergedBlockMetaSuccess.class);
   public final long requestId;
   public final int numChunks;
 
@@ -45,46 +46,65 @@ public class MergedBlockMetaSuccess extends AbstractResponseMessage {
 
   @Override
   public Type type() {
+	logger.debug(">>> Entering type()");
+	logger.debug("<<< Exiting type()");
     return Type.MergedBlockMetaSuccess;
   }
 
   @Override
   public int hashCode() {
+	logger.debug(">>> Entering hashCode()");
+	logger.debug("<<< Exiting hashCode()");
     return Objects.hash(requestId, numChunks);
   }
 
   @Override
   public String toString() {
+	logger.debug(">>> Entering toString()");
+	logger.debug("<<< Exiting toString()");
     return "MergedBlockMetaSuccess[requestId=" + requestId + ",numChunks=" + numChunks + "]";
   }
 
   @Override
   public int encodedLength() {
+	logger.debug(">>> Entering encodedLength()");
+	logger.debug("<<< Exiting encodedLength()");
     return 8 + 4;
   }
 
   /** Encoding does NOT include 'buffer' itself. See {@link MessageEncoder}. */
   @Override
   public void encode(ByteBuf buf) {
+	logger.debug(">>> Entering encode(buf={})", buf);
     buf.writeLong(requestId);
     buf.writeInt(numChunks);
+	logger.debug("<<< Exiting encode(buf={})", buf);
   }
 
   public int getNumChunks() {
+	logger.debug(">>> Entering getNumChunks()");
+	logger.debug("<<< Exiting getNumChunks()");
     return numChunks;
   }
 
   /** Decoding uses the given ByteBuf as our data, and will retain() it. */
   public static MergedBlockMetaSuccess decode(ByteBuf buf) {
+	logger.debug(">>> Entering decode(buf={})", buf);
     long requestId = buf.readLong();
     int numChunks = buf.readInt();
+	logger.debug("decode(buf={}): numChunks → {}", buf, numChunks);
+	logger.debug("decode(buf={}): requestId → {}", buf, requestId);
     buf.retain();
     NettyManagedBuffer managedBuf = new NettyManagedBuffer(buf.duplicate());
+	logger.debug("decode(buf={}): managedBuf → {}", buf, managedBuf);
+	logger.debug("<<< Exiting decode(buf={})", buf);
     return new MergedBlockMetaSuccess(requestId, numChunks, managedBuf);
   }
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.debug(">>> Entering createFailureResponse(error={})", error);
+	logger.debug("<<< Exiting createFailureResponse(error={})", error);
     return new RpcFailure(requestId, error);
   }
 }

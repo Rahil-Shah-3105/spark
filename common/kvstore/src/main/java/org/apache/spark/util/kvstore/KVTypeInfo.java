@@ -31,18 +31,24 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public class KVTypeInfo {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(KVTypeInfo.class);
 
   private final Class<?> type;
   private final Map<String, KVIndex> indices;
   private final Map<String, Accessor> accessors;
 
   public KVTypeInfo(Class<?> type) {
+	LOG.debug(">>> Entering KVTypeInfo(type={})", type);
     this.type = type;
     this.accessors = new HashMap<>();
+	LOG.debug("KVTypeInfo(type={}): this.type → {}", type, this.type);
+	LOG.debug("KVTypeInfo(type={}): accessors → {}", type, accessors);
     this.indices = new HashMap<>();
 
+	LOG.debug("KVTypeInfo(type={}): indices → {}", type, indices);
     for (Field f : type.getDeclaredFields()) {
       KVIndex idx = f.getAnnotation(KVIndex.class);
+	LOG.debug("KVTypeInfo(type={}): idx → {}", type, idx);
       if (idx != null) {
         checkIndex(idx, indices);
         f.setAccessible(true);
@@ -69,15 +75,18 @@ public class KVTypeInfo {
     for (KVIndex idx : indices.values()) {
       if (!idx.parent().isEmpty()) {
         KVIndex parent = indices.get(idx.parent());
+		LOG.debug("KVTypeInfo(type={}): parent → {}", type, parent);
         JavaUtils.checkArgument(parent != null,
           "Cannot find parent %s of index %s.", idx.parent(), idx.value());
         JavaUtils.checkArgument(parent.parent().isEmpty(),
           "Parent index %s of index %s cannot be itself a child index.", idx.parent(), idx.value());
       }
     }
+	LOG.debug("<<< Exiting KVTypeInfo(type={})", type);
   }
 
   private void checkIndex(KVIndex idx, Map<String, KVIndex> indices) {
+	LOG.debug(">>> Entering checkIndex(idx={},indices={})", idx, indices);
     JavaUtils.checkArgument(idx.value() != null && !idx.value().isEmpty(),
       "No name provided for index in type %s.", type.getName());
     JavaUtils.checkArgument(
@@ -87,33 +96,47 @@ public class KVTypeInfo {
       "Index %s cannot be parent of itself.", idx.value());
     JavaUtils.checkArgument(!indices.containsKey(idx.value()),
       "Duplicate index %s for type %s.", idx.value(), type.getName());
+	LOG.debug("<<< Exiting checkIndex(idx={},indices={})", idx, indices);
   }
 
   public Class<?> type() {
+	LOG.debug(">>> Entering type()");
+	LOG.debug("<<< Exiting type()");
     return type;
   }
 
   public Object getIndexValue(String indexName, Object instance) throws Exception {
+	LOG.debug(">>> Entering getIndexValue(indexName={},instance={})", indexName, instance);
+	LOG.debug("<<< Exiting getIndexValue(indexName={},instance={})", indexName, instance);
     return getAccessor(indexName).get(instance);
   }
 
   public Stream<KVIndex> indices() {
+	LOG.debug(">>> Entering indices()");
+	LOG.debug("<<< Exiting indices()");
     return indices.values().stream();
   }
 
   Accessor getAccessor(String indexName) {
+	LOG.debug(">>> Entering getAccessor(indexName={})", indexName);
     Accessor a = accessors.get(indexName);
     JavaUtils.checkArgument(a != null, "No index %s.", indexName);
+	LOG.debug("getAccessor(indexName={}): a → {}", indexName, a);
+	LOG.debug("<<< Exiting getAccessor(indexName={})", indexName);
     return a;
   }
 
   Accessor getParentAccessor(String indexName) {
+	LOG.debug(">>> Entering getParentAccessor(indexName={})", indexName);
     KVIndex index = indices.get(indexName);
+	LOG.debug("<<< Exiting getParentAccessor(indexName={})", indexName);
     return index.parent().isEmpty() ? null : getAccessor(index.parent());
   }
 
   String getParentIndexName(String indexName) {
+	LOG.debug(">>> Entering getParentIndexName(indexName={})", indexName);
     KVIndex index = indices.get(indexName);
+	LOG.debug("<<< Exiting getParentIndexName(indexName={})", indexName);
     return index.parent();
   }
 
@@ -132,16 +155,22 @@ public class KVTypeInfo {
     private final Field field;
 
     FieldAccessor(Field field) {
+	LOG.debug(">>> Entering FieldAccessor(field={})", field);
       this.field = field;
+	LOG.debug("<<< Exiting FieldAccessor(field={})", field);
     }
 
     @Override
     public Object get(Object instance) throws ReflectiveOperationException {
+	LOG.debug(">>> Entering get(instance={})", instance);
+	LOG.debug("<<< Exiting get(instance={})", instance);
       return field.get(instance);
     }
 
     @Override
     public Class<?> getType() {
+	LOG.debug(">>> Entering getType()");
+	LOG.debug("<<< Exiting getType()");
       return field.getType();
     }
   }
@@ -151,7 +180,9 @@ public class KVTypeInfo {
     private final Method method;
 
     MethodAccessor(Method method) {
+	LOG.debug(">>> Entering MethodAccessor(method={})", method);
       this.method = method;
+	LOG.debug("<<< Exiting MethodAccessor(method={})", method);
     }
 
     @Override

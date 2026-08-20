@@ -45,7 +45,10 @@ setMethod("lookup",
           signature(x = "RDD", key = "ANY"),
           function(x, key) {
             partitionFunc <- function(part) {
+			message(sprintf(">>> Entering partitionFunc(part=%s)", part))
               filtered <- part[unlist(lapply(part, function(i) { identical(key, i[[1]]) }))]
+			message(sprintf("partitionFunc(part=%s): filtered → %s", part, filtered))
+			message(sprintf("<<< Exiting partitionFunc(part=%s)", part))
               lapply(filtered, function(i) { i[[2]] })
             }
             valsRDD <- lapplyPartition(x, partitionFunc)
@@ -95,6 +98,10 @@ setMethod("keys",
           signature(x = "RDD"),
           function(x) {
             func <- function(k) {
+			message(sprintf(">>> Entering func(k=%s)", k))
+			message(sprintf("<<< Exiting func(k=%s)", k))
+			message(sprintf(">>> Entering func(v=%s)", v))
+			message(sprintf("<<< Exiting func(v=%s)", v))
               k[[1]]
             }
             lapply(x, func)
@@ -943,10 +950,14 @@ setMethod("sampleByKey",
               # implementation. Look into some iterator package? Note that
               # Scala avoids many calls to creating an empty list and PySpark
               # similarly achieves this using `yield'. (duplicated from sampleRDD)
+			message(sprintf("samplingFunc(partIndex=%s,part=%s): res → %s", partIndex, part, res))
+			message(sprintf("samplingFunc(partIndex=%s,part=%s): count → %s", partIndex, part, count))
+			message(sprintf("samplingFunc(partIndex=%s,part=%s): frac → %s", partIndex, part, frac))
               if (len > 0) {
                 res[1:len]
               } else {
                 list()
+			message(sprintf("<<< Exiting samplingFunc(partIndex=%s,part=%s)", partIndex, part))
               }
             }
 

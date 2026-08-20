@@ -20,10 +20,12 @@
 # Utility function that returns TRUE if we have an active connection to the
 # backend and FALSE otherwise
 connExists <- function(env) {
+message(sprintf(">>> Entering connExists(env=%s)", env))
   tryCatch({
     exists(".sparkRCon", envir = env) && isOpen(env[[".sparkRCon"]])
   },
   error = function(err) {
+	message(sprintf("error(err=%s): error → %s", err, error))
     return(FALSE)
   })
 }
@@ -37,6 +39,7 @@ connExists <- function(env) {
 #' @name sparkR.session.stop
 #' @note sparkR.session.stop since 2.0.0
 sparkR.session.stop <- function() {
+message(">>> Entering sparkR.session.stop()")
   env <- .sparkREnv
   if (exists(".sparkRCon", envir = env)) {
     if (exists(".sparkRjsc", envir = env)) {
@@ -90,8 +93,10 @@ sparkR.session.stop <- function() {
       close(conn)
     },
     error = function(err) {
+	message(sprintf(">>> Entering error(err=%s)", err))
       warning(err)
     })
+	message(sprintf("<<< Exiting error(err=%s)", err))
     rm(".monitorConn", envir = env)
   }
 
@@ -107,7 +112,9 @@ sparkR.session.stop <- function() {
 #' @name sparkR.stop
 #' @note sparkR.stop since 1.4.0
 sparkR.stop <- function() {
+message(">>> Entering sparkR.stop()")
   sparkR.session.stop()
+message("<<< Exiting sparkR.stop()")
 }
 
 #' (Deprecated) Initialize a new Spark Context
@@ -144,12 +151,26 @@ sparkR.init <- function(
   sparkJars = "",
   sparkPackages = "") {
   .Deprecated("sparkR.session")
+message(sprintf(">>> Entering sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s)", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): sparkExecutorEnv → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, sparkExecutorEnv))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): master → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, master))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): sparkEnvir → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, sparkEnvir))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): sparkJars → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, sparkJars))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): sparkPackages → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, sparkPackages))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): appName → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, appName))
+message(sprintf("sparkR.init(master=%s,appName=%s,sparkHome=%s,sparkEnvir=%s,sparkExecutorEnv=%s,sparkJars=%s,sparkPackages=%s): sparkHome → %s", master, appName, sparkHome, sparkEnvir, sparkExecutorEnv, sparkJars, sparkPackages, sparkHome))
   sparkR.sparkContext(master,
      appName,
      sparkHome,
      convertNamedListToEnv(sparkEnvir),
      convertNamedListToEnv(sparkExecutorEnv),
      sparkJars,
+	message(sprintf(">>> Entering sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s)", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages))
+	message(sprintf("sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s): jars → %s", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages, jars))
+	message(sprintf("sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s): args → %s", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages, args))
+	message(sprintf("sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s): sparkSubmitOpts → %s", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages, sparkSubmitOpts))
+	message(sprintf("sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s): packages → %s", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages, packages))
+	message(sprintf("sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s): timeout → %s", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages, timeout))
      sparkPackages)
 }
 
@@ -163,6 +184,7 @@ sparkR.sparkContext <- function(
   sparkJars = "",
   sparkPackages = "") {
 
+message(sprintf(">>> Entering sparkR.sparkContext(master=%s,appName=%s,sparkHome=%s,sparkEnvirMap=%s,sparkExecutorEnvMap=%s,sparkJars=%s,sparkPackages=%s)", master, appName, sparkHome, sparkEnvirMap, sparkExecutorEnvMap, sparkJars, sparkPackages))
   if (exists(".sparkRjsc", envir = .sparkREnv)) {
     cat(paste("Re-using existing Spark Context.",
               "Call sparkR.session.stop() or restart R to create a new Spark Context\n"))
@@ -320,6 +342,7 @@ sparkRSQL.init <- function(jsc = NULL) {
 
   # Default to without Hive support for backward compatibility.
   sparkR.session(enableHiveSupport = FALSE)
+message(sprintf("<<< Exiting sparkRSQL.init(jsc=%s)", jsc))
 }
 
 #' (Deprecated) Initialize a new HiveContext
@@ -347,6 +370,7 @@ sparkRHive.init <- function(jsc = NULL) {
 
   # Default to without Hive support for backward compatibility.
   sparkR.session(enableHiveSupport = TRUE)
+message(sprintf("<<< Exiting sparkRHive.init(jsc=%s)", jsc))
 }
 
 #' Get the existing SparkSession or initialize a new SparkSession.
@@ -403,6 +427,16 @@ sparkR.session <- function(
   sparkPackages = "",
   enableHiveSupport = TRUE,
   ...) {
+message(sprintf(">>> Entering sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s)", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkHome → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkHome))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): appName → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, appName))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkPackages → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkPackages))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkJars → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkJars))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): master → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, master))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkConfig → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkConfig))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkConfigMap → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkConfigMap))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): namedParams → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, namedParams))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): paramMap → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, paramMap))
   sparkConfigMap <- convertNamedListToEnv(sparkConfig)
   namedParams <- list(...)
   if (length(namedParams) > 0) {
@@ -419,6 +453,7 @@ sparkR.session <- function(
 
   deployMode <- ""
   if (exists("spark.submit.deployMode", envir = sparkConfigMap)) {
+	message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): deployMode → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, deployMode))
     deployMode <- sparkConfigMap[["spark.submit.deployMode"]]
   }
 
@@ -428,8 +463,10 @@ sparkR.session <- function(
 
   if (!exists(".sparkRjsc", envir = .sparkREnv)) {
     retHome <- sparkCheckInstall(sparkHome, master, deployMode)
+	message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): retHome → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, retHome))
     if (!is.null(retHome)) sparkHome <- retHome
     sparkExecutorEnvMap <- new.env()
+	message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): sparkExecutorEnvMap → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, sparkExecutorEnvMap))
     sparkR.sparkContext(master, appName, sparkHome, sparkConfigMap, sparkExecutorEnvMap,
        sparkJars, sparkPackages)
     stopifnot(exists(".sparkRjsc", envir = .sparkREnv))
@@ -445,6 +482,7 @@ sparkR.session <- function(
                 sparkConfigMap)
   } else {
     jsc <- get(".sparkRjsc", envir = .sparkREnv)
+	message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): jsc → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, jsc))
     sparkSession <- callJStatic("org.apache.spark.sql.api.r.SQLUtils",
                                 "getOrCreateSparkSession",
                                 jsc,
@@ -455,8 +493,11 @@ sparkR.session <- function(
 
   # Check if version number of SparkSession matches version number of SparkR package
   jvmVersion <- callJMethod(sparkSession, "version")
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): jvmVersion → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, jvmVersion))
   # Remove -SNAPSHOT from jvm versions
   jvmVersionStrip <- gsub("-SNAPSHOT", "", jvmVersion, fixed = TRUE)
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): jvmVersionStrip → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, jvmVersionStrip))
+message(sprintf("sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s): rPackageVersion → %s", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport, rPackageVersion))
   rPackageVersion <- paste0(packageVersion("SparkR"))
 
   if (jvmVersionStrip != rPackageVersion) {
@@ -466,6 +507,7 @@ sparkR.session <- function(
   }
 
   sparkSession
+message(sprintf("<<< Exiting sparkR.session(master=%s,appName=%s,sparkHome=%s,sparkConfig=%s,sparkJars=%s,sparkPackages=%s,enableHiveSupport=%s)", master, appName, sparkHome, sparkConfig, sparkJars, sparkPackages, enableHiveSupport))
 }
 
 #' Get the URL of the SparkUI instance for the current active SparkSession
@@ -482,13 +524,17 @@ sparkR.session <- function(
 #' }
 #' @note sparkR.uiWebUrl since 2.1.1
 sparkR.uiWebUrl <- function() {
+message(">>> Entering sparkR.uiWebUrl()")
   sc <- sparkR.callJMethod(getSparkContext(), "sc")
   u <- callJMethod(sc, "uiWebUrl")
+message(sprintf("sparkR.uiWebUrl(): u → %s", u))
+message(sprintf("sparkR.uiWebUrl(): sc → %s", sc))
   if (callJMethod(u, "isDefined")) {
     callJMethod(u, "get")
   } else {
     NA
   }
+message("<<< Exiting sparkR.uiWebUrl()")
 }
 
 #' Assigns a group ID to all the jobs started by this thread until the group ID is set to a
@@ -506,8 +552,11 @@ sparkR.uiWebUrl <- function() {
 #'}
 #' @note setJobGroup since 1.5.0
 setJobGroup <- function(groupId, description, interruptOnCancel) {
+message(sprintf(">>> Entering setJobGroup(groupId=%s,description=%s,interruptOnCancel=%s)", groupId, description, interruptOnCancel))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "setJobGroup", groupId, description, interruptOnCancel))
+message(sprintf("setJobGroup(groupId=%s,description=%s,interruptOnCancel=%s): sc → %s", groupId, description, interruptOnCancel, sc))
+message(sprintf("<<< Exiting setJobGroup(groupId=%s,description=%s,interruptOnCancel=%s)", groupId, description, interruptOnCancel))
 }
 
 #' Clear current job group ID and its description
@@ -521,8 +570,11 @@ setJobGroup <- function(groupId, description, interruptOnCancel) {
 #'}
 #' @note clearJobGroup since 1.5.0
 clearJobGroup <- function() {
+message(">>> Entering clearJobGroup()")
   sc <- getSparkContext()
   invisible(callJMethod(sc, "clearJobGroup"))
+message(sprintf("clearJobGroup(): sc → %s", sc))
+message("<<< Exiting clearJobGroup()")
 }
 
 #' Cancel active jobs for the specified group
@@ -537,8 +589,11 @@ clearJobGroup <- function() {
 #'}
 #' @note cancelJobGroup since 1.5.0
 cancelJobGroup <- function(groupId) {
+message(sprintf(">>> Entering cancelJobGroup(groupId=%s)", groupId))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "cancelJobGroup", groupId))
+message(sprintf("cancelJobGroup(groupId=%s): sc → %s", groupId, sc))
+message(sprintf("<<< Exiting cancelJobGroup(groupId=%s)", groupId))
 }
 
 #' Set the behavior of job cancellation from jobs started in this thread.
@@ -556,8 +611,11 @@ cancelJobGroup <- function(groupId) {
 #'}
 #' @note cancelJobGroup since 3.5.0
 setInterruptOnCancel <- function(interruptOnCancel) {
+message(sprintf(">>> Entering setInterruptOnCancel(interruptOnCancel=%s)", interruptOnCancel))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "setInterruptOnCancel", interruptOnCancel))
+message(sprintf("setInterruptOnCancel(interruptOnCancel=%s): sc → %s", interruptOnCancel, sc))
+message(sprintf("<<< Exiting setInterruptOnCancel(interruptOnCancel=%s)", interruptOnCancel))
 }
 
 #' Add a tag to be assigned to all the jobs started by this thread.
@@ -572,8 +630,11 @@ setInterruptOnCancel <- function(interruptOnCancel) {
 #'}
 #' @note addJobTag since 3.5.0
 addJobTag <- function(tag) {
+message(sprintf(">>> Entering addJobTag(tag=%s)", tag))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "addJobTag", tag))
+message(sprintf("addJobTag(tag=%s): sc → %s", tag, sc))
+message(sprintf("<<< Exiting addJobTag(tag=%s)", tag))
 }
 
 #' Remove a tag previously added to be assigned to all the jobs started by this thread.
@@ -589,8 +650,11 @@ addJobTag <- function(tag) {
 #'}
 #' @note cancelJobGroup since 3.5.0
 removeJobTag <- function(tag) {
+message(sprintf(">>> Entering removeJobTag(tag=%s)", tag))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "removeJobTag", tag))
+message(sprintf("removeJobTag(tag=%s): sc → %s", tag, sc))
+message(sprintf("<<< Exiting removeJobTag(tag=%s)", tag))
 }
 
 #' Get the tags that are currently set to be assigned to all the jobs started by this thread.
@@ -604,8 +668,11 @@ removeJobTag <- function(tag) {
 #'}
 #' @note getJobTags since 3.5.0
 getJobTags <- function() {
+message(">>> Entering getJobTags()")
   sc <- getSparkContext()
   callJStatic("org.apache.spark.api.r.RUtils", "getJobTags", sc)
+message(sprintf("getJobTags(): sc → %s", sc))
+message("<<< Exiting getJobTags()")
 }
 
 #' Clear the current thread's job tags.
@@ -619,8 +686,11 @@ getJobTags <- function() {
 #'}
 #' @note clearJobTags since 3.5.0
 clearJobTags <- function() {
+message(">>> Entering clearJobTags()")
   sc <- getSparkContext()
   invisible(callJMethod(sc, "clearJobTags"))
+message(sprintf("clearJobTags(): sc → %s", sc))
+message("<<< Exiting clearJobTags()")
 }
 
 #' Cancel active jobs that have the specified tag.
@@ -635,8 +705,11 @@ clearJobTags <- function() {
 #'}
 #' @note cancelJobGroup since 3.5.0
 cancelJobsWithTag <- function(tag) {
+message(sprintf(">>> Entering cancelJobsWithTag(tag=%s)", tag))
   sc <- getSparkContext()
   invisible(callJMethod(sc, "cancelJobsWithTag", tag))
+message(sprintf("cancelJobsWithTag(tag=%s): sc → %s", tag, sc))
+message(sprintf("<<< Exiting cancelJobsWithTag(tag=%s)", tag))
 }
 
 #' Set a human readable description of the current job.
@@ -652,11 +725,15 @@ cancelJobsWithTag <- function(tag) {
 #'}
 #' @note setJobDescription since 2.3.0
 setJobDescription <- function(value) {
+message(sprintf(">>> Entering setJobDescription(value=%s)", value))
   if (!is.null(value)) {
+	message(sprintf("setJobDescription(value=%s): value → %s", value, value))
     value <- as.character(value)
   }
   sc <- getSparkContext()
+message(sprintf("setJobDescription(value=%s): sc → %s", value, sc))
   invisible(callJMethod(sc, "setJobDescription", value))
+message(sprintf("<<< Exiting setJobDescription(value=%s)", value))
 }
 
 #' Set a local property that affects jobs submitted from this thread, such as the
@@ -673,14 +750,18 @@ setJobDescription <- function(value) {
 #'}
 #' @note setLocalProperty since 2.3.0
 setLocalProperty <- function(key, value) {
+message(sprintf(">>> Entering setLocalProperty(key=%s,value=%s)", key, value))
   if (is.null(key) || is.na(key)) {
     stop("key should not be NULL or NA.")
   }
   if (!is.null(value)) {
+	message(sprintf("setLocalProperty(key=%s,value=%s): value → %s", key, value, value))
     value <- as.character(value)
   }
   sc <- getSparkContext()
+message(sprintf("setLocalProperty(key=%s,value=%s): sc → %s", key, value, sc))
   invisible(callJMethod(sc, "setLocalProperty", as.character(key), value))
+message(sprintf("<<< Exiting setLocalProperty(key=%s,value=%s)", key, value))
 }
 
 #' Get a local property set in this thread, or \code{NULL} if it is missing. See
@@ -695,11 +776,14 @@ setLocalProperty <- function(key, value) {
 #'}
 #' @note getLocalProperty since 2.3.0
 getLocalProperty <- function(key) {
+message(sprintf(">>> Entering getLocalProperty(key=%s)", key))
   if (is.null(key) || is.na(key)) {
     stop("key should not be NULL or NA.")
   }
   sc <- getSparkContext()
+message(sprintf("getLocalProperty(key=%s): sc → %s", key, sc))
   callJMethod(sc, "getLocalProperty", as.character(key))
+message(sprintf("<<< Exiting getLocalProperty(key=%s)", key))
 }
 
 sparkConfToSubmitOps <- new.env()
@@ -722,8 +806,10 @@ sparkConfToSubmitOps[["spark.kerberos.principal"]] <- "--principal"
 # When starting SparkR without using spark-submit, for example, from Rstudio, add them to
 # spark-submit commandline if not already set in SPARKR_SUBMIT_ARGS so that they can be effective.
 getClientModeSparkSubmitOpts <- function(submitOps, sparkEnvirMap) {
+message(sprintf(">>> Entering getClientModeSparkSubmitOpts(submitOps=%s,sparkEnvirMap=%s)", submitOps, sparkEnvirMap))
   envirToOps <- lapply(ls(sparkConfToSubmitOps), function(conf) {
     opsValue <- sparkEnvirMap[[conf]]
+	message(sprintf("getClientModeSparkSubmitOpts(submitOps=%s,sparkEnvirMap=%s): envirToOps → %s", submitOps, sparkEnvirMap, envirToOps))
     # process only if --option is not already specified
     if (!is.null(opsValue) &&
         nchar(opsValue) > 1 &&
@@ -736,25 +822,33 @@ getClientModeSparkSubmitOpts <- function(submitOps, sparkEnvirMap) {
   })
   # --option must be before the application class "sparkr-shell" in submitOps
   paste0(paste0(envirToOps, collapse = ""), submitOps)
+message(sprintf("<<< Exiting getClientModeSparkSubmitOpts(submitOps=%s,sparkEnvirMap=%s)", submitOps, sparkEnvirMap))
 }
 
 # Utility function that handles sparkJars argument, and normalize paths
 processSparkJars <- function(jars) {
+message(sprintf(">>> Entering processSparkJars(jars=%s)", jars))
   splittedJars <- splitString(jars)
   if (length(splittedJars) > length(jars)) {
+	message(sprintf("processSparkJars(jars=%s): splittedJars → %s", jars, splittedJars))
     warning("sparkJars as a comma-separated string is deprecated, use character vector instead")
   }
   normalized <- suppressWarnings(normalizePath(splittedJars))
+message(sprintf("processSparkJars(jars=%s): normalized → %s", jars, normalized))
   normalized
+message(sprintf("<<< Exiting processSparkJars(jars=%s)", jars))
 }
 
 # Utility function that handles sparkPackages argument
 processSparkPackages <- function(packages) {
+message(sprintf(">>> Entering processSparkPackages(packages=%s)", packages))
   splittedPackages <- splitString(packages)
   if (length(splittedPackages) > length(packages)) {
+	message(sprintf("processSparkPackages(packages=%s): splittedPackages → %s", packages, splittedPackages))
     warning("sparkPackages as a comma-separated string is deprecated, use character vector instead")
   }
   splittedPackages
+message(sprintf("<<< Exiting processSparkPackages(packages=%s)", packages))
 }
 
 # Utility function that checks and install Spark to local folder if not found
@@ -768,6 +862,7 @@ processSparkPackages <- function(packages) {
 #        or locally as an external client (client).
 # @return NULL if no need to update sparkHome, and new sparkHome otherwise.
 sparkCheckInstall <- function(sparkHome, master, deployMode) {
+message(sprintf(">>> Entering sparkCheckInstall(sparkHome=%s,master=%s,deployMode=%s)", sparkHome, master, deployMode))
   if (!isSparkRShell()) {
     if (!is.na(file.info(sparkHome)$isdir)) {
       message("Spark package found in SPARK_HOME: ", sparkHome)
@@ -822,6 +917,7 @@ sparkCheckInstall <- function(sparkHome, master, deployMode) {
   } else {
     NULL
   }
+message(sprintf("<<< Exiting sparkCheckInstall(sparkHome=%s,master=%s,deployMode=%s)", sparkHome, master, deployMode))
 }
 
 # Utility function for sending auth data over a socket and checking the server's reply.
@@ -832,6 +928,7 @@ doServerAuth <- function(con, authSecret) {
   writeString(con, authSecret)
   flush(con)
   reply <- readString(con)
+message(sprintf("doServerAuth(con=%s,authSecret=<redacted>): reply → %s", con, reply))
   if (reply != "ok") {
     close(con)
     stop("Unexpected reply from server.")

@@ -28,49 +28,68 @@ import io.netty.buffer.Unpooled;
  * A {@link ManagedBuffer} backed by {@link ByteBuffer}.
  */
 public class NioManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NioManagedBuffer.class);
   private final ByteBuffer buf;
 
   public NioManagedBuffer(ByteBuffer buf) {
+	logger.debug(">>> Entering NioManagedBuffer(buf={})", buf);
     this.buf = buf;
+	logger.debug("<<< Exiting NioManagedBuffer(buf={})", buf);
   }
 
   @Override
   public long size() {
+	logger.debug(">>> Entering size()");
+	logger.debug("<<< Exiting size()");
     return buf.remaining();
   }
 
   @Override
   public ByteBuffer nioByteBuffer() throws IOException {
+	logger.debug(">>> Entering nioByteBuffer()");
+	logger.debug("<<< Exiting nioByteBuffer()");
     return buf.duplicate();
   }
 
   @Override
   public InputStream createInputStream() throws IOException {
+	logger.debug(">>> Entering createInputStream()");
+	logger.debug("<<< Exiting createInputStream()");
     return new ByteBufInputStream(Unpooled.wrappedBuffer(buf));
   }
 
   @Override
   public ManagedBuffer retain() {
+	logger.debug(">>> Entering retain()");
+	logger.debug("<<< Exiting retain()");
     return this;
   }
 
   @Override
   public ManagedBuffer release() {
+	logger.debug(">>> Entering release()");
+	logger.debug("<<< Exiting release()");
     return this;
   }
 
   @Override
   public Object convertToNetty() throws IOException {
+	logger.debug(">>> Entering convertToNetty()");
+	logger.debug("<<< Exiting convertToNetty()");
     return Unpooled.wrappedBuffer(buf);
   }
 
   @Override
   public Object convertToNettyForSsl() throws IOException {
+	logger.debug(">>> Entering convertToNettyForSsl()");
+	logger.debug("<<< Exiting convertToNettyForSsl()");
     return Unpooled.wrappedBuffer(buf);
   }
 
   @Override
   public String toString() {
+	logger.debug(">>> Entering toString()");
+	logger.debug("<<< Exiting toString()");
     return "NioManagedBuffer[buf=" + buf + "]";
   }
 }

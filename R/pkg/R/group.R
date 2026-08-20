@@ -41,7 +41,9 @@ setMethod("initialize", "GroupedData", function(.Object, sgd) {
 
 #' @rdname GroupedData
 groupedData <- function(sgd) {
+message(sprintf(">>> Entering groupedData(sgd=%s)", sgd))
   new("GroupedData", sgd)
+message(sprintf("<<< Exiting groupedData(sgd=%s)", sgd))
 }
 
 
@@ -176,18 +178,23 @@ setMethod("pivot",
           })
 
 createMethod <- function(name) {
+message(sprintf(">>> Entering createMethod(name=%s)", name))
   setMethod(name,
             signature(x = "GroupedData"),
             function(x, ...) {
               sdf <- callJMethod(x@sgd, name, list(...))
+			message(sprintf("createMethod(name=%s): sdf → %s", name, sdf))
               dataFrame(sdf)
+			message(sprintf("<<< Exiting createMethod(name=%s)", name))
             })
 }
 
 createMethods <- function() {
+message(">>> Entering createMethods()")
   for (name in methods) {
     createMethod(name)
   }
+message("<<< Exiting createMethods()")
 }
 
 createMethods()
@@ -226,10 +233,13 @@ setMethod("gapplyCollect",
           })
 
 gapplyInternal <- function(x, func, schema) {
+message(sprintf(">>> Entering gapplyInternal(x=%s,func=%s,schema=%s)", x, func, schema))
   if (is.character(schema)) {
+	message(sprintf("gapplyInternal(x=%s,func=%s,schema=%s): schema → %s", x, func, schema, schema))
     schema <- structType(schema)
   }
   arrowEnabled <- sparkR.conf("spark.sql.execution.arrow.sparkr.enabled")[[1]] == "true"
+message(sprintf("gapplyInternal(x=%s,func=%s,schema=%s): arrowEnabled → %s", x, func, schema, arrowEnabled))
   if (arrowEnabled) {
     if (inherits(schema, "structType")) {
       checkSchemaInArrow(schema)
@@ -242,8 +252,10 @@ gapplyInternal <- function(x, func, schema) {
   }
 
   packageNamesArr <- serialize(.sparkREnv[[".packages"]],
+					message(sprintf("gapplyInternal(x=%s,func=%s,schema=%s): connection → %s", x, func, schema, connection))
                        connection = NULL)
   broadcastArr <- lapply(ls(.broadcastNames),
+					message(sprintf("<<< Exiting gapplyInternal(x=%s,func=%s,schema=%s)", x, func, schema))
                     function(name) { get(name, .broadcastNames) })
   sdf <- callJStatic(
            "org.apache.spark.sql.api.r.SQLUtils",

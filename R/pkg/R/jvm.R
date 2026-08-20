@@ -47,7 +47,9 @@
 #' }
 #' @note sparkR.callJMethod since 2.0.1
 sparkR.callJMethod <- function(x, methodName, ...) {
+message(sprintf(">>> Entering sparkR.callJMethod(x=%s,methodName=%s)", x, methodName))
   callJMethod(x, methodName, ...)
+message(sprintf("<<< Exiting sparkR.callJMethod(x=%s,methodName=%s)", x, methodName))
 }
 
 #' Call Static Java Methods
@@ -78,7 +80,9 @@ sparkR.callJMethod <- function(x, methodName, ...) {
 #' }
 #' @note sparkR.callJStatic since 2.0.1
 sparkR.callJStatic <- function(x, methodName, ...) {
+message(sprintf(">>> Entering sparkR.callJStatic(x=%s,methodName=%s)", x, methodName))
   callJStatic(x, methodName, ...)
+message(sprintf("<<< Exiting sparkR.callJStatic(x=%s,methodName=%s)", x, methodName))
 }
 
 #' Create Java Objects
@@ -110,5 +114,7 @@ sparkR.callJStatic <- function(x, methodName, ...) {
 #' }
 #' @note sparkR.newJObject since 2.0.1
 sparkR.newJObject <- function(x, ...) {
+message(sprintf(">>> Entering sparkR.newJObject(x=%s)", x))
   newJObject(x, ...)
+message(sprintf("<<< Exiting sparkR.newJObject(x=%s)", x))
 }

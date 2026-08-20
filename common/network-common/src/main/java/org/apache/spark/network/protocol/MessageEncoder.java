@@ -52,6 +52,7 @@ public final class MessageEncoder extends MessageToMessageEncoder<Message> {
    */
   @Override
   public void encode(ChannelHandlerContext ctx, Message in, List<Object> out) throws Exception {
+	logger.debug(">>> Entering encode(ctx={},in={},out={})", ctx, in, out);
     Object body = null;
     long bodyLength = 0;
     boolean isBodyInFrame = false;
@@ -72,6 +73,7 @@ public final class MessageEncoder extends MessageToMessageEncoder<Message> {
             MDC.of(LogKeys.HOST_PORT, ctx.channel().remoteAddress()));
           encode(ctx, resp.createFailureResponse(error), out);
         } else {
+		logger.warn("Throwing e from encode(ctx={},in={},out={})", ctx, in, out);
           throw e;
         }
         return;
@@ -112,6 +114,7 @@ public final class MessageEncoder extends MessageToMessageEncoder<Message> {
     } else {
       out.add(header);
     }
+	logger.debug("<<< Exiting encode(ctx={},in={},out={})", ctx, in, out);
   }
 
 }

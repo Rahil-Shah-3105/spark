@@ -52,6 +52,7 @@ import org.apache.spark.util.Pair;
  * Concurrency: thread safe and can be called from multiple threads.
  */
 public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportResponseHandler.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(TransportResponseHandler.class);
 
@@ -68,39 +69,56 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
   private final AtomicLong timeOfLastRequestNs;
 
   public TransportResponseHandler(Channel channel) {
+	logger.debug(">>> Entering TransportResponseHandler(channel={})", channel);
     this.channel = channel;
+	logger.debug("TransportResponseHandler(channel={}): this.channel → {}", channel, this.channel);
     this.outstandingFetches = new ConcurrentHashMap<>();
     this.outstandingRpcs = new ConcurrentHashMap<>();
+	logger.debug("TransportResponseHandler(channel={}): outstandingFetches → {}", channel, outstandingFetches);
+	logger.debug("TransportResponseHandler(channel={}): outstandingRpcs → {}", channel, outstandingRpcs);
     this.streamCallbacks = new ConcurrentLinkedQueue<>();
     this.timeOfLastRequestNs = new AtomicLong(0);
+	logger.debug("<<< Exiting TransportResponseHandler(channel={})", channel);
   }
 
   public void addFetchRequest(StreamChunkId streamChunkId, ChunkReceivedCallback callback) {
+	logger.debug(">>> Entering addFetchRequest(streamChunkId={},callback={})", streamChunkId, callback);
     updateTimeOfLastRequest();
     outstandingFetches.put(streamChunkId, callback);
+	logger.debug("<<< Exiting addFetchRequest(streamChunkId={},callback={})", streamChunkId, callback);
   }
 
   public void removeFetchRequest(StreamChunkId streamChunkId) {
+	logger.debug(">>> Entering removeFetchRequest(streamChunkId={})", streamChunkId);
     outstandingFetches.remove(streamChunkId);
+	logger.debug("<<< Exiting removeFetchRequest(streamChunkId={})", streamChunkId);
   }
 
   public void addRpcRequest(long requestId, BaseResponseCallback callback) {
+	logger.debug(">>> Entering addRpcRequest(requestId={},callback={})", requestId, callback);
     updateTimeOfLastRequest();
     outstandingRpcs.put(requestId, callback);
+	logger.debug("<<< Exiting addRpcRequest(requestId={},callback={})", requestId, callback);
   }
 
   public void removeRpcRequest(long requestId) {
+	logger.debug(">>> Entering removeRpcRequest(requestId={})", requestId);
     outstandingRpcs.remove(requestId);
+	logger.debug("<<< Exiting removeRpcRequest(requestId={})", requestId);
   }
 
   public void addStreamCallback(String streamId, StreamCallback callback) {
+	logger.debug(">>> Entering addStreamCallback(streamId={},callback={})", streamId, callback);
     updateTimeOfLastRequest();
     streamCallbacks.offer(Pair.of(streamId, callback));
+	logger.debug("<<< Exiting addStreamCallback(streamId={},callback={})", streamId, callback);
   }
 
   @VisibleForTesting
   public void deactivateStream() {
+	logger.debug(">>> Entering deactivateStream()");
     streamActive = false;
+	logger.debug("<<< Exiting deactivateStream()");
   }
 
   /**
@@ -108,6 +126,7 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
    * uncaught exception or pre-mature connection termination.
    */
   private void failOutstandingRequests(Throwable cause) {
+	logger.debug(">>> Entering failOutstandingRequests(cause={})", cause);
     for (Map.Entry<StreamChunkId, ChunkReceivedCallback> entry : outstandingFetches.entrySet()) {
       try {
         entry.getValue().onFailure(entry.getKey().chunkIndex(), cause);
@@ -134,38 +153,48 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
     outstandingFetches.clear();
     outstandingRpcs.clear();
     streamCallbacks.clear();
+	logger.debug("<<< Exiting failOutstandingRequests(cause={})", cause);
   }
 
   @Override
   public void channelActive() {
+logger.debug(">>> Entering channelActive()");
   }
 
   @Override
   public void channelInactive() {
+	logger.debug(">>> Entering channelInactive()");
     if (hasOutstandingRequests()) {
       String remoteAddress = getRemoteAddress(channel);
+	logger.debug("channelInactive(): remoteAddress → {}", remoteAddress);
       logger.error("Still have {} requests outstanding when connection from {} is closed",
         MDC.of(LogKeys.COUNT, numOutstandingRequests()),
         MDC.of(LogKeys.HOST_PORT, remoteAddress));
       failOutstandingRequests(new IOException("Connection from " + remoteAddress + " closed"));
     }
+	logger.debug("<<< Exiting channelInactive()");
   }
 
   @Override
   public void exceptionCaught(Throwable cause) {
+	logger.debug(">>> Entering exceptionCaught(cause={})", cause);
     if (hasOutstandingRequests()) {
       String remoteAddress = getRemoteAddress(channel);
+	logger.debug("exceptionCaught(cause={}): remoteAddress → {}", cause, remoteAddress);
       logger.error("Still have {} requests outstanding when connection from {} is closed",
         MDC.of(LogKeys.COUNT, numOutstandingRequests()),
         MDC.of(LogKeys.HOST_PORT, remoteAddress));
       failOutstandingRequests(cause);
     }
+	logger.debug("<<< Exiting exceptionCaught(cause={})", cause);
   }
 
   @Override
   public void handle(ResponseMessage message) throws Exception {
+	logger.debug(">>> Entering handle(message={})", message);
     if (message instanceof ChunkFetchSuccess resp) {
       ChunkReceivedCallback listener = outstandingFetches.get(resp.streamChunkId);
+	logger.debug("handle(message={}): listener → {}", message, listener);
       if (listener == null) {
         logger.warn("Ignoring response for block {} from {} since it is not outstanding",
           MDC.of(LogKeys.STREAM_CHUNK_ID, resp.streamChunkId),
@@ -234,8 +263,10 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
       }
     } else if (message instanceof StreamResponse resp) {
       Pair<String, StreamCallback> entry = streamCallbacks.poll();
+	logger.debug("handle(message={}): entry → {}", message, entry);
       if (entry != null) {
         StreamCallback callback = entry.getRight();
+		logger.debug("handle(message={}): callback → {}", message, callback);
         if (resp.byteCount > 0) {
           StreamInterceptor<ResponseMessage> interceptor = new StreamInterceptor<>(
             this, resp.streamId, resp.byteCount, callback);
@@ -243,7 +274,9 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
             TransportFrameDecoder frameDecoder = (TransportFrameDecoder)
               channel.pipeline().get(TransportFrameDecoder.HANDLER_NAME);
             frameDecoder.setInterceptor(interceptor);
+			logger.debug("handle(message={}): frameDecoder → {}", message, frameDecoder);
             streamActive = true;
+			logger.debug("handle(message={}): streamActive → {}", message, streamActive);
           } catch (Exception e) {
             logger.error("Error installing stream handler.", e);
             deactivateStream();
@@ -280,30 +313,40 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
           MDC.of(LogKeys.ERROR, resp.error));
       }
     } else {
+	logger.warn("Throwing IllegalStateException from handle(message={})", message);
+	logger.debug("<<< Exiting handle(message={})", message);
       throw new IllegalStateException("Unknown response type: " + message.type());
     }
   }
 
   /** Returns total number of outstanding requests (fetch requests + rpcs) */
   public int numOutstandingRequests() {
+	logger.debug(">>> Entering numOutstandingRequests()");
+	logger.debug("<<< Exiting numOutstandingRequests()");
     return outstandingFetches.size() + outstandingRpcs.size() + streamCallbacks.size() +
       (streamActive ? 1 : 0);
   }
 
   /** Check if there are any outstanding requests (fetch requests + rpcs) */
   public Boolean hasOutstandingRequests() {
+	logger.debug(">>> Entering hasOutstandingRequests()");
+	logger.debug("<<< Exiting hasOutstandingRequests()");
     return streamActive || !outstandingFetches.isEmpty() || !outstandingRpcs.isEmpty() ||
         !streamCallbacks.isEmpty();
   }
 
   /** Returns the time in nanoseconds of when the last request was sent out. */
   public long getTimeOfLastRequestNs() {
+	logger.debug(">>> Entering getTimeOfLastRequestNs()");
+	logger.debug("<<< Exiting getTimeOfLastRequestNs()");
     return timeOfLastRequestNs.get();
   }
 
   /** Updates the time of the last request to the current system time. */
   public void updateTimeOfLastRequest() {
+	logger.debug(">>> Entering updateTimeOfLastRequest()");
     timeOfLastRequestNs.set(System.nanoTime());
+	logger.debug("<<< Exiting updateTimeOfLastRequest()");
   }
 
 }

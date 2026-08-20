@@ -42,23 +42,30 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public class InMemoryStore implements KVStore {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(InMemoryStore.class);
 
   private Object metadata;
   private InMemoryLists inMemoryLists = new InMemoryLists();
 
   @Override
   public <T> T getMetadata(Class<T> klass) {
+	LOG.debug(">>> Entering getMetadata(klass={})", klass);
+	LOG.debug("<<< Exiting getMetadata(klass={})", klass);
     return klass.cast(metadata);
   }
 
   @Override
   public void setMetadata(Object value) {
+	LOG.debug(">>> Entering setMetadata(value={})", value);
     this.metadata = value;
+	LOG.debug("<<< Exiting setMetadata(value={})", value);
   }
 
   @Override
   public long count(Class<?> type) {
+	LOG.debug(">>> Entering count(type={})", type);
     InstanceList<?> list = inMemoryLists.get(type);
+	LOG.debug("count(type={}): list → {}", type, list);
     return list != null ? list.size() : 0;
   }
 
@@ -86,9 +93,14 @@ public class InMemoryStore implements KVStore {
 
   @Override
   public <T> T read(Class<T> klass, Object naturalKey) {
+	LOG.debug(">>> Entering read(klass={},naturalKey={})", klass, naturalKey);
     InstanceList<T> list = inMemoryLists.get(klass);
     T value = list != null ? list.get(naturalKey) : null;
+	LOG.debug("read(klass={},naturalKey={}): value → {}", klass, naturalKey, value);
+	LOG.debug("read(klass={},naturalKey={}): list → {}", klass, naturalKey, list);
     if (value == null) {
+	LOG.warn("Throwing NoSuchElementException from read(klass={},naturalKey={})", klass, naturalKey);
+	LOG.debug("<<< Exiting read(klass={},naturalKey={})", klass, naturalKey);
       throw new NoSuchElementException();
     }
     return value;
@@ -97,26 +109,37 @@ public class InMemoryStore implements KVStore {
   @Override
   public void write(Object value) throws Exception {
     inMemoryLists.write(value);
+	LOG.debug(">>> Entering write(value={})", value);
+	LOG.debug("<<< Exiting write(value={})", value);
   }
 
   @Override
   public void delete(Class<?> type, Object naturalKey) {
+	LOG.debug(">>> Entering delete(type={},naturalKey={})", type, naturalKey);
     InstanceList<?> list = inMemoryLists.get(type);
     if (list != null) {
+	LOG.debug("delete(type={},naturalKey={}): list → {}", type, naturalKey, list);
       list.delete(naturalKey);
     }
+	LOG.debug("<<< Exiting delete(type={},naturalKey={})", type, naturalKey);
   }
 
   @Override
   public <T> KVStoreView<T> view(Class<T> type){
+	LOG.debug(">>> Entering view(type={})", type);
     InstanceList<T> list = inMemoryLists.get(type);
+	LOG.debug("view(type={}): list → {}", type, list);
+	LOG.debug("<<< Exiting view(type={})", type);
     return list != null ? list.view() : emptyView();
   }
 
   @Override
   public void close() {
+	LOG.debug(">>> Entering close()");
     metadata = null;
+	LOG.debug("close(): metadata → {}", metadata);
     inMemoryLists.clear();
+	LOG.debug("<<< Exiting close()");
   }
 
   @Override
@@ -124,25 +147,33 @@ public class InMemoryStore implements KVStore {
       Class<T> klass,
       String index,
       Collection<?> indexValues) {
+	LOG.debug(">>> Entering removeAllByIndexValues(klass={},index={},indexValues={})", klass, index, indexValues);
     InstanceList<T> list = inMemoryLists.get(klass);
 
+	LOG.debug("removeAllByIndexValues(klass={},index={},indexValues={}): list → {}", klass, index, indexValues, list);
     if (list != null) {
       return list.countingRemoveAllByIndexValues(index, indexValues) > 0;
     } else {
+	LOG.debug("<<< Exiting removeAllByIndexValues(klass={},index={},indexValues={})", klass, index, indexValues);
       return false;
     }
   }
 
   @SuppressWarnings("unchecked")
   private static Comparable<Object> asKey(Object in) {
+	LOG.debug(">>> Entering asKey(in={})", in);
     if (in.getClass().isArray()) {
       in = ArrayWrappers.forArray(in);
+	LOG.debug("asKey(in={}): in → {}", in, in);
     }
+	LOG.debug("<<< Exiting asKey(in={})", in);
     return (Comparable<Object>) in;
   }
 
   @SuppressWarnings("unchecked")
   private static <T> KVStoreView<T> emptyView() {
+	LOG.debug(">>> Entering emptyView()");
+	LOG.debug("<<< Exiting emptyView()");
     return (InMemoryView<T>) InMemoryView.EMPTY_VIEW;
   }
 
@@ -155,6 +186,8 @@ public class InMemoryStore implements KVStore {
 
     @SuppressWarnings("unchecked")
     public <T> InstanceList<T> get(Class<T> type) {
+	LOG.debug(">>> Entering get(type={})", type);
+	LOG.debug("<<< Exiting get(type={})", type);
       return (InstanceList<T>) data.get(type);
     }
 
@@ -166,7 +199,9 @@ public class InMemoryStore implements KVStore {
     }
 
     public void clear() {
+	LOG.debug(">>> Entering clear()");
       data.clear();
+	LOG.debug("<<< Exiting clear()");
     }
   }
 
@@ -198,17 +233,22 @@ public class InMemoryStore implements KVStore {
       private int count = 0;
 
       CountingRemoveIfForEach(InstanceList<T> instanceList, Predicate<? super T> filter) {
+		LOG.debug(">>> Entering CountingRemoveIfForEach(instanceList={},filter={})", instanceList, filter);
         this.instanceList = instanceList;
+		LOG.debug("CountingRemoveIfForEach(instanceList={},filter={}): this.instanceList → {}", instanceList, filter, this.instanceList);
         this.filter = filter;
+		LOG.debug("<<< Exiting CountingRemoveIfForEach(instanceList={},filter={})", instanceList, filter);
       }
 
       @Override
       public void accept(Comparable<Object> key, T value) {
+		LOG.debug(">>> Entering accept(key={},value={})", key, value);
         if (filter.test(value)) {
           if (instanceList.delete(key, value)) {
             count++;
           }
         }
+		LOG.debug("<<< Exiting accept(key={},value={})", key, value);
       }
 
       public int count() { return count; }
@@ -224,21 +264,31 @@ public class InMemoryStore implements KVStore {
     private final ConcurrentMap<Comparable<Object>, NaturalKeys> parentToChildrenMap;
 
     private InstanceList(Class<?> klass) {
+	LOG.debug(">>> Entering InstanceList(klass={})", klass);
+	LOG.debug("InstanceList(klass={}): naturalKey → {}", klass, naturalKey);
+	LOG.debug("InstanceList(klass={}): data → {}", klass, data);
       this.ti = new KVTypeInfo(klass);
       this.naturalKey = ti.getAccessor(KVIndex.NATURAL_INDEX_NAME);
       this.data = new ConcurrentHashMap<>();
       this.naturalParentIndexName = ti.getParentIndexName(KVIndex.NATURAL_INDEX_NAME);
+	LOG.debug("InstanceList(klass={}): naturalParentIndexName → {}", klass, naturalParentIndexName);
       this.parentToChildrenMap = new ConcurrentHashMap<>();
+	LOG.debug("InstanceList(klass={}): parentToChildrenMap → {}", klass, parentToChildrenMap);
       this.hasNaturalParentIndex = !naturalParentIndexName.isEmpty();
+	LOG.debug("<<< Exiting InstanceList(klass={})", klass);
     }
 
     KVTypeInfo.Accessor getIndexAccessor(String indexName) {
+	LOG.debug(">>> Entering getIndexAccessor(indexName={})", indexName);
+	LOG.debug("<<< Exiting getIndexAccessor(indexName={})", indexName);
       return ti.getAccessor(indexName);
     }
 
     int countingRemoveAllByIndexValues(String index, Collection<?> indexValues) {
+	LOG.debug(">>> Entering countingRemoveAllByIndexValues(index={},indexValues={})", index, indexValues);
       int count = 0;
       if (KVIndex.NATURAL_INDEX_NAME.equals(index)) {
+		LOG.debug("countingRemoveAllByIndexValues(index={},indexValues={}): count → {}", index, indexValues, count);
         for (Object naturalKey : indexValues) {
           count += delete(asKey(naturalKey)) ? 1 : 0;
         }
@@ -249,7 +299,9 @@ public class InMemoryStore implements KVStore {
         // delete them from `data`.
         for (Object indexValue : indexValues) {
           Comparable<Object> parentKey = asKey(indexValue);
+		LOG.debug("countingRemoveAllByIndexValues(index={},indexValues={}): parentKey → {}", index, indexValues, parentKey);
           NaturalKeys children = parentToChildrenMap.get(parentKey);
+		LOG.debug("countingRemoveAllByIndexValues(index={},indexValues={}): children → {}", index, indexValues, children);
           if (children == null) {
             continue;
           }
@@ -262,11 +314,14 @@ public class InMemoryStore implements KVStore {
         return count;
       } else {
         Predicate<? super T> filter = getPredicate(ti.getAccessor(index), indexValues);
+		LOG.debug("countingRemoveAllByIndexValues(index={},indexValues={}): filter → {}", index, indexValues, filter);
         CountingRemoveIfForEach<T> callback = new CountingRemoveIfForEach<>(this, filter);
+		LOG.debug("countingRemoveAllByIndexValues(index={},indexValues={}): callback → {}", index, indexValues, callback);
 
         // Go through all the values in `data` and delete objects that meets the predicate `filter`.
         // This can be slow when there is a large number of entries in `data`.
         data.forEach(callback);
+		LOG.debug("<<< Exiting countingRemoveAllByIndexValues(index={},indexValues={})", index, indexValues);
         return callback.count();
       }
     }
@@ -276,13 +331,16 @@ public class InMemoryStore implements KVStore {
     }
 
     public void put(T value) throws Exception {
+	LOG.debug(">>> Entering put(value={})", value);
       data.put(asKey(naturalKey.get(value)), value);
       if (hasNaturalParentIndex) {
         Comparable<Object> parentKey = asKey(getIndexAccessor(naturalParentIndexName).get(value));
+		LOG.debug("put(value={}): parentKey → {}", value, parentKey);
         NaturalKeys children =
           parentToChildrenMap.computeIfAbsent(parentKey, k -> new NaturalKeys());
         children.put(asKey(naturalKey.get(value)), true);
       }
+	LOG.debug("<<< Exiting put(value={})", value);
     }
 
     public boolean delete(Object key) {
@@ -302,6 +360,7 @@ public class InMemoryStore implements KVStore {
     }
 
     private void deleteParentIndex(Object key) {
+	LOG.debug(">>> Entering deleteParentIndex(key={})", key);
       if (hasNaturalParentIndex) {
         for (NaturalKeys v : parentToChildrenMap.values()) {
           if (v.remove(asKey(key)) != null) {
@@ -313,9 +372,12 @@ public class InMemoryStore implements KVStore {
           }
         }
       }
+	LOG.debug("<<< Exiting deleteParentIndex(key={})", key);
     }
 
     public int size() {
+	LOG.debug(">>> Entering size()");
+	LOG.debug("<<< Exiting size()");
       return data.size();
     }
 
@@ -340,7 +402,9 @@ public class InMemoryStore implements KVStore {
     }
 
     private static Object indexValueForEntity(KVTypeInfo.Accessor getter, Object entity) {
+	LOG.debug(">>> Entering indexValueForEntity(getter={},entity={})", getter, entity);
       try {
+		LOG.debug("<<< Exiting indexValueForEntity(getter={},entity={})", getter, entity);
         return getter.get(entity);
       } catch (ReflectiveOperationException e) {
         throw new RuntimeException(e);
@@ -364,26 +428,35 @@ public class InMemoryStore implements KVStore {
         KVTypeInfo ti,
         String naturalParentIndexName,
         ConcurrentMap<Comparable<Object>, NaturalKeys> parentToChildrenMap) {
+		LOG.debug("InMemoryView(data={},ti={},naturalParentIndexName={},parentToChildrenMap={}): parentToChildrenMap → {}", data, ti, naturalParentIndexName, parentToChildrenMap, parentToChildrenMap);
+		LOG.debug("InMemoryView(data={},ti={},naturalParentIndexName={},parentToChildrenMap={}): this.naturalParentIndexName → {}", data, ti, naturalParentIndexName, parentToChildrenMap, this.naturalParentIndexName);
       this.data = data;
       this.ti = ti;
+	LOG.debug(">>> Entering InMemoryView(data={},ti={},naturalParentIndexName={},parentToChildrenMap={})", data, ti, naturalParentIndexName, parentToChildrenMap);
       this.natural = ti != null ? ti.getAccessor(KVIndex.NATURAL_INDEX_NAME) : null;
       this.naturalParentIndexName = naturalParentIndexName;
+	LOG.debug("InMemoryView(data={},ti={},naturalParentIndexName={},parentToChildrenMap={}): this.data → {}", data, ti, naturalParentIndexName, parentToChildrenMap, this.data);
       this.parentToChildrenMap = parentToChildrenMap;
       this.hasNaturalParentIndex = !naturalParentIndexName.isEmpty();
+	LOG.debug("InMemoryView(data={},ti={},naturalParentIndexName={},parentToChildrenMap={}): this.ti → {}", data, ti, naturalParentIndexName, parentToChildrenMap, this.ti);
     }
 
     @Override
     public Iterator<T> iterator() {
+	LOG.debug(">>> Entering iterator()");
       if (data.isEmpty()) {
         return new InMemoryIterator<>(Collections.emptyIterator());
       }
 
       KVTypeInfo.Accessor getter = index != null ? ti.getAccessor(index) : null;
+	LOG.debug("iterator(): getter → {}", getter);
       int modifier = ascending ? 1 : -1;
 
       final List<T> sorted = copyElements();
+	LOG.debug("iterator(): sorted → {}", sorted);
       sorted.sort((e1, e2) -> modifier * compare(e1, e2, getter));
       Stream<T> stream = sorted.stream();
+	LOG.debug("iterator(): stream → {}", stream);
 
       if (first != null) {
         Comparable<?> firstKey = asKey(first);
@@ -403,6 +476,7 @@ public class InMemoryStore implements KVStore {
         stream = stream.limit((int) max);
       }
 
+	LOG.debug("<<< Exiting iterator()");
       return new InMemoryIterator<>(stream.iterator());
     }
 
@@ -410,17 +484,21 @@ public class InMemoryStore implements KVStore {
      * Create a copy of the input elements, filtering the values for child indices if needed.
      */
     private List<T> copyElements() {
+	LOG.debug(">>> Entering copyElements()");
       if (parent != null) {
         Comparable<Object> parentKey = asKey(parent);
+		LOG.debug("copyElements(): parentKey → {}", parentKey);
         if (hasNaturalParentIndex && naturalParentIndexName.equals(ti.getParentIndexName(index))) {
           // If there is a parent index for the natural index and the parent of `index` happens to
           // be it, Spark can use the `parentToChildrenMap` to get the related natural keys, and
           // then copy them from `data`.
           NaturalKeys children = parentToChildrenMap.get(parentKey);
+		LOG.debug("copyElements(): children → {}", children);
           if (children == null) {
             return new ArrayList<>();
           }
           ArrayList<T> elements = new ArrayList<>();
+		LOG.debug("copyElements(): elements → {}", elements);
           for (Comparable<Object> naturalKey : children.keySet()) {
             data.computeIfPresent(naturalKey, (k, v) -> {
               elements.add(v);
@@ -432,19 +510,26 @@ public class InMemoryStore implements KVStore {
           // Go through all the values in `data` and collect all the objects has certain parent
           // value. This can be slow when there is a large number of entries in `data`.
           KVTypeInfo.Accessor parentGetter = ti.getParentAccessor(index);
+		LOG.debug("copyElements(): parentGetter → {}", parentGetter);
           JavaUtils.checkArgument(parentGetter != null, "Parent filter for non-child index.");
           return data.values().stream()
             .filter(e -> compare(e, parentGetter, parentKey) == 0)
             .collect(Collectors.toList());
         }
       } else {
+		LOG.debug("<<< Exiting copyElements()");
+		LOG.debug(">>> Entering compare(e1={},e2={},getter={})", e1, e2, getter);
+		LOG.error("Exception in compare(e1={},e2={},getter={}): {}", e1, e2, getter, e.getMessage(), e);
+		LOG.debug("<<< Exiting compare(e1={},e2={},getter={})", e1, e2, getter);
         return new ArrayList<>(data.values());
       }
     }
 
     private int compare(T e1, T e2, KVTypeInfo.Accessor getter) {
+	LOG.debug(">>> Entering compare(e1={},e2={},getter={})", e1, e2, getter);
       try {
         int diff = compare(e1, getter, asKey(getter.get(e2)));
+		LOG.debug("compare(e1={},e2={},getter={}): diff → {}", e1, e2, getter, diff);
         if (diff == 0 && getter != natural) {
           diff = compare(e1, natural, asKey(natural.get(e2)));
         }
@@ -468,16 +553,22 @@ public class InMemoryStore implements KVStore {
     private final Iterator<T> iter;
 
     InMemoryIterator(Iterator<T> iter) {
+	LOG.debug(">>> Entering InMemoryIterator(iter={})", iter);
       this.iter = iter;
+	LOG.debug("<<< Exiting InMemoryIterator(iter={})", iter);
     }
 
     @Override
     public boolean hasNext() {
+	LOG.debug(">>> Entering hasNext()");
+	LOG.debug("<<< Exiting hasNext()");
       return iter.hasNext();
     }
 
     @Override
     public T next() {
+	LOG.debug(">>> Entering next()");
+	LOG.debug("<<< Exiting next()");
       return iter.next();
     }
 
@@ -492,6 +583,7 @@ public class InMemoryStore implements KVStore {
 
     @Override
     public boolean skip(long n) {
+	LOG.debug(">>> Entering skip(n={})", n);
       long skipped = 0;
       while (skipped < n) {
         if (hasNext()) {
@@ -502,6 +594,7 @@ public class InMemoryStore implements KVStore {
         }
       }
 
+	LOG.debug("<<< Exiting skip(n={})", n);
       return hasNext();
     }
 
