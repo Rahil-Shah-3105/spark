@@ -312,6 +312,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
       }
     }
     LOG.debug("Client's IP Address: " + clientIpAddress);
+	// SUGGESTED FIX (review before applying): LOG.debug("Client's *** ***: " + ***);
     return clientIpAddress;
   }
 

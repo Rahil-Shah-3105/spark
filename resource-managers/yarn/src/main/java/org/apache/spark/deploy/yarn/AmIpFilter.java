@@ -113,6 +113,7 @@ public class AmIpFilter implements Filter {
               LOG.debug("proxy address is: {}", add.getHostAddress());
               proxyAddresses.add(add.getHostAddress());
             }
+			// SUGGESTED FIX (review before applying): LOG.debug("proxy *** is: {}", add.***());
             lastUpdate = now;
           } catch (UnknownHostException e) {
             LOG.warn("Could not locate " + proxyHost + " - skipping", e);
@@ -140,6 +141,7 @@ public class AmIpFilter implements Filter {
     HttpServletResponse httpResp = (HttpServletResponse)resp;
 
     LOG.debug("Remote address for request is: {}", httpReq.getRemoteAddr());
+	// SUGGESTED FIX (review before applying): LOG.debug("Remote *** for request is: {}", httpReq.getRemoteAddr());
 
     if (!getProxyAddresses().contains(httpReq.getRemoteAddr())) {
       StringBuilder redirect = new StringBuilder(findRedirectUrl());

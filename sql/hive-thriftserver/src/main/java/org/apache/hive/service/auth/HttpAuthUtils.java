@@ -134,6 +134,7 @@ public final class HttpAuthUtils {
       int separator = part.indexOf(COOKIE_KEY_VALUE_SEPARATOR);
       if (separator == -1) {
         LOG.error("Invalid token string {}", MDC.of(LogKeys.TOKEN, tokenStr));
+		// SUGGESTED FIX (review before applying): LOG.error("Invalid *** string {}", MDC.of(LogKeys.***, ***));
         return null;
       }
       String key = part.substring(0, separator);

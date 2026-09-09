@@ -132,6 +132,7 @@ public class SparkSaslClient implements SaslEncryptionBackend {
           nc.setName(encodeIdentifier(secretKeyHolder.getSaslUser(secretKeyId)));
         } else if (callback instanceof PasswordCallback pc) {
           logger.trace("SASL client callback: setting password");
+		// SUGGESTED FIX (review before applying): logger.trace("SASL client callback: setting ***");
           pc.setPassword(encodePassword(secretKeyHolder.getSecretKey(secretKeyId)));
         } else if (callback instanceof RealmCallback rc) {
           logger.trace("SASL client callback: setting realm");

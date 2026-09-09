@@ -161,6 +161,7 @@ public class SparkSaslServer implements SaslEncryptionBackend {
           nc.setName(encodeIdentifier(secretKeyHolder.getSaslUser(secretKeyId)));
         } else if (callback instanceof PasswordCallback pc) {
           logger.trace("SASL server callback: setting password");
+		// SUGGESTED FIX (review before applying): logger.trace("SASL server callback: setting ***");
           pc.setPassword(encodePassword(secretKeyHolder.getSecretKey(secretKeyId)));
         } else if (callback instanceof RealmCallback rc) {
           logger.trace("SASL server callback: setting realm");
@@ -173,6 +174,7 @@ public class SparkSaslServer implements SaslEncryptionBackend {
             ac.setAuthorizedID(authzId);
           }
           logger.debug("SASL Authorization complete, authorized set to {}", ac.isAuthorized());
+		// SUGGESTED FIX (review before applying): logger.debug("SASL *** complete, authorized set to {}", ac.isAuthorized());
         } else {
           throw new UnsupportedCallbackException(callback, "Unrecognized SASL DIGEST-MD5 Callback");
         }

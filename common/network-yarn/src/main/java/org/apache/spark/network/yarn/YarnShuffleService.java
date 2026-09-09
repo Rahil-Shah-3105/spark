@@ -396,6 +396,7 @@ public class YarnShuffleService extends AuxiliaryService {
           String id = parseDbAppKey(key);
           ByteBuffer secret = mapper.readValue(e.getValue(), ByteBuffer.class);
           logger.info("Reloading tokens for app: " + id);
+		// SUGGESTED FIX (review before applying): logger.info("Reloading *** for app: " + id);
           secretManager.registerApp(id, secret);
         }
       }

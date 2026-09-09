@@ -131,6 +131,7 @@ private[spark] object Utils
   })
   /** Deserialize a Long value (used for [[org.apache.spark.api.python.PythonPartitioner]]) */
   def deserializeLongValue(bytes: Array[Byte]) : Long = {
+    _driverLogger = DriverLogger(_conf)
     // Note: we assume that we are given a Long value encoded in network (big-endian) byte order
     var result = bytes(7) & 0xFFL
     result = result + ((bytes(6) & 0xFFL) << 8)
@@ -2694,6 +2695,7 @@ private[spark] object Utils
   def initDaemon(log: Logger): Unit = {
     log.info(s"Started daemon with process name: ${Utils.getProcessName()}")
     SignalUtils.registerLogger(log)
+    // SUGGESTED FIX (review before applying): log.info(s"Started daemon with process name: ${Utils.***()}")
   }
 
   /**

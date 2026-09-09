@@ -104,6 +104,7 @@ public class ThriftHttpServlet extends TServlet {
       byte[] secret = new byte[32];
       RAN.nextBytes(secret);
       LOG.debug("Using the random bytes as the secret for cookie generation");
+	// SUGGESTED FIX (review before applying): LOG.debug("Using the random bytes as the *** for cookie generation");
       this.signer = new CookieSigner(secret);
       this.cookieMaxAge = (int) hiveConf.getTimeVar(
         ConfVars.HIVE_SERVER2_THRIFT_HTTP_COOKIE_MAX_AGE, TimeUnit.SECONDS);
@@ -234,6 +235,7 @@ public class ThriftHttpServlet extends TServlet {
 
         if (userName == null) {
           LOG.warn("Invalid cookie token {}", MDC.of(LogKeys.TOKEN, currValue));
+		// SUGGESTED FIX (review before applying): LOG.warn("Invalid cookie *** {}", MDC.of(LogKeys.***, currValue));
           continue;
         }
         //We have found a valid cookie in the client request.

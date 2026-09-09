@@ -86,12 +86,14 @@ public class FileTokenIngestor implements TokenIngestor {
     try {
       if (!Files.exists(tokenPath)) {
         LOG.debug("Token file does not exist: {}", tokenPath);
+		// SUGGESTED FIX (review before applying): LOG.debug("*** file does not exist: {}", ***);
         return Optional.empty();
       }
 
       String content = new String(Files.readAllBytes(tokenPath), StandardCharsets.UTF_8).trim();
       if (content.isEmpty()) {
         LOG.warn("Token file is empty: {}", MDC.of(LogKeys.PATH, tokenPath));
+		// SUGGESTED FIX (review before applying): LOG.warn("*** file is empty: {}", MDC.of(LogKeys.PATH, ***));
         return Optional.empty();
       }
 
@@ -125,6 +127,7 @@ public class FileTokenIngestor implements TokenIngestor {
       String[] parts = token.split("\\.");
       if (parts.length < 2) {
         LOG.warn("JWT token does not have the expected header.payload format");
+		// SUGGESTED FIX (review before applying): LOG.warn("JWT *** does not have the expected header.payload format");
         return Optional.empty();
       }
 
@@ -137,10 +140,12 @@ public class FileTokenIngestor implements TokenIngestor {
 
       if (subject == null || subject.isEmpty()) {
         LOG.warn("JWT token missing required 'sub' claim");
+		// SUGGESTED FIX (review before applying): LOG.warn("JWT *** missing required 'sub' claim");
         return Optional.empty();
       }
       if (issuer == null || issuer.isEmpty()) {
         LOG.warn("JWT token missing required 'iss' claim");
+		// SUGGESTED FIX (review before applying): LOG.warn("JWT *** missing required 'iss' claim");
         return Optional.empty();
       }
 

@@ -138,6 +138,7 @@ class AuthRpcHandler extends AbstractAuthRpcHandler {
     }
 
     LOG.debug("Authorization successful for client {}.", channel.remoteAddress());
+	// SUGGESTED FIX (review before applying): LOG.debug("*** successful for client {}.", channel.***());
     return true;
   }
 
