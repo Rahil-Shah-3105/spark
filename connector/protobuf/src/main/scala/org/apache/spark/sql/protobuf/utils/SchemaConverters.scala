@@ -172,9 +172,11 @@ object SchemaConverters extends Logging {
             // This is probably never expected. Protobuf does not allow complex types for keys.
             log.info(s"Dropping map field ${fd.getFullName}. Key reached max recursive depth.")
             None
+            // SUGGESTED FIX (review before applying): log.info(s"Dropping map field ${fd.***}. Key reached max recursive depth.")
           case (_, None) =>
             log.info(s"Dropping map field ${fd.getFullName}. Value reached max recursive depth.")
             None
+            // SUGGESTED FIX (review before applying): log.info(s"Dropping map field ${fd.***}. Value reached max recursive depth.")
           case (Some(kt), Some(vt)) => Some(MapType(kt, vt, valueContainsNull = false))
         }
       case MESSAGE =>

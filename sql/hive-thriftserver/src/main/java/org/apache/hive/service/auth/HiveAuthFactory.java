@@ -286,6 +286,7 @@ public class HiveAuthFactory {
           "Delegation token only supported over kerberos authentication", "08S01");
     }
     try {
+	// SUGGESTED FIX (review before applying): LOG.error(msg + " {}", e, MDC.of(LogKeys.***, ***));
       return delegationTokenManager.verifyDelegationToken(delegationToken);
     } catch (IOException e) {
       String msg = "Error verifying delegation token";

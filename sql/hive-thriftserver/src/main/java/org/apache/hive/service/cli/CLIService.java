@@ -557,6 +557,7 @@ public class CLIService extends CompositeService implements ICLIService {
     String delegationToken = sessionManager.getSession(sessionHandle)
         .getDelegationToken(authFactory, owner, renewer);
     LOG.info("{}: getDelegationToken()", MDC.of(LogKeys.SESSION_HANDLE, sessionHandle));
+	// SUGGESTED FIX (review before applying): LOG.info("{}: ***()", MDC.of(LogKeys.SESSION_HANDLE, sessionHandle));
     return delegationToken;
   }
 

@@ -64,6 +64,7 @@ import org.apache.spark.network.util.*;
  * TransportClient, all given {@link TransportClientBootstrap}s will be run.
  */
 public class TransportClientFactory implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportClientFactory.class);
 
   /** A simple data structure to track the pool of clients between two peer nodes. */
   private static class ClientPool {
@@ -203,6 +204,7 @@ public class TransportClientFactory implements Closeable {
       if (handler != null) {
         synchronized (handler) {
           handler.getResponseHandler().updateTimeOfLastRequest();
+		// SUGGESTED FIX (review before applying): logger.trace("Returning cached connection to {}: {}", ***, cachedClient);
         }
       }
 

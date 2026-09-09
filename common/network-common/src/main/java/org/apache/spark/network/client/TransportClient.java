@@ -169,6 +169,7 @@ public class TransportClient implements Closeable {
    */
   public void stream(String streamId, StreamCallback callback) {
     StdChannelListener listener = new StdChannelListener(streamId) {
+	// SUGGESTED FIX (review before applying): logger.debug("Sending stream request for {} to {}", streamId, ***(channel));
       @Override
       void handleFailure(String errorMsg, Throwable cause) throws Exception {
         callback.onFailure(streamId, new IOException(errorMsg, cause));

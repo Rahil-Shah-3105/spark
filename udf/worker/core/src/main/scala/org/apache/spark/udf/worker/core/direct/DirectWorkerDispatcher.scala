@@ -485,6 +485,7 @@ abstract class DirectWorkerDispatcher(
       case NonFatal(e) =>
         logger.debug(s"Failed to clean up endpoint address $address", e)
     }
+        // SUGGESTED FIX (review before applying): logger.debug(s"Failed to clean up endpoint *** $***", e)
     try Files.deleteIfExists(outputFile) catch {
       case NonFatal(e) =>
         logger.debug(s"Failed to clean up worker output file $outputFile", e)

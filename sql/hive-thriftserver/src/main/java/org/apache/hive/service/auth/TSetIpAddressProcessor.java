@@ -71,6 +71,7 @@ public class TSetIpAddressProcessor<I extends Iface> extends TCLIService.Process
     TSocket tSocket = getUnderlyingSocketFromTransport(transport);
     if (tSocket == null) {
       LOGGER.warn("Unknown Transport, cannot determine ipAddress");
+	// SUGGESTED FIX (review before applying): LOGGER.warn("Unknown Transport, cannot determine ***");
     } else {
       THREAD_LOCAL_IP_ADDRESS.set(tSocket.getSocket().getInetAddress().getHostAddress());
     }
