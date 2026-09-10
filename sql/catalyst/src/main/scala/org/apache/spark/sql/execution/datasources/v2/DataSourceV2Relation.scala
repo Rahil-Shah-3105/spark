@@ -61,6 +61,7 @@ abstract class DataSourceV2RelationBase(
     options: CaseInsensitiveStringMap,
     timeTravelSpec: Option[TimeTravelSpec] = None)
   extends LeafNode with MultiInstanceRelation with NamedRelation {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   import DataSourceV2Implicits._
 
@@ -383,6 +384,7 @@ object ExtractV2CatalogAndIdentifier {
       case _ =>
         None
     }
+    planChangeLogger.warn("unapply(relation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", relation)
   }
 }
 
@@ -395,6 +397,7 @@ object ExtractV2ScanInfo {
   def unapply(scanRelation: DataSourceV2ScanRelation)
       : Option[(DataSourceV2Relation, Scan, Seq[AttributeReference])] =
     Some((scanRelation.relation, scanRelation.scan, scanRelation.output))
+planChangeLogger.warn("unapply(scanRelation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", scanRelation)
 }
 
 object DataSourceV2Relation {
@@ -419,6 +422,8 @@ object DataSourceV2Relation {
       CharVarcharUtils.replaceCharVarcharWithStringInSchema(table.columns.asSchema),
       keepFieldIds = true)
     DataSourceV2Relation(table, toAttributes(schema), catalog, identifier, options, timeTravelSpec)
+    planChangeLogger.warn("create(table,catalog,identifier,options,timeTravelSpec)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, catalog, identifier, options, timeTravelSpec, identifier)
+  planChangeLogger.warn("create(table,catalog,identifier)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, catalog, identifier, identifier)
   }
 
   def create(

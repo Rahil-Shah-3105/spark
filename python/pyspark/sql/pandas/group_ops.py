@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         ArrowCogroupedMapFunction,
     )
     from pyspark.sql.group import GroupedData
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class PandasGroupedOpsMixin:
@@ -106,6 +107,7 @@ class PandasGroupedOpsMixin:
                 messageParameters={"eval_type": "SQL_GROUPED_MAP_PANDAS_UDF"},
             )
 
+            logger.warning("apply(self,udf)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, udf)
         warnings.warn(
             "It is preferred to use 'applyInPandas' over this "
             "API. This API will be deprecated in the future releases. See SPARK-28264 for "

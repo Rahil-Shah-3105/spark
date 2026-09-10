@@ -111,6 +111,8 @@ class ChiSqSelectorModel @Since("1.3.0") (
   @Since("1.6.0")
   override def save(sc: SparkContext, path: String): Unit = {
     ChiSqSelectorModel.SaveLoadV1_0.save(sc, this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,model,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, model, path)
   }
 }
 
@@ -118,6 +120,7 @@ object ChiSqSelectorModel extends Loader[ChiSqSelectorModel] {
   @Since("1.6.0")
   override def load(sc: SparkContext, path: String): ChiSqSelectorModel = {
     ChiSqSelectorModel.SaveLoadV1_0.load(sc, path)
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private[feature]
@@ -200,6 +203,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
   def this(numTopFeatures: Int) = {
     this()
     this.numTopFeatures = numTopFeatures
+  logger.warn("setNumTopFeatures(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("1.6.0")
@@ -213,6 +217,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
     require(0.0 <= value && value <= 1.0, "Percentile must be in [0,1]")
     percentile = value
     this
+    logger.warn("setPercentile(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("2.1.0")
@@ -220,6 +225,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
     require(0.0 <= value && value <= 1.0, "FPR must be in [0,1]")
     fpr = value
     this
+    logger.warn("setFpr(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("2.2.0")
@@ -227,6 +233,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
     require(0.0 <= value && value <= 1.0, "FDR must be in [0,1]")
     fdr = value
     this
+    logger.warn("setFdr(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("2.2.0")
@@ -234,6 +241,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
     require(0.0 <= value && value <= 1.0, "FWE must be in [0,1]")
     fwe = value
     this
+    logger.warn("setFwe(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("2.1.0")
@@ -241,6 +249,7 @@ class ChiSqSelector @Since("2.1.0") () extends Serializable {
     require(ChiSqSelector.supportedSelectorTypes.contains(value),
       s"ChiSqSelector Type: $value was not supported.")
     selectorType = value
+    logger.warn("setSelectorType(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
     this
   }
 

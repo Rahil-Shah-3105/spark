@@ -30,6 +30,7 @@ import org.apache.spark.sql.internal.SQLConf
  * reused to parse the [[SQLConf.DEFAULT_PATH]] conf value.
  */
 case class SetPathCommand(elements: Seq[PathElement]) extends LeafRunnableCommand {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def output: Seq[Attribute] = Seq.empty
 
@@ -45,6 +46,7 @@ case class SetPathCommand(elements: Seq[PathElement]) extends LeafRunnableComman
     val expanded0 = PathElement.expand(elements, conf, catalogManager)
     val expanded = PathElement.validateNoStaticDuplicates(expanded0, conf.caseSensitiveAnalysis)
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     if (expanded.isEmpty) {
       catalogManager.clearSessionPath()
     } else {

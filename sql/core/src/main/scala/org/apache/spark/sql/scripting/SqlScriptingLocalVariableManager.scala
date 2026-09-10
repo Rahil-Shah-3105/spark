@@ -28,6 +28,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors.unresolvedVariableErro
 
 class SqlScriptingLocalVariableManager(context: SqlScriptingExecutionContext)
   extends VariableManager with DataTypeErrorsBase {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def getVariableNameForError(variableName: String): String =
     toSQLId(Seq(context.currentScope.label, variableName))
@@ -38,6 +39,7 @@ class SqlScriptingLocalVariableManager(context: SqlScriptingExecutionContext)
       overrideIfExists: Boolean): Unit = {
     val name = nameParts.last
 
+    planChangeLogger.warn("create(nameParts,varDef,overrideIfExists)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", nameParts, varDef, overrideIfExists, overrideIfExists)
     // Sanity check, this should already be thrown by CreateVariableExec.run
     if (context.currentScope.variables.contains(name)) {
       throw new AnalysisException(
@@ -57,6 +59,7 @@ class SqlScriptingLocalVariableManager(context: SqlScriptingExecutionContext)
         throw unresolvedVariableError(
           nameParts, Seq(varDef.identifier.namespace().toIndexedSeq), origin))
 
+      planChangeLogger.warn("set(nameParts,varDef,origin)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nameParts, varDef, origin)
     if (!scope.variables.contains(nameParts.last)) {
       throw unresolvedVariableError(
         nameParts, Seq(varDef.identifier.namespace().toIndexedSeq), origin)
@@ -67,6 +70,7 @@ class SqlScriptingLocalVariableManager(context: SqlScriptingExecutionContext)
 
   override def get(nameParts: Seq[String]): Option[VariableDefinition] = {
     findScopeOfVariable(nameParts).flatMap(_.variables.get(nameParts.last))
+    planChangeLogger.warn("get(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   private def findScopeOfVariable(nameParts: Seq[String]): Option[SqlScriptingExecutionScope] = {
@@ -98,6 +102,7 @@ class SqlScriptingLocalVariableManager(context: SqlScriptingExecutionContext)
     throw SparkException.internalError(
       "ScriptingVariableManager.remove should never be called as local variables cannot be dropped."
     )
+    planChangeLogger.warn("remove(nameParts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nameParts)
   }
 
   override def clear(): Unit = context.frames.clear()

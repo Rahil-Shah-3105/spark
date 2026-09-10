@@ -34,6 +34,7 @@ abstract class FileScanBuilder(
   extends ScanBuilder
     with SupportsPushDownRequiredColumns
     with SupportsPushDownCatalystFilters {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private val partitionSchema = fileIndex.partitionSchema
   private val isCaseSensitive = sparkSession.sessionState.conf.caseSensitiveAnalysis
   protected val supportsNestedSchemaPruning = false
@@ -45,6 +46,7 @@ abstract class FileScanBuilder(
   override def pruneColumns(requiredSchema: StructType): Unit = {
     // [SPARK-30107] While `requiredSchema` might have pruned nested columns,
     // the actual data schema of this scan is determined in `readDataSchema`.
+    planChangeLogger.warn("pruneColumns(requiredSchema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", requiredSchema)
     // File formats that don't support nested schema pruning,
     // use `requiredSchema` as a reference and prune only top-level columns.
     this.requiredSchema = requiredSchema
@@ -53,6 +55,7 @@ abstract class FileScanBuilder(
   protected def readDataSchema(): StructType = {
     val requiredNameSet = createRequiredNameSet()
     val schema = if (supportsNestedSchemaPruning) requiredSchema else dataSchema
+    planChangeLogger.warn("readDataSchema()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val fields = schema.fields.filter { field =>
       val colName = PartitioningUtils.getColName(field, isCaseSensitive)
       requiredNameSet.contains(colName) && !partitionNameSet.contains(colName)
@@ -67,6 +70,7 @@ abstract class FileScanBuilder(
       requiredNameSet.contains(colName)
     }
     StructType(fields)
+    planChangeLogger.warn("readPartitionSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def pushFilters(filters: Seq[Expression]): Seq[Expression] = {

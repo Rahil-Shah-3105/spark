@@ -144,6 +144,7 @@ private[r] object MultilayerPerceptronClassifierWrapper
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)

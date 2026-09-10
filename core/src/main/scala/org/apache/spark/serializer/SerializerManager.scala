@@ -44,7 +44,9 @@ private[spark] class SerializerManager(
   private[this] val kryoSerializer = new KryoSerializer(conf)
 
   def setDefaultClassLoader(classLoader: ClassLoader): Unit = {
+    _driverLogger = DriverLogger(_conf)
     kryoSerializer.setDefaultClassLoader(classLoader)
+    _driverLogger.warn("setDefaultClassLoader(classLoader)={}): EUAIACT-AUDIT: State change recorded for the audit trail", classLoader)
   }
 
   private[this] val stringClassTag: ClassTag[String] = implicitly[ClassTag[String]]
@@ -95,6 +97,8 @@ private[spark] class SerializerManager(
     } else {
       defaultSerializer
     }
+    _driverLogger.warn("getSerializer(ct,autoPick)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ct, autoPick)
+  _driverLogger.warn("getSerializer(keyClassTag,valueClassTag)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keyClassTag, valueClassTag)
   }
 
   /**

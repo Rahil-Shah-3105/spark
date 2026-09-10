@@ -29,12 +29,14 @@ import org.apache.spark.sql.errors.QueryExecutionErrors
  * Spark ClassLoader.
  */
 class DriverWrapper(val wrapped: Driver) extends Driver {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def acceptsURL(url: String): Boolean = wrapped.acceptsURL(url)
 
   override def jdbcCompliant(): Boolean = wrapped.jdbcCompliant()
 
   override def getPropertyInfo(url: String, info: Properties): Array[DriverPropertyInfo] = {
     wrapped.getPropertyInfo(url, info)
+    planChangeLogger.warn("getPropertyInfo(url,info)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", url, info)
   }
 
   override def getMinorVersion: Int = wrapped.getMinorVersion

@@ -48,6 +48,7 @@ import org.apache.spark.util.SparkErrorUtils
 class XmlInferSchema(private val options: XmlOptions, private val caseSensitive: Boolean)
     extends Serializable
     with Logging {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   import org.apache.spark.sql.catalyst.xml.XmlInferSchema._
 
@@ -244,6 +245,7 @@ class XmlInferSchema(private val options: XmlOptions, private val caseSensitive:
         compatibleType(caseSensitive, options.valueTag)(rootType, taskResult)
       }
     }
+    planChangeLogger.warn("inferFromReaders(recordReader)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordReader, recordReader)
     recordReader.sparkContext.runJob(mergedTypesFromPartitions, foldPartition, mergeResult)
 
     canonicalizeType(rootType) match {
@@ -541,6 +543,8 @@ class XmlInferSchema(private val options: XmlOptions, private val caseSensitive:
 
         case _ => // do nothing
       }
+    planChangeLogger.warn("addOrUpdateType(nameToDataType,fieldName,newType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nameToDataType, fieldName, newType)
+    planChangeLogger.warn("addOrUpdateType(oldTypeOpt,newType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", oldTypeOpt, newType)
     }
 
     // Note: other code relies on this sorting for correctness, so don't remove it!
@@ -713,6 +717,7 @@ class XmlInferSchema(private val options: XmlOptions, private val caseSensitive:
     } else {
       tryParseTimestampNTZ(field)
     }
+    planChangeLogger.warn("tryParseTime(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
   }
 
   private def tryParseDate(field: String): DataType = {
@@ -727,6 +732,7 @@ class XmlInferSchema(private val options: XmlOptions, private val caseSensitive:
     // We can only parse the value as TimestampNTZType if it does not have zone-offset or
     // time-zone component and can be parsed with the timestamp formatter.
     // Otherwise, it is likely to be a timestamp with timezone.
+    planChangeLogger.warn("tryParseTimestampNTZ(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
     val timestampType = SQLConf.get.timestampType
     try {
       if ((SQLConf.get.legacyTimeParserPolicy == LegacyBehaviorPolicy.LEGACY ||
@@ -769,6 +775,7 @@ class XmlInferSchema(private val options: XmlOptions, private val caseSensitive:
     } else {
       tryParseBoolean(field)
     }
+    planChangeLogger.warn("tryParseTimestamp(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
   }
 
   private def tryParseBoolean(field: String): DataType = {

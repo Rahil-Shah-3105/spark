@@ -30,6 +30,8 @@ import org.apache.hadoop.hive.ql.exec.UDAFEvaluatorResolver;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A equivalent implementation of {@link GenericUDAFBridge}, but eliminate calls
@@ -39,6 +41,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
  */
 @SuppressWarnings("deprecation")
 public class SparkGenericUDAFBridge extends GenericUDAFBridge {
+private static final Logger log = LoggerFactory.getLogger(SparkGenericUDAFBridge.class);
 
   public SparkGenericUDAFBridge(UDAF udaf) {
       super(udaf);
@@ -52,6 +55,7 @@ public class SparkGenericUDAFBridge extends GenericUDAFBridge {
       resolver = new SparkDefaultUDAFEvaluatorResolver((DefaultUDAFEvaluatorResolver) resolver);
     }
     Class<? extends UDAFEvaluator> udafEvaluatorClass =
+		log.warn("getEvaluator(parameters)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parameters);
         resolver.getEvaluatorClass(Arrays.asList(parameters));
 
     return new SparkGenericUDAFBridgeEvaluator(udafEvaluatorClass);

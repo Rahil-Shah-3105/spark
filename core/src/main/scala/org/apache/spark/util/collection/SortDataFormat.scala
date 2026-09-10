@@ -36,6 +36,7 @@ import scala.reflect.ClassTag
 // TODO: Making Buffer a real trait would be a better abstraction, but adds some complexity.
 private[spark]
 abstract class SortDataFormat[K, Buffer] {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Creates a new mutable key for reuse. This should be implemented if you want to override
@@ -52,6 +53,7 @@ abstract class SortDataFormat[K, Buffer] {
    * If you want to override this method, you must implement [[newKey()]].
    */
   def getKey(data: Buffer, pos: Int, reuse: K): K = {
+    _driverLogger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos)
     getKey(data, pos)
   }
 

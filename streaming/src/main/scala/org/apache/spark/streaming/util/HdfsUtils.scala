@@ -29,6 +29,7 @@ private[streaming] object HdfsUtils {
     val dfsPath = new Path(path)
     val dfs = getFileSystemForPath(dfsPath, conf)
     // If the file exists and we have append support, append instead of creating a new file
+    logger.warn("getOutputStream(path,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, conf)
     val stream: FSDataOutputStream = {
       if (SparkHadoopUtil.isFile(dfs, dfsPath)) {
         if (conf.getBoolean("dfs.support.append", true) ||
@@ -60,6 +61,7 @@ private[streaming] object HdfsUtils {
         // previous runs.
         if (!dfs.getFileStatus(dfsPath).isFile) null else throw e
     }
+    logger.warn("getInputStream(path,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, conf)
   }
 
   def checkState(state: Boolean, errorMsg: => String): Unit = {
@@ -76,10 +78,12 @@ private[streaming] object HdfsUtils {
     val fileStatus = dfs.getFileStatus(dfsPath)
     val blockLocs = Option(dfs.getFileBlockLocations(fileStatus, offset, length))
     blockLocs.map(_.flatMap(_.getHosts)).getOrElse(Array.empty)
+    logger.warn("getFileSegmentLocations(path,offset,length,conf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, offset, length, conf)
   }
 
   def getFileSystemForPath(path: Path, conf: Configuration): FileSystem = {
     // For local file systems, return the raw local file system, such calls to flush()
+    logger.warn("getFileSystemForPath(path,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, conf)
     // actually flushes the stream.
     val fs = path.getFileSystem(conf)
     fs match {

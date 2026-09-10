@@ -51,6 +51,7 @@ private[python] class ColumnarArrowPythonWithNamedArgumentRunner(
     pythonMetrics, jobArtifactUUID, sessionUUID)
   with ColumnarArrowPythonInput
   with BasicPythonArrowOutput {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def runnerConf: Map[String, String] = super.runnerConf ++ pythonRunnerConf
 
@@ -65,5 +66,6 @@ private[python] class ColumnarArrowPythonWithNamedArgumentRunner(
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDFRunner.writeUDFs(dataOut, funcs, argMetas)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 }

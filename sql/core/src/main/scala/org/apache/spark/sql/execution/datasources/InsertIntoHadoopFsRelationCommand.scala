@@ -119,6 +119,7 @@ case class InsertIntoHadoopFsRelationCommand(
       outputPath = outputPath.toString,
       dynamicPartitionOverwrite = dynamicPartitionOverwrite)
 
+    planChangeLogger.warn("run(sparkSession,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSession, child, jobId)
     val doInsertion = if (mode == SaveMode.Append) {
       true
     } else {
@@ -148,6 +149,7 @@ case class InsertIntoHadoopFsRelationCommand(
     if (doInsertion) {
 
       def refreshUpdatedPartitions(updatedPartitionPaths: Set[String]): Unit = {
+        val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
         val updatedPartitions = updatedPartitionPaths.map(PartitioningUtils.parsePathFragment)
         if (partitionsTrackedByCatalog) {
           val newPartitions = updatedPartitions -- initialMatchingPartitions
@@ -168,6 +170,7 @@ case class InsertIntoHadoopFsRelationCommand(
             }
           }
         }
+        planChangeLogger.warn("refreshUpdatedPartitions(updatedPartitionPaths)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updatedPartitionPaths)
       }
 
       // For dynamic partition overwrite, FileOutputCommitter's output path is staging path, files
@@ -241,6 +244,7 @@ case class InsertIntoHadoopFsRelationCommand(
     // first clear the path determined by the static partition keys (e.g. /table/foo=1)
     val staticPrefixPath = qualifiedOutputPath.suffix(staticPartitionPrefix)
     if (fs.exists(staticPrefixPath) && !committer.deleteWithJob(fs, staticPrefixPath, true)) {
+    planChangeLogger.warn("deleteMatchingPartitions(fs,qualifiedOutputPath,customPartitionLocations,committer)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, qualifiedOutputPath, customPartitionLocations, committer)
       throw QueryExecutionErrors.cannotClearOutputDirectoryError(staticPrefixPath)
     }
     // now clear all custom partition locations (e.g. /custom/dir/where/foo=2/bar=4)

@@ -46,7 +46,9 @@ case object NumericEvalContext {
       evalMode: EvalMode.Value,
       allowDecimalPrecisionLoss: Boolean = SQLConf.get.decimalOperationsAllowPrecisionLoss
   ): NumericEvalContext = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     new NumericEvalContext(evalMode, allowDecimalPrecisionLoss)
+    planChangeLogger.warn("apply(evalMode,allowDecimalPrecisionLoss)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", evalMode, allowDecimalPrecisionLoss)
   }
 
   def fromSQLConf(conf: SQLConf): NumericEvalContext = {

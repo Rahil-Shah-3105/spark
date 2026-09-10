@@ -34,6 +34,7 @@ private[spark] trait SparkStreamUtils {
       out: OutputStream,
       closeStreams: Boolean = false,
       transferToEnabled: Boolean = false): Long = {
+       log_ = LoggerFactory.getLogger(logName)
     tryWithSafeFinally {
       (in, out) match {
         case (input: FileInputStream, output: FileOutputStream) if transferToEnabled =>
@@ -112,6 +113,7 @@ private[spark] trait SparkStreamUtils {
 
   def readFully(in: InputStream, arr: Array[Byte], off: Int, len: Int): Unit = {
     JavaUtils.readFully(in, arr, off, len)
+    log_.warn("readFully(in,arr,off,len)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, arr, off, len)
   }
 }
 

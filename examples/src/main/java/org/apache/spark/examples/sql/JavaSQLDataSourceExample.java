@@ -40,8 +40,11 @@ import org.apache.spark.sql.Row;
 // $example off:schema_merging$
 // $example off:basic_parquet_example$
 import org.apache.spark.sql.SparkSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JavaSQLDataSourceExample {
+private static final Logger log = LoggerFactory.getLogger(JavaSQLDataSourceExample.class);
 
   // $example on:schema_merging$
   public static class Square implements Serializable {
@@ -55,6 +58,7 @@ public class JavaSQLDataSourceExample {
     }
 
     public void setValue(int value) {
+	log.warn("setValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value);
       this.value = value;
     }
 
@@ -63,6 +67,7 @@ public class JavaSQLDataSourceExample {
     }
 
     public void setSquare(int square) {
+	log.warn("setSquare(square)={}): EUAIACT-AUDIT: State change recorded for the audit trail", square);
       this.square = square;
     }
     // $example on:schema_merging$
@@ -89,6 +94,7 @@ public class JavaSQLDataSourceExample {
     }
 
     public void setCube(int cube) {
+	log.warn("setCube(cube)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cube);
       this.cube = cube;
     }
     // $example on:schema_merging$
@@ -188,6 +194,7 @@ public class JavaSQLDataSourceExample {
     // +-------------+
     // |         file|
     // +-------------+
+	log.warn("runGenericFileSourceOptionsExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |file1.parquet|
     // +-------------+
     // $example off:load_with_modified_time_filter$
@@ -246,6 +253,7 @@ public class JavaSQLDataSourceExample {
       .bucketBy(42, "name")
       .saveAsTable("users_partitioned_bucketed");
     // $example off:write_partition_and_bucket$
+	log.warn("runBasicDataSourceExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
 
     spark.sql("DROP TABLE IF EXISTS people_bucketed");
     spark.sql("DROP TABLE IF EXISTS users_partitioned_bucketed");
@@ -273,6 +281,7 @@ public class JavaSQLDataSourceExample {
     // +------------+
     // |       value|
     // +------------+
+	log.warn("runBasicParquetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |Name: Justin|
     // +------------+
     // $example off:basic_parquet_example$
@@ -314,6 +323,7 @@ public class JavaSQLDataSourceExample {
     // root
     //  |-- value: int (nullable = true)
     //  |-- square: int (nullable = true)
+	log.warn("runParquetSchemaMergingExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     //  |-- cube: int (nullable = true)
     //  |-- key: int (nullable = true)
     // $example off:schema_merging$
@@ -353,6 +363,7 @@ public class JavaSQLDataSourceExample {
     // +---------------+----+
     // |        address|name|
     // +---------------+----+
+	log.warn("runJsonDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |[Columbus,Ohio]| Yin|
     // +---------------+----+
     // $example off:json_dataset$
@@ -417,6 +428,7 @@ public class JavaSQLDataSourceExample {
     // |311val_311|
     // |  27val_27|
     // |165val_165|
+	log.warn("runCsvDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // +-----------+
 
     // $example off:csv_dataset$
@@ -464,6 +476,7 @@ public class JavaSQLDataSourceExample {
     df1.write().text("output");
 
     // You can specify the compression format using the 'compression' option.
+	log.warn("runTextDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     df1.write().option("compression", "gzip").text("output_compressed");
 
     // $example off:text_dataset$
@@ -503,6 +516,7 @@ public class JavaSQLDataSourceExample {
     jdbcDF.write()
       .option("createTableColumnTypes", "name CHAR(64), comments VARCHAR(1024)")
       .jdbc("jdbc:postgresql:dbserver", "schema.tablename", connectionProperties);
+	log.warn("runJdbcDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // $example off:jdbc_dataset$
   }
 
@@ -551,6 +565,7 @@ public class JavaSQLDataSourceExample {
     // |age|      job|      name|
     // +---+---------+----------+
     // | 28|Developer|laglangyue|
+	log.warn("runXmlDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // +---+---------+----------+
     // $example off:xml_dataset$
 

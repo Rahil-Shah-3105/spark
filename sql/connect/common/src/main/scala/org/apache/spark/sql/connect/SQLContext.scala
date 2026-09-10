@@ -141,6 +141,8 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
       path: String,
       source: String): Dataset[Row] = {
     super.createExternalTable(tableName, path, source)
+    logger.warn("createExternalTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
+  logger.warn("createExternalTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
   }
 
   /** @inheritdoc */
@@ -157,6 +159,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
       source: String,
       options: Map[String, String]): Dataset[Row] = {
     super.createExternalTable(tableName, source, options)
+  logger.warn("createExternalTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
   }
 
   /** @inheritdoc */
@@ -259,6 +262,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
   /** @inheritdoc */
   override def load(path: String): Dataset[Row] = super.load(path)
 
+  logger.warn("load(source,schema,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, schema, options)
   /** @inheritdoc */
   override def load(path: String, source: String): Dataset[Row] = super.load(path, source)
 
@@ -313,5 +317,6 @@ object SQLContext extends sql.SQLContextCompanion {
   /** @inheritdoc */
   def getOrCreate(sparkContext: SparkContext): SQLContext = {
     SparkSession.builder().getOrCreate().sqlContext
+    logger.warn("getOrCreate(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
   }
 }

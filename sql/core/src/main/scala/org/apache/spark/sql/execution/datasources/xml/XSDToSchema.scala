@@ -34,6 +34,7 @@ import org.apache.spark.sql.types._
  * so not all elements or XSDs are supported.
  */
 object XSDToSchema extends Logging{
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Reads a schema from an XSD path.
@@ -50,6 +51,7 @@ object XSDToSchema extends Logging{
     xmlSchemaCollection.setBaseUri(xsdPath.toString)
     val xmlSchema = xmlSchemaCollection.read(new InputStreamReader(in))
     getStructType(xmlSchema)
+    planChangeLogger.warn("read(xsdPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", xsdPath)
   }
 
   /**
@@ -182,6 +184,7 @@ object XSDToSchema extends Logging{
       case unsupported =>
         throw new IllegalArgumentException(s"Unsupported schema element type: $unsupported")
     }
+    planChangeLogger.warn("getStructField(xmlSchema,schemaType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", xmlSchema, schemaType)
   }
 
   private def getStructType(xmlSchema: XmlSchema): StructType = {
@@ -193,6 +196,7 @@ object XSDToSchema extends Logging{
       val rootType = getStructField(xmlSchema, schemaType)
       StructField(schemaElement.getName, rootType.dataType, schemaElement.getMinOccurs == 0)
     })
+    planChangeLogger.warn("getStructType(xmlSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", xmlSchema)
   }
 
   private def getStructFieldsFromParticle(
@@ -266,5 +270,6 @@ object XSDToSchema extends Logging{
         case unsupported =>
           throw new IllegalArgumentException(s"Unsupported particle: $unsupported")
       }
+      planChangeLogger.warn("getStructFieldsFromParticle(particle,xmlSchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", particle, xmlSchema)
   }
 }

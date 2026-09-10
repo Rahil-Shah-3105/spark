@@ -75,6 +75,7 @@ private[v2] trait V2ViewPreparation extends LeafV2CommandExec {
   override def output: Seq[Attribute] = Seq.empty
 
   protected def buildViewInfo(): View = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     import ViewHelper._
 
     if (userSpecifiedColumns.nonEmpty) {
@@ -126,6 +127,7 @@ private[v2] trait V2ViewPreparation extends LeafV2CommandExec {
     viewDependencies.foreach(builder.withViewDependencies)
     tableType.foreach(builder.withTableType)
     builder.build()
+    planChangeLogger.warn("buildViewInfo()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected def viewAlreadyExists(): Throwable =
@@ -149,6 +151,7 @@ private[v2] trait V2CreateViewPreparation extends V2ViewPreparation {
     // CREATE VIEW IF NOT EXISTS: short-circuit before `buildViewInfo` if a view already sits
     // at the ident -- avoids `aliasPlan` / config capture for the common no-op case (matches
     // v1 `CreateViewCommand.run`). The mixed-catalog "table at ident" no-op is handled in the
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // catch block below; that case is rare enough that paying for `buildViewInfo` is fine.
     if (allowExisting && catalog.viewExists(identifier)) return Seq.empty
 

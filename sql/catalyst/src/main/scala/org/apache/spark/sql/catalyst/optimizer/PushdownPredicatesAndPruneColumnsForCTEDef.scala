@@ -32,6 +32,7 @@ import org.apache.spark.util.collection.Utils
  * the disjunctive predicates as well as the union of attributes down the CTE plan.
  */
 object PushdownPredicatesAndPruneColumnsForCTEDef extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // CTE_id - (CTE_definition, precedence, predicates_to_push_down, attributes_to_prune)
   private type CTEMap = mutable.HashMap[Long, (CTERelationDef, Int, Seq[Expression], AttributeSet)]
@@ -44,6 +45,7 @@ object PushdownPredicatesAndPruneColumnsForCTEDef extends Rule[LogicalPlan] with
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def restoreCTEDefAttrs(
@@ -53,6 +55,7 @@ object PushdownPredicatesAndPruneColumnsForCTEDef extends Rule[LogicalPlan] with
       case a: Attribute =>
         mapping.keys.find(_.semanticEquals(a)).map(mapping).getOrElse(a)
     })
+    planChangeLogger.warn("restoreCTEDefAttrs(input,mapping)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**
@@ -261,6 +264,7 @@ object PushdownPredicatesAndPruneColumnsForCTEDef extends Rule[LogicalPlan] with
 
   private def needsPruning(sourcePlan: LogicalPlan, attributeSet: AttributeSet): Boolean = {
     attributeSet.size < sourcePlan.outputSet.size && attributeSet.subsetOf(sourcePlan.outputSet)
+    planChangeLogger.warn("needsPruning(sourcePlan,attributeSet)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sourcePlan, attributeSet)
   }
 }
 

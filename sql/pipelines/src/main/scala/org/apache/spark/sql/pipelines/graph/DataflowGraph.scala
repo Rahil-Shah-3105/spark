@@ -265,6 +265,7 @@ case class DataflowGraph(
         )
       }
     }
+    logger.warn("validateEveryDatasetHasFlow()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Returns true iff all [[Flow]]s are successfully analyzed. */

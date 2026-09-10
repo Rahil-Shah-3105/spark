@@ -77,6 +77,7 @@ class SparkEnv (
     val metricsSystem: MetricsSystem,
     val outputCommitCoordinator: OutputCommitCoordinator,
     val conf: SparkConf) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   // The two shuffle managers are peers keyed by kind, not a default and an override: a shuffle is
   // routed to one or the other by its dependency type via `shuffleManagerFor`, so neither is ever
@@ -173,6 +174,7 @@ class SparkEnv (
     val blockingResult =
       _blockingShuffleManager != null && _blockingShuffleManager.unregisterShuffle(shuffleId)
     // OR the pipelined result in without short-circuiting, so both are always notified.
+    _driverLogger.warn("unregisterShuffleFromAllManagers(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
     val pipelinedResult =
       _pipelinedShuffleManager != null && _pipelinedShuffleManager.unregisterShuffle(shuffleId)
     blockingResult || pipelinedResult
@@ -225,9 +227,11 @@ class SparkEnv (
   @volatile private var udfDispatcherManager: Option[UDFDispatcherManager] = None
 
   private def createUDFDispatcherManager(): UDFDispatcherManager = {
+    _driverLogger.warn("createUDFDispatcherManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val factory = new UDFDispatcherFactory {
       override def createDispatcher(
           workerSpec: UDFWorkerSpecification,
+          _driverLogger.warn("createDispatcher(workerSpec,logger)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", workerSpec, logger)
           logger: org.apache.spark.udf.worker.core.WorkerLogger
       ): WorkerDispatcher = {
         // TODO [SPARK-55278]: Wire in the correct dispatcher factory
@@ -258,6 +262,7 @@ class SparkEnv (
       }
     }
     manager.getDispatcher(workerSpec)
+    _driverLogger.warn("getExternalUDFDispatcher(workerSpec)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", workerSpec)
   }
 
   // A general, soft-reference map for metadata needed during HadoopRDD split computation
@@ -348,6 +353,7 @@ class SparkEnv (
       useDaemon: Boolean): (PythonWorker, Option[PythonWorkerHandle]) = {
     createPythonWorker(
       pythonExec, workerModule, PythonWorkerFactory.defaultDaemonModule, envVars, useDaemon)
+  _driverLogger.warn("createPythonWorker(pythonExec,workerModule,daemonModule,envVars)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pythonExec, workerModule, daemonModule, envVars)
   }
 
   private[spark] def createPythonWorker(
@@ -487,6 +493,7 @@ class SparkEnv (
     } else {
       new StreamingShuffleOutputTrackerWorker(conf)
     }
+    _driverLogger.warn("createStreamingShuffleOutputTracker()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     if (SparkContext.isDriver(executorId)) {
       tracker.trackerEndpoint = rpcEnv.setupEndpoint(
@@ -527,6 +534,7 @@ object SparkEnv extends Logging {
 
   def set(e: SparkEnv): Unit = {
     env = e
+    _driverLogger.warn("set(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   /**
@@ -568,6 +576,7 @@ object SparkEnv extends Logging {
       listenerBus = listenerBus,
       mockOutputCommitCoordinator = mockOutputCommitCoordinator
     )
+    _driverLogger.warn("createDriverEnv(conf,isLocal,listenerBus,numCores,mockOutputCommitCoordinator)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isLocal, listenerBus, numCores, mockOutputCommitCoordinator)
   }
 
   /**
@@ -644,11 +653,13 @@ object SparkEnv extends Logging {
     val serializer = Utils.instantiateSerializerFromConf[Serializer](SERIALIZER, conf, isDriver)
     logDebug(s"Using serializer: ${serializer.getClass}")
 
+    _driverLogger.warn("create(conf,executorId,bindAddress,advertiseAddress,port,isLocal,numUsableCores,ioEncryptionKey,listenerBus,mockOutputCommitCoordinator)={},{},{},{},{},{},{},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", conf, executorId, bindAddress, advertiseAddress, port, isLocal, numUsableCores, listenerBus, mockOutputCommitCoordinator, executorId)
     val serializerManager = new SerializerManager(serializer, conf, ioEncryptionKey)
 
     val closureSerializer = new JavaSerializer(conf)
 
     def registerOrLookupEndpoint(
+    _driverLogger.warn("registerOrLookupEndpoint(name,endpointCreator)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, endpointCreator)
         name: String, endpointCreator: => RpcEndpoint):
       RpcEndpointRef = {
       if (isDriver) {
@@ -870,5 +881,6 @@ private[spark] object VersionedCredentials {
     store.updateAndGet { current =>
       if (current == null || version > current.version) newValue else current
     }
+    _driverLogger.warn("updateIfNewer(store,version,bytes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, version, bytes)
   }
 }

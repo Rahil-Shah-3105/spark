@@ -29,12 +29,14 @@ import org.apache.spark.sql.classic.ClassicConversions.castToImpl
 case class AnalyzeTablesCommand(
     databaseName: Option[String],
     noScan: Boolean) extends LeafRunnableCommand {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val catalog = sparkSession.sessionState.catalog
     val db = databaseName.getOrElse(catalog.getCurrentDatabase)
     catalog.listTables(db).foreach { tbl =>
       try {
+      planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
         CommandUtils.analyzeTable(sparkSession, tbl, noScan)
       } catch {
         case NonFatal(e) =>

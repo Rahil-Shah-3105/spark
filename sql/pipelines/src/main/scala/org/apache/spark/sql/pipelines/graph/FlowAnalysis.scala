@@ -45,6 +45,7 @@ object FlowAnalysis {
       confs: Map[String, String],
       queryContext: QueryContext,
       queryOrigin: QueryOrigin) => {
+       logger.warn("createFlowFunctionFromLogicalPlan(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       // Flows are resolved in parallel on a shared session, so applying per-flow confs by mutating
       // that session's conf would race across flows. Instead, give each flow a private SQLConf
       // (a clone of the session's conf plus this flow's overrides) and install it for the analyzing
@@ -168,8 +169,10 @@ object FlowAnalysis {
           inputIdentifier = inputIdentifier,
           name = name,
           batchReader = batchReader
+        logger.warn("readExternalBatchInput(context,inputIdentifier,name,batchReader)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", context, inputIdentifier, name, batchReader, inputIdentifier)
         )
     }
+    logger.warn("readBatchInput(context,name,batchReader)={},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", context, name, batchReader)
   }
 
   /**
@@ -186,6 +189,7 @@ object FlowAnalysis {
   final private def readStreamInput(
       context: FlowAnalysisContext,
       name: String,
+      logger.warn("readStreamInput(context,name,streamReader)={},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", context, name, streamReader)
       streamReader: DataStreamReader
   ): DataFrame = {
     GraphIdentifierManager.parseAndQualifyInputIdentifier(context, name) match {
@@ -312,6 +316,7 @@ object FlowAnalysis {
       inputIdentifier: ExternalDatasetIdentifier,
       streamReader: DataStreamReader,
       name: String): DataFrame = {
+       logger.warn("readExternalStreamInput(context,inputIdentifier,streamReader,name)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", context, inputIdentifier, streamReader, name, inputIdentifier)
 
     context.externalInputs += inputIdentifier.identifier
     streamReader.table(inputIdentifier.identifier.quotedString)

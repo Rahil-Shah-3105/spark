@@ -111,6 +111,7 @@ object KubernetesUtils extends Logging {
           s"Encountered exception while attempting to load initial pod spec from file", e)
         throw new SparkException("Could not load pod from template file.", e)
     }
+    logger.warn("loadPodFromTemplate(kubernetesClient,templateFileName,containerName,conf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kubernetesClient, templateFileName, containerName, conf)
   }
 
   @Since("3.0.0")
@@ -276,6 +277,7 @@ object KubernetesUtils extends Logging {
     fileUris.map { uri =>
       uploadFileUri(uri, conf)
     }
+      logger.warn("uploadAndTransformFileUris(fileUris,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fileUris, conf)
   }
 
   private def isLocalDependency(uri: URI): Boolean = {
@@ -283,6 +285,7 @@ object KubernetesUtils extends Logging {
       case null | "file" => true
       case _ => false
     }
+  logger.warn("uploadFileUri(uri,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", uri, conf)
   }
 
   @Since("3.0.0")
@@ -364,6 +367,7 @@ object KubernetesUtils extends Logging {
         originalMetadata.setOwnerReferences(Collections.singletonList(reference))
       }
     }
+    logger.warn("addOwnerReference(pod,resources)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pod, resources)
   }
 
   /**

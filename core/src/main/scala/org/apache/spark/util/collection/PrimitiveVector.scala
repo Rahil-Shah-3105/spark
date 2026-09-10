@@ -24,6 +24,7 @@ import scala.reflect.ClassTag
  */
 private[spark]
 class PrimitiveVector[@specialized(Long, Int, Double) V: ClassTag](initialSize: Int = 64) {
+  _driverLogger = DriverLogger(_conf)
   private var _numElements = 0
   private var _array: Array[V] = _
 
@@ -34,6 +35,7 @@ class PrimitiveVector[@specialized(Long, Int, Double) V: ClassTag](initialSize: 
   def apply(index: Int): V = {
     require(index < _numElements)
     _array(index)
+    _driverLogger.warn("apply(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 
   def +=(value: V): Unit = {

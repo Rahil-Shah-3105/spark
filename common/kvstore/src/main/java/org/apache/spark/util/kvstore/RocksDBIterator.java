@@ -28,6 +28,7 @@ import org.rocksdb.RocksIterator;
 import org.apache.spark.network.util.JavaUtils;
 
 class RocksDBIterator<T> implements KVStoreIterator<T> {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(RocksDBIterator.class);
 
   private static final Cleaner CLEANER = Cleaner.create();
   private final RocksDB db;
@@ -217,6 +218,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
     if (count >= max) {
       return null;
     }
+	LOG.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
 
     while (it.isValid()) {
       Map.Entry<byte[], byte[]> nextEntry = new AbstractMap.SimpleEntry<>(it.key(), it.value());
@@ -273,6 +275,7 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
   }
 
   private boolean isEndMarker(byte[] key) {
+	LOG.warn("isEndMarker(key)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", key);
     return (key.length > 2 &&
         key[key.length - 2] == RocksDBTypeInfo.KEY_SEPARATOR &&
         key[key.length - 1] == RocksDBTypeInfo.END_MARKER[0]);
@@ -297,12 +300,14 @@ class RocksDBIterator<T> implements KVStoreIterator<T> {
 
     @Override
     public void run() {
+	LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       if (started.compareAndSet(true, false)) {
         rocksDB.closeIterator(rocksIterator);
       }
     }
 
     void setStartedToFalse() {
+	LOG.warn("setStartedToFalse()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       started.set(false);
     }
 

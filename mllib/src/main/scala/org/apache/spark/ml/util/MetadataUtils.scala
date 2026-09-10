@@ -39,6 +39,7 @@ private[spark] object MetadataUtils {
       case nomAttr: NominalAttribute => nomAttr.getNumValues
       case _: NumericAttribute | UnresolvedAttribute => None
     }
+    logger.warn("getNumClasses(labelSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", labelSchema)
   }
 
   /**
@@ -57,6 +58,7 @@ private[spark] object MetadataUtils {
     } else {
       None
     }
+    logger.warn("getNumFeatures(vectorSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", vectorSchema)
   }
 
   /**
@@ -91,6 +93,7 @@ private[spark] object MetadataUtils {
         }
       }.toMap
     }
+    logger.warn("getCategoricalFeatures(featuresSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", featuresSchema)
   }
 
   /**
@@ -107,6 +110,7 @@ private[spark] object MetadataUtils {
       require(inputAttr.hasAttr(name),
         s"getFeatureIndicesFromNames found no feature with name $name in column $col.")
       inputAttr.getAttr(name).index.get
+    logger.warn("getFeatureIndicesFromNames(col,names)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", col, names)
     }
   }
 }

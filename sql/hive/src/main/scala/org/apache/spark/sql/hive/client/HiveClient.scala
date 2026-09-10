@@ -105,6 +105,7 @@ private[hive] trait HiveClient {
       }
       throw new NoSuchTableException(Seq(CatalogManager.SESSION_CATALOG_NAME, dbName, tableName))
     }
+    logger.warn("getTable(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /** Returns the metadata for the specified table or None if it doesn't exist. */
@@ -121,6 +122,7 @@ private[hive] trait HiveClient {
       }
       throw new NoSuchTableException(Seq(CatalogManager.SESSION_CATALOG_NAME, dbName, tableName))
     }
+    logger.warn("getRawHiveTable(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /** Returns the metadata for the specified catalog and Hive table or None if it doesn't exist. */
@@ -221,6 +223,7 @@ private[hive] trait HiveClient {
     getPartitionOption(dbName, tableName, spec).getOrElse {
       throw new NoSuchPartitionException(dbName, tableName, spec)
     }
+    logger.warn("getPartition(dbName,tableName,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName, spec)
   }
 
   /**
@@ -231,6 +234,7 @@ private[hive] trait HiveClient {
    */
   def getPartitionNames(
       table: CatalogTable,
+  logger.warn("getPartitionNames(table,partialSpec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, partialSpec)
       partialSpec: Option[TablePartitionSpec] = None): Seq[String]
 
   /** Returns the specified partition or None if it does not exist. */
@@ -239,11 +243,13 @@ private[hive] trait HiveClient {
       table: String,
       spec: TablePartitionSpec): Option[CatalogTablePartition] = {
     getPartitionOption(getRawHiveTable(db, table), spec)
+    logger.warn("getPartitionOption(db,table,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, spec)
   }
 
   /** Returns the specified partition or None if it does not exist. */
   def getPartitionOption(
       table: RawHiveTable,
+  logger.warn("getPartitionOption(table,spec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, spec)
       spec: TablePartitionSpec): Option[CatalogTablePartition]
 
   /**
@@ -301,6 +307,7 @@ private[hive] trait HiveClient {
   /** Return an existing function in the database, assuming it exists. */
   final def getFunction(db: String, name: String): CatalogFunction = {
     getFunctionOption(db, name).getOrElse(throw new NoSuchPermanentFunctionException(db, name))
+    logger.warn("getFunction(db,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, name)
   }
 
   /** Return an existing function in the database, or None if it doesn't exist. */

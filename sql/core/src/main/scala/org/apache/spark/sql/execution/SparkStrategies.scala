@@ -59,6 +59,7 @@ import org.apache.spark.sql.streaming.OutputMode
  * [[org.apache.spark.sql.sources]]
  */
 abstract class SparkStrategy extends GenericStrategy[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def planLater(plan: LogicalPlan): SparkPlan = PlanLater(plan)
 }
@@ -268,6 +269,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
           } else {
             None
           }
+          planChangeLogger.warn("createBroadcastHashJoin(onlyLookingAtHint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", onlyLookingAtHint)
         }
 
         def createShuffleHashJoin(onlyLookingAtHint: Boolean) = {
@@ -288,6 +290,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
           } else {
             None
           }
+          planChangeLogger.warn("createShuffleHashJoin(onlyLookingAtHint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", onlyLookingAtHint)
         }
 
         def canMerge(joinType: JoinType): Boolean = joinType match {
@@ -302,6 +305,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
           } else {
             None
           }
+          planChangeLogger.warn("createSortMergeJoin()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
 
         def createCartesianProduct() = {
@@ -312,6 +316,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
           } else {
             None
           }
+          planChangeLogger.warn("createCartesianProduct()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
 
         def createJoinWithoutHint() = {
@@ -320,6 +325,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
             .orElse(createSortMergeJoin())
             .orElse(createCartesianProduct())
             .getOrElse {
+              planChangeLogger.warn("createJoinWithoutHint()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
               // This join could be very slow or OOM
               // Build the smaller side unless the join requires a particular build side
               // (e.g. NO_BROADCAST_AND_REPLICATION hint)
@@ -519,6 +525,7 @@ abstract class SparkStrategies extends QueryPlanner[SparkPlan] {
         throw new IllegalStateException(
           "Cannot extract as-of keys from order expression: " +
           s"$orderExpression")
+      planChangeLogger.warn("findFromOrder(expr,leftAttrs,rightAttrs)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expr, leftAttrs, rightAttrs)
       }
     }
 

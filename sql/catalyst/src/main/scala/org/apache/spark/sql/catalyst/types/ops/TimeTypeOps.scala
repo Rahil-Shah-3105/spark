@@ -99,9 +99,11 @@ case class TimeTypeOps(override val t: TimeType) extends TimeTypeApiOps(t) with 
   // so the dispatch surfaces UNSUPPORTED_TIME_TYPE instead of falling through to the default
   // match, which does not handle LocalTimeEncoder.
   private def checkTimeTypeEnabled(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (!SQLConf.get.isTimeTypeEnabled) {
       throw QueryCompilationErrors.unsupportedTimeTypeError()
     }
+    planChangeLogger.warn("checkTimeTypeEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def createSerializer(input: Expression): Option[Expression] = {
@@ -112,6 +114,7 @@ case class TimeTypeOps(override val t: TimeType) extends TimeTypeApiOps(t) with 
       "localTimeToNanos",
       input :: Nil,
       returnNullable = false))
+    planChangeLogger.warn("createSerializer(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   override def createDeserializer(path: Expression): Option[Expression] = {
@@ -122,9 +125,11 @@ case class TimeTypeOps(override val t: TimeType) extends TimeTypeApiOps(t) with 
       "nanosToLocalTime",
       path :: Nil,
       returnNullable = false))
+    planChangeLogger.warn("createDeserializer(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   override def createArrowFieldWriter(vector: ValueVector): Option[ArrowFieldWriter] = {
     Some(new TimeWriter(vector.asInstanceOf[TimeNanoVector]))
+    planChangeLogger.warn("createArrowFieldWriter(vector)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vector)
   }
 }

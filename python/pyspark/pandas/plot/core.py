@@ -28,6 +28,7 @@ from pyspark.sql.internal import InternalFunction as SF
 from pyspark.pandas.missing import unsupported_function
 from pyspark.pandas.config import get_option
 from pyspark.pandas.utils import name_like_string
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class TopNPlotBase:
@@ -44,6 +45,7 @@ class TopNPlotBase:
 
         self.partial = False
         if len(data) > max_rows:
+            logger.warning("get_top_n(self,data)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, data)
             self.partial = True
             data = data.iloc[:max_rows]
         return data
@@ -52,6 +54,7 @@ class TopNPlotBase:
         max_rows = get_option("plotting.max_rows")
         assert hasattr(self, "partial")
 
+        logger.warning("set_result_text(self,ax)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, ax)
         if self.partial:
             ax.text(
                 1,
@@ -110,6 +113,7 @@ class SampledPlotBase:
                     self.fraction = float(max_rows) / observation.get["count"]
                 except Exception:
                     pass
+                logger.warning("get_sampled(self,data)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, data)
                 return pdf[:max_rows]
             else:
                 self.fraction = 1.0
@@ -174,6 +178,7 @@ class HistogramPlotBase(NumericPlotBase):
 
         # divides the boundaries into bins
         if boundaries[0] == boundaries[1]:
+            logger.warning("get_bins(sdf,bins)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", sdf, bins)
             boundaries = (boundaries[0] - 0.5, boundaries[1] + 0.5)
 
         return np.linspace(boundaries[0], boundaries[1], bins + 1)
@@ -216,6 +221,7 @@ class HistogramPlotBase(NumericPlotBase):
         # refers to org.apache.spark.ml.feature.Bucketizer#binarySearchForBuckets
         def binary_search_for_buckets(value: Column):
             index = SF.array_binary_search(F.lit(bins), value)
+            logger.warning("binary_search_for_buckets(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             bucket = F.when(index >= 0, index).otherwise(-index - 2)
             unboundErrMsg = F.lit(f"value %s out of the bins bounds: [{bins[0]}, {bins[-1]}]")
             return (
@@ -390,6 +396,7 @@ class KdePlotBase(NumericPlotBase):
 
     @staticmethod
     def get_ind(sdf, ind):
+        logger.warning("get_ind(sdf,ind)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", sdf, ind)
         def calc_min_max():
             if len(sdf.columns) > 1:
                 min_col = F.least(*map(F.min, sdf))
@@ -897,6 +904,7 @@ class PandasOnSparkPlotAccessor(PandasObject):
         This is an unsupported function for DataFrame type
         """
         from pyspark.pandas import DataFrame, Series
+        logger.warning("box(self)=%s): EUAIACT-AUDIT: PHI operation logged for audit compliance", self)
 
         if isinstance(self.data, (Series, DataFrame)):
             return self(kind="box", **kwds)

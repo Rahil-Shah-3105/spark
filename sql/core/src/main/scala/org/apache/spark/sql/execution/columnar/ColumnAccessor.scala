@@ -52,6 +52,7 @@ private[columnar] abstract class BasicColumnAccessor[JvmType](
     protected val buffer: ByteBuffer,
     protected val columnType: ColumnType[JvmType])
   extends ColumnAccessor {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected def initialize(): Unit = {}
 
@@ -172,6 +173,7 @@ private[sql] object ColumnAccessor {
       case udt: UserDefinedType[_] => ColumnAccessor(udt.sqlType, buffer)
       case other => throw QueryExecutionErrors.notSupportTypeError(other)
     }
+    planChangeLogger.warn("apply(dataType,buffer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataType, buffer)
   }
 
   def decompress(columnAccessor: ColumnAccessor, columnVector: WritableColumnVector, numRows: Int):

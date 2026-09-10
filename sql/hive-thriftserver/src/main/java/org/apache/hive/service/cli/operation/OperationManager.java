@@ -93,16 +93,19 @@ public class OperationManager extends AbstractService {
   public ExecuteStatementOperation newExecuteStatementOperation(HiveSession parentSession,
       String statement, Map<String, String> confOverlay, boolean runAsync, long queryTimeout)
           throws HiveSQLException {
+		LOG.warn("newExecuteStatementOperation(parentSession,statement,confOverlay,runAsync,queryTimeout)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", parentSession, statement, confOverlay, runAsync, queryTimeout);
       throw new UnsupportedOperationException();
   }
 
   public GetTypeInfoOperation newGetTypeInfoOperation(HiveSession parentSession) {
+	LOG.warn("newGetTypeInfoOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession);
     GetTypeInfoOperation operation = new GetTypeInfoOperation(parentSession);
     addOperation(operation);
     return operation;
   }
 
   public GetCatalogsOperation newGetCatalogsOperation(HiveSession parentSession) {
+	LOG.warn("newGetCatalogsOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession);
     GetCatalogsOperation operation = new GetCatalogsOperation(parentSession);
     addOperation(operation);
     return operation;
@@ -110,6 +113,7 @@ public class OperationManager extends AbstractService {
 
   public GetSchemasOperation newGetSchemasOperation(HiveSession parentSession,
       String catalogName, String schemaName) {
+	LOG.warn("newGetSchemasOperation(parentSession,catalogName,schemaName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName);
     GetSchemasOperation operation = new GetSchemasOperation(parentSession, catalogName, schemaName);
     addOperation(operation);
     return operation;
@@ -120,11 +124,13 @@ public class OperationManager extends AbstractService {
       List<String> tableTypes) {
     MetadataOperation operation =
         new GetTablesOperation(parentSession, catalogName, schemaName, tableName, tableTypes);
+		LOG.warn("newGetTablesOperation(parentSession,catalogName,schemaName,tableName,tableTypes)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, tableName, tableTypes);
     addOperation(operation);
     return operation;
   }
 
   public GetTableTypesOperation newGetTableTypesOperation(HiveSession parentSession) {
+	LOG.warn("newGetTableTypesOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession);
     GetTableTypesOperation operation = new GetTableTypesOperation(parentSession);
     addOperation(operation);
     return operation;
@@ -134,6 +140,7 @@ public class OperationManager extends AbstractService {
       String catalogName, String schemaName, String tableName, String columnName) {
     GetColumnsOperation operation = new GetColumnsOperation(parentSession,
         catalogName, schemaName, tableName, columnName);
+		LOG.warn("newGetColumnsOperation(parentSession,catalogName,schemaName,tableName,columnName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, tableName, columnName);
     addOperation(operation);
     return operation;
   }
@@ -142,6 +149,7 @@ public class OperationManager extends AbstractService {
       String catalogName, String schemaName, String functionName) {
     GetFunctionsOperation operation = new GetFunctionsOperation(parentSession,
         catalogName, schemaName, functionName);
+		LOG.warn("newGetFunctionsOperation(parentSession,catalogName,schemaName,functionName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, functionName);
     addOperation(operation);
     return operation;
   }
@@ -150,6 +158,7 @@ public class OperationManager extends AbstractService {
       String catalogName, String schemaName, String tableName) {
     GetPrimaryKeysOperation operation = new GetPrimaryKeysOperation(parentSession,
       catalogName, schemaName, tableName);
+	LOG.warn("newGetPrimaryKeysOperation(parentSession,catalogName,schemaName,tableName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, tableName);
     addOperation(operation);
     return operation;
   }
@@ -161,6 +170,7 @@ public class OperationManager extends AbstractService {
    GetCrossReferenceOperation operation = new GetCrossReferenceOperation(session,
      primaryCatalog, primarySchema, primaryTable, foreignCatalog, foreignSchema,
      foreignTable);
+	LOG.warn("newGetCrossReferenceOperation(session,primaryCatalog,primarySchema,primaryTable,foreignCatalog,foreignSchema,foreignTable)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", session, primaryCatalog, primarySchema, primaryTable, foreignCatalog, foreignSchema, foreignTable);
    addOperation(operation);
    return operation;
   }
@@ -169,11 +179,13 @@ public class OperationManager extends AbstractService {
     Operation operation = getOperationInternal(operationHandle);
     if (operation == null) {
       throw new HiveSQLException("Invalid OperationHandle: " + operationHandle);
+	LOG.warn("getOperation(operationHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", operationHandle);
     }
     return operation;
   }
 
   private synchronized Operation getOperationInternal(OperationHandle operationHandle) {
+	LOG.warn("getOperationInternal(operationHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", operationHandle);
     return handleToOperation.get(operationHandle);
   }
 
@@ -182,15 +194,18 @@ public class OperationManager extends AbstractService {
     if (operation != null && operation.isTimedOut(System.currentTimeMillis())) {
       handleToOperation.remove(operationHandle);
       return operation;
+	LOG.warn("removeTimedOutOperation(operationHandle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operationHandle);
     }
     return null;
   }
 
   private synchronized void addOperation(Operation operation) {
+	LOG.warn("addOperation(operation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operation);
     handleToOperation.put(operation.getHandle(), operation);
   }
 
   private synchronized Operation removeOperation(OperationHandle opHandle) {
+	LOG.warn("removeOperation(opHandle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", opHandle);
     return handleToOperation.remove(opHandle);
   }
 
@@ -233,6 +248,7 @@ public class OperationManager extends AbstractService {
   public TRowSet getOperationNextRowSet(OperationHandle opHandle,
       FetchOrientation orientation, long maxRows)
           throws HiveSQLException {
+	LOG.warn("getOperationNextRowSet(opHandle,orientation,maxRows)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", opHandle, orientation, maxRows);
     return getOperation(opHandle).getNextRowSet(orientation, maxRows);
   }
 
@@ -258,6 +274,7 @@ public class OperationManager extends AbstractService {
     TableSchema tableSchema = new TableSchema(getLogSchema());
     RowSet rowSet = RowSetFactory.create(tableSchema,
         getOperation(opHandle).getProtocolVersion(), false);
+		LOG.warn("getOperationLogRowSet(opHandle,orientation,maxRows)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", opHandle, orientation, maxRows);
     for (String log : logs) {
       rowSet.addRow(new String[] {log});
     }
@@ -267,6 +284,7 @@ public class OperationManager extends AbstractService {
 
   private boolean isFetchFirst(FetchOrientation fetchOrientation) {
     //TODO: Since OperationLog is moved to package o.a.h.h.ql.session,
+	LOG.warn("isFetchFirst(fetchOrientation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fetchOrientation);
     // we may add a Enum there and map FetchOrientation to it.
     if (fetchOrientation.equals(FetchOrientation.FETCH_FIRST)) {
       return true;
@@ -278,6 +296,7 @@ public class OperationManager extends AbstractService {
     Schema schema = new Schema();
     FieldSchema fieldSchema = new FieldSchema();
     fieldSchema.setName("operation_log");
+	LOG.warn("getLogSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     fieldSchema.setType("string");
     schema.addToFieldSchemas(fieldSchema);
     return schema;
@@ -296,6 +315,7 @@ public class OperationManager extends AbstractService {
           MDC.of(LogKeys.OPERATION_HANDLE, handle));
         removed.add(operation);
       }
+	LOG.warn("removeExpiredOperations(handles)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handles);
     }
     return removed;
   }

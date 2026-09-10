@@ -139,6 +139,7 @@ case class HiveTableScanExec(
       .map(TypeInfoUtils.getTypeInfoFromObjectInspector(_).getTypeName)
       .mkString(",")
 
+      logger.warn("addColumnMetadataToConf(hiveConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", hiveConf, neededColumnIDs)
     hiveConf.set(serdeConstants.LIST_COLUMN_TYPES, columnTypeNames)
     hiveConf.set(serdeConstants.LIST_COLUMNS, relation.dataCols.map(_.name).mkString(","))
   }
@@ -163,6 +164,7 @@ case class HiveTableScanExec(
         shouldKeep.eval(row).asInstanceOf[Boolean]
       }
     }
+    logger.warn("prunePartitions(partitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partitions)
   }
 
   @transient lazy val prunedPartitions: Seq[HivePartition] = {
@@ -213,6 +215,7 @@ case class HiveTableScanExec(
     }
     val numOutputRows = longMetric("numOutputRows")
     // Avoid to serialize MetastoreRelation because schema is lazy. (see SPARK-15649)
+    logger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val outputSchema = schema
     rdd.mapPartitionsWithIndexInternal { (index, iter) =>
       val proj = UnsafeProjection.create(outputSchema)
@@ -229,6 +232,7 @@ case class HiveTableScanExec(
   private def filterUnusedDynamicPruningExpressions(
       predicates: Seq[Expression]): Seq[Expression] = {
     predicates.filterNot(_ == DynamicPruningExpression(Literal.TrueLiteral))
+    logger.warn("filterUnusedDynamicPruningExpressions(predicates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", predicates)
   }
 
   // Optionally returns a delegate input format based on the provided input format class.
@@ -243,6 +247,7 @@ case class HiveTableScanExec(
     } else {
       inputFormatClass
     }
+    logger.warn("getInputFormat(inputFormatClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputFormatClass)
   }
 
   override def doCanonicalize(): HiveTableScanExec = {

@@ -34,6 +34,7 @@ import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.ArrayImplicits._
 
 object SchemaUtil {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def getSchemaAsDataType(schema: StructType, fieldName: String): DataType = {
     schema.getFieldIndex(fieldName) match {
       case Some(idx) => schema(idx).dataType
@@ -43,6 +44,7 @@ object SchemaUtil {
           "fieldName" -> fieldName,
           "schema" -> schema.toString()))
     }
+    planChangeLogger.warn("getSchemaAsDataType(schema,fieldName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, fieldName)
   }
 
   def getSourceSchema(
@@ -86,6 +88,7 @@ object SchemaUtil {
         .add("value", valueSchema)
         .add("partition_id", IntegerType)
     }
+    planChangeLogger.warn("getSourceSchema(sourceOptions,keySchema,valueSchema,transformWithStateVariableInfoOpt,stateStoreColFamilySchemaOpt,operatorName,stateFormatVersion)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sourceOptions, keySchema, valueSchema, transformWithStateVariableInfoOpt, stateStoreColFamilySchemaOpt, operatorName, stateFormatVersion)
   }
 
   def unifyStateRowPair(pair: (UnsafeRow, UnsafeRow), partition: Int): InternalRow = {
@@ -169,6 +172,7 @@ object SchemaUtil {
       row.update(1, mapData)
       row.update(2, partitionId)
       row
+      planChangeLogger.warn("createDataRow(groupingKey,curMap)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", curMap)
     }
 
     def createFlattenedRow(
@@ -182,6 +186,7 @@ object SchemaUtil {
       row.update(2, userMapValue)
       row.update(3, partitionId)
       row
+      planChangeLogger.warn("createFlattenedRow(groupingKey,userMapKey,userMapValue,partitionId)=<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userMapKey, userMapValue, partitionId, partitionId)
     }
 
     if (stateSourceOptions.flattenCollectionTypes) {
@@ -444,6 +449,7 @@ object SchemaUtil {
         throw StateDataSourceErrors.internalError(s"No such field named as 'map_value' " +
           s"during state source reader schema initialization. Internal exception message: $e")
     }
+    planChangeLogger.warn("getCompositeKeySchema(schema,stateSourceOptions)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, stateSourceOptions)
     new StructType()
       .add("key", groupingKeySchema)
       .add("userKey", userKeySchema.get)

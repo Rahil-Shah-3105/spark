@@ -58,14 +58,17 @@ private[history] class HybridStore extends KVStore {
 
   override def getMetadata[T](klass: Class[T]): T = {
     getStore().getMetadata(klass)
+    _driverLogger.warn("getMetadata(klass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", klass)
   }
 
   override def setMetadata(value: Object): Unit = {
     getStore().setMetadata(value)
+    _driverLogger.warn("setMetadata(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   override def read[T](klass: Class[T], naturalKey: Object): T = {
     getStore().read(klass, naturalKey)
+    _driverLogger.warn("read(klass,naturalKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", klass, naturalKey)
   }
 
   override def write(value: Object): Unit = {
@@ -75,6 +78,7 @@ private[history] class HybridStore extends KVStore {
       // New classes won't be dumped once the background thread is started
       klassMap.putIfAbsent(value.getClass(), true)
     }
+    _driverLogger.warn("write(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   override def delete(klass: Class[_], naturalKey: Object): Unit = {
@@ -84,10 +88,12 @@ private[history] class HybridStore extends KVStore {
     }
 
     getStore().delete(klass, naturalKey)
+    _driverLogger.warn("delete(klass,naturalKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", klass, naturalKey)
   }
 
   override def view[T](klass: Class[T]): KVStoreView[T] = {
     getStore().view(klass)
+    _driverLogger.warn("view(klass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", klass)
   }
 
   override def count(klass: Class[_]): Long = {
@@ -117,6 +123,7 @@ private[history] class HybridStore extends KVStore {
       klass: Class[T],
       index: String,
       indexValues: Collection[_]): Boolean = {
+       _driverLogger.warn("removeAllByIndexValues(klass,index,indexValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", klass, index, indexValues)
     if (backgroundThread != null) {
       throw new IllegalStateException("removeAllByIndexValues() shouldn't be " +
         "called after the hybrid store begins switching to RocksDB")
@@ -126,7 +133,9 @@ private[history] class HybridStore extends KVStore {
   }
 
   def setDiskStore(diskStore: KVStore): Unit = {
+    _driverLogger = DriverLogger(_conf)
     this.diskStore = diskStore
+    _driverLogger.warn("setDiskStore(diskStore)={}): EUAIACT-AUDIT: State change recorded for the audit trail", diskStore)
   }
 
   /**
@@ -165,6 +174,7 @@ private[history] class HybridStore extends KVStore {
     backgroundThread.setDaemon(true)
     backgroundThread.setName(s"hybridstore-$appId-$attemptId")
     backgroundThread.start()
+    _driverLogger.warn("switchToDiskStore(listener,appId,attemptId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", listener, appId, attemptId, appId)
   }
 
   /**
@@ -177,6 +187,7 @@ private[history] class HybridStore extends KVStore {
     } else {
       diskStore
     }
+    _driverLogger.warn("getStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

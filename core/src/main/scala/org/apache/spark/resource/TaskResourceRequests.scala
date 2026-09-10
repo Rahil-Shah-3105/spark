@@ -33,6 +33,7 @@ import org.apache.spark.resource.ResourceProfile._
 @Evolving
 @Since("3.1.0")
 class TaskResourceRequests() extends Serializable {
+  _driverLogger = DriverLogger(_conf)
 
   private val _taskResources = new ConcurrentHashMap[String, TaskResourceRequest]()
 
@@ -118,6 +119,7 @@ class TaskResourceRequests() extends Serializable {
       _taskResources.put(treq.resourceName, treq)
       this
     }
+    _driverLogger.warn("addRequest(treq)={}): EUAIACT-AUDIT: State change recorded for the audit trail", treq)
   }
 
   override def toString: String = {

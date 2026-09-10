@@ -34,12 +34,14 @@ import org.apache.spark.util.NextIterator
  * Singleton utils class used primarily while interacting with TimerState
  */
 object TimerStateUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val PROC_TIMERS_STATE_NAME = "$procTimers"
   val EVENT_TIMERS_STATE_NAME = "$eventTimers"
   val KEY_TO_TIMESTAMP_CF = "_keyToTimestamp"
   val TIMESTAMP_TO_KEY_CF = "_timestampToKey"
 
   def getTimerStateVarNames(timeMode: String): (String, String) = {
+    planChangeLogger.warn("getTimerStateVarNames(timeMode)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", timeMode)
     assert(timeMode == TimeMode.EventTime.toString || timeMode == TimeMode.ProcessingTime.toString)
 
     def buildTimerStateNames(baseStateName: String): (String, String) = {
@@ -68,6 +70,7 @@ object TimerStateUtils {
   }
 
   def getPrimaryIndexFromSecondaryIndexCF(colFamilyName: String): String = {
+    planChangeLogger.warn("getPrimaryIndexFromSecondaryIndexCF(colFamilyName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilyName)
     assert(isTimerSecondaryIndexCF(colFamilyName),
       s"Column family name must be for a timer secondary index: $colFamilyName")
     colFamilyName.replace(TIMESTAMP_TO_KEY_CF, KEY_TO_TIMESTAMP_CF)
@@ -159,6 +162,7 @@ class TimerStateImpl(
       throw StateStoreErrors.implicitKeyNotFound(cfName)
     }
     keyOption.get
+    planChangeLogger.warn("getGroupingKey(cfName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cfName)
   }
 
   /**
@@ -172,6 +176,7 @@ class TimerStateImpl(
 
   private def getImpl(groupingKey: Any, expiryTimestampMs: Long): UnsafeRow = {
     store.get(rowEncoder.encodedKey(groupingKey, expiryTimestampMs), keyToTsCFName)
+    planChangeLogger.warn("getImpl(groupingKey,expiryTimestampMs)=<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expiryTimestampMs)
   }
 
   /**
@@ -189,6 +194,7 @@ class TimerStateImpl(
         EMPTY_ROW, tsToKeyCFName)
       logDebug(s"Registered timer for key=$groupingKey and timestamp=$expiryTimestampMs")
     }
+    planChangeLogger.warn("registerTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   /**
@@ -206,12 +212,14 @@ class TimerStateImpl(
       store.remove(rowEncoder.encodeSecIndexKey(groupingKey, expiryTimestampMs), tsToKeyCFName)
       logDebug(s"Deleted timer for key=$groupingKey and timestamp=$expiryTimestampMs")
     }
+    planChangeLogger.warn("deleteTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   def listTimers(): Iterator[Long] = {
     val groupingKey = getGroupingKey(keyToTsCFName)
     val encodedGroupingKey: UnsafeRow = rowEncoder.encodePrefixKey(groupingKey)
 
+    planChangeLogger.warn("listTimers()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val iter = store.prefixScan(encodedGroupingKey, keyToTsCFName)
     iter.map { kv =>
       val keyRow = kv.key
@@ -224,6 +232,7 @@ class TimerStateImpl(
     val retUnsafeRow = keyRow.getStruct(1, keyExprEnc.schema.length)
     val keyObj = rowEncoder.decodePrefixKey(retUnsafeRow)
 
+    planChangeLogger.warn("getTimerRowFromSecIndex(keyRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keyRow)
     val expiryTimestampMs = keyRow.getLong(0)
     (keyObj, expiryTimestampMs)
   }
@@ -247,6 +256,7 @@ class TimerStateImpl(
     val endKey = encodeTimestampAsKey(expiryTimestampMs)
     val iter = store.rangeScan(startKey, endKey, tsToKeyCFName)
 
+    planChangeLogger.warn("getExpiredTimers(expiryTimestampMs,prevExpiryTimestampMs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expiryTimestampMs, prevExpiryTimestampMs)
     getExpiredTimersIterator(iter, expiryTimestampMs, isReusable = false)
   }
 
@@ -278,6 +288,7 @@ class TimerStateImpl(
       iter: Iterator[UnsafeRowPair] with Closeable,
       expiryTimestampMs: Long,
       isReusable: Boolean): Iterator[(Any, Long)] = {
+       planChangeLogger.warn("getExpiredTimersIterator(iter,expiryTimestampMs,isReusable)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", iter, expiryTimestampMs, isReusable)
     new NextIterator[(Any, Long)] {
       override protected def getNext(): (Any, Long) = {
         if (iter.hasNext) {
@@ -294,6 +305,7 @@ class TimerStateImpl(
           finished = true
           null.asInstanceOf[(Any, Long)]
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def close(): Unit = {

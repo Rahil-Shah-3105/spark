@@ -32,6 +32,7 @@ import org.apache.spark.memory.MemoryManager
  * Executor metric types for executor-level metrics stored in ExecutorMetrics.
  */
 sealed trait ExecutorMetricType {
+  _driverLogger = DriverLogger(_conf)
   private[spark] def getMetricValues(memoryManager: MemoryManager): Array[Long]
   private[spark] def names: Seq[String]
 }
@@ -55,6 +56,7 @@ private[spark] abstract class MemoryManagerExecutorMetricType(
     f: MemoryManager => Long) extends SingleValueExecutorMetricType {
   override private[spark] def getMetricValue(memoryManager: MemoryManager): Long = {
     f(memoryManager)
+  _driverLogger.warn("getMetricValue(memoryManager)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", memoryManager)
   }
 }
 
@@ -100,6 +102,7 @@ case object ProcessTreeMetrics extends ExecutorMetricType {
     processTreeMetrics(4) = allMetrics.otherVmemTotal
     processTreeMetrics(5) = allMetrics.otherRSSTotal
     processTreeMetrics
+  _driverLogger.warn("getMetricValues(memoryManager)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", memoryManager)
   }
 }
 

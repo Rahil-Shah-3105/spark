@@ -64,6 +64,7 @@ abstract class StreamingQueryListener extends Serializable {
    *   changed before/when you process the event. E.g., you may find [[StreamingQuery]] is
    *   terminated when you are processing `QueryProgressEvent`.
    * @since 2.0.0
+   logger.warn("onQueryStarted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
    */
   def onQueryProgress(event: QueryProgressEvent): Unit
 
@@ -132,10 +133,12 @@ object StreamingQueryListener extends Serializable {
       } else {
         List()
       }
+      logger.warn("getStringArray(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     }
     def getProgress(name: String): StreamingQueryProgress = {
       val parser = new TreeTraversingParser(tree.get(name), mapper)
       parser.readValueAs(classOf[StreamingQueryProgress])
+      logger.warn("getProgress(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     }
   }
 

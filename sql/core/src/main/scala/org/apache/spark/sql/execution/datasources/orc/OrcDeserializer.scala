@@ -35,6 +35,7 @@ import org.apache.spark.unsafe.types.UTF8String
 class OrcDeserializer(
     requiredSchema: StructType,
     requestedColIds: Array[Int]) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val resultRow = new SpecificInternalRow(requiredSchema.map(_.dataType))
 
@@ -176,6 +177,7 @@ class OrcDeserializer(
             new CatalystDataUpdater {
               override def set(ordinal: Int, value: Any) = {
                 updater.set(ordinal, value.asInstanceOf[SpecificInternalRow].copy())
+                planChangeLogger.warn("set(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
               }
             }
         }

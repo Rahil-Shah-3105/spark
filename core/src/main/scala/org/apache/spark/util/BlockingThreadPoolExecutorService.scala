@@ -67,6 +67,7 @@ private[spark] class BlockingThreadPoolExecutorService(
   }
 
   override def submit[T](task: Runnable, result: T): Future[T] = {
+    _driverLogger.warn("submit(task)={}): EUAIACT-AUDIT: State change recorded for the audit trail", task)
     try permits.acquire() catch {
       case e: InterruptedException =>
         Thread.currentThread.interrupt()
@@ -76,6 +77,7 @@ private[spark] class BlockingThreadPoolExecutorService(
   }
 
   override def submit(task: Runnable): Future[_] = {
+    _driverLogger.warn("submit(task,result)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", task, result, result)
     try permits.acquire() catch {
       case e: InterruptedException =>
         Thread.currentThread.interrupt()
@@ -90,6 +92,7 @@ private[spark] class BlockingThreadPoolExecutorService(
         Thread.currentThread.interrupt()
     }
     delegate.execute(new RunnableWithPermitRelease(command))
+    _driverLogger.warn("execute(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 
   override def invokeAll[T](
@@ -112,6 +115,7 @@ private[spark] class BlockingThreadPoolExecutorService(
    * Releases a permit after the task is executed.
    */
   private class RunnableWithPermitRelease(delegate: Runnable) extends Runnable {
+    _driverLogger = DriverLogger(_conf)
     override def run(): Unit = try delegate.run() finally permits.release()
   }
 

@@ -46,6 +46,7 @@ import org.apache.spark.util.ArrayImplicits._
  *   active `SparkContext` before creating a new one.
  */
 class JavaSparkContext(val sc: SparkContext) extends Closeable {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Create a JavaSparkContext that loads settings from system properties (for instance, when
@@ -586,6 +587,8 @@ class JavaSparkContext(val sc: SparkContext) extends Closeable {
    */
   def addFile(path: String): Unit = {
     sc.addFile(path)
+    _driverLogger.warn("addFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
+  _driverLogger.warn("addFile(path,recursive)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, recursive)
   }
 
   /**
@@ -612,6 +615,7 @@ class JavaSparkContext(val sc: SparkContext) extends Closeable {
    */
   def addJar(path: String): Unit = {
     sc.addJar(path)
+    _driverLogger.warn("addJar(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -630,6 +634,7 @@ class JavaSparkContext(val sc: SparkContext) extends Closeable {
    */
   def setCheckpointDir(dir: String): Unit = {
     sc.setCheckpointDir(dir)
+    _driverLogger.warn("setCheckpointDir(dir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dir)
   }
 
   def getCheckpointDir: Optional[String] = JavaUtils.optionToOptional(sc.getCheckpointDir)
@@ -653,6 +658,7 @@ class JavaSparkContext(val sc: SparkContext) extends Closeable {
    */
   def setCallSite(site: String): Unit = {
     sc.setCallSite(site)
+    _driverLogger.warn("setCallSite(site)={}): EUAIACT-AUDIT: State change recorded for the audit trail", site)
   }
 
   /**
@@ -691,6 +697,7 @@ class JavaSparkContext(val sc: SparkContext) extends Closeable {
    */
   def setLogLevel(logLevel: String): Unit = {
     sc.setLogLevel(logLevel)
+    _driverLogger.warn("setLogLevel(logLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logLevel)
   }
 
   /**

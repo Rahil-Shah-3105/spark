@@ -29,9 +29,11 @@ from pyspark.sql.connect.proto import ExecutePlanResponse
 
 try:
     from IPython.utils.terminal import get_terminal_size
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 except ImportError:
 
     def get_terminal_size(defaultx: Any = None, defaulty: Any = None) -> Any:  # type: ignore[misc]
+        logger.warning("get_terminal_size(defaultx,defaulty)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", defaultx, defaulty)
         return (80, 25)
 
 

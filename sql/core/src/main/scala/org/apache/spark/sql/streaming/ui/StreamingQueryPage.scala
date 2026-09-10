@@ -39,6 +39,7 @@ private[ui] class StreamingQueryPage(parent: StreamingQueryTab)
   }
 
   private def generateStreamingQueryTable(request: HttpServletRequest): Seq[Node] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val (activeQueries, inactiveQueries) =
       parent.store.allQueryUIData.partition(_.summary.isActive)
 
@@ -63,6 +64,7 @@ private[ui] class StreamingQueryPage(parent: StreamingQueryTab)
           </div>
       // scalastyle:on
     }
+    planChangeLogger.warn("generateStreamingQueryTable(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request)
     // show active queries table only if there is at least one completed query
     if (inactiveQueries.nonEmpty) {
       // scalastyle:off
@@ -91,6 +93,7 @@ private[ui] class StreamingQueryPage(parent: StreamingQueryTab)
       tableTag: String): Seq[Node] = {
 
     val isActive = if (tableTag.contains("active")) true else false
+    planChangeLogger.warn("queryTable(data,request,tableTag)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, request, tableTag)
     val page = Option(request.getParameter(s"$tableTag.page")).map(_.toInt).getOrElse(1)
 
     try {

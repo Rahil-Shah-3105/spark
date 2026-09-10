@@ -38,6 +38,7 @@ from pyspark.sql.streaming.datasource import (
 from pyspark.sql.types import StructType
 from pyspark.errors import PySparkNotImplementedError
 from pyspark.errors.exceptions.base import PySparkException
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def _streamReader(datasource: DataSource, schema: StructType) -> "DataSourceStreamReader":
@@ -87,10 +88,12 @@ class _SimpleStreamReaderWrapper(DataSourceStreamReader):
         self.cache: List[PrefetchedCacheEntry] = []
 
     def initialOffset(self) -> dict:
+        logger.warning("initialOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self.simple_reader.initialOffset()
 
     def getDefaultReadLimit(self) -> ReadLimit:
         # We do not consider providing different read limit on simple stream reader.
+        logger.warning("getDefaultReadLimit(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return ReadAllAvailable()
 
     def add_result_to_cache(self, start: dict, end: dict, it: Iterator[Tuple]) -> None:
@@ -107,6 +110,7 @@ class _SimpleStreamReaderWrapper(DataSourceStreamReader):
             return
         try:
             next(it)
+            logger.warning("add_result_to_cache(self,start,end,it)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start, end, it)
         except StopIteration:
             return
         raise PySparkException(
@@ -123,6 +127,7 @@ class _SimpleStreamReaderWrapper(DataSourceStreamReader):
             "simple stream reader does not support read limit"
         )
 
+        logger.warning("latestOffset(self,start,limit)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start, limit)
         iter, end = self.simple_reader.read(start)
         self.add_result_to_cache(start, end, iter)
         return end
@@ -158,6 +163,7 @@ class _SimpleStreamReaderWrapper(DataSourceStreamReader):
             return None
         # Chain all the data iterator between start offset and end offset
         # need to copy here to avoid exhausting the original data iterator.
+        logger.warning("getCache(self,start,end)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, start, end)
         entries = [copy.copy(entry.iterator) for entry in self.cache[start_idx : end_idx + 1]]
         it = chain(*entries)
         return it
@@ -194,6 +200,7 @@ class ReadLimitRegistry:
         if read_limit_type is None:
             raise PySparkException("name '{}' is not registered.".format(type_name))
 
+            logger.warning("get(self,params_with_type)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, params_with_type)
         params_without_type = params_with_type.copy()
         del params_without_type["_type"]
         return read_limit_type(**params_without_type)

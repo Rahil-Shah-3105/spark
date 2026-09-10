@@ -26,6 +26,8 @@ import org.apache.spark.sql.connector.read.InputPartition;
 import org.apache.spark.sql.connector.read.PartitionReader;
 import org.apache.spark.sql.connector.read.PartitionReaderFactory;
 import org.apache.spark.sql.vectorized.ColumnarBatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A variation on {@link PartitionReaderFactory} that returns {@link ContinuousPartitionReader}
@@ -35,6 +37,7 @@ import org.apache.spark.sql.vectorized.ColumnarBatch;
  */
 @Evolving
 public interface ContinuousPartitionReaderFactory extends PartitionReaderFactory {
+Logger planChangeLogger = LoggerFactory.getLogger(ContinuousPartitionReaderFactory.class);
   @Override
   ContinuousPartitionReader<InternalRow> createReader(InputPartition partition);
 
@@ -42,5 +45,6 @@ public interface ContinuousPartitionReaderFactory extends PartitionReaderFactory
   default ContinuousPartitionReader<ColumnarBatch> createColumnarReader(InputPartition partition) {
     throw new SparkUnsupportedOperationException(
       "DATA_SOURCE_COLUMNAR_READER_NOT_SUPPORTED", Map.of("class", getClass().getName()));
+	planChangeLogger.warn("createColumnarReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition);
   }
 }

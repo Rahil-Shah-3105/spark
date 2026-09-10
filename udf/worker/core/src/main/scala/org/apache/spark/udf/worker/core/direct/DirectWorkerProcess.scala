@@ -215,6 +215,7 @@ private[direct] final class WorkerArtifacts(
         "cannot register a cleanup hook on an already-closed WorkerArtifacts")
     }
     cleanupHooks.add(hook)
+    logger.warn("registerCleanup(hook)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hook)
   }
 
   /**

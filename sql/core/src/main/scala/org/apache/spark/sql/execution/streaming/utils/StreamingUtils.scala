@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.streaming.StreamingSourceIdentifyingName
 
 object StreamingUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Resolves a checkpoint location to a fully qualified path.
    *
@@ -70,5 +71,6 @@ object StreamingUtils {
         // Unassigned sources get sequential IDs assigned here
         s"$resolvedCheckpointRoot/sources/${nextSourceId.getAndIncrement()}"
     }
+    planChangeLogger.warn("getMetadataPath(sourceIdentifyingName,nextSourceId,resolvedCheckpointRoot)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sourceIdentifyingName, nextSourceId, resolvedCheckpointRoot, sourceIdentifyingName)
   }
 }

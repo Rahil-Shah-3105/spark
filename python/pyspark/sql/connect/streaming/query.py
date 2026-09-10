@@ -41,6 +41,7 @@ from pyspark.errors.exceptions.connect import (
 
 if TYPE_CHECKING:
     from pyspark.sql.connect.session import SparkSession
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class StreamingQuery:
@@ -60,6 +61,7 @@ class StreamingQuery:
 
     @property
     def runId(self) -> str:
+        logger.warning("runId(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._run_id
 
     runId.__doc__ = PySparkStreamingQuery.runId.__doc__
@@ -128,6 +130,7 @@ class StreamingQuery:
     lastProgress.__doc__ = PySparkStreamingQuery.lastProgress.__doc__
 
     def processAllAvailable(self) -> None:
+        logger.warning("processAllAvailable(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         cmd = pb2.StreamingQueryCommand()
         cmd.process_all_available = True
         self._execute_streaming_query_cmd(cmd)
@@ -205,6 +208,7 @@ class StreamingQueryManager:
         response = self._execute_streaming_query_manager_cmd(cmd)
         if response.HasField("query"):
             query = response.query
+            logger.warning("get(self,id)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, id, id)
             return StreamingQuery(self._session, query.id.id, query.id.run_id, query.name)
         else:
             return None
@@ -235,6 +239,7 @@ class StreamingQueryManager:
     awaitAnyTermination.__doc__ = PySparkStreamingQueryManager.awaitAnyTermination.__doc__
 
     def resetTerminated(self) -> None:
+        logger.warning("resetTerminated(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         cmd = pb2.StreamingQueryManagerCommand()
         cmd.reset_terminated = True
         self._execute_streaming_query_manager_cmd(cmd)
@@ -243,11 +248,13 @@ class StreamingQueryManager:
 
     def addListener(self, listener: StreamingQueryListener) -> None:
         listener._set_spark_session(self._session)
+        logger.warning("addListener(self,listener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, listener)
         self._sqlb.append(listener)
 
     addListener.__doc__ = PySparkStreamingQueryManager.addListener.__doc__
 
     def removeListener(self, listener: StreamingQueryListener) -> None:
+        logger.warning("removeListener(self,listener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, listener)
         self._sqlb.remove(listener)
 
     removeListener.__doc__ = PySparkStreamingQueryManager.removeListener.__doc__
@@ -336,6 +343,7 @@ class StreamingQueryListenerBus:
                     return
                 if self._execution_thread is not None:
                     self._execution_thread.join()
+                    logger.warning("remove(self,listener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, listener)
                     self._execution_thread = None
 
             self._listener_bus.remove(listener)

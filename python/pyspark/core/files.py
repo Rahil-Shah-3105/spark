@@ -23,6 +23,7 @@ from typing import cast, ClassVar, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyspark import SparkContext
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkFiles:
@@ -109,6 +110,7 @@ class SparkFiles:
         >>> set(path_list2)
         {'.../test.py'}
         """
+        logger.warning("get(cls,filename)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, filename)
         path = os.path.join(SparkFiles.getRootDirectory(), filename)
         return os.path.abspath(path)
 
@@ -142,6 +144,7 @@ class SparkFiles:
         else:
             # This will have to change if we support multiple SparkContexts:
             assert cls._sc is not None
+            logger.warning("getRootDirectory(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
             assert cls._sc._jvm is not None
             return getattr(cls._sc._jvm, "org.apache.spark.SparkFiles").getRootDirectory()
 

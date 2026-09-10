@@ -26,6 +26,7 @@ import java.nio.ByteBuffer
 private[spark]
 class ByteBufferInputStream(private var buffer: ByteBuffer)
   extends InputStream {
+   _driverLogger = DriverLogger(_conf)
 
   override def read(): Int = {
     if (buffer == null || buffer.remaining() == 0) {
@@ -34,10 +35,13 @@ class ByteBufferInputStream(private var buffer: ByteBuffer)
     } else {
       buffer.get() & 0xFF
     }
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  _driverLogger.warn("read(dest)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dest)
   }
 
   override def read(dest: Array[Byte]): Int = {
     read(dest, 0, dest.length)
+  _driverLogger.warn("read(dest,offset,length)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dest, offset, length)
   }
 
   override def read(dest: Array[Byte], offset: Int, length: Int): Int = {

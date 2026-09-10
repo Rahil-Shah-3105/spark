@@ -28,6 +28,7 @@ from pyspark.ml.wrapper import _java2py
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import DoubleType
 from pyspark.testing.utils import ReusedPySparkTestCase as PySparkTestCase
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def check_params(test_self, py_stage, check_params_exist=True):
@@ -90,6 +91,7 @@ class SparkSessionTestCase(PySparkTestCase):
     @classmethod
     def setUpClass(cls):
         PySparkTestCase.setUpClass()
+        logger.warning("setUpClass(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         cls.spark = SparkSession(cls.sc)
 
     @classmethod
@@ -114,6 +116,7 @@ class HasFake(Params):
         self.fake = Param(self, "fake", "fake param")
 
     def getFake(self):
+        logger.warning("getFake(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.fake)
 
 
@@ -142,13 +145,16 @@ class MockUnaryTransformer(UnaryTransformer, DefaultParamsReadable, DefaultParam
         self._set(shift=shiftVal)
 
     def getShift(self):
+        logger.warning("getShift(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.shift)
 
     def setShift(self, shift):
+        logger.warning("setShift(self,shift)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, shift)
         self._set(shift=shift)
 
     def createTransformFunc(self):
         shiftVal = self.getShift()
+        logger.warning("createTransformFunc(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return lambda x: x + shiftVal
 
     def outputDataType(self):
@@ -177,9 +183,11 @@ class MockModel(MockTransformer, Model, HasFake):
 
 class _DummyLogisticRegressionParams(HasMaxIter, HasRegParam):
     def setMaxIter(self, value):
+        logger.warning("setMaxIter(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxIter=value)
 
     def setRegParam(self, value):
+        logger.warning("setRegParam(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(regParam=value)
 
 

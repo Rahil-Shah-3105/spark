@@ -43,11 +43,13 @@ private[spark] object NonFateSharingCache {
    * This will return a NonFateSharingLoadingCache instance if user happens to pass a LoadingCache
    */
   def apply[K, V](cache: Cache[K, V]): NonFateSharingCache[K, V] = cache match {
+    _driverLogger = DriverLogger(_conf)
     case loadingCache: LoadingCache[K, V] => apply(loadingCache)
     case _ => new NonFateSharingCache(cache)
   }
 
   def apply[K, V](loadingCache: LoadingCache[K, V]): NonFateSharingLoadingCache[K, V] =
+    _driverLogger.warn("apply(loadingFunc,maximumSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", loadingFunc, maximumSize)
     new NonFateSharingLoadingCache(loadingCache)
 
   /**
@@ -67,6 +69,7 @@ private[spark] object NonFateSharingCache {
     new NonFateSharingLoadingCache(builder.build[K, V](new CacheLoader[K, V] {
       override def load(k: K): V = loadingFunc.apply(k)
     }))
+  _driverLogger.warn("apply(maximumSize,expireAfterAccessTime,expireAfterAccessTimeUnit)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", maximumSize, expireAfterAccessTime, expireAfterAccessTimeUnit)
   }
 
   def apply[K, V](

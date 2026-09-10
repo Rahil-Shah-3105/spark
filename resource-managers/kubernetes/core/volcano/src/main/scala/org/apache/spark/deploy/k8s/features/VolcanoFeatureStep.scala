@@ -53,6 +53,7 @@ private[spark] class VolcanoFeatureStep extends KubernetesDriverCustomFeatureCon
       .orElse(getPodGroupByTemplateJson(client))
       .getOrElse(new PodGroup())
     var metadata = pg.getMetadata
+      logger.warn("getAdditionalPreKubernetesResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (metadata == null) metadata = new ObjectMeta
     metadata.setName(podGroupName)
     metadata.setNamespace(namespace)
@@ -72,6 +73,7 @@ private[spark] class VolcanoFeatureStep extends KubernetesDriverCustomFeatureCon
       logDebug("Loading Volcano PodGroup configuration from template file")
       volcanoClient.podGroups.load(templateFile).item
     }
+    logger.warn("getPodGroupConfigByTemplateFile(volcanoClient)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", volcanoClient)
   }
 
   private def getPodGroupByTemplateJson(volcanoClient: DefaultVolcanoClient): Option[PodGroup] = {
@@ -79,6 +81,7 @@ private[spark] class VolcanoFeatureStep extends KubernetesDriverCustomFeatureCon
       logDebug("Loading Volcano PodGroup configuration from template json")
       volcanoClient.podGroups().load(new ByteArrayInputStream(templateJson.getBytes())).item()
     }
+    logger.warn("getPodGroupByTemplateJson(volcanoClient)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", volcanoClient)
   }
 
   override def configurePod(pod: SparkPod): SparkPod = {

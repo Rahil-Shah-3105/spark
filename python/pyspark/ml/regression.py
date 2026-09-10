@@ -76,6 +76,7 @@ from pyspark.sql.utils import is_remote
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 T = TypeVar("T")
 M = TypeVar("M", bound=Transformer)
@@ -205,6 +206,7 @@ class _LinearRegressionParams(
         """
         Gets the value of epsilon or its default value.
         """
+        logger.warning("getEpsilon(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.epsilon)
 
 
@@ -371,6 +373,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`epsilon`.
         """
+        logger.warning("setEpsilon(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(epsilon=value)
 
     def setMaxIter(self, value: int) -> "LinearRegression":
@@ -383,6 +386,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`regParam`.
         """
+        logger.warning("setRegParam(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(regParam=value)
 
     def setTol(self, value: float) -> "LinearRegression":
@@ -395,6 +399,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`elasticNetParam`.
         """
+        logger.warning("setElasticNetParam(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(elasticNetParam=value)
 
     def setFitIntercept(self, value: bool) -> "LinearRegression":
@@ -407,6 +412,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`standardization`.
         """
+        logger.warning("setStandardization(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(standardization=value)
 
     def setWeightCol(self, value: str) -> "LinearRegression":
@@ -419,6 +425,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`solver`.
         """
+        logger.warning("setSolver(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(solver=value)
 
     def setAggregationDepth(self, value: int) -> "LinearRegression":
@@ -431,6 +438,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`loss`.
         """
+        logger.warning("setLoss(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(lossType=value)
 
     @since("3.1.0")
@@ -438,6 +446,7 @@ class LinearRegression(
         """
         Sets the value of :py:attr:`maxBlockSizeInMB`.
         """
+        logger.warning("setMaxBlockSizeInMB(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxBlockSizeInMB=value)
 
 
@@ -802,12 +811,14 @@ class _IsotonicRegressionParams(HasFeaturesCol, HasLabelCol, HasPredictionCol, H
         """
         Gets the value of isotonic or its default value.
         """
+        logger.warning("getIsotonic(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.isotonic)
 
     def getFeatureIndex(self) -> int:
         """
         Gets the value of featureIndex or its default value.
         """
+        logger.warning("getFeatureIndex(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.featureIndex)
 
 
@@ -906,6 +917,7 @@ class IsotonicRegression(
         """
         Sets the value of :py:attr:`isotonic`.
         """
+        logger.warning("setIsotonic(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(isotonic=value)
 
     def setFeatureIndex(self, value: int) -> "IsotonicRegression":
@@ -914,6 +926,7 @@ class IsotonicRegression(
         """
         return self._set(featureIndex=value)
 
+    logger.warning("setFeatureIndex(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setFeaturesCol(self, value: str) -> "IsotonicRegression":
         """
@@ -921,6 +934,7 @@ class IsotonicRegression(
         """
         return self._set(featuresCol=value)
 
+    logger.warning("setFeaturesCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setPredictionCol(self, value: str) -> "IsotonicRegression":
         """
@@ -928,11 +942,13 @@ class IsotonicRegression(
         """
         return self._set(predictionCol=value)
 
+    logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setLabelCol(self, value: str) -> "IsotonicRegression":
         """
         Sets the value of :py:attr:`labelCol`.
         """
+        logger.warning("setLabelCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(labelCol=value)
 
     @since("1.6.0")
@@ -1184,6 +1200,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`maxDepth`.
         """
+        logger.warning("setMaxDepth(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxDepth=value)
 
     @since("1.4.0")
@@ -1191,6 +1208,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`maxBins`.
         """
+        logger.warning("setMaxBins(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxBins=value)
 
     @since("1.4.0")
@@ -1198,6 +1216,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`minInstancesPerNode`.
         """
+        logger.warning("setMinInstancesPerNode(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(minInstancesPerNode=value)
 
     @since("3.0.0")
@@ -1207,11 +1226,13 @@ class DecisionTreeRegressor(
         """
         return self._set(minWeightFractionPerNode=value)
 
+    logger.warning("setMinWeightFractionPerNode(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.4.0")
     def setMinInfoGain(self, value: float) -> "DecisionTreeRegressor":
         """
         Sets the value of :py:attr:`minInfoGain`.
         """
+        logger.warning("setMinInfoGain(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(minInfoGain=value)
 
     @since("1.4.0")
@@ -1219,6 +1240,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`maxMemoryInMB`.
         """
+        logger.warning("setMaxMemoryInMB(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxMemoryInMB=value)
 
     @since("1.4.0")
@@ -1226,6 +1248,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`cacheNodeIds`.
         """
+        logger.warning("setCacheNodeIds(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(cacheNodeIds=value)
 
     @since("1.4.0")
@@ -1233,6 +1256,7 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`impurity`.
         """
+        logger.warning("setImpurity(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(impurity=value)
 
     @since("1.4.0")
@@ -1240,12 +1264,14 @@ class DecisionTreeRegressor(
         """
         Sets the value of :py:attr:`checkpointInterval`.
         """
+        logger.warning("setCheckpointInterval(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(checkpointInterval=value)
 
     def setSeed(self, value: int) -> "DecisionTreeRegressor":
         """
         Sets the value of :py:attr:`seed`.
         """
+        logger.warning("setSeed(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(seed=value)
 
     @since("3.0.0")
@@ -1263,6 +1289,7 @@ class DecisionTreeRegressor(
         return self._set(varianceCol=value)
 
 
+logger.warning("setVarianceCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
 @inherit_doc
 class DecisionTreeRegressionModel(
     _JavaRegressionModel,
@@ -1535,6 +1562,7 @@ class RandomForestRegressor(
         """
         Sets the value of :py:attr:`numTrees`.
         """
+        logger.warning("setNumTrees(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(numTrees=value)
 
     @since("3.0.0")
@@ -1542,6 +1570,7 @@ class RandomForestRegressor(
         """
         Sets the value of :py:attr:`bootstrap`.
         """
+        logger.warning("setBootstrap(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(bootstrap=value)
 
     @since("1.4.0")
@@ -1549,6 +1578,7 @@ class RandomForestRegressor(
         """
         Sets the value of :py:attr:`subsamplingRate`.
         """
+        logger.warning("setSubsamplingRate(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(subsamplingRate=value)
 
     @since("2.4.0")
@@ -1556,6 +1586,7 @@ class RandomForestRegressor(
         """
         Sets the value of :py:attr:`featureSubsetStrategy`.
         """
+        logger.warning("setFeatureSubsetStrategy(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(featureSubsetStrategy=value)
 
     def setCheckpointInterval(self, value: int) -> "RandomForestRegressor":
@@ -1674,6 +1705,7 @@ class _GBTRegressorParams(_GBTParams, _TreeRegressorParams):
         """
         Gets the value of lossType or its default value.
         """
+        logger.warning("getLossType(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.lossType)
 
 
@@ -1897,6 +1929,7 @@ class GBTRegressor(
         """
         Sets the value of :py:attr:`lossType`.
         """
+        logger.warning("setLossType(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(lossType=value)
 
     @since("1.4.0")
@@ -1918,6 +1951,7 @@ class GBTRegressor(
         """
         Sets the value of :py:attr:`validationIndicatorCol`.
         """
+        logger.warning("setValidationIndicatorCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(validationIndicatorCol=value)
 
     @since("1.4.0")
@@ -1946,6 +1980,7 @@ class GBTRegressor(
         """
         Sets the value of :py:attr:`stepSize`.
         """
+        logger.warning("setStepSize(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(stepSize=value)
 
     @since("3.0.0")
@@ -1955,6 +1990,7 @@ class GBTRegressor(
         """
         return self._set(weightCol=value)
 
+    logger.warning("setWeightCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("3.0.0")
     def setMinWeightFractionPerNode(self, value: float) -> "GBTRegressor":
         """
@@ -2072,6 +2108,7 @@ class _AFTSurvivalRegressionParams(
         """
         Gets the value of censorCol or its default value.
         """
+        logger.warning("getCensorCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.censorCol)
 
     @since("1.6.0")
@@ -2079,6 +2116,7 @@ class _AFTSurvivalRegressionParams(
         """
         Gets the value of quantileProbabilities or its default value.
         """
+        logger.warning("getQuantileProbabilities(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.quantileProbabilities)
 
     @since("1.6.0")
@@ -2086,6 +2124,7 @@ class _AFTSurvivalRegressionParams(
         """
         Gets the value of quantilesCol or its default value.
         """
+        logger.warning("getQuantilesCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.quantilesCol)
 
 
@@ -2242,6 +2281,7 @@ class AFTSurvivalRegression(
         """
         Sets the value of :py:attr:`censorCol`.
         """
+        logger.warning("setCensorCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(censorCol=value)
 
     @since("1.6.0")
@@ -2251,6 +2291,7 @@ class AFTSurvivalRegression(
         """
         return self._set(quantileProbabilities=value)
 
+    logger.warning("setQuantileProbabilities(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setQuantilesCol(self, value: str) -> "AFTSurvivalRegression":
         """
@@ -2258,6 +2299,7 @@ class AFTSurvivalRegression(
         """
         return self._set(quantilesCol=value)
 
+    logger.warning("setQuantilesCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setMaxIter(self, value: int) -> "AFTSurvivalRegression":
         """
@@ -2265,6 +2307,7 @@ class AFTSurvivalRegression(
         """
         return self._set(maxIter=value)
 
+    logger.warning("setMaxIter(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setTol(self, value: float) -> "AFTSurvivalRegression":
         """
@@ -2272,6 +2315,7 @@ class AFTSurvivalRegression(
         """
         return self._set(tol=value)
 
+    logger.warning("setTol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setFitIntercept(self, value: bool) -> "AFTSurvivalRegression":
         """
@@ -2279,6 +2323,7 @@ class AFTSurvivalRegression(
         """
         return self._set(fitIntercept=value)
 
+    logger.warning("setFitIntercept(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("2.1.0")
     def setAggregationDepth(self, value: int) -> "AFTSurvivalRegression":
         """
@@ -2286,6 +2331,7 @@ class AFTSurvivalRegression(
         """
         return self._set(aggregationDepth=value)
 
+    logger.warning("setAggregationDepth(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("3.1.0")
     def setMaxBlockSizeInMB(self, value: int) -> "AFTSurvivalRegression":
         """
@@ -2438,6 +2484,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of family or its default value.
         """
+        logger.warning("getFamily(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.family)
 
     @since("2.0.0")
@@ -2445,6 +2492,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of linkPredictionCol or its default value.
         """
+        logger.warning("getLinkPredictionCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.linkPredictionCol)
 
     @since("2.0.0")
@@ -2452,6 +2500,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of link or its default value.
         """
+        logger.warning("getLink(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.link)
 
     @since("2.2.0")
@@ -2459,6 +2508,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of variancePower or its default value.
         """
+        logger.warning("getVariancePower(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.variancePower)
 
     @since("2.2.0")
@@ -2466,6 +2516,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of linkPower or its default value.
         """
+        logger.warning("getLinkPower(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.linkPower)
 
     @since("2.3.0")
@@ -2473,6 +2524,7 @@ class _GeneralizedLinearRegressionParams(
         """
         Gets the value of offsetCol or its default value.
         """
+        logger.warning("getOffsetCol(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self.getOrDefault(self.offsetCol)
 
 
@@ -2639,6 +2691,7 @@ class GeneralizedLinearRegression(
         """
         Sets the value of :py:attr:`family`.
         """
+        logger.warning("setFamily(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(family=value)
 
     @since("2.0.0")
@@ -2648,11 +2701,13 @@ class GeneralizedLinearRegression(
         """
         return self._set(linkPredictionCol=value)
 
+    logger.warning("setLinkPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("2.0.0")
     def setLink(self, value: str) -> "GeneralizedLinearRegression":
         """
         Sets the value of :py:attr:`link`.
         """
+        logger.warning("setLink(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(link=value)
 
     @since("2.2.0")
@@ -2660,6 +2715,7 @@ class GeneralizedLinearRegression(
         """
         Sets the value of :py:attr:`variancePower`.
         """
+        logger.warning("setVariancePower(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(variancePower=value)
 
     @since("2.2.0")
@@ -2667,6 +2723,7 @@ class GeneralizedLinearRegression(
         """
         Sets the value of :py:attr:`linkPower`.
         """
+        logger.warning("setLinkPower(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(linkPower=value)
 
     @since("2.3.0")
@@ -2674,6 +2731,7 @@ class GeneralizedLinearRegression(
         """
         Sets the value of :py:attr:`offsetCol`.
         """
+        logger.warning("setOffsetCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(offsetCol=value)
 
     @since("2.0.0")
@@ -3042,6 +3100,7 @@ class _FactorizationMachinesParams(
         """
         Gets the value of factorSize or its default value.
         """
+        logger.warning("getFactorSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.factorSize)
 
     @since("3.0.0")
@@ -3049,6 +3108,7 @@ class _FactorizationMachinesParams(
         """
         Gets the value of fitLinear or its default value.
         """
+        logger.warning("getFitLinear(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.fitLinear)
 
     @since("3.0.0")
@@ -3056,6 +3116,7 @@ class _FactorizationMachinesParams(
         """
         Gets the value of miniBatchFraction or its default value.
         """
+        logger.warning("getMiniBatchFraction(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.miniBatchFraction)
 
     @since("3.0.0")
@@ -3063,6 +3124,7 @@ class _FactorizationMachinesParams(
         """
         Gets the value of initStd or its default value.
         """
+        logger.warning("getInitStd(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.initStd)
 
 
@@ -3202,6 +3264,7 @@ class FMRegressor(
         """
         Sets the value of :py:attr:`factorSize`.
         """
+        logger.warning("setFactorSize(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(factorSize=value)
 
     @since("3.0.0")
@@ -3209,6 +3272,7 @@ class FMRegressor(
         """
         Sets the value of :py:attr:`fitLinear`.
         """
+        logger.warning("setFitLinear(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(fitLinear=value)
 
     @since("3.0.0")
@@ -3216,6 +3280,7 @@ class FMRegressor(
         """
         Sets the value of :py:attr:`miniBatchFraction`.
         """
+        logger.warning("setMiniBatchFraction(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(miniBatchFraction=value)
 
     @since("3.0.0")
@@ -3223,6 +3288,7 @@ class FMRegressor(
         """
         Sets the value of :py:attr:`initStd`.
         """
+        logger.warning("setInitStd(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(initStd=value)
 
     @since("3.0.0")

@@ -186,6 +186,8 @@ object GeometryType extends SpatialType {
         messageParameters = Map("srid" -> srid.toString))
     }
     new GeometryType(crs)
+    logger.warn("apply(srid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", srid, srid)
+  logger.warn("apply(crs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", crs)
   }
 
   def apply(crs: String): GeometryType = {

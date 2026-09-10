@@ -35,6 +35,7 @@ import org.apache.spark.util.SparkExitCode
  * implementation that loads the user code and submits it to the backend.
  */
 object SparkPipelines extends Logging {
+  _driverLogger = DriverLogger(_conf)
   def main(args: Array[String]): Unit = {
     val pipelinesCliFile = args(0)
     val sparkSubmitAndPipelinesArgs = args.slice(1, args.length)
@@ -47,6 +48,7 @@ object SparkPipelines extends Logging {
       args: Array[String]): Seq[String] = {
     val (sparkSubmitArgs, pipelinesArgs) = splitArgs(args)
     sparkSubmitArgs ++ Seq(pipelinesCliFile) ++ pipelinesArgs
+    _driverLogger.warn("constructSparkSubmitArgs(pipelinesCliFile,args)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pipelinesCliFile, args)
   }
 
   /**

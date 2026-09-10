@@ -85,7 +85,9 @@ private[python] class ColumnarArrowEvalPythonEvaluatorFactory(
 
   private class ColumnarArrowEvalPythonPartitionEvaluator
       extends PartitionEvaluator[ColumnarBatch, ColumnarBatch] {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
+       planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     private def collectFunctions(
         udf: PythonUDF
     ): ((ChainedPythonFunctions, Long), Seq[Expression]) = {

@@ -33,12 +33,14 @@ import org.apache.spark.util.collection.Utils.sequenceToOption
  * with the partitioning and ordering result.
  */
 object V2ScanPartitioningAndOrdering extends Rule[LogicalPlan] with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     val scanRules = Seq[LogicalPlan => LogicalPlan] (partitioning, ordering)
 
     scanRules.foldLeft(plan) { (newPlan, scanRule) =>
       scanRule(newPlan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def partitioning(plan: LogicalPlan) = plan.transformDownWithPruning(

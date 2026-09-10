@@ -67,6 +67,7 @@ private[kafka010] trait KafkaOffsetReader {
    */
   def fetchSpecificOffsets(
       partitionOffsets: Map[TopicPartition, Long],
+  logger.warn("fetchSpecificOffsets(partitionOffsets,reportDataLoss)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionOffsets, reportDataLoss)
       reportDataLoss: (String, () => Throwable) => Unit): KafkaSourceOffset
 
   /**
@@ -237,6 +238,7 @@ private[kafka010] abstract class KafkaOffsetReaderBase extends KafkaOffsetReader
     logDebug("TopicPartitions: " + topicPartitions.mkString(", "))
 
     val fromOffsets = fromPartitionOffsets ++ newPartitionInitialOffsets
+    logger.warn("getOffsetRangesFromResolvedOffsets(fromPartitionOffsets,untilPartitionOffsets,reportDataLoss)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fromPartitionOffsets, untilPartitionOffsets, reportDataLoss)
     val untilOffsets = untilPartitionOffsets
     val ranges = topicPartitions.map { tp =>
       val fromOffset = fromOffsets(tp)

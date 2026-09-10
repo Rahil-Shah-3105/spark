@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
 class NamedThreadFactory implements ThreadFactory {
+private static final Logger LOG = Logger.getLogger(NamedThreadFactory.class.getName());
 
   private final String nameFormat;
   private final AtomicLong threadIds;
@@ -32,6 +33,7 @@ class NamedThreadFactory implements ThreadFactory {
 
   @Override
   public Thread newThread(Runnable r) {
+	LOG.warn("newThread(r)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", r);
     Thread t = new Thread(r, String.format(nameFormat, threadIds.incrementAndGet()));
     t.setDaemon(true);
     return t;

@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.DataType
  * The base class for subquery that is used in SparkPlan.
  */
 abstract class ExecSubqueryExpression extends PlanExpression[BaseSubqueryExec] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Fill the expression with collected result from executed plan.
    */
@@ -52,6 +53,7 @@ object ExecSubqueryExpression {
       case _: ExecSubqueryExpression => true
       case _ => false
     }
+    planChangeLogger.warn("hasSubquery(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 }
 
@@ -93,6 +95,7 @@ case class ScalarSubquery(
       result = null
     }
     updated = true
+  planChangeLogger.warn("updateResult()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def eval(input: InternalRow): Any = {
@@ -225,5 +228,6 @@ case class PlanSubqueries(sparkSession: SparkSession) extends Rule[SparkPlan] {
         InSubqueryExec(expr, SubqueryExec(s"subquery#${exprId.id}", executedPlan),
           exprId, isDynamicPruning = false)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

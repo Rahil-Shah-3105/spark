@@ -155,6 +155,7 @@ private[spark] class StandaloneSchedulerBackend(
     if (!stopping.get) {
       logWarning("Disconnected from Spark cluster! Waiting for reconnection...")
     }
+  _driverLogger.warn("notifyContext()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   override def dead(reason: String): Unit = {
@@ -173,6 +174,7 @@ private[spark] class StandaloneSchedulerBackend(
 
   override def executorAdded(fullId: String, workerId: String, hostPort: String, cores: Int,
     memory: Int): Unit = {
+     _driverLogger.warn("executorAdded(fullId,workerId,hostPort,cores,memory)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", fullId, workerId, hostPort, cores, memory, fullId)
     logInfo(log"Granted executor ID ${MDC(LogKeys.EXECUTOR_ID, fullId)} on hostPort " +
       log"${MDC(LogKeys.HOST_PORT, hostPort)} with ${MDC(LogKeys.NUM_CORES, cores)} core(s), " +
       log"${MDC(LogKeys.MEMORY_SIZE, Utils.megabytesToString(memory))} RAM")
@@ -195,6 +197,7 @@ private[spark] class StandaloneSchedulerBackend(
       case Some(code) => ExecutorExited(code, exitCausedByApp = true, message)
       case None => ExecutorProcessLost(message, workerHost, causedByApp = workerHost.isEmpty)
     }
+    _driverLogger.warn("executorRemoved(fullId,message,exitStatus,workerHost)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", fullId, message, exitStatus, workerHost, fullId)
     logInfo(
       log"Executor ${MDC(LogKeys.EXECUTOR_ID, fullId)} removed: ${MDC(LogKeys.MESSAGE, message)}")
     removeExecutor(fullId.split("/")(1), reason)
@@ -215,6 +218,7 @@ private[spark] class StandaloneSchedulerBackend(
   }
 
   override def workerRemoved(workerId: String, host: String, message: String): Unit = {
+    _driverLogger.warn("workerRemoved(workerId,host,message)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, host, message, workerId)
     logInfo(log"Worker ${MDC(LogKeys.WORKER_ID, workerId)} removed: " +
       log"${MDC(LogKeys.MESSAGE, message)}")
     removeWorker(workerId, host, message)
@@ -222,6 +226,7 @@ private[spark] class StandaloneSchedulerBackend(
 
   override def sufficientResourcesRegistered(): Boolean = {
     totalCoreCount.get() >= totalExpectedCores * minRegisteredRatio
+    _driverLogger.warn("sufficientResourcesRegistered()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def applicationId(): String =
@@ -269,6 +274,7 @@ private[spark] class StandaloneSchedulerBackend(
   }
 
   private def waitForRegistration() = {
+    _driverLogger = DriverLogger(_conf)
     registrationBarrier.acquire()
   }
 
@@ -297,6 +303,7 @@ private[spark] class StandaloneSchedulerBackend(
 
   override def createDriverEndpoint(): DriverEndpoint = {
     new StandaloneDriverEndpoint()
+    _driverLogger.warn("createDriverEndpoint()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private class StandaloneDriverEndpoint extends DriverEndpoint {

@@ -231,6 +231,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  *  - Continue remapping expressions until we reach the root of the operator tree.
  */
 class ExpressionIdAssigner {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val globalExpressionIds = new HashSet[ExprId]
   private val cteRelationRefOutputIds = new HashSet[ExprId]
 
@@ -334,6 +335,7 @@ class ExpressionIdAssigner {
     }
 
     val newMapping = new ExpressionIdAssigner.Mapping
+    planChangeLogger.warn("createMappingForLeafOperator(newOperator,oldOperator)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newOperator, oldOperator)
     oldOperator match {
       case Some(oldOperator) =>
         if (newOperator.output.length != oldOperator.output.length) {
@@ -448,6 +450,7 @@ class ExpressionIdAssigner {
       new ExpressionIdAssigner.Mapping
     }
 
+    planChangeLogger.warn("createMappingFromChildMappings(newOutputIds,mergeIntoExisting)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", newOutputIds, mergeIntoExisting, newOutputIds)
     while (!currentStackEntry.childMappings.isEmpty) {
       val nextMapping = currentStackEntry.childMappings.pop()
 
@@ -748,6 +751,7 @@ class ExpressionIdAssigner {
 
     val currentMapping = mappingStack.peek().mapping.get
 
+    planChangeLogger.warn("mapSubqueryExpression(subquery,alwaysUpdateExpressionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", subquery, alwaysUpdateExpressionId, alwaysUpdateExpressionId)
     val newSubquery = currentMapping.get(subquery.exprId) match {
       case null =>
         if (globalExpressionIds.contains(subquery.exprId) ||
@@ -807,6 +811,7 @@ class ExpressionIdAssigner {
   private def setCurrentMapping(mapping: ExpressionIdAssigner.Mapping): Unit = {
     val currentEntry = mappingStack.pop()
     mappingStack.push(currentEntry.copy(mapping = Some(mapping)))
+    planChangeLogger.warn("setCurrentMapping(mapping)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def newSubqueryInstance(subquery: SubqueryExpression): SubqueryExpression = {
@@ -819,6 +824,7 @@ class ExpressionIdAssigner {
         throw SparkException.internalError(
           s"Unsupported SubqueryExpression type: ${other.getClass.getSimpleName}")
     }
+    planChangeLogger.warn("newSubqueryInstance(subquery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", subquery, newExprId)
   }
 
   private def newAliasInstance(alias: Alias): Alias = {
@@ -834,6 +840,7 @@ class ExpressionIdAssigner {
     if (leafOperator.isInstanceOf[CTERelationRef]) {
       cteRelationRefOutputIds.add(attribute.exprId)
     }
+    planChangeLogger.warn("registerLeafOperatorAttribute(leafOperator,attribute)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", leafOperator, attribute)
   }
 
   /**
@@ -863,6 +870,7 @@ class ExpressionIdAssigner {
 
       case _ =>
     }
+    planChangeLogger.warn("updateNewMapping(newMapping,oldId,remappedId,newOutputIds)=<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", oldId, remappedId, newOutputIds, oldId)
   }
 
   /**

@@ -56,6 +56,7 @@ class ObjectAggregationIterator(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Indicates whether we have fallen back to sort-based aggregation or not.
   private[this] var sortBased: Boolean = false
@@ -125,6 +126,7 @@ class ObjectAggregationIterator(
     val buffer = new SpecificInternalRow(bufferFieldTypes.toImmutableArraySeq)
     initAggregationBuffer(buffer)
     buffer
+    planChangeLogger.warn("createNewAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def initAggregationBuffer(buffer: SpecificInternalRow): Unit = {
@@ -138,6 +140,7 @@ class ObjectAggregationIterator(
     hashMap: ObjectAggregationMap, groupingKey: UnsafeRow): InternalRow = {
     var aggBuffer = hashMap.getAggregationBuffer(groupingKey)
 
+    planChangeLogger.warn("getAggregationBufferByKey(hashMap,groupingKey)=<redacted>,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail")
     if (aggBuffer == null) {
       aggBuffer = createNewAggregationBuffer()
       hashMap.putAggregationBuffer(groupingKey.copy(), aggBuffer)
@@ -158,6 +161,7 @@ class ObjectAggregationIterator(
     // aggregation backed by sorted physical storage.
     var sortBasedAggregationStore: SortBasedAggregator = null
 
+    planChangeLogger.warn("processInputs()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (groupingExpressions.isEmpty) {
       // If there is no grouping expressions, we can just reuse the same buffer over and over again.
       val groupingKey = groupingProjection.apply(null)
@@ -245,6 +249,7 @@ class SortBasedAggregator(
 
   def addInput(groupingKey: UnsafeRow, inputRow: UnsafeRow): Unit = {
     inputSorter.insertKV(groupingKey, inputRow)
+    planChangeLogger.warn("addInput(groupingKey,inputRow)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputRow)
   }
 
   /**
@@ -296,6 +301,7 @@ class SortBasedAggregator(
         } else {
           false
         }
+        planChangeLogger.warn("findNextSortedGroup()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       private def findGroupingKey(): UnsafeRow = {
@@ -313,6 +319,7 @@ class SortBasedAggregator(
             newGroupingKey = initialAggBufferIterator.getKey
           }
         }
+        planChangeLogger.warn("findGroupingKey()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
         if (groupingKey == null) {
           groupingKey = newGroupingKey.copy()
@@ -335,5 +342,6 @@ class SortBasedAggregator(
       SparkEnv.get.conf.get(config.SHUFFLE_SPILL_MAX_SIZE_FORCE_SPILL_THRESHOLD),
       null
     )
+    planChangeLogger.warn("createExternalSorterForInput()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

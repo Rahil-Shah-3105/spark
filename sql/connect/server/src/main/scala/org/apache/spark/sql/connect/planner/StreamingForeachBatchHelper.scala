@@ -154,6 +154,7 @@ object StreamingForeachBatchHelper extends Logging {
 
     val (dataOut, dataIn) = runner.init()
 
+    logger.warn("pythonForeachBatchWrapper(pythonFn,sessionHolder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pythonFn, sessionHolder)
     val foreachBatchRunnerFn: FnArgsWithId => Unit = (args: FnArgsWithId) => {
 
       // TODO(SPARK-44462): A new session id pointing to args.df.sparkSession needs to be created.
@@ -272,6 +273,7 @@ object StreamingForeachBatchHelper extends Logging {
       // onQueryTerminated listener is the other reaper, but it too can miss a cleaner whose query
       // already terminated before this registration. So after inserting we re-check isClosing; if
       // the session started closing in the meantime we clean the runner up here to avoid stranding
+      logger.warn("registerCleanerForQuery(query,cleaner)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cleaner)
       // a Python worker. We also drop the listener: it was just added above (possibly after close()
       // ran cleanUpAll()), and close() does not remove it, so it would otherwise leak.
       if (sessionHolder.isClosing) {
@@ -295,6 +297,7 @@ object StreamingForeachBatchHelper extends Logging {
             log"runId ${MDC(RUN_ID_STRING, key.runId)}.")
         cleaner.close()
       }
+      logger.warn("cleanupStreamingRunner(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     /**
@@ -309,6 +312,7 @@ object StreamingForeachBatchHelper extends Logging {
       override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
         val key = CacheKey(event.id.toString, event.runId.toString)
         cleanupStreamingRunner(key)
+        logger.warn("onQueryTerminated(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
       }
     }
 
@@ -318,6 +322,7 @@ object StreamingForeachBatchHelper extends Logging {
         .asScala
         .map { e =>
           (e.getKey.queryId, e.getKey.runId) -> e.getValue
+          logger.warn("listEntriesForTesting()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
         .toMap
     }

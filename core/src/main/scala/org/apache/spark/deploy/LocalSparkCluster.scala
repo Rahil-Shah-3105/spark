@@ -117,6 +117,7 @@ private[spark] object LocalSparkCluster {
       coresPerWorker: Int,
       memoryPerWorker: Int,
       conf: SparkConf): LocalSparkCluster = {
+       _driverLogger.warn("apply(numWorkers,coresPerWorker,memoryPerWorker,conf)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numWorkers, coresPerWorker, memoryPerWorker, conf)
     localCluster =
       Some(new LocalSparkCluster(numWorkers, coresPerWorker, memoryPerWorker, conf))
     localCluster.get

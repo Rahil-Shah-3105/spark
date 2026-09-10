@@ -61,6 +61,7 @@ class StreamingQueryManager private[sql] (sparkSession: SparkSession)
     } else {
       null
     }
+    logger.warn("get(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   /** @inheritdoc */
@@ -81,24 +82,29 @@ class StreamingQueryManager private[sql] (sparkSession: SparkSession)
   /** @inheritdoc */
   def resetTerminated(): Unit = {
     executeManagerCmd(_.setResetTerminated(true))
+    logger.warn("resetTerminated()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
   def addListener(listener: StreamingQueryListener): Unit = {
     streamingQueryListenerBus.append(listener)
+    logger.warn("addListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** @inheritdoc */
   def removeListener(listener: StreamingQueryListener): Unit = {
     streamingQueryListenerBus.remove(listener)
+    logger.warn("removeListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** @inheritdoc */
   def listListeners(): Array[StreamingQueryListener] = {
     streamingQueryListenerBus.list()
+    logger.warn("listListeners()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def executeManagerCmd(
+      logger.warn("executeManagerCmd(setCmdFn)={}): EUAIACT-AUDIT: State change recorded for the audit trail", setCmdFn)
       setCmdFn: StreamingQueryManagerCommand.Builder => Unit // Sets the command field, like stop().
   ): StreamingQueryManagerCommandResult = {
 

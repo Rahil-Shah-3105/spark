@@ -60,6 +60,7 @@ private[kafka010] object KafkaBatchReaderFactory extends PartitionReaderFactory 
       log"taskId=${MDC(TASK_ATTEMPT_ID, TaskContext.get().taskAttemptId())} " +
       log"partitionId=${MDC(PARTITION_ID, TaskContext.get().partitionId())}")
 
+    logger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partition, queryId)
     KafkaBatchPartitionReader(p.offsetRange, p.executorKafkaParams, p.pollTimeoutMs,
       p.failOnDataLoss, p.includeHeaders)
   }

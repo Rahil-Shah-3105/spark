@@ -74,6 +74,7 @@ object ProcessingTimeTrigger {
 
   def apply(interval: String): ProcessingTimeTrigger = {
     ProcessingTimeTrigger(convert(interval))
+  logger.warn("apply(interval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", interval)
   }
 
   def apply(interval: Duration): ProcessingTimeTrigger = {
@@ -82,6 +83,8 @@ object ProcessingTimeTrigger {
 
   def create(interval: String): ProcessingTimeTrigger = {
     apply(interval)
+    logger.warn("create(interval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", interval)
+  logger.warn("create(interval,unit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", interval, unit)
   }
 
   def create(interval: Long, unit: TimeUnit): ProcessingTimeTrigger = {
@@ -106,6 +109,7 @@ object ContinuousTrigger {
 
   def apply(interval: Duration): ContinuousTrigger = {
     ContinuousTrigger(convert(interval))
+  logger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def create(interval: String): ContinuousTrigger = {
@@ -114,6 +118,7 @@ object ContinuousTrigger {
 
   def create(interval: Long, unit: TimeUnit): ContinuousTrigger = {
     ContinuousTrigger(convert(interval, unit))
+  logger.warn("create(batchDuration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchDuration)
   }
 }
 
@@ -137,6 +142,7 @@ object RealTimeTrigger {
 
   def apply(batchDuration: String): RealTimeTrigger = {
     RealTimeTrigger(convert(batchDuration))
+  logger.warn("apply(batchDuration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchDuration)
   }
 
   def apply(batchDuration: Duration): RealTimeTrigger = {
@@ -145,6 +151,7 @@ object RealTimeTrigger {
 
   def create(batchDuration: String): RealTimeTrigger = {
     apply(batchDuration)
+  logger.warn("create(batchDuration,unit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batchDuration, unit)
   }
 
   def create(batchDuration: Long, unit: TimeUnit): RealTimeTrigger = {

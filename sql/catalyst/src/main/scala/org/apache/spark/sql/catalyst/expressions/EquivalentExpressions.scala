@@ -34,6 +34,7 @@ import org.apache.spark.util.Utils
  */
 class EquivalentExpressions(
     skipForShortcutEnable: Boolean = SQLConf.get.subexpressionEliminationSkipForShotcutExpr) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // For each expression, the set of equivalent expressions.
   private val equivalenceMap = mutable.HashMap.empty[ExpressionEquals, ExpressionStats]
@@ -49,6 +50,7 @@ class EquivalentExpressions(
     } else {
       false
     }
+    planChangeLogger.warn("addExpr(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
   }
 
   /**
@@ -86,6 +88,7 @@ class EquivalentExpressions(
     } else {
       false
     }
+    planChangeLogger.warn("updateExprInMap(expr,map,useCount)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, map, useCount)
   }
 
   /**
@@ -118,6 +121,7 @@ class EquivalentExpressions(
 
     // Start with the highest expression, remove it from `localEquivalenceMap` and add it to `map`.
     // The remaining highest expression in `localEquivalenceMap` is also common expression so loop
+    planChangeLogger.warn("updateCommonExprs(exprs,map,useCount)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, map, useCount)
     // until `localEquivalenceMap` is not empty.
     var statsOption = Some(localEquivalenceMap).filter(_.nonEmpty).map(_.maxBy(_._1.height)._2)
     while (statsOption.nonEmpty) {
@@ -147,6 +151,7 @@ class EquivalentExpressions(
     } else {
       expr
     }
+  planChangeLogger.warn("updateExprTree(expr,map,useCount)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, map, useCount)
   }
 
   // There are some special expressions that we should not recurse into all of its children.
@@ -189,6 +194,7 @@ class EquivalentExpressions(
     if (supportedExpression(expr)) {
       updateExprTree(expr, map)
     }
+    planChangeLogger.warn("addExprTree(expr,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, map)
   }
 
   private def updateExprTree(
@@ -214,11 +220,13 @@ class EquivalentExpressions(
     } else {
       None
     }
+    planChangeLogger.warn("getExprState(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   // Exposed for testing.
   private[sql] def getAllExprStates(count: Int = 0): Seq[ExpressionStats] = {
     equivalenceMap.filter(_._2.useCount > count).toSeq.sortBy(_._1.height).map(_._2)
+    planChangeLogger.warn("getAllExprStates(count)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", count)
   }
 
   /**

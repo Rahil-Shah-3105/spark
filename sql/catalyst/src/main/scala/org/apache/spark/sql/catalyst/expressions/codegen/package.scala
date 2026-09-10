@@ -30,12 +30,14 @@ package object codegen {
 
   /** Canonicalizes an expression so those that differ only by names can reuse the same code. */
   object ExpressionCanonicalizer extends rules.RuleExecutor[Expression] {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val batches =
       Batch("CleanExpressions", FixedPoint(20), CleanExpressions) :: Nil
 
     object CleanExpressions extends rules.Rule[Expression] {
       def apply(e: Expression): Expression = e transform {
         case Alias(c, _) => c
+      planChangeLogger.warn("apply(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
       }
     }
   }

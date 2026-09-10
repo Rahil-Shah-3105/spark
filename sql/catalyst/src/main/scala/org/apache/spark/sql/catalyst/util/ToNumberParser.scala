@@ -28,6 +28,7 @@ import org.apache.spark.unsafe.types.UTF8String
 
 // This object contains some definitions of characters and tokens for the parser below.
 object ToNumberParser {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   final val ANGLE_BRACKET_CLOSE = '>'
   final val ANGLE_BRACKET_OPEN = '<'
   final val COMMA_LETTER = 'G'
@@ -843,6 +844,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
   private def addCharacterCheckingTrailingSpaces(result: StringBuilder, char: Char): Unit = {
     result.append(char)
     var i = result.size - 1
+    planChangeLogger.warn("addCharacterCheckingTrailingSpaces(result,char)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", result, char, result)
     while (i >= 1 &&
       result(i - 1) == SPACE &&
       result(i) == char) {
@@ -864,6 +866,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
         result(i - 1) == MINUS_SIGN ||
         result(i - 1) == ANGLE_BRACKET_OPEN) &&
       result(i) == SPACE) {
+       planChangeLogger.warn("addSpaceCheckingTrailingCharacters(result)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", result, result)
       result(i) = result(i - 1)
       result(i - 1) = SPACE
       i -= 1

@@ -29,10 +29,13 @@ import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.util.Utils
 
 object LocalRelation {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(output: Attribute*): LocalRelation = new LocalRelation(output)
 
   def apply(output1: StructField, output: StructField*): LocalRelation = {
     apply(StructType(output1 +: output))
+    planChangeLogger.warn("apply(output1,output)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", output1, output)
+  planChangeLogger.warn("apply(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
   }
 
   def apply(schema: StructType): LocalRelation = {

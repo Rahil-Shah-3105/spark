@@ -53,6 +53,7 @@ class StreamingQueryManager private[sql] (
     sqlConf: SQLConf)
   extends streaming.StreamingQueryManager
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private[sql] val stateStoreCoordinator =
     StateStoreCoordinatorRef.forDriver(sparkSession.sparkContext.env, sqlConf)
@@ -146,26 +147,31 @@ class StreamingQueryManager private[sql] (
     awaitTerminationLock.synchronized {
       lastTerminatedQueryException = null
     }
+    planChangeLogger.warn("resetTerminated()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
   def addListener(listener: StreamingQueryListener): Unit = {
     listenerBus.addListener(listener)
   }
+    planChangeLogger.warn("addListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
 
   /** @inheritdoc */
   def removeListener(listener: StreamingQueryListener): Unit = {
     listenerBus.removeListener(listener)
+    planChangeLogger.warn("removeListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** @inheritdoc */
   def listListeners(): Array[StreamingQueryListener] = {
     listenerBus.listeners.asScala.toArray
+    planChangeLogger.warn("listListeners()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** Post a listener event */
   private[sql] def postListenerEvent(event: StreamingQueryListener.Event): Unit = {
     listenerBus.post(event)
+    planChangeLogger.warn("postListenerEvent(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   private def isAnalysedPlanStateful(analysedPlan: WriteToStream): Boolean = {
@@ -184,6 +190,7 @@ class StreamingQueryManager private[sql] (
         !isAnalysedPlanStateful(analysedPlan) &&
         sparkSession.sessionState.conf.getConf(
           SQLConf.STREAMING_ASYNC_PROGRESS_TRACKING_REAL_TIME_MODE_ENABLED_BY_DEFAULT))
+      planChangeLogger.warn("useAsyncProgressTracking(extraOptions,trigger,analysedPlan)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", extraOptions, trigger, analysedPlan)
   }
 
   /**
@@ -285,6 +292,7 @@ class StreamingQueryManager private[sql] (
     val analyzedStreamWritePlan =
       sparkSession.sessionState.executePlan(dataStreamWritePlan).analyzed
         .asInstanceOf[WriteToStream]
+        planChangeLogger.warn("createQuery(userSpecifiedName,userSpecifiedSinkName,userSpecifiedCheckpointLocation,df,extraOptions,sink,outputMode,useTempCheckpointLocation,recoverFromCheckpointLocation,trigger,triggerClock,catalogAndIdent,catalogTable)={},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userSpecifiedName, userSpecifiedSinkName, userSpecifiedCheckpointLocation, df, extraOptions, sink, outputMode, useTempCheckpointLocation, recoverFromCheckpointLocation, trigger, triggerClock, catalogAndIdent, catalogTable, catalogAndIdent)
 
     (sink, trigger) match {
       case (_: SupportsWrite, trigger: ContinuousTrigger) =>
@@ -438,6 +446,7 @@ class StreamingQueryManager private[sql] (
       }
       activeQueries.put(query.id, query)
     }
+    planChangeLogger.warn("startQuery(userSpecifiedName,userSpecifiedSinkName,userSpecifiedCheckpointLocation,df,extraOptions,sink,outputMode,useTempCheckpointLocation,recoverFromCheckpointLocation,trigger,triggerClock,catalogAndIdent,catalogTable)={},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", userSpecifiedName, userSpecifiedSinkName, userSpecifiedCheckpointLocation, df, extraOptions, sink, outputMode, useTempCheckpointLocation, recoverFromCheckpointLocation, trigger, triggerClock, catalogAndIdent, catalogTable, catalogAndIdent)
 
     try {
       // When starting a query, it will call `StreamingQueryListener.onQueryStarted` synchronously.
@@ -463,6 +472,8 @@ class StreamingQueryManager private[sql] (
       awaitTerminationLock.notifyAll()
     }
     stateStoreCoordinator.deactivateInstances(terminatedQuery.runId)
+    planChangeLogger.warn("notifyQueryTermination(terminatedQuery)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", terminatedQuery)
+  planChangeLogger.warn("unregisterTerminatedStream(terminatedQuery)={}): EUAIACT-AUDIT: State change recorded for the audit trail", terminatedQuery)
   }
 
   private def unregisterTerminatedStream(terminatedQuery: StreamingQuery): Unit = {

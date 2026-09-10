@@ -27,6 +27,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Unpivot
  *  2. Cast inner values to type according to their index.
  */
 object UnpivotTypeCoercion extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(unpivot: Unpivot): Unpivot = {
     val valueDataTypes = unpivot.values.get.head.zipWithIndex.map {
       case (_, index) =>
@@ -47,6 +48,7 @@ object UnpivotTypeCoercion extends SQLConfHelper {
         }
     )
 
+        planChangeLogger.warn("apply(unpivot)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unpivot)
     unpivot.copy(values = Some(values))
   }
 }

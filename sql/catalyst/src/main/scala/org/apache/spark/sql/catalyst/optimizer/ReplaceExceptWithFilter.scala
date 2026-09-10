@@ -42,6 +42,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.EXCEPT
  * 3. Add a Coalesce(condition, False) (to take into account of NULL values in the condition).
  */
 object ReplaceExceptWithFilter extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!plan.conf.replaceExceptWithFilter) {
@@ -61,6 +62,7 @@ object ReplaceExceptWithFilter extends Rule[LogicalPlan] {
           e
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def transformCondition(plan: LogicalPlan, condition: Expression): Option[Expression] = {

@@ -43,6 +43,7 @@ import org.apache.spark.util.Utils
 class UnsafeRowSerializer(
     numFields: Int,
     dataSize: SQLMetric = null) extends Serializer with Serializable {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def newInstance(): SerializerInstance =
     new UnsafeRowSerializerInstance(numFields, dataSize)
   override def supportsRelocationOfSerializedObjects: Boolean = true
@@ -65,6 +66,7 @@ private class UnsafeRowSerializerInstance(
       if (dataSize != null) {
         dataSize.add(row.getSizeInBytes)
       }
+      planChangeLogger.warn("writeValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
       dOut.writeInt(row.getSizeInBytes)
       row.writeToStream(dOut, writeBuffer)
       this
@@ -72,6 +74,7 @@ private class UnsafeRowSerializerInstance(
 
     override def writeKey[T: ClassTag](key: T): SerializationStream = {
       // The key is only needed on the map side when computing partition ids. It does not need to
+      planChangeLogger.warn("writeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
       // be shuffled.
       assert(null == key || key.isInstanceOf[Int])
       this
@@ -80,11 +83,13 @@ private class UnsafeRowSerializerInstance(
     override def writeAll[T: ClassTag](iter: Iterator[T]): SerializationStream = {
       // This method is never called by shuffle code.
       throw SparkUnsupportedOperationException()
+      planChangeLogger.warn("writeAll(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
     }
 
     override def writeObject[T: ClassTag](t: T): SerializationStream = {
       // This method is never called by shuffle code.
       throw SparkUnsupportedOperationException()
+      planChangeLogger.warn("writeObject(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     }
 
     override def flush(): Unit = {
@@ -152,6 +157,7 @@ private class UnsafeRowSerializerInstance(
         // We skipped serialization of the key in writeKey(), so just return a dummy value since
         // this is going to be discarded anyways.
         null.asInstanceOf[T]
+        planChangeLogger.warn("readKey()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def readValue[T: ClassTag](): T = {
@@ -159,6 +165,7 @@ private class UnsafeRowSerializerInstance(
         if (rowBuffer.length < rowSize) {
           rowBuffer = new Array[Byte](rowSize)
         }
+        planChangeLogger.warn("readValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         Utils.readFully(dIn, rowBuffer, 0, rowSize)
         row.pointTo(rowBuffer, Platform.BYTE_ARRAY_OFFSET, rowSize)
         row.asInstanceOf[T]
@@ -167,6 +174,7 @@ private class UnsafeRowSerializerInstance(
       override def readObject[T: ClassTag](): T = {
         // This method is never called by shuffle code.
         throw SparkUnsupportedOperationException()
+        planChangeLogger.warn("readObject()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def close(): Unit = {

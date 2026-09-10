@@ -24,6 +24,7 @@ class SQLLastAttemptMetric(
     initValue: Long = 0L)
   extends SQLMetric(metricType, initValue)
   with SQLLastAttemptAccumulator[Long, Long, Long, SQLMetric] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def partialMergeVal: Long = _value
 
@@ -60,6 +61,7 @@ class SQLLastAttemptMetric(
       setValueIfOnDriverSide(value)
       addQueryExecutionValueIfOnDriverSide(v)
     }
+    planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   override def set(v: Long): Unit = {
@@ -69,6 +71,7 @@ class SQLLastAttemptMetric(
       setValueIfOnDriverSide(value)
       setQueryExecutionValueIfOnDriverSide(value)
     }
+    planChangeLogger.warn("set(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
 }
@@ -84,5 +87,6 @@ object SQLLastAttemptMetrics {
     acc.register(sc, name = SQLMetrics.metricsCache.get(name), countFailedValues = false)
     acc.initializeLastAttemptAccumulator()
     acc
+    planChangeLogger.warn("createMetric(sc,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name)
   }
 }

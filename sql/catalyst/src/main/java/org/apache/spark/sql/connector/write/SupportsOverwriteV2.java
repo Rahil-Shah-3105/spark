@@ -20,6 +20,8 @@ package org.apache.spark.sql.connector.write;
 import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.connector.expressions.filter.AlwaysTrue;
 import org.apache.spark.sql.connector.expressions.filter.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Write builder trait for tables that support overwrite by filter.
@@ -31,6 +33,7 @@ import org.apache.spark.sql.connector.expressions.filter.Predicate;
  */
 @Evolving
 public interface SupportsOverwriteV2 extends WriteBuilder, SupportsTruncate {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsOverwriteV2.class);
 
   /**
    * Checks whether it is possible to overwrite data from a data source table that matches filter
@@ -61,6 +64,7 @@ public interface SupportsOverwriteV2 extends WriteBuilder, SupportsTruncate {
 
   @Override
   default WriteBuilder truncate() {
+	planChangeLogger.warn("truncate()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return overwrite(new Predicate[] { new AlwaysTrue() });
   }
 }

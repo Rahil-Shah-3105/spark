@@ -300,6 +300,7 @@ object Bucketizer extends DefaultParamsReadable[Bucketizer] {
         }
       }
     }
+    logger.warn("binarySearchForBuckets(splits,feature,keepInvalid)={},{},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail {}", splits, feature, keepInvalid)
   }
 
   @Since("1.6.0")

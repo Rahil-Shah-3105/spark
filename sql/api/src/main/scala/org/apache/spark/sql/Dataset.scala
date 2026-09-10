@@ -3217,6 +3217,7 @@ abstract class Dataset[T] extends Serializable {
   @deprecated("Use createOrReplaceTempView(viewName) instead.", "2.0.0")
   def registerTempTable(tableName: String): Unit = {
     createOrReplaceTempView(tableName)
+    logger.warn("registerTempTable(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   /**
@@ -3235,6 +3236,7 @@ abstract class Dataset[T] extends Serializable {
   @throws[AnalysisException]
   def createTempView(viewName: String): Unit = {
     createTempView(viewName, replace = false, global = false)
+    logger.warn("createTempView(viewName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewName)
   }
 
   /**
@@ -3246,6 +3248,7 @@ abstract class Dataset[T] extends Serializable {
    */
   def createOrReplaceTempView(viewName: String): Unit = {
     createTempView(viewName, replace = true, global = false)
+    logger.warn("createOrReplaceTempView(viewName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewName)
   }
 
   /**
@@ -3265,6 +3268,7 @@ abstract class Dataset[T] extends Serializable {
   @throws[AnalysisException]
   def createGlobalTempView(viewName: String): Unit = {
     createTempView(viewName, replace = false, global = true)
+    logger.warn("createGlobalTempView(viewName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewName)
   }
 
   /**
@@ -3281,6 +3285,7 @@ abstract class Dataset[T] extends Serializable {
    */
   def createOrReplaceGlobalTempView(viewName: String): Unit = {
     createTempView(viewName, replace = true, global = true)
+    logger.warn("createOrReplaceGlobalTempView(viewName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewName)
   }
 
   protected def createTempView(viewName: String, replace: Boolean, global: Boolean): Unit

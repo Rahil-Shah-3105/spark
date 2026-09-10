@@ -40,6 +40,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 @Evolving
 final class DataStreamReader private[sql](sparkSession: SparkSession)
   extends streaming.DataStreamReader {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /** @inheritdoc */
   def format(source: String): this.type = {
     this.source = source
@@ -88,6 +89,8 @@ final class DataStreamReader private[sql](sparkSession: SparkSession)
     )
     val plan = NamedStreamingRelation.withUserProvidedName(unresolved, userProvidedSourceName)
     Dataset.ofRows(sparkSession, plan)
+    planChangeLogger.warn("loadInternal(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
+  planChangeLogger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   /** @inheritdoc */
@@ -128,6 +131,7 @@ final class DataStreamReader private[sql](sparkSession: SparkSession)
     val changes = RelationChanges(unresolved, changelogContext)
     val plan = NamedStreamingRelation.withUserProvidedName(changes, userProvidedSourceName)
     Dataset.ofRows(sparkSession, plan)
+    planChangeLogger.warn("changes(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableName, identifier)
   }
 
   override protected def assertNoSpecifiedSchema(operation: String): Unit = {

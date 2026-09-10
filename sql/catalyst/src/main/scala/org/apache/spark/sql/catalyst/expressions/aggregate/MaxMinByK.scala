@@ -102,6 +102,7 @@ case class MaxMinByK(
   override def defaultResult: Option[Literal] = Option(Literal.create(null, dataType))
 
   override def checkInputDataTypes(): TypeCheckResult = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val parentCheck = super.checkInputDataTypes()
     if (!parentCheck.isSuccess) return parentCheck
 
@@ -163,6 +164,7 @@ case class MaxMinByK(
       mutableAggBuffer, offset + ORDERINGS_OFFSET, orderingExpr.dataType)
     val heap = MaxMinByKHeap.getMutableHeap(mutableAggBuffer, offset + HEAP_OFFSET)
 
+    planChangeLogger.warn("update(mutableAggBuffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mutableAggBuffer, inputRow)
     MaxMinByKHeap.insert(value, ord, k, valuesArr, orderingsArr, heap, heapCompare)
   }
 

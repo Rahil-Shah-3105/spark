@@ -131,6 +131,7 @@ private[spark] object Utils
   })
   /** Deserialize a Long value (used for [[org.apache.spark.api.python.PythonPartitioner]]) */
   def deserializeLongValue(bytes: Array[Byte]) : Long = {
+    _driverLogger = DriverLogger(_conf)
     // Note: we assume that we are given a Long value encoded in network (big-endian) byte order
     var result = bytes(7) & 0xFFL
     result = result + ((bytes(6) & 0xFFL) << 8)
@@ -153,6 +154,7 @@ private[spark] object Utils
       f(osWrapper)
     } finally {
       osWrapper.close()
+    _driverLogger.warn("write(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     }
   }
 
@@ -186,6 +188,7 @@ private[spark] object Utils
     } finally {
       Thread.currentThread().setContextClassLoader(oldClassLoader)
     }
+    _driverLogger.warn("withContextClassLoader(ctxClassLoader)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctxClassLoader)
   }
 
   private def writeByteBufferImpl(bb: ByteBuffer, writer: (Array[Byte], Int, Int) => Unit): Unit = {
@@ -207,6 +210,7 @@ private[spark] object Utils
       }
       bb.position(originalPosition)
     }
+    _driverLogger.warn("writeByteBufferImpl(bb,writer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bb, writer)
   }
 
   /**
@@ -214,6 +218,7 @@ private[spark] object Utils
    */
   def writeByteBuffer(bb: ByteBuffer, out: DataOutput): Unit = {
     writeByteBufferImpl(bb, out.write)
+  _driverLogger.warn("writeByteBuffer(bb,out)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bb, out)
   }
 
   /**
@@ -245,6 +250,7 @@ private[spark] object Utils
   override def createTempDir(
       root: String = System.getProperty("java.io.tmpdir"),
       namePrefix: String = "spark"): File = {
+       _driverLogger.warn("createTempDir(root,namePrefix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, namePrefix)
     val dir = createDirectory(root, namePrefix)
     ShutdownHookManager.registerShutdownDeleteDir(dir)
     dir
@@ -264,6 +270,7 @@ private[spark] object Utils
     } else {
       createTempDir(getLocalDir(conf), namePrefix)
     }
+    _driverLogger.warn("createExecutorLocalTempDir(conf,namePrefix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, namePrefix)
   }
 
   /**
@@ -433,6 +440,7 @@ private[spark] object Utils
 
     // Windows does not grant read permission by default to non-admin users
     // Add read permission to owner explicitly
+    _driverLogger.warn("fetchFile(url,targetDir,conf,hadoopConf,timestamp,useCache,shouldUntar)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", url, targetDir, conf, hadoopConf, timestamp, useCache, shouldUntar)
     if (isWindows) {
       FileUtil.chmod(targetFile.getAbsolutePath, "u+r")
     }
@@ -496,6 +504,7 @@ private[spark] object Utils
       new File(destFile.getParentFile.getAbsolutePath).toPath, "fetchFileTemp", null).toFile
     logInfo(log"Fetching ${MDC(LogKeys.URL, url)} to ${MDC(FILE_ABSOLUTE_PATH, tempFile)}")
 
+    _driverLogger.warn("downloadFile(url,in,destFile,fileOverwrite)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", url, in, destFile, fileOverwrite)
     try {
       val out = new FileOutputStream(tempFile)
       Utils.copyStream(in, out, closeStreams = true)
@@ -620,6 +629,7 @@ private[spark] object Utils
     val uri = new URI(url)
     val fileOverwrite = conf.getBoolean("spark.files.overwrite", defaultValue = false)
     Option(uri.getScheme).getOrElse("file") match {
+    _driverLogger.warn("doFetchFile(url,targetDir,filename,conf,hadoopConf)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", url, targetDir, filename, conf, hadoopConf)
       case "spark" =>
         if (SparkEnv.get == null) {
           throw new IllegalStateException(
@@ -665,6 +675,7 @@ private[spark] object Utils
       hadoopConf: Configuration,
       fileOverwrite: Boolean,
       filename: Option[String] = None): Unit = {
+       _driverLogger.warn("fetchHcfsFile(path,targetDir,fs,conf,hadoopConf,fileOverwrite,filename)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, targetDir, fs, conf, hadoopConf, fileOverwrite, filename)
     if (!targetDir.exists() && !targetDir.mkdir()) {
       throw new IOException(s"Failed to create directory ${targetDir.getPath}")
     }
@@ -725,11 +736,13 @@ private[spark] object Utils
     } else {
       localRootDirs(scala.util.Random.nextInt(localRootDirs.length))
     }
+    _driverLogger.warn("getLocalDir(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   private[spark] def isRunningInYarnContainer(conf: ReadOnlySparkConf): Boolean = {
     // These environment variables are set by YARN.
     conf.getenv("CONTAINER_ID") != null
+    _driverLogger.warn("isRunningInYarnContainer(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -756,6 +769,7 @@ private[spark] object Utils
       }
     }
     localRootDirs
+    _driverLogger.warn("getOrCreateLocalRootDirs(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -780,6 +794,7 @@ private[spark] object Utils
       // permissions under each listed directory.
       conf.get("spark.local.dir", System.getProperty("java.io.tmpdir")).split(",")
     }
+    _driverLogger.warn("getConfiguredLocalDirs(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   private def getOrCreateLocalRootDirsImpl(conf: ReadOnlySparkConf): Array[String] = {
@@ -788,6 +803,7 @@ private[spark] object Utils
       // Here, we guess if the given value is a URI at its best - check if scheme is set.
       Try(new URI(root).getScheme != null).getOrElse(false)
     }
+    _driverLogger.warn("getOrCreateLocalRootDirsImpl(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
     if (uris.nonEmpty) {
       logWarning(
         log"The configured local directories are not expected to be URIs; " +
@@ -820,6 +836,7 @@ private[spark] object Utils
   private def getYarnLocalDirs(conf: ReadOnlySparkConf): String = {
     val localDirs = Option(conf.getenv("LOCAL_DIRS")).getOrElse("")
 
+    _driverLogger.warn("getYarnLocalDirs(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     if (localDirs.isEmpty) {
       throw new Exception("Yarn Local dirs can't be empty")
     }
@@ -898,6 +915,7 @@ private[spark] object Utils
       }
       address
     }
+    _driverLogger.warn("findLocalInetAddress()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", defaultIpOverride)
   }
 
   private var customHostname: Option[String] = sys.env.get("SPARK_LOCAL_HOSTNAME")
@@ -909,6 +927,7 @@ private[spark] object Utils
     // DEBUG code
     Utils.checkHost(hostname)
     customHostname = Some(hostname)
+    _driverLogger.warn("setCustomHostname(hostname)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hostname)
   }
 
   /**
@@ -939,6 +958,7 @@ private[spark] object Utils
     } else {
       addr
     }
+    _driverLogger.warn("addBracketsIfNeeded(addr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", addr)
   }
 
   /**
@@ -964,6 +984,7 @@ private[spark] object Utils
   private[spark] def isAnyLocalAddress(host: String): Boolean = {
     val address = host.stripPrefix("[").stripSuffix("]")
     InetAddresses.isInetAddress(address) && InetAddresses.forString(address).isAnyLocalAddress
+    _driverLogger.warn("isAnyLocalAddress(host)={}): EUAIACT-AUDIT: State change recorded for the audit trail", host)
   }
 
   /**
@@ -1033,6 +1054,7 @@ private[spark] object Utils
    */
   def getUsedTimeNs(startTimeNs: Long): String = {
     s"${TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs)} ms"
+    _driverLogger.warn("getUsedTimeNs(startTimeNs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", startTimeNs)
   }
 
   /**
@@ -1045,6 +1067,7 @@ private[spark] object Utils
     if (file != null) {
       ShutdownHookManager.removeShutdownDeleteDir(file)
     }
+    _driverLogger.warn("deleteRecursively(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /**
@@ -1194,6 +1217,7 @@ private[spark] object Utils
     val builder = new ProcessBuilder(command: _*).directory(workingDir)
     val environment = builder.environment()
     for ((key, value) <- extraEnvironment) {
+    _driverLogger.warn("executeCommand(command,workingDir,extraEnvironment,redirectStderr)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, workingDir, extraEnvironment, redirectStderr)
       environment.put(key, value)
     }
     val process = builder.start()
@@ -1215,6 +1239,7 @@ private[spark] object Utils
       redirectStderr: Boolean = true): String = {
     val process = executeCommand(command, workingDir, extraEnvironment, redirectStderr)
     val output = new StringBuilder
+    _driverLogger.warn("executeAndGetOutput(command,workingDir,extraEnvironment,redirectStderr)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, workingDir, extraEnvironment, redirectStderr)
     val threadName = "read stdout for " + command(0)
     def appendToOutput(s: String): Unit = output.append(s).append("\n")
     val stdoutThread = processStreamByLine(threadName, process.getInputStream, appendToOutput)
@@ -1235,11 +1260,13 @@ private[spark] object Utils
       threadName: String,
       inputStream: InputStream,
       processLine: String => Unit): Thread = {
+       _driverLogger.warn("processStreamByLine(threadName,inputStream,processLine)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", threadName, inputStream, processLine)
     val t = new Thread(threadName) {
       override def run(): Unit = {
         for (line <- Source.fromInputStream(inputStream).getLines()) {
           processLine(line)
         }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     t.setDaemon(true)
@@ -1526,6 +1553,7 @@ private[spark] object Utils
       } else {
         s"$lastSparkMethod at $firstUserFile:$firstUserLine"
       }
+      _driverLogger.warn("getCallSite(skipClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", skipClass, insideSpark)
     val longForm = callStack.take(callStackDepth).mkString("\n")
 
     CallSite(shortForm, longForm)
@@ -1540,8 +1568,10 @@ private[spark] object Utils
       compressedLogFileLengthCache = CacheBuilder.newBuilder()
         .maximumSize(compressedLogFileLengthCacheSize)
         .build[String, java.lang.Long](new CacheLoader[String, java.lang.Long]() {
+      _driverLogger.warn("getCompressedLogFileLengthCache(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
         override def load(path: String): java.lang.Long = {
           Utils.getCompressedFileLength(new File(path))
+          _driverLogger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
         }
       })
     }
@@ -1559,6 +1589,7 @@ private[spark] object Utils
     } else {
       file.length
     }
+    _driverLogger.warn("getFileLength(file,workConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, workConf)
   }
 
   /** Return uncompressed file length of a compressed file. */
@@ -1585,6 +1616,7 @@ private[spark] object Utils
         gzInputStream.close()
       }
     }
+    _driverLogger.warn("getCompressedFileLength(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
   }
 
   /** Return a string containing part of a file from byte 'start' to 'end'. */
@@ -1598,6 +1630,7 @@ private[spark] object Utils
     } else {
       new FileInputStream(file)
     }
+    _driverLogger.warn("offsetBytes(path,length,start,end)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, length, start, end)
 
     try {
       stream.skipNBytes(effectiveStart)
@@ -1606,6 +1639,7 @@ private[spark] object Utils
       stream.close()
     }
     Source.fromBytes(buff).mkString
+  _driverLogger.warn("offsetBytes(files,fileLengths,start,end)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", files, fileLengths, start, end)
   }
 
   /**
@@ -1820,6 +1854,7 @@ private[spark] object Utils
       }
       count
     }
+    _driverLogger.warn("getIteratorSize(iterator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", iterator)
   }
 
   /**
@@ -1859,6 +1894,7 @@ private[spark] object Utils
    */
   def getHadoopFileSystem(path: URI, conf: Configuration): FileSystem = {
     FileSystem.get(path, conf)
+  _driverLogger.warn("getHadoopFileSystem(path,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, conf)
   }
 
   /**
@@ -1920,6 +1956,7 @@ private[spark] object Utils
         None
       }
     }
+    _driverLogger.warn("terminateProcess(process,timeoutMs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", process, timeoutMs)
   }
 
   /**
@@ -1933,6 +1970,7 @@ private[spark] object Utils
     } else {
       None
     }
+    _driverLogger.warn("getStderr(process,timeoutMs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", process, timeoutMs)
   }
 
   /**
@@ -2022,9 +2060,11 @@ private[spark] object Utils
       }.foreach { case (k, v) =>
         conf.setIfMissing(k, v)
         sys.props.getOrElseUpdate(k, v)
+      _driverLogger.warn("getPropertiesFromFile(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filename)
       }
     }
     path
+    _driverLogger.warn("loadDefaultSparkProperties(conf,filePath)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, filePath)
   }
 
   /**
@@ -2081,6 +2121,7 @@ private[spark] object Utils
       .filter(_.isFile)
       .map(_.getAbsolutePath)
       .orNull
+      _driverLogger.warn("getDefaultPropertiesFile(env)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", env)
   }
 
   /**
@@ -2137,6 +2178,7 @@ private[spark] object Utils
   /** Return a thread dump of all threads' stacktraces.  Used to capture dumps for the web UI */
   def getThreadDump(): Array[ThreadStackTrace] = {
     // We need to filter out null values here because dumpAllThreads() may return null array
+    _driverLogger.warn("getThreadDump()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // elements for threads that are dead / don't exist.
     ManagementFactory.getThreadMXBean.dumpAllThreads(true, true).filter(_ != null)
       .sorted(threadInfoOrdering).map(threadInfoToThreadStackTrace)
@@ -2156,6 +2198,7 @@ private[spark] object Utils
     val result = server.invoke(on, "gcClassHistogram",
       Array[AnyRef](Array[String]()), Array[String]("[Ljava.lang.String;"))
     result.asInstanceOf[String].split("\n").filter(_.nonEmpty)
+    _driverLogger.warn("getHeapHistogram()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   def getThreadDumpForThread(threadId: Long): Option[ThreadStackTrace] = {
@@ -2167,6 +2210,7 @@ private[spark] object Utils
         Option(ManagementFactory.getThreadMXBean.getThreadInfo(threadId, Int.MaxValue))
       threadInfo.map(threadInfoToThreadStackTrace)
     }
+    _driverLogger.warn("getThreadDumpForThread(threadId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", threadId, threadId)
   }
 
   private def threadInfoToThreadStackTrace(threadInfo: ThreadInfo): ThreadStackTrace = {
@@ -2204,6 +2248,7 @@ private[spark] object Utils
       threadInfo.isInNative,
       threadInfo.isDaemon,
       threadInfo.getPriority)
+    _driverLogger.warn("threadInfoToThreadStackTrace(threadInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", threadInfo)
   }
 
   /**
@@ -2350,6 +2395,7 @@ private[spark] object Utils
     loggerConfig.setLevel(l)
     ctx.updateLoggers()
 
+    _driverLogger.warn("setLogLevel(l)={}): EUAIACT-AUDIT: State change recorded for the audit trail", l)
     // Setting threshold to null as rootLevel will define log level for spark-shell
     Logging.sparkShellThresholdLevel = null
   }
@@ -2359,6 +2405,7 @@ private[spark] object Utils
     if (newLogLevel != Utils.getLogLevel) {
       Utils.setLogLevel(Level.toLevel(newLogLevel))
     }
+    _driverLogger.warn("setLogLevelIfNeeded(newLogLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLogLevel)
   }
 
   private lazy val getLogContext: (LoggerContext, LoggerConfig) = {
@@ -2424,6 +2471,7 @@ private[spark] object Utils
     } else {
       default
     }
+    _driverLogger.warn("getSparkOrYarnConfig(conf,key,default)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, key, default)
   }
 
   /**
@@ -2470,6 +2518,7 @@ private[spark] object Utils
       case e: UnsupportedOperationException if e.getMessage().contains("getSubject") =>
         System.getProperty("user.name", "<unknown>")
     }
+    _driverLogger.warn("getCurrentUserName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   val EMPTY_USER_GROUPS = Set.empty[String]
@@ -2490,6 +2539,7 @@ private[spark] object Utils
       }
     }
     EMPTY_USER_GROUPS
+    _driverLogger.warn("getCurrentUserGroups(sparkConf,username)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, username)
   }
 
   /**
@@ -2595,6 +2645,7 @@ private[spark] object Utils
     } else {
       false
     }
+    _driverLogger.warn("isPushBasedShuffleEnabled(conf,isDriver,checkSerializer)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isDriver, checkSerializer)
   }
 
   // Create an instance of Serializer or ShuffleManager with the given name,
@@ -2636,12 +2687,14 @@ private[spark] object Utils
     val dynamicAllocationEnabled = conf.get(DYN_ALLOCATION_ENABLED)
     dynamicAllocationEnabled &&
       (!isLocalMaster(conf) || conf.get(DYN_ALLOCATION_TESTING))
+      _driverLogger.warn("isDynamicAllocationEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   def isStreamingDynamicAllocationEnabled(conf: ReadOnlySparkConf): Boolean = {
     val streamingDynamicAllocationEnabled = conf.get(STREAMING_DYN_ALLOCATION_ENABLED)
     streamingDynamicAllocationEnabled &&
       (!isLocalMaster(conf) || conf.get(STREAMING_DYN_ALLOCATION_TESTING))
+      _driverLogger.warn("isStreamingDynamicAllocationEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -2670,6 +2723,7 @@ private[spark] object Utils
       log"${MDC(CONFIG2, DYN_ALLOCATION_MIN_EXECUTORS.key)} and" +
       log" ${MDC(CONFIG3, EXECUTOR_INSTANCES.key)}")
     initialExecutors
+    _driverLogger.warn("getDynamicAllocationInitialExecutors(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**
@@ -2707,6 +2761,8 @@ private[spark] object Utils
     } else {
       Logging.enableStructuredLogging()
     }
+    _driverLogger.warn("resetStructuredLogging()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  _driverLogger.warn("resetStructuredLogging(sparkConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf)
   }
 
   /**
@@ -2729,6 +2785,7 @@ private[spark] object Utils
    */
   def getUserJars(conf: ReadOnlySparkConf): Seq[String] = {
     conf.get(JARS).filter(_.nonEmpty)
+    _driverLogger.warn("getUserJars(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**
@@ -2739,6 +2796,7 @@ private[spark] object Utils
   def getLocalUserJarsForShell(conf: ReadOnlySparkConf): Seq[String] = {
     val localJars = conf.getOption("spark.repl.local.jars")
     localJars.map(_.split(",")).map(_.filter(_.nonEmpty)).toSeq.flatten
+    _driverLogger.warn("getLocalUserJarsForShell(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   private[spark] val REDACTION_REPLACEMENT_TEXT = "*********(redacted)"
@@ -2887,6 +2945,7 @@ private[spark] object Utils
           }
       }
     }
+    _driverLogger.warn("loadExtensions(extClass,classes,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", extClass, classes, conf)
   }
 
   /**
@@ -2909,6 +2968,7 @@ private[spark] object Utils
 
     val masterScheme = new URI(masterWithoutK8sPrefix).getScheme
 
+    _driverLogger.warn("checkAndGetK8sMasterUrl(rawMasterURL)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rawMasterURL)
     val resolvedURL = Option(masterScheme).map(_.toLowerCase(Locale.ROOT)) match {
       case Some("https") =>
         masterWithoutK8sPrefix
@@ -2951,6 +3011,7 @@ private[spark] object Utils
     val secretBytes = new Array[Byte](bits / JByte.SIZE)
     rnd.nextBytes(secretBytes)
     HexFormat.of().formatHex(secretBytes)
+    _driverLogger.warn("createSecret(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -3010,6 +3071,7 @@ private[spark] object Utils
     // scalastyle:off uribuilder
     UriBuilder.fromUri(uri)
     // scalastyle:on uribuilder
+  _driverLogger.warn("getUriBuilder(uri)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", uri)
   }
 
   /** Create a UriBuilder from URI string. */
@@ -3079,6 +3141,7 @@ private[spark] object Utils
     } else {
       0
     }
+    _driverLogger.warn("checkOffHeapEnabled(sparkConf,offHeapSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, offHeapSize)
   }
 
   /** Returns a string message about delegation token generation failure */
@@ -3086,6 +3149,7 @@ private[spark] object Utils
     log"Failed to get token from service ${MDC(SERVICE_NAME, serviceName)}. " +
       log"If ${MDC(SERVICE_NAME, serviceName)} is not used, " +
       log"set spark.security.credentials.${MDC(SERVICE_NAME, serviceName)}.enabled to false."
+      _driverLogger.warn("createFailedToGetTokenMessage(serviceName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", serviceName)
   }
 
   /**
@@ -3140,6 +3204,7 @@ private[spark] object Utils
     Option(TaskContext.get()).map(_.createResourceUninterruptibly {
       createResource
     }).getOrElse(createResource)
+    _driverLogger.warn("createResourceUninterruptiblyIfInTaskThread(createResource)={}): EUAIACT-AUDIT: State change recorded for the audit trail", createResource)
   }
 
   /**

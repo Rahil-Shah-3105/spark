@@ -45,6 +45,7 @@ import org.apache.spark.sql.internal.SQLConf
  * It supports [[HashAggregateExec]], [[SortAggregateExec]] and [[ObjectHashAggregateExec]].
  */
 object CombineAdjacentAggregation extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private case class CombinedAggregate(
       aggregateExpressions: Seq[AggregateExpression],
       initialInputBufferOffset: Int)
@@ -77,6 +78,7 @@ object CombineAdjacentAggregation extends Rule[SparkPlan] {
           initialInputBufferOffset = 0,
           child = partialAgg.child)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def combineHashAggregates(

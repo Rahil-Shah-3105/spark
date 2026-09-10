@@ -47,6 +47,7 @@ import org.apache.spark.util.ArrayImplicits.SparkArrayOps
  * single distinct group without a filter bypasses that rule and is handled by the physical planner.
  */
 object InsertMapSortInAggregate extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   import InsertMapSortExpression._
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
@@ -62,6 +63,7 @@ object InsertMapSortInAggregate extends Rule[LogicalPlan] {
             distinctAggregateChildren(agg.aggregateExpressions).exists(mapTypeExistsRecursively))
       case _ => false
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     if (!shouldRewrite) {
       return plan
     }
@@ -135,6 +137,7 @@ object InsertMapSortInAggregate extends Rule[LogicalPlan] {
 
   private def createDistinctInputAliases(
       expressions: Seq[Expression]): VectorMap[Expression, NamedExpression] = {
+       planChangeLogger.warn("createDistinctInputAliases(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
     val aliases = new mutable.LinkedHashMap[Expression, NamedExpression]
     expressions.foreach {
       case _: Attribute =>
@@ -156,6 +159,7 @@ object InsertMapSortInAggregate extends Rule[LogicalPlan] {
     val aliases = new mutable.LinkedHashMap[Expression, NamedExpression]
     expressions.foreach { expr =>
       val canonicalized = expr.canonicalized
+      planChangeLogger.warn("insertMapSortInExpressions(expressions,aliasName,reusableAliases,inputAliases)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expressions, aliasName, reusableAliases, inputAliases)
       val input = inputAliases.get(canonicalized).map(_.toAttribute).getOrElse(expr)
       val inserted = insertMapSortRecursively(input)
       if (input.ne(inserted)) {
@@ -244,5 +248,6 @@ private[optimizer] object InsertMapSortExpression {
 
       case _ => e
     }
+    planChangeLogger.warn("insertMapSortRecursively(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 }

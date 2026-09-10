@@ -39,6 +39,7 @@ import org.apache.spark.sql.types.IntegerType
  * This rule assumes the commands have been fully resolved and all assignments have been aligned.
  */
 object RewriteMergeIntoTable extends RewriteRowLevelCommand with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private final val ROW_FROM_SOURCE = "__row_from_source"
   private final val ROW_FROM_TARGET = "__row_from_target"
@@ -300,6 +301,7 @@ object RewriteMergeIntoTable extends RewriteRowLevelCommand with PredicateHelper
     val writeRelation = relation.copy(table = operationTable)
     val projections = buildWriteDeltaProjections(mergeRowsPlan, rowAttrs, rowIdAttrs, metadataAttrs)
     val groupFilterCond = if (notMatchedBySourceActions.isEmpty && groupFilterEnabled) {
+    planChangeLogger.warn("buildWriteDeltaPlan(relation,operationTable,source,cond,matchedActions,notMatchedActions,notMatchedBySourceActions)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", relation, operationTable, source, cond, matchedActions, notMatchedActions, notMatchedBySourceActions, rowIdAttrs)
       Some(toGroupFilterCondition(relation, source, cond))
     } else {
       None
@@ -312,6 +314,7 @@ object RewriteMergeIntoTable extends RewriteRowLevelCommand with PredicateHelper
       notMatchedBySourceActions: Seq[MergeAction]): JoinType = {
 
     val unmatchedTargetRowsRequired = notMatchedBySourceActions.nonEmpty
+    planChangeLogger.warn("chooseWriteDeltaJoinType(notMatchedActions,notMatchedBySourceActions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", notMatchedActions, notMatchedBySourceActions)
     val unmatchedSourceRowsRequired = notMatchedActions.nonEmpty
 
     if (unmatchedTargetRowsRequired && unmatchedSourceRowsRequired) {
@@ -393,6 +396,7 @@ object RewriteMergeIntoTable extends RewriteRowLevelCommand with PredicateHelper
     val (targetPredicates, joinPredicates) = predicates.partition { predicate =>
       predicate.references.subsetOf(targetTable.outputSet)
     }
+    planChangeLogger.warn("pushDownTargetPredicates(targetTable,cond)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetTable, cond)
     val targetCond = targetPredicates.reduceOption(And).getOrElse(TrueLiteral)
     val joinCond = joinPredicates.reduceOption(And).getOrElse(TrueLiteral)
     (Filter(targetCond, targetTable), joinCond)

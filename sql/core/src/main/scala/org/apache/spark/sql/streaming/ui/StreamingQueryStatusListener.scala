@@ -54,6 +54,7 @@ private[sql] class StreamingQueryStatusListener(
   private val queryToProgress = new ConcurrentHashMap[UUID, mutable.Queue[String]]()
 
   private def cleanupInactiveQueries(count: Long): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val view = store.view(classOf[StreamingQueryData]).index("active").first(false).last(false)
     val inactiveQueries = KVUtils.viewToSeq(view)
     val numInactiveQueries = inactiveQueries.size
@@ -80,6 +81,7 @@ private[sql] class StreamingQueryStatusListener(
       None,
       startTimestamp
     ), checkTriggers = true)
+    planChangeLogger.warn("onQueryStarted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
@@ -93,6 +95,7 @@ private[sql] class StreamingQueryStatusListener(
     progressIds.enqueue(getUniqueId(runId, batchId, timestamp))
     store.write(new StreamingQueryProgressWrapper(event.progress))
     while (progressIds.length > streamingProgressRetention) {
+    planChangeLogger.warn("onQueryProgress(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", event, runId)
       val uniqueId = progressIds.dequeue()
       store.delete(classOf[StreamingQueryProgressWrapper], uniqueId)
     }
@@ -114,6 +117,7 @@ private[sql] class StreamingQueryStatusListener(
       Some(curTime)
     ), checkTriggers = true)
     queryToProgress.remove(event.runId)
+    planChangeLogger.warn("onQueryTerminated(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 }
 
@@ -161,5 +165,6 @@ private[sql] object StreamingQueryProgressWrapper {
       batchId: Long,
       timestamp: String): String = {
     s"${runId}_${batchId}_$timestamp"
+    planChangeLogger.warn("getUniqueId(runId,batchId,timestamp)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", runId, batchId, timestamp, runId)
   }
 }

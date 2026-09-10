@@ -83,6 +83,7 @@ class StateSchemaCompatibilityChecker(
     oldSchemaFilePaths: List[Path] = List.empty,
     newSchemaFilePath: Option[Path] = None,
     createSchemaDir: Boolean = true) extends Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // For OperatorStateMetadataV1: Only one schema file present per operator
   // per query
@@ -110,6 +111,8 @@ class StateSchemaCompatibilityChecker(
   def readSchemaFile(): List[StateStoreColFamilySchema] = {
     val inStream = fm.open(schemaFileLocation)
     StateSchemaCompatibilityChecker.readSchemaFile(inStream)
+    planChangeLogger.warn("readSchemaFile()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("readSchemaFile(inStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inStream)
   }
 
   // Read all old schema files, group by column family name
@@ -126,6 +129,7 @@ class StateSchemaCompatibilityChecker(
         }
       }
       .groupBy(_.colFamilyName)
+      planChangeLogger.warn("readSchemaFiles()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def createSchemaFile(
@@ -135,6 +139,7 @@ class StateSchemaCompatibilityChecker(
     if (stateSchemaVersion >= SCHEMA_FORMAT_V3 && newSchemaFilePath.isEmpty) {
       throw new IllegalStateException("Schema file path is required for schema version 3+")
     }
+    planChangeLogger.warn("createSchemaFile(stateStoreColFamilySchema,stateSchemaVersion)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateStoreColFamilySchema, stateSchemaVersion)
 
     val schemaWriter = SchemaWriter.createSchemaWriter(stateSchemaVersion)
     createSchemaFile(stateStoreColFamilySchema, schemaWriter)
@@ -144,6 +149,7 @@ class StateSchemaCompatibilityChecker(
   private[sql] def createSchemaFile(
       stateStoreColFamilySchema: List[StateStoreColFamilySchema],
       schemaWriter: SchemaWriter): Unit = {
+       planChangeLogger.warn("createSchemaFile(stateStoreColFamilySchema,schemaWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateStoreColFamilySchema, schemaWriter)
     val schemaFilePath = newSchemaFilePath match {
       case Some(path) =>
         fm.mkdirs(path.getParent)
@@ -174,6 +180,7 @@ class StateSchemaCompatibilityChecker(
     } else {
       List.empty
     }
+    planChangeLogger.warn("getExistingKeyAndValueSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def schemasCompatible(storedSchema: StructType, schema: StructType): Boolean =

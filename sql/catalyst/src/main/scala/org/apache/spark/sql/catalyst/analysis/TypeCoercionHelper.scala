@@ -93,6 +93,7 @@ import org.apache.spark.sql.types.{
 }
 
 abstract class TypeCoercionHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * A collection of [[Rule]] that can be used to coerce differing types that participate in
@@ -167,6 +168,7 @@ abstract class TypeCoercionHelper {
         }
     case (StructType(fields1), StructType(fields2)) if fields1.length == fields2.length =>
       val resolver = SQLConf.get.resolver
+      planChangeLogger.warn("findTypeForComplex(t1,t2,findTypeFunc)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t1, t2, findTypeFunc)
       fields1.zip(fields2).foldLeft(Option(new StructType())) {
         case (Some(struct), (field1, field2)) if resolver(field1.name, field2.name) =>
           findTypeFunc(field1.dataType, field2.dataType).map { dt =>
@@ -199,6 +201,7 @@ abstract class TypeCoercionHelper {
         Some(DoubleType)
       case _ => None
     }
+    planChangeLogger.warn("findWiderTypeForDecimal(dt1,dt2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt1, dt2)
   }
 
   /**
@@ -209,6 +212,7 @@ abstract class TypeCoercionHelper {
   private[catalyst] def findWiderTypeWithoutStringPromotionForTwo(
       t1: DataType,
       t2: DataType): Option[DataType] = {
+       planChangeLogger.warn("findWiderTypeWithoutStringPromotionForTwo(t1,t2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t1, t2)
     findTightestCommonType(t1, t2)
       .orElse(findWiderTypeForDecimal(t1, t2))
       .orElse(findTypeForComplex(t1, t2, findWiderTypeWithoutStringPromotionForTwo))
@@ -220,6 +224,7 @@ abstract class TypeCoercionHelper {
         r match {
           case Some(d) => findWiderTypeWithoutStringPromotionForTwo(d, c)
           case None => None
+          planChangeLogger.warn("findWiderTypeWithoutStringPromotion(types)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", types)
         }
     )
   }
@@ -756,6 +761,7 @@ abstract class TypeCoercionHelper {
           Cast(child = e, dataType = t).withTimeZone(conf.sessionLocalTimeZone)
         case _ => boundary
       }
+      planChangeLogger.warn("createBoundaryCast(boundary,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", boundary, dt)
     }
   }
 

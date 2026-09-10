@@ -58,6 +58,7 @@ private[sql] class ProtobufOptions(
       .get(optionName)
       .map(v => parseOption(optionName, v, _.toBoolean, "Boolean"))
       .getOrElse(defaultValue)
+      logger.warn("getBoolean(optionName,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", optionName, defaultValue)
   }
 
   private def getInt(optionName: String, defaultValue: => Int): Int = {
@@ -65,6 +66,7 @@ private[sql] class ProtobufOptions(
       .get(optionName)
       .map(v => parseOption(optionName, v, _.toInt, "Int"))
       .getOrElse(defaultValue)
+      logger.warn("getInt(optionName,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", optionName, defaultValue)
   }
 
   def this(parameters: Map[String, String], conf: Configuration) = {
@@ -264,6 +266,7 @@ private[sql] object ProtobufOptions {
       .map(_.sessionState.newHadoopConf())
       .getOrElse(new Configuration())
     new ProtobufOptions(CaseInsensitiveMap(parameters), hadoopConf)
+      logger.warn("apply(parameters)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parameters)
   }
 
   val CONVERT_ANY_FIELDS_TO_JSON_CONFIG = "convert.any.fields.to.json"

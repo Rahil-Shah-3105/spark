@@ -45,6 +45,7 @@ import org.apache.spark.util.ArrayImplicits._
 import org.apache.spark.util.Utils
 
 object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import DataSourceV2Implicits._
 
   def apply(plan: LogicalPlan): LogicalPlan = {
@@ -64,6 +65,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
       buildScanWithPushedVariants,
       pruneColumns)
 
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     pushdownRules.foldLeft(plan) { (newPlan, pushDownRule) =>
       pushDownRule(newPlan)
     }
@@ -311,6 +313,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
     def processColumn(originalName: String): SupportsPushDownJoin.ColumnWithAlias = {
       val normalizedName = normalizeCase(originalName)
 
+      planChangeLogger.warn("processColumn(originalName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", originalName)
       // No alias needed for unique column names
       if (allNameCounts(normalizedName) == 1) {
         new SupportsPushDownJoin.ColumnWithAlias(originalName, null)
@@ -357,6 +360,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
       }
     ).asInstanceOf[Seq[AttributeReference]]
 
+      planChangeLogger.warn("getRequiredColumnNames(projections,sHolder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", projections, sHolder)
     normalizedProjections.map(_.name).toArray
   }
 
@@ -420,6 +424,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
           }
         }
     }
+    planChangeLogger.warn("getColumnName(structType,ordinals)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", structType, ordinals)
   }
 
   private def pushVariantExtractions(
@@ -1132,6 +1137,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
         sHolder.pushedOffset = Some(offset)
       }
       isPushed
+      planChangeLogger.warn("pushDownOffset(plan,offset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, offset)
     case Project(projectList, child) if projectList.forall(_.deterministic) =>
       pushDownOffset(child, offset)
     case _ => false
@@ -1224,6 +1230,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
         V1ScanWrapper(v1, pushedFilters.toImmutableArraySeq, pushedDownOperators)
       case _ => scan
     }
+    planChangeLogger.warn("getWrappedScan(scan,sHolder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", scan, sHolder)
   }
 
   private def getPushedDownOperators(sHolder: ScanBuilderHolder): PushedDownOperators = {
@@ -1231,6 +1238,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
     PushedDownOperators(sHolder.pushedAggregate, sHolder.pushedSample,
       sHolder.pushedLimit, sHolder.pushedOffset, sHolder.sortOrders, sHolder.pushedPredicates,
       sHolder.joinedRelationsPushedDownOperators, optRelationName)
+    planChangeLogger.warn("getPushedDownOperators(sHolder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sHolder)
   }
 
   private def withSparkPostPushdownAdjustmentFilters(
@@ -1244,6 +1252,7 @@ object V2ScanRelationPushDown extends Rule[LogicalPlan] with PredicateHelper {
             case s: SupportsReportStatistics => !s.reflectsFullyPushedDownFilters()
             case _ => false
           }
+          planChangeLogger.warn("shouldAddPushedFilter(scanRelation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", scanRelation)
         }
 
         def addToScan(plan: LogicalPlan): LogicalPlan = plan match {

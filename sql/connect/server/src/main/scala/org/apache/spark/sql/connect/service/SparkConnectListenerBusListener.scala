@@ -134,6 +134,7 @@ private[sql] class SparkConnectListenerBusListener(
         // remove this listener and cleanup resources.
         serverSideListenerHolder.cleanUp()
     }
+    logger.warn("send(eventJson,eventType)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", eventJson, eventType)
   }
 
   def sendResultComplete(): Unit = {
@@ -144,11 +145,13 @@ private[sql] class SparkConnectListenerBusListener(
           .newBuilder()
           .setResultComplete(ExecutePlanResponse.ResultComplete.newBuilder().build())
           .build())
+      logger.warn("sendResultComplete()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   // QueryStartedEvent is sent to client along with WriteStreamOperationStartResult
   override def onQueryStarted(event: StreamingQueryListener.QueryStartedEvent): Unit = {
     serverSideListenerHolder.streamingQueryStartedEventCache.put(event.runId.toString, event)
+    logger.warn("onQueryStarted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
@@ -157,6 +160,7 @@ private[sql] class SparkConnectListenerBusListener(
         s"Sending QueryProgressEvent to client, id: ${event.progress.id}" +
         s" runId: ${event.progress.runId}, batch: ${event.progress.batchId}.")
     send(event.json, StreamingQueryEventType.QUERY_PROGRESS_EVENT)
+    logger.warn("onQueryProgress(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
@@ -166,6 +170,7 @@ private[sql] class SparkConnectListenerBusListener(
         log"Sending QueryTerminatedEvent to client, id: ${MDC(LogKeys.QUERY_ID, event.id)} " +
         log"runId: ${MDC(LogKeys.QUERY_RUN_ID, event.runId)}.")
     send(event.json, StreamingQueryEventType.QUERY_TERMINATED_EVENT)
+    logger.warn("onQueryTerminated(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryIdle(event: StreamingQueryListener.QueryIdleEvent): Unit = {
@@ -173,5 +178,6 @@ private[sql] class SparkConnectListenerBusListener(
       s"[SessionId: ${sessionHolder.sessionId}][UserId: ${sessionHolder.userId}] " +
         s"Sending QueryIdleEvent to client, id: ${event.id} runId: ${event.runId}.")
     send(event.json, StreamingQueryEventType.QUERY_IDLE_EVENT)
+    logger.warn("onQueryIdle(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 }

@@ -121,6 +121,7 @@ private[hive] class SparkGetTablesOperation(
       tableName: String,
       tableType: String,
       comment: Option[String]): Unit = {
+       private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     val rowData = Array[AnyRef](
       sessionCatalogTableCat(""),
       dbName,
@@ -128,6 +129,7 @@ private[hive] class SparkGetTablesOperation(
       tableType,
       comment.getOrElse(""))
     // Since HIVE-7575(Hive 2.0.0), adds 5 additional columns to the ResultSet of GetTables.
+    logInfo.warn("addToRowSet(dbName,tableName,tableType,comment)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbName, tableName, tableType, comment)
     rowSet.addRow(rowData ++ Array(null, null, null, null, null))
   }
 }

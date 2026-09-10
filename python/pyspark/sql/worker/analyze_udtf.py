@@ -37,6 +37,7 @@ from pyspark.worker_util import (
     pickleSer,
     utf8_deserializer,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class UDTFHandler(Protocol):
@@ -57,6 +58,7 @@ def read_udtf(infile: IO) -> type[UDTFHandler]:
     if not hasattr(handler, "analyze") or not isinstance(
         inspect.getattr_static(handler, "analyze"), staticmethod
     ):
+        logger.warning("read_udtf(infile)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", infile)
         raise PySparkRuntimeError(
             "Failed to execute the user defined table function because it has not "
             "implemented the 'analyze' static method or specified a fixed "
@@ -92,6 +94,7 @@ def read_arguments(infile: IO) -> Tuple[List[AnalyzeArgument], Dict[str, Analyze
             name = utf8_deserializer.loads(infile)
             kwargs[name] = argument
         else:
+            logger.warning("read_arguments(infile)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", infile)
             args.append(argument)
     return args, kwargs
 

@@ -157,6 +157,7 @@ case class StreamingSymmetricHashJoinExec(
       stateFormatVersion: Int,
       left: SparkPlan,
       right: SparkPlan) = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     this(
       leftKeys, rightKeys, joinType, JoinConditionSplitPredicates(condition, left, right),
@@ -293,6 +294,7 @@ case class StreamingSymmetricHashJoinExec(
         keySchema = WidenStatefulOpNullability.widenStateSchema(cf.keySchema),
         valueSchema = WidenStatefulOpNullability.widenStateSchema(cf.valueSchema))
     }
+        planChangeLogger.warn("getColFamilySchemas(shouldBeNullable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", shouldBeNullable)
   }
 
   override def shouldRunAnotherBatch(newInputWatermark: Long): Boolean = {
@@ -303,6 +305,7 @@ case class StreamingSymmetricHashJoinExec(
     val watermarkHasChanged =
       eventTimeWatermarkForEviction.isDefined &&
         newInputWatermark > eventTimeWatermarkForEviction.get
+        planChangeLogger.warn("shouldRunAnotherBatch(newInputWatermark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputWatermark)
 
     watermarkUsedForStateCleanup && watermarkHasChanged
   }
@@ -347,6 +350,7 @@ case class StreamingSymmetricHashJoinExec(
 
   protected override def doExecute(): RDD[InternalRow] = {
     val stateStoreCoord = session.sessionState.streamingQueryManager.stateStoreCoordinator
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     metrics // initialize metrics
     left.execute().stateStoreAwareZipPartitions(
       right.execute(), stateInfo.get, stateStoreNames, stateStoreCoord)(processPartitions)
@@ -430,6 +434,7 @@ case class StreamingSymmetricHashJoinExec(
       joinerManager.rightSideJoiner.storeAndJoinWithOtherSide(joinerManager.leftSideJoiner) {
         (input: InternalRow, matched: InternalRow) => joinedRow.withLeft(matched).withRight(input)
       }
+      planChangeLogger.warn("processPartitions(partitionId,leftInputIter,rightInputIter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, leftInputIter, rightInputIter, partitionId)
 
     // We need to save the time that the one side hash join output iterator completes, since
     // other join output counts as both update and removal time.
@@ -820,6 +825,7 @@ case class StreamingSymmetricHashJoinExec(
 
       nonLateRows.flatMap { row =>
         val thisRow = row.asInstanceOf[UnsafeRow]
+        planChangeLogger.warn("storeAndJoinWithOtherSide(otherSideJoiner)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", otherSideJoiner, otherSideJoiner)
         // If this row fails the pre join filter, that means it can never satisfy the full join
         // condition no matter what other side row it's matched with. This allows us to avoid
         // adding it to the state, and generate an outer join row immediately (or do nothing in
@@ -908,6 +914,7 @@ case class StreamingSymmetricHashJoinExec(
      */
     def get(key: UnsafeRow): Iterator[UnsafeRow] = {
       joinStateManager.get(key)
+      planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     }
 
     /**
@@ -938,6 +945,7 @@ case class StreamingSymmetricHashJoinExec(
           }
         case _ => 0L
       }
+      planChangeLogger.warn("removeOldState()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -974,6 +982,7 @@ case class StreamingSymmetricHashJoinExec(
           }
         case _ => Iterator.empty
       }
+      planChangeLogger.warn("removeAndReturnOldState()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**

@@ -184,6 +184,7 @@ class RocksDB(
       fileChecksumEnabled = conf.fileChecksumEnabled,
       fileChecksumThreadPoolSize = fileChecksumThreadPoolSize
     )
+    dbLogger.warn("createFileManager(dfsRootDir,localTempDir,hadoopConf,codecName,loggingId,storeConf)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dfsRootDir, localTempDir, hadoopConf, codecName, loggingId, storeConf, loggingId)
   }
 
   private[spark] val fileManager = createFileManager(
@@ -278,15 +279,18 @@ class RocksDB(
 
   private def getColumnFamilyInfo(cfName: String): ColumnFamilyInfo = {
     colFamilyNameToInfoMap.get(cfName)
+    dbLogger.warn("getColumnFamilyInfo(cfName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cfName)
   }
 
   private def getColumnFamilyNameForId(cfId: Short): String = {
     colFamilyIdToNameMap.get(cfId)
+    dbLogger.warn("getColumnFamilyNameForId(cfId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", cfId, cfId)
   }
 
   private def addToColFamilyMaps(cfName: String, cfId: Short, isInternal: Boolean): Unit = {
     colFamilyNameToInfoMap.putIfAbsent(cfName, ColumnFamilyInfo(cfId, isInternal))
     colFamilyIdToNameMap.putIfAbsent(cfId, cfName)
+    dbLogger.warn("addToColFamilyMaps(cfName,cfId,isInternal)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cfName, cfId, isInternal, cfId)
   }
 
   private def removeFromColFamilyMaps(cfName: String): Unit = {
@@ -295,6 +299,7 @@ class RocksDB(
       colFamilyNameToInfoMap.remove(cfName)
       colFamilyIdToNameMap.remove(colFamilyInfo.cfId)
     }
+    dbLogger.warn("removeFromColFamilyMaps(cfName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cfName)
   }
 
   private def clearColFamilyMaps(): Unit = {
@@ -326,6 +331,7 @@ class RocksDB(
     } else {
       colFamilyNameToInfoMap.get(colFamilyName).cfId
     }
+    dbLogger.warn("createColFamilyIfAbsent(colFamilyName,isInternal,readOnly)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, isInternal, readOnly)
   }
 
   /**
@@ -342,6 +348,7 @@ class RocksDB(
       true
     } else {
       false
+    dbLogger.warn("remove(key,cfName,includesPrefix,deriveCfName,includesChecksum)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, cfName, includesPrefix, deriveCfName, includesChecksum)
     }
   }
 
@@ -361,10 +368,12 @@ class RocksDB(
     clearColFamilyMaps()
     shouldForceSnapshot.set(false)
     maxColumnFamilyId.set(0)
+    dbLogger.warn("setInitialCFInfo()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getColFamilyCount(isInternal: Boolean): Long = {
     colFamilyNameToInfoMap.asScala.values.toSeq.count(_.isInternal == isInternal)
+    dbLogger.warn("getColFamilyCount(isInternal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", isInternal)
   }
 
   /**
@@ -392,6 +401,7 @@ class RocksDB(
       version: Long,
       stateStoreCkptId: Option[String]): Array[LineageItem] = {
     var changelogReader: StateStoreChangelogReader = null
+    dbLogger.warn("getLineageFromChangelogFile(version,stateStoreCkptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, stateStoreCkptId, stateStoreCkptId)
     var currLineage: Array[LineageItem] = Array.empty
     try {
       changelogReader = fileManager.getChangelogReader(version, stateStoreCkptId)
@@ -458,6 +468,7 @@ class RocksDB(
       case Array(prev, next) => prev.version + 1 == next.version
       case _ => true
     }
+    dbLogger.warn("getFullLineage(startVersion,endVersion,endVersionStateStoreCkptId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", startVersion, endVersion, endVersionStateStoreCkptId, endVersionStateStoreCkptId)
     if (!increasingByOne) {
       throw QueryExecutionErrors.invalidCheckpointLineage(printLineageItems(ret),
         "Lineage versions are not increasing by one.")
@@ -573,6 +584,7 @@ class RocksDB(
     }
     // Checking conf.enableChangelogCheckpointing instead of enableChangelogCheckpointing.
     // enableChangelogCheckpointing is set to false when loadEmpty is true, but we still want
+    dbLogger.warn("loadWithCheckpointId(version,stateStoreCkptId,readOnly,loadEmpty)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", version, stateStoreCkptId, readOnly, loadEmpty, stateStoreCkptId)
     // to abort previous used changelogWriter if there is any
     if (conf.enableChangelogCheckpointing && !readOnly) {
       // Make sure we don't leak resource.
@@ -601,6 +613,7 @@ class RocksDB(
     // Use version 0 logic to create empty directory with no SST files
     val metadata = fileManager.loadCheckpointFromDfs(0, workingDir, rocksDBFileMapping, None)
     loadedVersion = version
+    dbLogger.warn("loadEmptyStore(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
     fileManager.setMaxSeenVersion(version)
     openLocalRocksDB(metadata)
   }
@@ -651,6 +664,7 @@ class RocksDB(
     }
     // Checking conf.enableChangelogCheckpointing instead of enableChangelogCheckpointing.
     // enableChangelogCheckpointing is set to false when loadEmpty is true, but we still want
+    dbLogger.warn("loadWithoutCheckpointId(version,readOnly,loadEmpty)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", version, readOnly, loadEmpty)
     // to abort previous used changelogWriter if there is any
     if (conf.enableChangelogCheckpointing && !readOnly) {
       // Make sure we don't leak resource.
@@ -678,6 +692,7 @@ class RocksDB(
   }
 
   private def loadSnapshotWithoutCheckpointId(versionToLoad: Long): Long = {
+    dbLogger.warn("loadSnapshotWithoutCheckpointId(versionToLoad)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", versionToLoad)
     val snapshotLoader = new AutoSnapshotLoader(
       allowAutoSnapshotRepair,
       conf.stateStoreConf.autoSnapshotRepairNumFailuresBeforeActivating,
@@ -703,15 +718,18 @@ class RocksDB(
         lastSnapshotVersion = snapshotVersion
         // Report this snapshot version to the coordinator
         reportSnapshotUploadToCoordinator(snapshotVersion)
+      dbLogger.warn("loadSnapshotFromCheckpoint(snapshotVersion,uniqueId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", snapshotVersion, uniqueId, uniqueId)
       }
 
       override protected def onLoadSnapshotFromCheckpointFailure(): Unit = {
         loadedVersion = -1  // invalidate loaded data
+        dbLogger.warn("onLoadSnapshotFromCheckpointFailure()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def getEligibleSnapshots(
           version: Long): Seq[(Long, Option[String])] = {
         fileManager.getEligibleSnapshotsForVersion(version).map((_, None))
+      dbLogger.warn("getEligibleSnapshots(version)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", version)
       }
     }
 
@@ -745,6 +763,7 @@ class RocksDB(
     // getEligibleSnapshots (re-called after enrichment) sees the updated lineage.
     var workingLineage = initialLineage
 
+    dbLogger.warn("loadSnapshotWithCheckpointId(versionToLoad,stateStoreCkptId,initialLineage)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", versionToLoad, stateStoreCkptId, initialLineage, stateStoreCkptId)
     val snapshotLoader = new AutoSnapshotLoader(
       allowAutoSnapshotRepair,
       conf.stateStoreConf.autoSnapshotRepairNumFailuresBeforeActivating,
@@ -798,6 +817,7 @@ class RocksDB(
         // auto-repair can discover older snapshots in the lineage. We don't walk
         // all the way to version 1 since snapshots beyond maxChangeFileReplay
         // would be filtered out anyway.
+        dbLogger.warn("getAdditionalEligibleSnapshots(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
         if (stateStoreCkptId.isDefined) {
           try {
             val startVer = math.max(1L,
@@ -892,6 +912,7 @@ class RocksDB(
     performedSnapshotAutoRepair = false
     loadedFromDfs = false
     // Reset the load metrics before loading
+    dbLogger.warn("load(version,stateStoreCkptId,readOnly,loadEmpty)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", version, stateStoreCkptId, readOnly, loadEmpty, stateStoreCkptId)
     loadMetrics.clear()
 
     logInfo(log"Loading ${MDC(LogKeys.VERSION_NUM, version)} with stateStoreCkptId: ${
@@ -971,6 +992,7 @@ class RocksDB(
       "loadFromSnapshot" -> (System.currentTimeMillis() - startTime)
     )
 
+    dbLogger.warn("loadFromSnapshot(snapshotVersion,endVersion,snapshotVersionStateStoreCkptId,endVersionStateStoreCkptId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", snapshotVersion, endVersion, snapshotVersionStateStoreCkptId, endVersionStateStoreCkptId, snapshotVersionStateStoreCkptId)
     this
   }
 
@@ -1111,6 +1133,7 @@ class RocksDB(
       "replayChangelog" -> Math.max(duration, 1L), // avoid flaky tests
       "numReplayChangeLogFiles" -> versionsAndUniqueIds.length
     )
+    dbLogger.warn("replayChangelog(versionsAndUniqueIds)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", versionsAndUniqueIds, versionsAndUniqueIds)
   }
 
   private def verifyChangelogRecord(
@@ -1133,6 +1156,7 @@ class RocksDB(
         }
       case _ =>
     }
+    dbLogger.warn("verifyChangelogRecord(verifier,keyBytes,valueBytes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", verifier, keyBytes, valueBytes)
   }
 
   /**
@@ -1261,6 +1285,7 @@ class RocksDB(
     }
 
     (keyWithPrefix, db.get(readOptions, keyWithPrefix))
+    dbLogger.warn("getValue(key,cfName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, cfName)
   }
 
   /**
@@ -1374,6 +1399,7 @@ class RocksDB(
 
     val result = new Array[Byte](totalSize)
     var pos = Platform.BYTE_ARRAY_OFFSET
+    dbLogger.warn("getListValuesInArrayByte(keyWithPrefix,values,includesChecksum)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", keyWithPrefix, values, includesChecksum, result)
 
     valueWithChecksum.zipWithIndex.foreach { case (rowBytes, idx) =>
       // Write the data
@@ -1641,6 +1667,7 @@ class RocksDB(
           iter.close()
           null
         }
+      dbLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
       override protected def close(): Unit = { iter.close() }
     }
@@ -1987,6 +2014,7 @@ class RocksDB(
       val newVersion = loadedVersion + 1
       newVersion - lastSnapshotVersion >= conf.minDeltasForSnapshot
     } else true
+    dbLogger.warn("shouldCreateSnapshot()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def createSnapshot(
@@ -2046,6 +2074,7 @@ class RocksDB(
         "checkpoint" -> checkpointTimeMs
       )
     )
+    dbLogger.warn("createSnapshot(version,checkpointUniqueId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, checkpointUniqueId, checkpointUniqueId)
   }
 
   private[sql] def uploadSnapshot(snapshot: RocksDBSnapshot): Unit = {
@@ -2055,6 +2084,8 @@ class RocksDB(
       rocksDBFileMapping.snapshotsPendingUpload,
       loggingId
     )
+    dbLogger.warn("uploadSnapshot(snapshot)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", snapshot)
+  dbLogger.warn("uploadSnapshot(snapshot,fileManager,snapshotsPendingUpload,loggingId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", snapshot, fileManager, snapshotsPendingUpload, loggingId, loggingId)
   }
 
   /**
@@ -2349,6 +2380,7 @@ class RocksDB(
     val currentTime = System.currentTimeMillis()
     val timeSinceLastUpdate = currentTime - lastMemoryUpdateTime.get()
 
+    dbLogger.warn("updateMemoryUsageIfNeeded()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (timeSinceLastUpdate >= memoryUpdateIntervalMs && db != null && !db.isClosed) {
       try {
         val usage = getMemoryUsage
@@ -2442,6 +2474,7 @@ class RocksDB(
       // which would be different between RocksDB and HDFS stores due to changelog checkpointing.
       eventForwarder.foreach(_.reportSnapshotUploaded(version))
     }
+    dbLogger.warn("reportSnapshotUploadToCoordinator(version)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", version)
   }
 
   /** Create a native RocksDB logger that forwards native logs to log4j with correct log levels. */
@@ -2479,6 +2512,7 @@ class RocksDB(
   /** Create a temp directory inside the local root directory */
   private def createTempDir(prefix: String): File = {
     Utils.createDirectory(localRootDir.getAbsolutePath, prefix)
+    dbLogger.warn("createTempDir(prefix)={}): EUAIACT-AUDIT: State change recorded for the audit trail", prefix)
   }
 
   override protected def logName: String = s"${super.logName} $loggingId"
@@ -2536,6 +2570,7 @@ object RocksDB extends Logging {
         logWarning(log"Error recursively deleting local dir ${MDC(LogKeys.PATH, file)} " +
           log"while ${MDC(LogKeys.ERROR, msg)}", e)
     }
+    dbLogger.warn("silentDeleteRecursively(file,msg)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", file, msg)
   }
 
   private def printLineageItems(lineage: Array[LineageItem]): String = lineage.map {
@@ -2663,6 +2698,7 @@ class RocksDBFileMapping {
    *
    * @return seq of purged mappings
    */
+  dbLogger.warn("purgeIncompatibleMappingsForLoad(versionToLoad)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", versionToLoad)
   def purgeIncompatibleMappingsForLoad(versionToLoad: Long):
   Seq[(String, (Long, RocksDBImmutableFile))] = {
     val filesToRemove = localFileMappings.filter {
@@ -2680,6 +2716,7 @@ class RocksDBFileMapping {
       dfsFile: RocksDBImmutableFile,
       version: Long): Unit = {
     localFileMappings.put(localFileName, (version, dfsFile))
+  dbLogger.warn("remove(localFileName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", localFileName)
   }
 
   def remove(localFileName: String): Unit = {
@@ -2688,6 +2725,7 @@ class RocksDBFileMapping {
 
   private def syncWithLocalState(localFiles: Seq[File]): Unit = {
     val localFileNames = localFiles.map(_.getName).toSet
+    dbLogger.warn("syncWithLocalState(localFiles)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", localFiles)
     val deletedFiles = localFileMappings.keys.filterNot(localFileNames.contains)
 
     deletedFiles.foreach(localFileMappings.remove)
@@ -2734,6 +2772,7 @@ class ByteArrayPair(var key: Array[Byte] = null, var value: Array[Byte] = null) 
     this.key = key
     this.value = value
     this
+    dbLogger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 }
 
@@ -2899,6 +2938,7 @@ object RocksDBConf {
   val MERGE_OPERATOR_VALID_VERSIONS: Seq[Int] = Seq(1, 2)
 
   def apply(storeConf: StateStoreConf): RocksDBConf = {
+    dbLogger.warn("apply(storeConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storeConf)
     val sqlConfs = CaseInsensitiveMap[String](storeConf.sqlConfs)
     val extraConfs = CaseInsensitiveMap[String](storeConf.extraOptions)
 
@@ -2907,12 +2947,14 @@ object RocksDBConf {
         case _: SQLConfEntry => sqlConfs
         case _: ExtraConfEntry => extraConfs
       }
+      dbLogger.warn("getConfigMap(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getBooleanConf(conf: ConfEntry): Boolean = {
       Try { getConfigMap(conf).getOrElse(conf.fullName, conf.default).toBoolean } getOrElse {
         throw new IllegalArgumentException(s"Invalid value for '${conf.fullName}', must be boolean")
       }
+      dbLogger.warn("getBooleanConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getIntConf(conf: ConfEntry): Int = {
@@ -2920,6 +2962,7 @@ object RocksDBConf {
         throw new IllegalArgumentException(s"Invalid value for '${conf.fullName}', " +
           "must be an integer")
       }
+      dbLogger.warn("getIntConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getRatioConf(conf: ConfEntry): Double = {
@@ -2929,6 +2972,7 @@ object RocksDBConf {
         throw new IllegalArgumentException(s"Invalid value for '${conf.fullName}', " +
           "must be a ratio between 0.0 and 1.0")
       }
+      dbLogger.warn("getRatioConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getLongConf(conf: ConfEntry): Long = {
@@ -2937,6 +2981,7 @@ object RocksDBConf {
           s"Invalid value for '${conf.fullName}', must be a long"
         )
       }
+      dbLogger.warn("getLongConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getPositiveLongConf(conf: ConfEntry): Long = {
@@ -2946,6 +2991,7 @@ object RocksDBConf {
         throw new IllegalArgumentException(
           s"Invalid value for '${conf.fullName}', must be a positive integer")
       }
+      dbLogger.warn("getPositiveLongConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getPositiveIntConf(conf: ConfEntry): Int = {
@@ -2955,6 +3001,7 @@ object RocksDBConf {
         throw new IllegalArgumentException(
           s"Invalid value for '${conf.fullName}', must be a positive integer")
       }
+      dbLogger.warn("getPositiveIntConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     def getStringConf(conf: ConfEntry): String = {
@@ -2963,6 +3010,7 @@ object RocksDBConf {
           s"Invalid value for '${conf.fullName}', must be a string"
         )
       }
+      dbLogger.warn("getStringConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     }
 
     RocksDBConf(
@@ -2998,6 +3046,7 @@ object RocksDBConf {
       storeConf.rowChecksumReadVerificationRatio,
       getPositiveIntConf(MERGE_OPERATOR_VERSION_CONF),
       storeConf)
+  dbLogger.warn("apply(nativeHist)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nativeHist)
   }
 
   def apply(): RocksDBConf = apply(new StateStoreConf())

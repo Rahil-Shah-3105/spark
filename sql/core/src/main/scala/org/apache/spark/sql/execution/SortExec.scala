@@ -73,6 +73,7 @@ case class SortExec(
    * should make it public.
    */
   def createSorter(): UnsafeExternalRowSorter = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val ordering = RowOrdering.create(sortOrder, output)
 
     // The comparator for comparing prefix
@@ -83,6 +84,7 @@ case class SortExec(
       SortPrefixUtils.canSortFullyWithPrefix(boundSortExpression)
 
     // The generator for prefix
+    planChangeLogger.warn("createSorter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val prefixExpr = SortPrefix(boundSortExpression)
     val prefixProjection = UnsafeProjection.create(Seq(prefixExpr))
     val prefixComputer = new UnsafeExternalRowSorter.PrefixComputer {
@@ -111,6 +113,7 @@ case class SortExec(
     val spillSize = longMetric("spillSize")
     val sortTime = longMetric("sortTime")
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     child.execute().mapPartitionsInternal { iter =>
       val sorter = createSorter()
 

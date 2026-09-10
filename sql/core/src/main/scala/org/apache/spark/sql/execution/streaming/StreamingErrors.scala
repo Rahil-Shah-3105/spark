@@ -22,6 +22,7 @@ import org.apache.spark.{SparkException, SparkRuntimeException}
  * Object for grouping error messages from streaming query exceptions
  */
 object StreamingErrors {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Error condition and subclasses for failures writing a streaming checkpoint log entry.
    * Defined here as the single source of truth so the factory methods below and the tests that
@@ -42,6 +43,7 @@ object StreamingErrors {
         "checkpointLocation" -> checkpointLocation),
       cause = cause
     )
+    planChangeLogger.warn("commitLogWriteFailure(batchId,checkpointLocation,cause)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, checkpointLocation, cause, batchId)
   }
 
   def offsetLogWriteFailure(
@@ -55,6 +57,7 @@ object StreamingErrors {
         "checkpointLocation" -> checkpointLocation),
       cause = cause
     )
+    planChangeLogger.warn("offsetLogWriteFailure(batchId,checkpointLocation,cause)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, checkpointLocation, cause, batchId)
   }
 
   def cannotLoadCheckpointFileManagerClass(path: String, className: String, err: Throwable):

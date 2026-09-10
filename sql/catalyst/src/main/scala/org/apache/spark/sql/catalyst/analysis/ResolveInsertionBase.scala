@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.SchemaUtils
 
 abstract class ResolveInsertionBase extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def resolver: Resolver = conf.resolver
 
   /** Add a project to use the table column names for INSERT INTO BY NAME */
@@ -42,6 +43,7 @@ abstract class ResolveInsertionBase extends Rule[LogicalPlan] {
           tblName, i.userSpecifiedCols, i.query.output)
       }
     }
+    planChangeLogger.warn("createProjectForByNameQuery(tblName,i)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tblName, i)
     val projectByName = i.userSpecifiedCols.zip(i.query.output)
       .map { case (userSpecifiedCol, queryOutputCol) =>
         val resolvedCol = i.table.resolve(Seq(userSpecifiedCol), resolver)

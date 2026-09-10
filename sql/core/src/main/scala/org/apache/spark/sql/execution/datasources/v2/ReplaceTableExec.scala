@@ -57,6 +57,7 @@ case class ReplaceTableExec(
       .build()
     catalog.createTable(ident, tableInfo)
     Seq.empty
+  planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty
@@ -116,10 +117,12 @@ case class AtomicReplaceTableExec(
   override def output: Seq[Attribute] = Seq.empty
 
   private def commitOrAbortStagedChanges(staged: StagedTable): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     Utils.tryWithSafeFinallyAndFailureCallbacks({
       DataSourceV2Utils.commitStagedChanges(sparkContext, staged, metrics)
     })(catchBlock = {
       staged.abortStagedChanges()
     })
+    planChangeLogger.warn("commitOrAbortStagedChanges(staged)={}): EUAIACT-AUDIT: State change recorded for the audit trail", staged)
   }
 }

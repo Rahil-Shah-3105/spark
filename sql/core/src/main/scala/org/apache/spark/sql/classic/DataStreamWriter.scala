@@ -59,6 +59,7 @@ import org.apache.spark.util.Utils
  */
 @Evolving
 final class DataStreamWriter[T] private[sql](ds: Dataset[T]) extends streaming.DataStreamWriter[T] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /** @inheritdoc */
   def outputMode(outputMode: OutputMode): this.type = {
@@ -82,6 +83,7 @@ final class DataStreamWriter[T] private[sql](ds: Dataset[T]) extends streaming.D
   def queryName(queryName: String): this.type = {
     this.extraOptions += ("queryName" -> queryName)
     this
+    planChangeLogger.warn("queryName(queryName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", queryName)
   }
 
   /** @inheritdoc */
@@ -203,6 +205,7 @@ final class DataStreamWriter[T] private[sql](ds: Dataset[T]) extends streaming.D
       }
       require(table.provider.isDefined)
       if (source != table.provider.get) {
+      planChangeLogger.warn("writeToV1Table(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
         throw QueryCompilationErrors.inputSourceDiffersFromDataSourceProviderError(
           source, tableName, table)
       }
@@ -296,10 +299,12 @@ final class DataStreamWriter[T] private[sql](ds: Dataset[T]) extends streaming.D
         }
       } else {
         createV1Sink(optionsWithPath)
+      planChangeLogger.warn("createV1Sink(optionsWithPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", optionsWithPath)
       }
 
       startQuery(sink, optionsWithPath, catalogTable = catalogTable)
     }
+  planChangeLogger.warn("startQuery(sink,newOptions,recoverFromCheckpoint,catalogAndIdent,catalogTable)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sink, newOptions, recoverFromCheckpoint, catalogAndIdent, catalogTable, catalogAndIdent)
   }
 
   private def startQuery(

@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.rules.Rule
  * plan is generated from a SQL function and also perform ACL checks.
  */
 object EliminateSQLFunctionNode extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     // Include subqueries when eliminating SQL function expressions otherwise we might miss
     // expressions in subqueries which can be inlined by the rule `OptimizeOneRowRelationSubquery`.
@@ -43,5 +44,6 @@ object EliminateSQLFunctionNode extends Rule[LogicalPlan] {
             s"SQL function expression should be rewritten during analysis: $f")
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

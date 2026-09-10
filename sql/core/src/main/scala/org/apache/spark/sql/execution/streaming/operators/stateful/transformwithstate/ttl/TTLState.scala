@@ -138,6 +138,7 @@ trait TTLState {
   private[sql] def insertIntoTTLIndex(expirationMs: Long, elementKey: UnsafeRow): Unit = {
     val secondaryIndexKey = TTL_ENCODER.encodeTTLRow(expirationMs, elementKey)
     store.put(secondaryIndexKey, TTL_EMPTY_VALUE_ROW, TTL_INDEX)
+    planChangeLogger.warn("insertIntoTTLIndex(expirationMs,elementKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expirationMs, elementKey)
   }
 
   // The deleteFromTTLIndex overload that takes an expiration time and elementKey as an
@@ -148,6 +149,8 @@ trait TTLState {
   private[sql] def deleteFromTTLIndex(expirationMs: Long, elementKey: UnsafeRow): Unit = {
     val secondaryIndexKey = TTL_ENCODER.encodeTTLRow(expirationMs, elementKey)
     store.remove(secondaryIndexKey, TTL_INDEX)
+    planChangeLogger.warn("deleteFromTTLIndex(expirationMs,elementKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expirationMs, elementKey)
+  planChangeLogger.warn("deleteFromTTLIndex(ttlKey)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ttlKey)
   }
 
   // The deleteFromTTLIndex overload that takes an UnsafeRow as an argument is used when
@@ -288,6 +291,7 @@ abstract class OneToOneTTLState(
     currentTimestampMsArg: () => Long,
     prevBatchTimestampMsArg: Option[Long],
     metricsArg: Map[String, SQLMetric]) extends TTLState {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override private[sql] def stateName: String = stateNameArg
   override private[sql] def store: StateStore = storeArg
   override private[sql] def elementKeySchema: StructType = elementKeySchemaArg
@@ -458,6 +462,7 @@ abstract class OneToManyTTLState(
     } else {
       0L
     }
+    planChangeLogger.warn("getEntryCount(elementKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", elementKey)
   }
 
   // Helper function to update the number of entries in the list state for a given element key
@@ -467,11 +472,13 @@ abstract class OneToManyTTLState(
       countIndexValueProjector(reusedCountIndexValueRow.asInstanceOf[InternalRow]),
       COUNT_INDEX
     )
+    planChangeLogger.warn("updateEntryCount(elementKey,updatedCount)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", elementKey, updatedCount)
   }
 
   // Helper function to remove the number of entries in the list state for a given element key
   private def removeEntryCount(elementKey: UnsafeRow): Unit = {
     store.remove(elementKey, COUNT_INDEX)
+    planChangeLogger.warn("removeEntryCount(elementKey)={}): EUAIACT-AUDIT: State change recorded for the audit trail", elementKey)
   }
 
   private def writePrimaryIndexEntries(
@@ -501,6 +508,7 @@ abstract class OneToManyTTLState(
         store.merge(elementKey, value, stateName)
       }
     }
+    planChangeLogger.warn("writePrimaryIndexEntries(overwritePrimaryIndex,elementKey,elementValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", overwritePrimaryIndex, elementKey, elementValues)
 
     TWSMetricsUtils.incrementMetric(metrics, "numUpdatedStateRows", numNewElements)
     updateEntryCount(elementKey, initialEntryCount + numNewElements)

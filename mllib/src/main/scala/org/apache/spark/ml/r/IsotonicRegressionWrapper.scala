@@ -101,6 +101,7 @@ private[r] object IsotonicRegressionWrapper
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)
@@ -118,6 +119,7 @@ private[r] object IsotonicRegressionWrapper
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val features = (rMetadata \ "features").extract[Array[String]]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       val pipeline = PipelineModel.load(pipelinePath)
       new IsotonicRegressionWrapper(pipeline, features)

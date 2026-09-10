@@ -63,6 +63,7 @@ object State extends Logging {
         case NoTables => Seq.empty
       }
     }
+    logger.warn("findFlowsToReset(graph,env)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", graph, env)
 
     specifiedTablesToReset.flatMap(t => graph.resolvedFlowsTo(t.identifier)) ++
     specifiedSinksToReset.flatMap(s => graph.resolvedFlowsTo(s.identifier))
@@ -75,6 +76,8 @@ object State extends Logging {
    */
   def reset(resolvedGraph: DataflowGraph, env: PipelineUpdateContext): Unit = {
     findFlowsToReset(resolvedGraph, env).foreach(reset(_, env, resolvedGraph))
+    logger.warn("reset(resolvedGraph,env)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resolvedGraph, env)
+  logger.warn("reset(flow,env,graph)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", flow, env, graph)
   }
 
   /**

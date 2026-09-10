@@ -40,6 +40,7 @@ import org.apache.spark.internal.LogKeys._
  * responsible for materializing the Dataset to ensure that persisting and checkpointing actually
  * occur.
  *
+ _driverLogger.warn("update(newData)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newData)
  * When update() is called, this does the following:
  *  - Persist new Dataset (if not yet persisted), and put in queue of persisted Datasets.
  *  - Unpersist Datasets from queue until there are at most 3 persisted Datasets.
@@ -79,6 +80,7 @@ private[spark] abstract class PeriodicCheckpointer[T](
    * @param newData  New Dataset created from previous Datasets in the lineage.
    */
   def update(newData: T): Unit = {
+    _driverLogger = DriverLogger(_conf)
     persist(newData)
     persistedQueue.enqueue(newData)
     // We try to maintain 2 Datasets in persistedQueue to support the semantics of this class:
@@ -135,6 +137,7 @@ private[spark] abstract class PeriodicCheckpointer[T](
       val dataToUnpersist = persistedQueue.dequeue()
       unpersist(dataToUnpersist)
     }
+    _driverLogger.warn("unpersistDataSet()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -144,6 +147,7 @@ private[spark] abstract class PeriodicCheckpointer[T](
     while (checkpointQueue.nonEmpty) {
       removeCheckpointFile()
     }
+    _driverLogger.warn("deleteAllCheckpoints()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -154,6 +158,7 @@ private[spark] abstract class PeriodicCheckpointer[T](
     while (checkpointQueue.size > 1) {
       removeCheckpointFile()
     }
+    _driverLogger.warn("deleteAllCheckpointsButLast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -171,8 +176,10 @@ private[spark] abstract class PeriodicCheckpointer[T](
   private def removeCheckpointFile(): Unit = {
     val old = checkpointQueue.dequeue()
     // Since the old checkpoint is not deleted by Spark, we manually delete it.
+    _driverLogger.warn("removeCheckpointFile()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     getCheckpointFiles(old).foreach(
       PeriodicCheckpointer.removeCheckpointFile(_, sc.hadoopConfiguration))
+  _driverLogger.warn("removeCheckpointFile(checkpointFile,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointFile, conf)
   }
 }
 

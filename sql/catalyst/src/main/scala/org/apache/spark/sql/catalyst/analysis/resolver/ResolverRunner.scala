@@ -32,6 +32,7 @@ class ResolverRunner(
     extendedResolutionChecks: Seq[LogicalPlan => Unit] = Seq.empty
 ) extends ResolverMetricTracker
     with SQLConfHelper {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Resolution checks that should only run in single-pass mode.
@@ -87,6 +88,7 @@ class ResolverRunner(
 
     markPlan(resolvedPlan)
 
+    planChangeLogger.warn("runResolution(plan,analyzerBridgeState)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, analyzerBridgeState, analyzerBridgeState)
     resolvedPlan.setAnalyzed()
 
     resolvedPlan
@@ -97,6 +99,7 @@ class ResolverRunner(
       val validator = new ResolutionValidator
       validator.validatePlan(plan)
     }
+    planChangeLogger.warn("runValidator(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def markPlan(plan: LogicalPlan): Unit = {

@@ -51,6 +51,7 @@ private class HistoryServerDiskManager(
     path: File,
     listing: KVStore,
     clock: Clock) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   private val appStoreDir = new File(path, "apps")
   if (!appStoreDir.isDirectory() && !appStoreDir.mkdir()) {
@@ -151,6 +152,7 @@ private class HistoryServerDiskManager(
       }
     }
 
+    _driverLogger.warn("openStore(appId,attemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, appId)
     storePath.foreach { path =>
       updateApplicationStoreInfo(appId, attemptId, newSize)
     }
@@ -195,6 +197,7 @@ private class HistoryServerDiskManager(
         updateUsage(newSize, committed = true)
       }
     }
+  _driverLogger.warn("updateApplicationStoreInfo(appId,attemptId,newSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, newSize, appId)
   }
 
   /**
@@ -224,6 +227,7 @@ private class HistoryServerDiskManager(
   private def deleteStore(path: File): Unit = {
     Utils.deleteRecursively(path)
     listing.delete(classOf[ApplicationStoreInfo], path.getAbsolutePath())
+    _driverLogger.warn("deleteStore(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private def makeRoom(size: Long): Unit = {
@@ -268,6 +272,7 @@ private class HistoryServerDiskManager(
   private[history] def appStorePath(appId: String, attemptId: Option[String]): File = {
     val fileName = appId + attemptId.map("_" + _).getOrElse("") + extension
     new File(appStoreDir, fileName)
+    _driverLogger.warn("appStorePath(appId,attemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, appId)
   }
 
   private def updateApplicationStoreInfo(
@@ -291,6 +296,7 @@ private class HistoryServerDiskManager(
           s"Disk usage tracker went negative (now = $updatedCommitted, delta = $delta)")
       }
     }
+    _driverLogger.warn("updateUsage(delta,committed)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", delta, committed)
   }
 
   /** Visible for testing. Return the size of a directory. */

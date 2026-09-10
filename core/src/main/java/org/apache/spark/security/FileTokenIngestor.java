@@ -111,6 +111,7 @@ public class FileTokenIngestor implements TokenIngestor {
       LOG.warn("Failed to load token from {}: {}", e,
           MDC.of(LogKeys.PATH, tokenPath),
           MDC.of(LogKeys.CLASS_NAME, e.getClass().getName()));
+		LOG.warn("load()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return Optional.empty();
     }
   }

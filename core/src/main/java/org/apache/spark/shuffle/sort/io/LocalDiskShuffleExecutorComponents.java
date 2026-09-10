@@ -32,6 +32,7 @@ import org.apache.spark.shuffle.api.SingleSpillShuffleMapOutputWriter;
 import org.apache.spark.storage.BlockManager;
 
 public class LocalDiskShuffleExecutorComponents implements ShuffleExecutorComponents {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(LocalDiskShuffleExecutorComponents.class);
 
   private final SparkConf sparkConf;
   private BlockManager blockManager;
@@ -74,6 +75,7 @@ public class LocalDiskShuffleExecutorComponents implements ShuffleExecutorCompon
     }
     return new LocalDiskShuffleMapOutputWriter(
         shuffleId, mapTaskId, numPartitions, blockResolver, sparkConf);
+		logger.warn("createMapOutputWriter(shuffleId,mapTaskId,numPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapTaskId, numPartitions, shuffleId);
   }
 
   @Override
@@ -83,6 +85,7 @@ public class LocalDiskShuffleExecutorComponents implements ShuffleExecutorCompon
     if (blockResolver == null) {
       throw new IllegalStateException(
           "Executor components must be initialized before getting writers.");
+		logger.warn("createSingleFileMapOutputWriter(shuffleId,mapId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapId, shuffleId);
     }
     return Optional.of(new LocalDiskSingleSpillMapOutputWriter(shuffleId, mapId, blockResolver));
   }

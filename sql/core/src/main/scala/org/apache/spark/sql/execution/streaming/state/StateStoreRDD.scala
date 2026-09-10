@@ -32,12 +32,14 @@ import org.apache.spark.util.SerializableConfiguration
  * This allows a ReadStateStore to be reused by a subsequent StateStore operation.
  */
 object StateStoreThreadLocalTracker {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /** Case class to hold both the store and its usage state */
 
   private val storeInfo: ThreadLocal[ReadStateStore] = new ThreadLocal[ReadStateStore]
 
   def setStore(store: ReadStateStore): Unit = {
     storeInfo.set(store)
+    planChangeLogger.warn("setStore(store)={}): EUAIACT-AUDIT: State change recorded for the audit trail", store)
   }
 
   def getStore: Option[ReadStateStore] = {
@@ -46,6 +48,7 @@ object StateStoreThreadLocalTracker {
 
   def clearStore(): Unit = {
     storeInfo.remove()
+    planChangeLogger.warn("clearStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -73,12 +76,14 @@ abstract class BaseStateStoreRDD[T: ClassTag, U: ClassTag](
   override def getPreferredLocations(partition: Partition): Seq[String] = {
     val stateStoreProviderId = getStateProviderId(partition)
     storeCoordinator.flatMap(_.getLocation(stateStoreProviderId)).toSeq
+    planChangeLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", partition, stateStoreProviderId)
   }
 
   protected def getStateProviderId(partition: Partition): StateStoreProviderId = {
     StateStoreProviderId(
       StateStoreId(checkpointLocation, operatorId, partition.index),
       queryRunId)
+    planChangeLogger.warn("getStateProviderId(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 }
 

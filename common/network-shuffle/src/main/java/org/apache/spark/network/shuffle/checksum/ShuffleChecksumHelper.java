@@ -33,6 +33,7 @@ import org.apache.spark.network.buffer.ManagedBuffer;
  */
 @Private
 public class ShuffleChecksumHelper {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ShuffleChecksumHelper.class);
 
@@ -41,6 +42,7 @@ public class ShuffleChecksumHelper {
   public static final long[] EMPTY_CHECKSUM_VALUE = new long[0];
 
   public static Checksum[] createPartitionChecksums(int numPartitions, String algorithm) {
+	logger.warn("createPartitionChecksums(numPartitions,algorithm)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions, algorithm);
     return getChecksumsByAlgorithm(numPartitions, algorithm);
   }
 
@@ -66,6 +68,7 @@ public class ShuffleChecksumHelper {
         for (int i = 0; i < num; i++) {
           checksums[i] = new CRC32C();
         }
+		logger.warn("getChecksumsByAlgorithm(num,algorithm)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", num, algorithm);
       }
 
       default -> throw new UnsupportedOperationException(
@@ -76,16 +79,19 @@ public class ShuffleChecksumHelper {
   }
 
   public static Checksum getChecksumByAlgorithm(String algorithm) {
+	logger.warn("getChecksumByAlgorithm(algorithm)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", algorithm);
     return getChecksumsByAlgorithm(1, algorithm)[0];
   }
 
   public static String getChecksumFileName(String blockName, String algorithm) {
     // append the shuffle checksum algorithm as the file extension
+	logger.warn("getChecksumFileName(blockName,algorithm)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", blockName, algorithm);
     return String.format("%s.%s", blockName, algorithm);
   }
 
   private static long readChecksumByReduceId(File checksumFile, int reduceId) throws IOException {
     try (DataInputStream in = new DataInputStream(new FileInputStream(checksumFile))) {
+	logger.warn("readChecksumByReduceId(checksumFile,reduceId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", checksumFile, reduceId, reduceId);
       in.skipNBytes(reduceId * 8L);
       return in.readLong();
     }

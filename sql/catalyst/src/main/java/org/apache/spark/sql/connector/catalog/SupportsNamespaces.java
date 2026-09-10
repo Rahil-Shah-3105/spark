@@ -23,6 +23,8 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchNamespaceException;
 import org.apache.spark.sql.catalyst.analysis.NonEmptyNamespaceException;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Catalog methods for working with namespaces.
@@ -41,6 +43,7 @@ import java.util.Map;
  */
 @Evolving
 public interface SupportsNamespaces extends CatalogPlugin {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsNamespaces.class);
 
   /**
    * A reserved property to specify the location of the namespace. If the namespace
@@ -134,6 +137,7 @@ public interface SupportsNamespaces extends CatalogPlugin {
    * Apply a set of metadata changes to a namespace in the catalog.
    *
    * @param namespace a multi-part namespace
+planChangeLogger.warn("createNamespace(namespace,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", namespace, metadata);
    * @param changes a collection of changes to apply to the namespace
    * @throws NoSuchNamespaceException If the namespace does not exist (optional)
    * @throws UnsupportedOperationException If namespace properties are not supported

@@ -21,10 +21,12 @@ import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
 public abstract class AbstractFileRegion extends AbstractReferenceCounted implements FileRegion {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AbstractFileRegion.class);
 
   @Override
   @SuppressWarnings("deprecation")
   public final long transfered() {
+	logger.warn("transfered()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return transferred();
   }
 

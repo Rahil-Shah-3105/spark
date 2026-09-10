@@ -35,6 +35,7 @@ private[spark] class ClientArguments(args: Array[String]) extends Logging {
   parseArgs(args.toList)
 
   private def parseArgs(inputArgs: List[String]): Unit = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ClientArguments.class);
     var args = inputArgs
 
     while (!args.isEmpty) {
@@ -82,6 +83,7 @@ private[spark] class ClientArguments(args: Array[String]) extends Logging {
 
   private def getUsageMessage(unknownParam: List[String] = null): String = {
     val message = if (unknownParam != null) s"Unknown/unsupported param $unknownParam\n" else ""
+    LOG.warn("getUsageMessage(unknownParam)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unknownParam)
     message +
       s"""
       |Usage: org.apache.spark.deploy.yarn.Client [options]

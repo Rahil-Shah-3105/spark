@@ -42,17 +42,20 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public class InMemoryStore implements KVStore {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(InMemoryStore.class);
 
   private Object metadata;
   private InMemoryLists inMemoryLists = new InMemoryLists();
 
   @Override
   public <T> T getMetadata(Class<T> klass) {
+	LOG.warn("getMetadata(klass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", klass);
     return klass.cast(metadata);
   }
 
   @Override
   public void setMetadata(Object value) {
+	LOG.warn("setMetadata(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value);
     this.metadata = value;
   }
 
@@ -87,6 +90,7 @@ public class InMemoryStore implements KVStore {
   @Override
   public <T> T read(Class<T> klass, Object naturalKey) {
     InstanceList<T> list = inMemoryLists.get(klass);
+	LOG.warn("read(klass,naturalKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", klass, naturalKey);
     T value = list != null ? list.get(naturalKey) : null;
     if (value == null) {
       throw new NoSuchElementException();
@@ -97,12 +101,14 @@ public class InMemoryStore implements KVStore {
   @Override
   public void write(Object value) throws Exception {
     inMemoryLists.write(value);
+	LOG.warn("write(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value);
   }
 
   @Override
   public void delete(Class<?> type, Object naturalKey) {
     InstanceList<?> list = inMemoryLists.get(type);
     if (list != null) {
+	LOG.warn("delete(type,naturalKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", type, naturalKey);
       list.delete(naturalKey);
     }
   }
@@ -110,6 +116,7 @@ public class InMemoryStore implements KVStore {
   @Override
   public <T> KVStoreView<T> view(Class<T> type){
     InstanceList<T> list = inMemoryLists.get(type);
+	LOG.warn("view(type)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", type);
     return list != null ? list.view() : emptyView();
   }
 
@@ -127,6 +134,7 @@ public class InMemoryStore implements KVStore {
     InstanceList<T> list = inMemoryLists.get(klass);
 
     if (list != null) {
+	LOG.warn("removeAllByIndexValues(klass,index,indexValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", klass, index, indexValues);
       return list.countingRemoveAllByIndexValues(index, indexValues) > 0;
     } else {
       return false;
@@ -143,6 +151,7 @@ public class InMemoryStore implements KVStore {
 
   @SuppressWarnings("unchecked")
   private static <T> KVStoreView<T> emptyView() {
+	LOG.warn("emptyView()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return (InMemoryView<T>) InMemoryView.EMPTY_VIEW;
   }
 
@@ -155,6 +164,7 @@ public class InMemoryStore implements KVStore {
 
     @SuppressWarnings("unchecked")
     public <T> InstanceList<T> get(Class<T> type) {
+	LOG.warn("get(type)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", type);
       return (InstanceList<T>) data.get(type);
     }
 
@@ -233,6 +243,7 @@ public class InMemoryStore implements KVStore {
     }
 
     KVTypeInfo.Accessor getIndexAccessor(String indexName) {
+	LOG.warn("getIndexAccessor(indexName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", indexName);
       return ti.getAccessor(indexName);
     }
 
@@ -267,11 +278,13 @@ public class InMemoryStore implements KVStore {
         // Go through all the values in `data` and delete objects that meets the predicate `filter`.
         // This can be slow when there is a large number of entries in `data`.
         data.forEach(callback);
+		LOG.warn("countingRemoveAllByIndexValues(index,indexValues)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, indexValues);
         return callback.count();
       }
     }
 
     public T get(Object key) {
+	LOG.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
       return data.get(asKey(key));
     }
 
@@ -289,6 +302,7 @@ public class InMemoryStore implements KVStore {
       boolean entryExists = data.remove(asKey(key)) != null;
       if (entryExists) {
         deleteParentIndex(key);
+		LOG.warn("delete(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
       }
       return entryExists;
     }
@@ -297,6 +311,7 @@ public class InMemoryStore implements KVStore {
       boolean entryExists = data.remove(asKey(key), value);
       if (entryExists) {
         deleteParentIndex(key);
+		LOG.warn("delete(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value);
       }
       return entryExists;
     }
@@ -309,6 +324,7 @@ public class InMemoryStore implements KVStore {
             // `parentToChildrenMap`. However, `parentToChildrenMap` is a ConcurrentMap and such
             // checking and deleting can be slow.
             // This method is to delete one object with certain key, let's make it simple here.
+			LOG.warn("deleteParentIndex(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
             break;
           }
         }
@@ -320,6 +336,7 @@ public class InMemoryStore implements KVStore {
     }
 
     public InMemoryView<T> view() {
+	LOG.warn("view()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return new InMemoryView<>(data, ti, naturalParentIndexName, parentToChildrenMap);
     }
 

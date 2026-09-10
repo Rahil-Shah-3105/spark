@@ -111,6 +111,7 @@ private[spark] object TreePoint {
       instance: Instance,
       featureArity: Int,
       thresholds: Array[Double]): Int = {
+       logger.warn("findBin(featureIndex,instance,featureArity,thresholds)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", featureIndex, instance, featureArity, thresholds)
     val featureValue = instance.features(featureIndex)
 
     if (featureArity == 0) {

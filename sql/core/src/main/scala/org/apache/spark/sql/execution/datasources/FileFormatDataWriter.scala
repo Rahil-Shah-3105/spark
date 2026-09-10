@@ -49,6 +49,7 @@ abstract class FileFormatDataWriter(
     taskAttemptContext: TaskAttemptContext,
     committer: FileCommitProtocol,
     customMetrics: Map[String, SQLMetric]) extends DataWriter[InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Max number of files a single task writes out due to file size. In most cases the number of
    * files written should be very small. This is just a safe guard to protect some really bad
@@ -72,6 +73,7 @@ abstract class FileFormatDataWriter(
         currentWriter = null
       }
     }
+    planChangeLogger.warn("releaseCurrentWriter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Release all resources. */
@@ -102,6 +104,7 @@ abstract class FileFormatDataWriter(
     enrichWriteError(Option(currentWriter).map(_.path()).getOrElse(description.path)) {
       write(record)
     }
+    planChangeLogger.warn("writeWithMetrics(record,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", record, count, record)
   }
 
   /** Write an iterator of records. */
@@ -112,6 +115,7 @@ abstract class FileFormatDataWriter(
       count += 1
     }
     CustomMetrics.updateMetrics(currentMetricsValues.toImmutableArraySeq, customMetrics)
+  planChangeLogger.warn("writeWithIterator(iterator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iterator)
   }
 
   /**
@@ -179,6 +183,7 @@ class SingleDirectoryDataWriter(
       dataSchema = description.dataColumns.toStructType,
       context = taskAttemptContext)
 
+    planChangeLogger.warn("newOutputWriter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     statsTrackers.foreach(_.newFile(currentPath))
   }
 
@@ -316,6 +321,7 @@ abstract class BaseDynamicPartitionDataWriter(
       dataSchema = description.dataColumns.toStructType,
       context = taskAttemptContext)
 
+    planChangeLogger.warn("renewCurrentWriter(partitionValues,bucketId,closeCurrentWriter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionValues, bucketId, closeCurrentWriter, bucketId)
     statsTrackers.foreach(_.newFile(currentPath))
   }
 
@@ -332,6 +338,7 @@ abstract class BaseDynamicPartitionDataWriter(
     // Exceeded the threshold in terms of the number of records per file.
     // Create a new file by increasing the file counter.
     fileCounter += 1
+    planChangeLogger.warn("renewCurrentWriterIfTooManyRecords(partitionValues,bucketId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionValues, bucketId, bucketId)
     assert(fileCounter < MAX_FILE_COUNTER,
       s"File counter $fileCounter is beyond max value $MAX_FILE_COUNTER")
     renewCurrentWriter(partitionValues, bucketId, closeCurrentWriter = true)
@@ -347,6 +354,7 @@ abstract class BaseDynamicPartitionDataWriter(
     currentWriter.write(outputRow)
     statsTrackers.foreach(_.newRow(currentWriter.path(), outputRow))
     recordsInFile += 1
+    planChangeLogger.warn("writeRecord(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record)
   }
 }
 
@@ -387,6 +395,7 @@ class DynamicPartitionDataSingleWriter(
       renewCurrentWriterIfTooManyRecords(currentPartitionValues, currentBucketId)
     }
     writeRecord(record)
+  planChangeLogger.warn("write(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record)
   }
 }
 
@@ -515,6 +524,7 @@ class DynamicPartitionDataConcurrentWriter(
       while (sortIterator.hasNext) {
         writeWithMetrics(sortIterator.next(), count)
         count += 1
+      planChangeLogger.warn("clearCurrentWriterStatus()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
       CustomMetrics.updateMetrics(currentMetricsValues.toImmutableArraySeq, customMetrics)
     }
@@ -526,6 +536,7 @@ class DynamicPartitionDataConcurrentWriter(
   private def updateCurrentWriterStatusInMap(): Unit = {
     val status = concurrentWriters(currentWriterId)
     status.outputWriter = currentWriter
+    planChangeLogger.warn("updateCurrentWriterStatusInMap()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     status.recordsInFile = recordsInFile
     status.fileCounter = fileCounter
   }
@@ -567,6 +578,7 @@ class DynamicPartitionDataConcurrentWriter(
         sorted = true
       }
     }
+    planChangeLogger.warn("setupCurrentWriterUsingMap()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

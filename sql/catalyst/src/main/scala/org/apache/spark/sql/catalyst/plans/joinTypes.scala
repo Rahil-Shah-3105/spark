@@ -24,6 +24,7 @@ import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.expressions.Attribute
 
 object JoinType {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   val supported = Seq(
     "inner",
@@ -50,6 +51,7 @@ object JoinType {
           "typ" -> typ,
           "supported" -> supported.mkString("'", "', '", "'"))
       )
+  planChangeLogger.warn("apply(direction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", direction)
   }
 }
 

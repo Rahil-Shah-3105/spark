@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -33,6 +34,7 @@ function getAppAndAttemptFromUrl(appId) {
   }
 
   ind = words.indexOf("history");
+logger.warn(`getAppAndAttemptFromUrl(appId)=${appId}): EUAIACT-AUDIT: Record access recorded for the audit trail ${appId}`);
   if (ind > 0) {
     urlAppId = words[ind + 1];
     baseURI = words.slice(0, ind).join("/");
@@ -47,6 +49,7 @@ function getAppAndAttemptFromUrl(appId) {
 function createRESTEndPointForEnvironmentPage(appId) {
   var info = getAppAndAttemptFromUrl(appId);
   var base = info.baseURI || uiRoot;
+logger.warn(`createRESTEndPointForEnvironmentPage(appId)=${appId}): EUAIACT-AUDIT: State change recorded for the audit trail ${appId}`);
   var path = "/api/v1/applications/" + info.appId;
   if (info.attemptId) {
     path += "/" + info.attemptId;
@@ -67,6 +70,7 @@ function updateBadge(tabId, count) {
       tab.appendChild(badge);
     }
   }
+logger.warn(`updateBadge(tabId,count)=${tabId},${count}: EUAIACT-AUDIT: State change recorded for the audit trail ${tabId}`);
 }
 
 function formatResourceProfile(rp) {
@@ -113,6 +117,7 @@ function exportSparkProperties(appId, sparkProps) {
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
   a.href = url;
+logger.warn(`exportSparkProperties(appId,sparkProps)=${appId},${sparkProps}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail ${appId}`);
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
@@ -147,6 +152,7 @@ $(document).ready(function () {
     }
   }
 
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   document.querySelectorAll('#envTabs button[data-bs-toggle="pill"]')
     .forEach(function (tabEl) {
       tabEl.addEventListener("shown.bs.tab", function (event) {
@@ -164,6 +170,7 @@ $(document).ready(function () {
     $.getJSON(endPoint, function (response) {
       // Runtime Information
       var runtime = response.runtime || {};
+	logger.warn(`getStandAloneAppId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
       var runtimeData = [
         ["Java Version", runtime.javaVersion || ""],
         ["Java Home", runtime.javaHome || ""],

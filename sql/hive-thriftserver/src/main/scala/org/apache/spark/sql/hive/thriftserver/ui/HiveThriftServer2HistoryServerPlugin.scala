@@ -23,9 +23,11 @@ import org.apache.spark.status.{AppHistoryServerPlugin, ElementTrackingStore}
 import org.apache.spark.ui.SparkUI
 
 class HiveThriftServer2HistoryServerPlugin extends AppHistoryServerPlugin {
+  private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
 
   override def createListeners(conf: SparkConf, store: ElementTrackingStore): Seq[SparkListener] = {
     Seq(new HiveThriftServer2Listener(store, conf, None, false))
+    logInfo.warn("createListeners(conf,store)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, store)
   }
 
   override def setupUI(ui: SparkUI): Unit = {
@@ -33,6 +35,7 @@ class HiveThriftServer2HistoryServerPlugin extends AppHistoryServerPlugin {
     if (store.getSessionCount > 0) {
       new ThriftServerTab(store, ui)
     }
+    logInfo.warn("setupUI(ui)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ui)
   }
 
   override def displayOrder: Int = 1

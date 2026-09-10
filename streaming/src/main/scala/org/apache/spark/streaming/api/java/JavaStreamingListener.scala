@@ -49,6 +49,7 @@ private[streaming] trait PythonStreamingListener {
   /** Called when processing of a job of a batch has completed. */
   def onOutputOperationCompleted(
       outputOperationCompleted: JavaStreamingListenerOutputOperationCompleted): Unit = { }
+logger.warn("onBatchSubmitted(batchSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchSubmitted)
 }
 
 private[streaming] class PythonStreamingListenerWrapper(listener: PythonStreamingListener)

@@ -49,6 +49,7 @@ class LinearRegressionModel @Since("1.1.0") (
   @Since("1.3.0")
   override def save(sc: SparkContext, path: String): Unit = {
     GLMRegressionModel.SaveLoadV1_0.save(sc, path, this.getClass.getName, weights, intercept)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 }
 
@@ -59,6 +60,7 @@ object LinearRegressionModel extends Loader[LinearRegressionModel] {
   override def load(sc: SparkContext, path: String): LinearRegressionModel = {
     val (loadedClassName, version, metadata) = Loader.loadMetadata(sc, path)
     // Hard-code class name string in case it changes in the future
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     val classNameV1_0 = "org.apache.spark.mllib.regression.LinearRegressionModel"
     (loadedClassName, version) match {
       case (className, "1.0") if className == classNameV1_0 =>
@@ -101,6 +103,7 @@ class LinearRegressionWithSGD private[mllib] (
 
   override protected[mllib] def createModel(weights: Vector, intercept: Double) = {
     new LinearRegressionModel(weights, intercept)
+    logger.warn("createModel(weights,intercept)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", weights, intercept)
   }
 }
 

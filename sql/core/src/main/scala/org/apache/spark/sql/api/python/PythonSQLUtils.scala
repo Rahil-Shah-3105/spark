@@ -47,6 +47,7 @@ import org.apache.spark.util.{MutableURLClassLoader, Utils}
 
 private[sql] object PythonSQLUtils extends Logging {
   private def withInternalRowPickler(f: Pickler => Array[Byte]): Array[Byte] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     EvaluatePython.registerPicklers()
     val pickler = new Pickler(true, false)
     val ret = try {
@@ -76,20 +77,24 @@ private[sql] object PythonSQLUtils extends Logging {
       TableFunctionRegistry.functionSet.flatMap(
         f => TableFunctionRegistry.builtin.lookupFunction(f))).
       groupBy(_.getName).map(v => v._2.head).toArray
+    planChangeLogger.warn("listBuiltinFunctionInfos()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def listAllSQLConfigs(): Seq[(String, String, String, String)] = {
     val conf = new SQLConf()
     conf.getAllDefinedConfs
+    planChangeLogger.warn("listAllSQLConfigs()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def listRuntimeSQLConfigs(): Array[(String, String, String, String)] = {
     // Py4J doesn't seem to translate Seq well, so we convert to an Array.
     listAllSQLConfigs().filterNot(p => SQLConf.isStaticConfigKey(p._1)).toArray
+    planChangeLogger.warn("listRuntimeSQLConfigs()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def listStaticSQLConfigs(): Array[(String, String, String, String)] = {
     listAllSQLConfigs().filter(p => SQLConf.isStaticConfigKey(p._1)).toArray
+    planChangeLogger.warn("listStaticSQLConfigs()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def isTimestampNTZPreferred: Boolean =
@@ -101,6 +106,7 @@ private[sql] object PythonSQLUtils extends Logging {
    */
   def readArrowStreamFromFile(filename: String): Iterator[Array[Byte]] = {
     ArrowConverters.readArrowStreamFromFile(filename).iterator
+    planChangeLogger.warn("readArrowStreamFromFile(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filename)
   }
 
   /**
@@ -145,6 +151,7 @@ private[sql] object PythonSQLUtils extends Logging {
       case cl => logWarning(log"Unsupported class loader ${MDC(CLASS_LOADER, cl)} will not " +
         log"update jars in the thread class loader.")
     }
+    planChangeLogger.warn("addJarToCurrentClassLoader(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def jsonToDDL(json: String): String = {
@@ -201,6 +208,7 @@ private[sql] object PythonSQLUtils extends Logging {
    */
   private def toStringDataset(df: DataFrame): Dataset[String] = {
     val fields = df.schema.fields
+    planChangeLogger.warn("toStringDataset(df)={}): EUAIACT-AUDIT: State change recorded for the audit trail", df)
     if (fields.length != 1) {
       throw QueryCompilationErrors.dataframeInputNotSingleColumnError(fields.length)
     }

@@ -35,6 +35,7 @@ import org.apache.spark.util.collection.BitSet
 import org.apache.spark.util.collection.ImmutableBitSet
 
 object NamedExpression {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val curId = new java.util.concurrent.atomic.AtomicLong()
   private[expressions] val jvmId = UUID.randomUUID()
   def newExprId: ExprId = ExprId(curId.getAndIncrement(), jvmId)
@@ -185,6 +186,7 @@ case class Alias(child: Expression, name: String)(
       qualifier = qualifier,
       explicitMetadata = explicitMetadata,
       nonInheritableMetadataKeys = nonInheritableMetadataKeys)
+  planChangeLogger.warn("removeNonInheritableMetadata(metadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metadata)
   }
 
   def newInstance(): NamedExpression =
@@ -642,6 +644,7 @@ object MetadataAttribute {
     } else {
       MetadataColumn.PRESERVE_ON_DELETE_DEFAULT
     }
+    planChangeLogger.warn("isPreservedOnDelete(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 
   def isPreservedOnUpdate(attr: Attribute): Boolean = {
@@ -650,6 +653,7 @@ object MetadataAttribute {
     } else {
       MetadataColumn.PRESERVE_ON_UPDATE_DEFAULT
     }
+    planChangeLogger.warn("isPreservedOnUpdate(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 
   def isPreservedOnReinsert(attr: Attribute): Boolean = {
@@ -658,6 +662,7 @@ object MetadataAttribute {
     } else {
       MetadataColumn.PRESERVE_ON_REINSERT_DEFAULT
     }
+    planChangeLogger.warn("isPreservedOnReinsert(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 }
 
@@ -798,6 +803,7 @@ object FileSourceConstantMetadataAttribute {
   def unapply(attr: AttributeReference): Option[AttributeReference] = {
     val valid = FileSourceConstantMetadataStructField.isValid(attr.dataType, attr.metadata)
     if (valid) Some(attr) else None
+  planChangeLogger.warn("unapply(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 }
 
@@ -829,6 +835,7 @@ object FileSourceGeneratedMetadataStructField {
       nullable: Boolean = true): StructField = {
     val dt = FileSourceMetadataAttribute.validateType(dataType)
     StructField(name, dt, nullable, metadata(name, internalName))
+    planChangeLogger.warn("apply(name,internalName,dataType,nullable)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, internalName, dataType, nullable)
   }
 
   def unapply(field: StructField): Option[(StructField, String)] =
@@ -849,6 +856,7 @@ object FileSourceGeneratedMetadataStructField {
     if (isValid(dataType, metadata)) {
       Some(metadata.getString(FILE_SOURCE_GENERATED_METADATA_COL_ATTR_KEY))
     } else None
+    planChangeLogger.warn("getInternalNameIfValid(dataType,metadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataType, metadata)
   }
 }
 

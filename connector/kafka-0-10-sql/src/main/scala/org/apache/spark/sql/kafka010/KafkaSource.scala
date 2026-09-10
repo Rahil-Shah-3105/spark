@@ -169,6 +169,7 @@ private[kafka010] class KafkaSource(
 
   override def reportLatestOffset(): streaming.Offset = {
     latestPartitionOffsets.map(KafkaSourceOffset(_)).orNull
+    logger.warn("reportLatestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def latestOffset(startOffset: streaming.Offset, limit: ReadLimit): streaming.Offset = {
@@ -222,6 +223,7 @@ private[kafka010] class KafkaSource(
         }
       }.getOrElse(latest)
     }
+    logger.warn("latestOffset(startOffset,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, limit)
     currentPartitionOffsets = Some(offsets)
     logDebug(s"GetOffset: ${offsets.toSeq.map(_.toString).sorted}")
     Option(KafkaSourceOffset(offsets)).filterNot(_.partitionToOffsets.isEmpty).orNull
@@ -344,6 +346,7 @@ private[kafka010] class KafkaSource(
     logInfo(log"GetBatch generating RDD of offset range: " +
       log"${MDC(TOPIC_PARTITIONS, offsetRanges.sortBy(_.topicPartition.toString).mkString(", "))}")
 
+    logger.warn("getBatch(start,end)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", start, end)
     sqlContext.internalCreateDataFrame(rdd.setName("kafka"), schema, isStreaming = true)
   }
 
@@ -364,6 +367,7 @@ private[kafka010] class KafkaSource(
     } else {
       logWarning(log"${MDC(ERROR, message)}. ${MDC(TIP, INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE)}")
     }
+    logger.warn("reportDataLoss(message,getException)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, getException)
   }
 
   private def verifyEndOffsetForTriggerAvailableNow(
@@ -395,6 +399,7 @@ private[kafka010] class KafkaSource(
       throw KafkaExceptions.lostTopicPartitionsInEndOffsetWithTriggerAvailableNow(
         tpsForLatestOffsets, tpsForEndOffset)
     }
+    logger.warn("verifyEndOffsetForTriggerAvailableNow(endPartitionOffsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", endPartitionOffsets)
 
     val endOffsetHasGreaterThenLatest = {
       tpsForEndOffset.exists { tp =>
@@ -423,6 +428,7 @@ private[kafka010] object KafkaSource {
       .map(x => ExecutorCacheTaskLocation(x.host, x.executorId))
       .sortWith(compare)
       .map(_.toString)
+      logger.warn("getSortedExecutorList(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 
   private def compare(a: ExecutorCacheTaskLocation, b: ExecutorCacheTaskLocation): Boolean = {

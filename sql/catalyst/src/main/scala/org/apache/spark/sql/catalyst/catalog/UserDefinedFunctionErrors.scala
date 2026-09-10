@@ -26,6 +26,7 @@ import org.apache.spark.sql.errors.QueryErrorsBase
  * [[org.apache.spark.sql.expressions.UserDefinedFunction]]s.
  */
 object UserDefinedFunctionErrors extends QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def unsupportedUserDefinedFunction(language: RoutineLanguage): Throwable = {
     unsupportedUserDefinedFunction(language.name)
   }
@@ -56,6 +57,7 @@ object UserDefinedFunctionErrors extends QueryErrorsBase {
     new AnalysisException(
       errorClass = "USER_DEFINED_FUNCTIONS.SQL_TABLE_UDF_BODY_MUST_BE_A_QUERY",
       messageParameters = Map("name" -> functionName))
+    planChangeLogger.warn("bodyIsNotAQueryForSqlTableUdf(functionName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", functionName)
   }
 
   def missingColumnNamesForSqlTableUdf(functionName: String): Throwable = {
@@ -74,6 +76,7 @@ object UserDefinedFunctionErrors extends QueryErrorsBase {
         "tempObjName" -> toSQLId(tempViewName)
       )
     )
+    planChangeLogger.warn("invalidTempViewReference(routineName,tempViewName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", routineName, tempViewName)
   }
 
   def invalidTempFuncReference(routineName: Seq[String], tempFuncName: String): Throwable = {

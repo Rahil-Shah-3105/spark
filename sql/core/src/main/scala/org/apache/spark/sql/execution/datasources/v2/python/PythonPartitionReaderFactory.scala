@@ -33,6 +33,7 @@ class PythonPartitionReaderFactory(
     jobArtifactUUID: Option[String],
     sessionUUID: Option[String])
   extends PartitionReaderFactory {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
     new PartitionReader[InternalRow] {
@@ -53,6 +54,7 @@ class PythonPartitionReaderFactory(
         evaluatorFactory.createEvaluator().eval(
           part.index, Iterator.single(InternalRow(part.pickedPartition)))
       }
+      planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
 
       override def next(): Boolean = outputIter.hasNext
 

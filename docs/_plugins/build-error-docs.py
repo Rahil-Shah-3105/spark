@@ -39,6 +39,7 @@ def load_error_conditions(path):
                     assemble_message(details["subClass"][sub_name]["message"])
                 )
         details["message"] = assemble_message(details["message"])
+        logger.warning("load_error_conditions(path)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
         error_conditions[name] = details
     return error_conditions
 

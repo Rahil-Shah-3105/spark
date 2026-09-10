@@ -27,6 +27,7 @@ import io.netty.util.NettyRuntime;
  * A central location that tracks all the settings we expose to users.
  */
 public class TransportConf {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportConf.class);
 
   private final String SPARK_NETWORK_DEFAULT_IO_MODE_KEY = "spark.io.mode.default";
   private final String SPARK_NETWORK_IO_MODE_KEY;
@@ -72,14 +73,17 @@ public class TransportConf {
   }
 
   public int getInt(String name, int defaultValue) {
+	logger.warn("getInt(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return conf.getInt(name, defaultValue);
   }
 
   public String get(String name, String defaultValue) {
+	logger.warn("get(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return conf.get(name, defaultValue);
   }
 
   private String getConfKey(String suffix) {
+	logger.warn("getConfKey(suffix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", suffix);
     return "spark." + module + "." + suffix;
   }
 
@@ -196,6 +200,7 @@ public class TransportConf {
    * connections that are idle for too long.
    */
   public boolean enableTcpKeepAlive() {
+	logger.warn("enableTcpKeepAlive()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean(SPARK_NETWORK_IO_ENABLETCPKEEPALIVE_KEY, false);
   }
 
@@ -210,6 +215,7 @@ public class TransportConf {
    * Enables strong encryption. Also enables the new auth protocol, used to negotiate keys.
    */
   public boolean encryptionEnabled() {
+	logger.warn("encryptionEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.network.crypto.enabled", false);
   }
 
@@ -271,6 +277,7 @@ public class TransportConf {
    * Whether Secure (SSL/TLS) RPC (including Block Transfer Service) is enabled
    */
   public boolean sslRpcEnabled() {
+	logger.warn("sslRpcEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.ssl.rpc.enabled", false);
   }
 
@@ -297,6 +304,7 @@ public class TransportConf {
     if (keyStore != null) {
       return new File(keyStore);
     } else {
+	logger.warn("sslRpcKeyStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return null;
     }
   }
@@ -305,6 +313,7 @@ public class TransportConf {
    * The password to the key-store file
    */
   public String sslRpcKeyStorePassword() {
+	logger.warn("sslRpcKeyStorePassword()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.get("spark.ssl.rpc.keyStorePassword", null);
   }
 
@@ -354,6 +363,7 @@ public class TransportConf {
     if (trustStore != null) {
       return new File(trustStore);
     } else {
+	logger.warn("sslRpcTrustStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return null;
     }
   }
@@ -362,6 +372,7 @@ public class TransportConf {
    * The password to the trust-store file
    */
   public String sslRpcTrustStorePassword() {
+	logger.warn("sslRpcTrustStorePassword()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.get("spark.ssl.rpc.trustStorePassword", null);
   }
 
@@ -370,6 +381,7 @@ public class TransportConf {
    * If true, when the trust-store file on disk changes, it will be reloaded
    */
   public boolean sslRpcTrustStoreReloadingEnabled() {
+	logger.warn("sslRpcTrustStoreReloadingEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.ssl.rpc.trustStoreReloadingEnabled", false);
   }
 
@@ -377,6 +389,7 @@ public class TransportConf {
    * The interval, in milliseconds, the trust-store will reload its configuration
    */
   public int sslRpctrustStoreReloadIntervalMs() {
+	logger.warn("sslRpctrustStoreReloadIntervalMs()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getInt("spark.ssl.rpc.trustStoreReloadIntervalMs", 10000);
   }
 
@@ -385,6 +398,7 @@ public class TransportConf {
    * (if available on host system), requires certChain and keyFile arguments
    */
   public boolean sslRpcOpenSslEnabled() {
+	logger.warn("sslRpcOpenSslEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.ssl.rpc.openSslEnabled", false);
   }
 
@@ -399,6 +413,7 @@ public class TransportConf {
     if (sslRpcOpenSslEnabled()) {
       // OpenSSL requires both the privateKey and certChain
       File privateKey = sslRpcPrivateKey();
+	logger.warn("sslRpcEnabledAndKeysAreValid()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       if (privateKey == null || !privateKey.exists()) {
         return false;
       }
@@ -449,6 +464,7 @@ public class TransportConf {
    * failure.
    */
   public long maxChunksBeingTransferred() {
+	logger.warn("maxChunksBeingTransferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getLong("spark.shuffle.maxChunksBeingTransferred", Long.MAX_VALUE);
   }
 
@@ -480,6 +496,7 @@ public class TransportConf {
     }
     int chunkFetchHandlerThreadsPercent =
       Integer.parseInt(conf.get("spark.shuffle.server.chunkFetchHandlerThreadsPercent"));
+	logger.warn("chunkFetchHandlerThreads()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     int threads =
       this.serverThreads() > 0 ? this.serverThreads() : 2 * NettyRuntime.availableProcessors();
     return (int) Math.ceil(threads * (chunkFetchHandlerThreadsPercent / 100.0));
@@ -491,6 +508,7 @@ public class TransportConf {
    */
   @Deprecated(since = "4.2.0", forRemoval = true)
   public boolean separateChunkFetchRequest() {
+	logger.warn("separateChunkFetchRequest()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return conf.getInt("spark.shuffle.server.chunkFetchHandlerThreadsPercent", 0) > 0;
   }
 
@@ -511,6 +529,7 @@ public class TransportConf {
         "Please set spark.shuffle.server.finalizeShuffleMergeThreadsPercent to a positive value");
     int finalizeShuffleMergeThreadsPercent =
         Integer.parseInt(conf.get("spark.shuffle.server.finalizeShuffleMergeThreadsPercent"));
+		logger.warn("finalizeShuffleMergeHandlerThreads()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     int threads =
         this.serverThreads() > 0 ? this.serverThreads() : 2 * NettyRuntime.availableProcessors();
     return (int) Math.ceil(threads * (finalizeShuffleMergeThreadsPercent / 100.0));
@@ -531,6 +550,7 @@ public class TransportConf {
    * job fetching blocks from old version external shuffle service.
    */
   public boolean useOldFetchProtocol() {
+	logger.warn("useOldFetchProtocol()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return conf.getBoolean("spark.shuffle.useOldFetchProtocol", false);
   }
 
@@ -541,6 +561,7 @@ public class TransportConf {
    * without this the degradation is permanent. On by default. See SPARK-58292.
    */
   public boolean recreateWorkerGroupOnDeadEventLoop() {
+	logger.warn("recreateWorkerGroupOnDeadEventLoop()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.network.recreateWorkerGroupOnDeadEventLoop", true);
   }
 
@@ -548,6 +569,7 @@ public class TransportConf {
    * `spark.shuffle.io.maxRetries`.
    */
   public boolean enableSaslRetries() {
+	logger.warn("enableSaslRetries()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return conf.getBoolean("spark.shuffle.sasl.enableRetries", false);
   }
 

@@ -50,6 +50,7 @@ import org.apache.spark.util.SparkStringUtils
  * Replaces [[UnresolvedRelation]]s if the plan is for direct query on files.
  */
 class ResolveSQLOnFile(sparkSession: SparkSession) extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def conf: SQLConf = sparkSession.sessionState.conf
 
@@ -84,6 +85,7 @@ class ResolveSQLOnFile(sparkSession: SparkSession) extends Rule[LogicalPlan] {
         case _ =>
       })
       result
+      planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, result)
     }
   }
 
@@ -518,6 +520,7 @@ object PreprocessTableInsertion extends ResolveInsertionBase {
 
     // Create a project if this INSERT has a user-specified column list.
     val hasColumnList = insert.userSpecifiedCols.nonEmpty
+    planChangeLogger.warn("preprocess(insert,tblName,partColNames,catalogTable)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", insert, tblName, partColNames, catalogTable)
     val query = if (hasColumnList) {
       createProjectForByNameQuery(tblName, insert)
     } else {
@@ -605,6 +608,7 @@ object PreprocessTableInsertion extends ResolveInsertionBase {
           oValNull)
       case _ => resolved
     }
+    planChangeLogger.warn("restoreDataTypeNullability(resolved,original)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resolved, original)
   }
 }
 

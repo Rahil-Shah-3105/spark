@@ -63,11 +63,13 @@ private[yarn] class ExecutorRunnable(
   var nmClient: NMClient = _
 
   def run(): Unit = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ExecutorRunnable.class);
     logDebug("Starting Executor Container")
     nmClient = NMClient.createNMClient()
     nmClient.init(conf)
     nmClient.start()
     startContainer()
+    LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def launchContextDebugInfo(): MessageWithContext = {

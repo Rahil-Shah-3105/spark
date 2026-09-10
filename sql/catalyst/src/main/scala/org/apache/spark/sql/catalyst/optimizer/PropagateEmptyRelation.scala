@@ -45,6 +45,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.{LOCAL_RELATION, REPARTIT
  *     - Generate(Explode) with all empty children. Others like Hive UDTF may return results.
  */
 abstract class PropagateEmptyRelationBase extends Rule[LogicalPlan] with CastSupport {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // This tag is used to mark a repartition as a root repartition which is user-specified
   private[sql] val ROOT_REPARTITION = TreeNodeTag[Unit]("ROOT_REPARTITION")
 
@@ -189,6 +190,7 @@ abstract class PropagateEmptyRelationBase extends Rule[LogicalPlan] with CastSup
 
   /**
    * Add a [[ROOT_REPARTITION]] tag for the root user-specified repartition so this rule can
+   planChangeLogger.warn("applyInternal(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
    * skip optimize it.
    */
   private def addTagForRootRepartition(plan: LogicalPlan): LogicalPlan = {
@@ -205,11 +207,13 @@ abstract class PropagateEmptyRelationBase extends Rule[LogicalPlan] with CastSup
         r
       case _ => plan
     }
+    planChangeLogger.warn("addTagForRootRepartition(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
     val planWithTag = addTagForRootRepartition(plan)
     applyInternal(planWithTag)
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 

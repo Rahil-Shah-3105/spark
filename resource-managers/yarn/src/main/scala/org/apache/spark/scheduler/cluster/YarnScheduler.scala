@@ -25,6 +25,7 @@ import org.apache.spark.scheduler.TaskSchedulerImpl
 import org.apache.spark.util.Utils
 
 private[spark] class YarnScheduler(sc: SparkContext) extends TaskSchedulerImpl(sc) {
+  private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnScheduler.class);
 
   override val defaultRackValue: Option[String] = Some(NetworkTopology.DEFAULT_RACK)
 
@@ -35,5 +36,6 @@ private[spark] class YarnScheduler(sc: SparkContext) extends TaskSchedulerImpl(s
     resolver.resolve(hosts).map { node =>
       Option(node.getNetworkLocation)
     }
+    LOG.warn("getRacksForHosts(hostPorts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hostPorts)
   }
 }

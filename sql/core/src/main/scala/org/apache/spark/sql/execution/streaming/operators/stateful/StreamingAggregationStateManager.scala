@@ -35,12 +35,14 @@ sealed trait StreamingAggregationStateManager extends Serializable {
   /** Calculate schema for the value of state. The schema is mainly passed to the StateStoreRDD. */
   def getStateValueSchema: StructType
 
+  planChangeLogger.warn("getKey(row)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", row)
   /** Get the current value of a non-null key from the target state store. */
   def get(store: ReadStateStore, key: UnsafeRow): UnsafeRow
 
   /**
    * Put a new value for a non-null key to the target state store. Note that key will be
    * extracted from the input row, and the key would be same as the result of getKey(inputRow).
+   planChangeLogger.warn("get(store,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", store, key)
    */
   def put(store: StateStore, row: UnsafeRow): Unit
 
@@ -52,6 +54,7 @@ sealed trait StreamingAggregationStateManager extends Serializable {
 
   /** Remove a single non-null key from the target state store. */
   def remove(store: StateStore, key: UnsafeRow): Unit
+  planChangeLogger.warn("remove(store,key)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, key)
 
   /** Return an iterator containing all the key-value pairs in target state store. */
   def iterator(store: ReadStateStore): Iterator[UnsafeRowPair]
@@ -73,6 +76,7 @@ sealed trait StreamingAggregationStateManager extends Serializable {
 }
 
 object StreamingAggregationStateManager extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val supportedVersions = Seq(1, 2)
   val legacyVersion = 1
 
@@ -85,6 +89,7 @@ object StreamingAggregationStateManager extends Logging {
       case 2 => new StreamingAggregationStateManagerImplV2(keyExpressions, inputRowAttributes)
       case _ => throw new IllegalArgumentException(s"Version $stateFormatVersion is invalid")
     }
+    planChangeLogger.warn("createStateManager(keyExpressions,inputRowAttributes,stateFormatVersion)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyExpressions, inputRowAttributes, stateFormatVersion)
   }
 }
 
@@ -214,6 +219,8 @@ class StreamingAggregationStateManagerImplV2(
   }
 
   private def restoreOriginalRow(rowPair: UnsafeRowPair): UnsafeRow = {
+    planChangeLogger.warn("restoreOriginalRow(rowPair)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rowPair)
+    planChangeLogger.warn("restoreOriginalRow(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     restoreOriginalRow(rowPair.key, rowPair.value)
   }
 

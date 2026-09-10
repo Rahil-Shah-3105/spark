@@ -176,6 +176,7 @@ object DataType {
             throw DataTypeErrors.schemaFailToParseError(schema, e)
         }
     }
+    logger.warn("parseTypeWithFallback(schema,parser,fallbackParser)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, parser, fallbackParser)
   }
 
   def fromJson(json: String): DataType = parseDataType(parse(json))
@@ -483,6 +484,7 @@ object DataType {
 
       case _ => Map.empty
     }
+    logger.warn("getCollationsMap(metadataFields)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadataFields)
   }
 
   private def stringTypeWithCollation(collationName: String): StringType = {

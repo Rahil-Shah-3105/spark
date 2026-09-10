@@ -59,6 +59,7 @@ case class EnsureRequirements(
       requiredChildDistributions: Seq[Distribution],
       requiredChildOrderings: Seq[Seq[SortOrder]],
       shuffleOrigin: ShuffleOrigin): Seq[SparkPlan] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     assert(requiredChildDistributions.length == originalChildren.length)
     assert(requiredChildOrderings.length == originalChildren.length)
     // Ensure that the operator's children satisfy their output distribution requirements.
@@ -325,6 +326,7 @@ case class EnsureRequirements(
     plan.multiTransformDownWithPruning(
       p => !p.isInstanceOf[SortExec] &&
         hasKeyedPartitioning(p.asInstanceOf[SparkPlan].outputPartitioning)) {
+         planChangeLogger.warn("tryEnableSortedMerge(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       case gpe: GroupPartitionsExec =>
         // Include the original so that peer GPEs are still independently considered.
         gpe +: gpe.tryEnableSortedMerge().toSeq
@@ -758,6 +760,7 @@ case class EnsureRequirements(
         GroupPartitionsExec(plan, joinKeyPositions, Some(mergedPartitionKeys), reducers,
           distributePartitions)
     }
+    planChangeLogger.warn("applyGroupPartitions(plan,joinKeyPositions,mergedPartitionKeys,reducers,distributePartitions)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, joinKeyPositions, mergedPartitionKeys, reducers, distributePartitions)
   }
 
   /**
@@ -781,6 +784,7 @@ case class EnsureRequirements(
   private def createKeyedShuffleSpec(
       partitioning: Partitioning,
       distribution: ClusteredDistribution): Option[KeyedShuffleSpec] = {
+       planChangeLogger.warn("createKeyedShuffleSpec(partitioning,distribution)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitioning, distribution)
     def tryCreate(partitioning: KeyedPartitioning): Option[KeyedShuffleSpec] = {
       // The config requires all the cluster keys to be covered by the partition keys, to avoid
       // the skew of joining on keys that are coarser than the join keys. Key order and duplicated
@@ -792,6 +796,7 @@ case class EnsureRequirements(
         distribution.clustering.forall(c => attributes.exists(_.semanticEquals(c)))
       }
 
+      planChangeLogger.warn("tryCreate(partitioning)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partitioning)
       if (partitioning.satisfies(distribution) &&
           (!SQLConf.get.getConf(SQLConf.REQUIRE_ALL_CLUSTER_KEYS_FOR_CO_PARTITION) ||
             allClusterKeysCovered)) {
@@ -894,6 +899,7 @@ case class EnsureRequirements(
   }
 
   def apply(plan: SparkPlan): SparkPlan = {
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val newPlan = plan.transformUp {
       case operator @ ShuffleExchangeExec(upper: HashPartitioning, child, shuffleOrigin, _, _)
           if optimizeOutRepartition &&

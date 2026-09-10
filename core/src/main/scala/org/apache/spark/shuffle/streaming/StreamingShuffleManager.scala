@@ -26,6 +26,7 @@ class StreamingShuffleHandle[K, V, C](shuffleId: Int, dependency: ShuffleDepende
   extends BaseShuffleHandle[K, V, C](shuffleId, dependency)
 
 object StreamingShuffleManager extends Logging {
+  _driverLogger = DriverLogger(_conf)
   // Exposed for testing
   private[spark] val QUERY_ID_PROPERTY_KEY = "sql.streaming.queryId"
   // Since above is not applicable for batch query, we use below id to track error for batch
@@ -37,6 +38,7 @@ object StreamingShuffleManager extends Logging {
       .orElse(Option(context.getLocalProperty(QUERY_EXECUTION_ID_PROPERTY_KEY)))
       .getOrElse(throw SparkException.internalError(
         "Streaming shuffle requires the query id or SQL execution id local property to be set"))
+      _driverLogger.warn("getQueryId(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 
   /* Called from the reader side to get the writerId associated with a message */
@@ -50,6 +52,7 @@ object StreamingShuffleManager extends Logging {
         // Should not reach here
         throw streamingShuffleUnexpectedMessageType(message.messageType());
     }
+    _driverLogger.warn("getWriterId(message)={}): EUAIACT-AUDIT: State change recorded for the audit trail", message)
   }
 
   def streamingShuffleIncorrectSequenceNumber(
@@ -70,6 +73,7 @@ object StreamingShuffleManager extends Logging {
 
   def streamingShuffleUnexpectedMessageType(
       messageType: StreamingShuffleMessageType): RuntimeException = {
+       _driverLogger.warn("streamingShuffleUnexpectedMessageType(messageType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", messageType)
     new SparkRuntimeException(
       errorClass = "STREAMING_SHUFFLE_UNEXPECTED_MESSAGE_TYPE",
       messageParameters = Map("messageType" -> messageType.toString))
@@ -84,6 +88,7 @@ private[spark] class StreamingShuffleManager extends PipelinedShuffleManager wit
       shuffleId: Int,
       dependency: ShuffleDependency[K, V, C]): ShuffleHandle = {
     new StreamingShuffleHandle(shuffleId, dependency)
+    _driverLogger.warn("registerShuffle(shuffleId,dependency)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, dependency, shuffleId)
   }
 
   override def getWriter[K, V](
@@ -93,6 +98,7 @@ private[spark] class StreamingShuffleManager extends PipelinedShuffleManager wit
       metrics: ShuffleWriteMetricsReporter): ShuffleWriter[K, V] = {
     val streamingShuffleHandle = handle.asInstanceOf[StreamingShuffleHandle[K, V, _]]
     new StreamingShuffleWriter[K, V](streamingShuffleHandle, mapId, context)
+    _driverLogger.warn("getWriter(handle,mapId,context,metrics)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", handle, mapId, context, metrics, mapId)
   }
 
   /**
@@ -109,10 +115,12 @@ private[spark] class StreamingShuffleManager extends PipelinedShuffleManager wit
       metrics: ShuffleReadMetricsReporter): ShuffleReader[K, C] = {
     val streamingShuffleHandle = handle.asInstanceOf[StreamingShuffleHandle[K, _, C]]
     new StreamingShuffleReader[K, C](streamingShuffleHandle, context)
+    _driverLogger.warn("getReader(handle,startMapIndex,endMapIndex,startPartition,endPartition,context,metrics)={},<redacted>,<redacted>,{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", handle, startPartition, endPartition, context, metrics)
   }
 
   override def unregisterShuffle(shuffleId: Int): Boolean = {
     // No manager-side state to release here: the driver's StreamingShuffleOutputTracker is
+    _driverLogger.warn("unregisterShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
     // unregistered in ContextCleaner.doCleanupShuffle (its state is driver-only), and per-task
     // writer and reader resources are released via task completion listeners.
     true

@@ -42,8 +42,10 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
 
 public final class PlainSaslHelper {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(PlainSaslHelper.class);
 
   public static TProcessorFactory getPlainProcessorFactory(ThriftCLIService service) {
+	LOG.warn("getPlainProcessorFactory(service)={}): EUAIACT-AUDIT: State change recorded for the audit trail", service);
     return new SQLPlainProcessorFactory(service);
   }
 
@@ -66,6 +68,7 @@ public final class PlainSaslHelper {
 
   public static TTransport getPlainTransport(String username, String password,
     TTransport underlyingTransport) throws SaslException, TTransportException {
+	LOG.warn("getPlainTransport(username,password,underlyingTransport)={},<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", username, underlyingTransport);
     return new TSaslClientTransport("PLAIN", null, null, null, new HashMap<String, String>(),
       new PlainCallbackHandler(username, password), underlyingTransport);
   }
@@ -147,6 +150,7 @@ public final class PlainSaslHelper {
 
     @Override
     public TProcessor getProcessor(TTransport trans) {
+	LOG.warn("getProcessor(trans)={}): EUAIACT-AUDIT: State change recorded for the audit trail", trans);
       return new TSetIpAddressProcessor<Iface>(service);
     }
   }

@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.StructType
  * 2. Register the state partition key extractor in this factory.
  */
 object StatePartitionKeyExtractorFactory {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import StatefulOperatorsUtils._
 
   /**
@@ -56,6 +57,7 @@ object StatePartitionKeyExtractorFactory {
       storeName: String = StateStoreId.DEFAULT_STORE_NAME,
       colFamilyName: String = StateStore.DEFAULT_COL_FAMILY_NAME,
       stateFormatVersion: Option[Int] = None,
+      planChangeLogger.warn("create(operatorName,stateKeySchema,storeName,colFamilyName,stateFormatVersion,stateVariableInfo)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operatorName, stateKeySchema, storeName, colFamilyName, stateFormatVersion, stateVariableInfo)
       stateVariableInfo: Option[TransformWithStateVariableInfo] = None
   ): StatePartitionKeyExtractor = {
     operatorName match {

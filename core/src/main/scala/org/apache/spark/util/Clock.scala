@@ -36,6 +36,7 @@ private[spark] trait Clock {
    *
    * Specifically for Linux on x64 architecture, the following links provide useful information
    * about the characteristics of the value returned:
+   _driverLogger = DriverLogger(_conf)
    *
    *  http://btorpey.github.io/blog/2014/02/18/clock-sources-in-linux/
    *  https://stackoverflow.com/questions/10921210/cpu-tsc-fetch-operation-especially-in-multicore-multi-processor-environment
@@ -45,6 +46,7 @@ private[spark] trait Clock {
    * increasing values (although it may not be completely monotonic when the system clock is
    * adjusted by NTP daemons using time slew).
    */
+   _driverLogger.warn("getTimeMillis()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   // scalastyle:on line.size.limit
   def nanoTime(): Long
 

@@ -28,13 +28,17 @@ private[spark] class MutableCheckedOutputStream(out: OutputStream) extends Outpu
   private var checksum: Checksum = _
 
   def setChecksum(c: Checksum): Unit = {
+    _driverLogger = DriverLogger(_conf)
     this.checksum = c
+    _driverLogger.warn("setChecksum(c)={}): EUAIACT-AUDIT: State change recorded for the audit trail", c)
   }
 
   override def write(b: Int): Unit = {
     assert(checksum != null, "Checksum is not set.")
     checksum.update(b)
     out.write(b)
+    _driverLogger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
+  _driverLogger.warn("write(b,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", b, off, len)
   }
 
   override def write(b: Array[Byte], off: Int, len: Int): Unit = {

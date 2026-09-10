@@ -33,6 +33,7 @@ private[sql] case class LogicalWriteInfoImpl(
   extends LogicalWriteInfo
 
 object LogicalWriteInfoImpl {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(
       queryId: String,
       schema: StructType,
@@ -45,5 +46,6 @@ object LogicalWriteInfoImpl {
       options,
       rowIdSchema.toJava,
       metadataSchema.toJava)
+    planChangeLogger.warn("apply(queryId,schema,options,rowIdSchema,metadataSchema)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", queryId, schema, options, rowIdSchema, metadataSchema, queryId)
   }
 }

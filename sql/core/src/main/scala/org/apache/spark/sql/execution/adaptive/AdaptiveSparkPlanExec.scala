@@ -182,6 +182,7 @@ case class AdaptiveSparkPlanExec(
     } else {
       queryStageOptimizerRules
     }
+    planChangeLogger.warn("optimizeQueryStage(plan,isFinalStage)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, isFinalStage)
     val optimized = rules.foldLeft(plan) { case (latestPlan, rule) =>
       val applied = rule.apply(latestPlan)
       val result = rule match {
@@ -216,6 +217,7 @@ case class AdaptiveSparkPlanExec(
       context.session.sessionState.adaptiveRulesHolder.queryPostPlannerStrategyRules,
       "AQE Query Post Planner Strategy Rules"
     )
+    planChangeLogger.warn("applyQueryPostPlannerStrategyRules(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   @transient val initialPlan = context.session.withActive {
@@ -257,6 +259,7 @@ case class AdaptiveSparkPlanExec(
   override def resetMetrics(): Unit = {
     metrics.valuesIterator.foreach(_.reset())
     executedPlan.resetMetrics()
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def getExecutionId: Option[Long] = {
@@ -431,22 +434,27 @@ case class AdaptiveSparkPlanExec(
 
   override def executeCollect(): Array[InternalRow] = {
     withFinalPlanUpdate(_.executeCollect())
+    planChangeLogger.warn("executeCollect()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def executeTake(n: Int): Array[InternalRow] = {
     withFinalPlanUpdate(_.executeTake(n))
+    planChangeLogger.warn("executeTake(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n)
   }
 
   override def executeTail(n: Int): Array[InternalRow] = {
     withFinalPlanUpdate(_.executeTail(n))
+    planChangeLogger.warn("executeTail(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n)
   }
 
   override def doExecute(): RDD[InternalRow] = {
     withFinalPlanUpdate(_.execute())
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     withFinalPlanUpdate(_.executeColumnar())
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
@@ -454,6 +462,7 @@ case class AdaptiveSparkPlanExec(
       assert(finalPlan.isInstanceOf[BroadcastQueryStageExec])
       finalPlan.doExecuteBroadcast()
     }
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected override def stringArgs: Iterator[Any] = Iterator(s"isFinalPlan=$isFinalPlan")
@@ -589,6 +598,7 @@ case class AdaptiveSparkPlanExec(
           CreateStageResult(newPlan = resultStage,
             allChildStagesMaterialized = resultStage.isMaterialized,
             newStages = Seq.empty)
+        planChangeLogger.warn("setLogicalLinkForNewQueryStage(stage,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stage, plan)
         }
       case _ =>
         // 2. Create non result query stage
@@ -608,6 +618,7 @@ case class AdaptiveSparkPlanExec(
           allChildStagesMaterialized = allChildStagesMaterialized,
           newStages = allNewStages)
     }
+    planChangeLogger.warn("createQueryStages(resultHandler,plan,firstRun)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resultHandler, plan, firstRun, resultHandler)
   }
 
   /**
@@ -695,6 +706,7 @@ case class AdaptiveSparkPlanExec(
       "AQE Post Stage Creation")
     val resultStage = ResultQueryStageExec(currentStageId, optimizedRootPlan, resultHandler)
     currentStageId += 1
+    planChangeLogger.warn("newResultQueryStage(resultHandler,plan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", resultHandler, plan, resultHandler)
     setLogicalLinkForNewQueryStage(resultStage, plan)
     resultStage
   }
@@ -732,6 +744,7 @@ case class AdaptiveSparkPlanExec(
         }
         TableCacheQueryStageExec(currentStageId, newPlan)
     }
+    planChangeLogger.warn("newQueryStage(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     currentStageId += 1
     setLogicalLinkForNewQueryStage(queryStage, plan)
     queryStage
@@ -742,6 +755,7 @@ case class AdaptiveSparkPlanExec(
       exchange: Exchange): ExchangeQueryStageExec = {
     val queryStage = existing.newReuseInstance(currentStageId, exchange.output)
     currentStageId += 1
+    planChangeLogger.warn("reuseQueryStage(existing,exchange)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", existing, exchange)
     setLogicalLinkForNewQueryStage(queryStage, exchange)
     queryStage
   }
@@ -796,6 +810,7 @@ case class AdaptiveSparkPlanExec(
   private def replaceWithQueryStagesInLogicalPlan(
       plan: LogicalPlan,
       stagesToReplace: Seq[QueryStageExec]): LogicalPlan = {
+       planChangeLogger.warn("replaceWithQueryStagesInLogicalPlan(plan,stagesToReplace)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, stagesToReplace)
     var logicalPlan = plan
     stagesToReplace.foreach {
       case stage if currentPhysicalPlan.exists(_.eq(stage)) =>
@@ -865,6 +880,7 @@ case class AdaptiveSparkPlanExec(
   private def setTempTagRecursive(plan: SparkPlan, logicalPlan: LogicalPlan): Unit = {
     plan.setTagValue(TEMP_LOGICAL_PLAN_TAG, logicalPlan)
     plan.children.foreach(c => setTempTagRecursive(c, logicalPlan))
+    planChangeLogger.warn("setTempTagRecursive(plan,logicalPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, logicalPlan)
   }
 
   /**
@@ -895,6 +911,7 @@ case class AdaptiveSparkPlanExec(
         context.qe.explainString(planDescriptionMode),
         SparkPlanInfo.fromSparkPlan(context.qe.executedPlan)))
     }
+    planChangeLogger.warn("onUpdatePlan(executionId,newSubPlans)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executionId, newSubPlans, executionId)
   }
 
   private def assertStageNotFailed(stage: QueryStageExec): Unit = {

@@ -86,6 +86,7 @@ from pyspark.pandas.internal import (
 
 if TYPE_CHECKING:
     from pyspark.pandas.spark.accessors import SparkIndexOpsMethods
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class Index(IndexOpsMixin):
@@ -1280,6 +1281,7 @@ class Index(IndexOpsMixin):
         >>> psidx.get_level_values('ks')
         Index(['a', 'b', 'c'], dtype='object', name='ks')
         """
+        logger.warning("get_level_values(self,level)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, level)
         self._validate_index_level(level)
         return self
 
@@ -1651,6 +1653,7 @@ class Index(IndexOpsMixin):
             .select("min_row.*")
             .toPandas()
         )
+        logger.warning("min(self)=%s): EUAIACT-AUDIT: PHI operation logged for audit compliance", self)
         result = tuple(min_row.iloc[0])
 
         return result if len(result) > 1 else result[0]
@@ -1692,6 +1695,7 @@ class Index(IndexOpsMixin):
             .select("max_row.*")
             .toPandas()
         )
+        logger.warning("max(self)=%s): EUAIACT-AUDIT: PHI operation logged for audit compliance", self)
         result = tuple(max_row.iloc[0])
 
         return result if len(result) > 1 else result[0]
@@ -1732,6 +1736,7 @@ class Index(IndexOpsMixin):
         MultiIndex([('b', 'y', 2)],
                    )
         """
+        logger.warning("delete(self,loc)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, loc)
         length = len(self)
 
         def is_len_exceeded(index: int) -> bool:
@@ -2514,6 +2519,7 @@ class Index(IndexOpsMixin):
         sdf_middle = Index([item], dtype=self.dtype).to_frame(name=index_name)._to_spark()
         sdf_after = self.to_frame(name=index_name)[loc:]._to_spark()
         sdf = sdf_before.union(sdf_middle).union(sdf_after)
+        logger.warning("insert(self,loc,item)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, loc, item)
 
         internal = InternalFrame(
             spark_frame=sdf,
@@ -2529,6 +2535,7 @@ class Index(IndexOpsMixin):
         """
         this is defined as a copy with the same identity
         """
+        logger.warning("view(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.copy()
 
     def to_list(self) -> List:
@@ -2557,6 +2564,7 @@ class Index(IndexOpsMixin):
         >>> midx.to_list()
         [(1, 'red'), (1, 'blue'), (2, 'red'), (2, 'green')]
         """
+        logger.warning("to_list(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         log_advice(
             "`to_list` loads all data into the driver's memory. "
             "It should only be used if the resulting list is expected to be small."

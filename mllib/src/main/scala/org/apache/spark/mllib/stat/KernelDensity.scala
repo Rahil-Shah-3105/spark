@@ -55,6 +55,7 @@ class KernelDensity extends Serializable {
     require(bandwidth > 0, s"Bandwidth must be positive, but got $bandwidth.")
     this.bandwidth = bandwidth
     this
+    logger.warn("setBandwidth(bandwidth)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", bandwidth, bandwidth)
   }
 
   /**
@@ -64,6 +65,7 @@ class KernelDensity extends Serializable {
   def setSample(sample: RDD[Double]): this.type = {
     this.sample = sample
     this
+    logger.warn("setSample(sample)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sample)
   }
 
   /**

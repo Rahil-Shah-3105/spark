@@ -130,6 +130,7 @@ case class FlatMapGroupsInPandasWithStateExec(
 
   override def createInputProcessor(
       store: StateStore): InputProcessor = new InputProcessor(store: StateStore) {
+       planChangeLogger.warn("createInputProcessor(store)={}): EUAIACT-AUDIT: State change recorded for the audit trail", store)
 
     override def processNewData(dataIter: Iterator[InternalRow]): Iterator[InternalRow] = {
       val groupedIter = GroupedIterator(dataIter, groupingAttributes, child.output)
@@ -138,6 +139,7 @@ case class FlatMapGroupsInPandasWithStateExec(
         val stateData = stateManager.getState(store, keyUnsafeRow)
         (keyUnsafeRow, stateData, valueRowIter.map(unsafeProj))
       }
+      planChangeLogger.warn("processNewData(dataIter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataIter)
 
       process(processIter, hasTimedOut = false)
     }
@@ -147,6 +149,7 @@ case class FlatMapGroupsInPandasWithStateExec(
         initStateIter: Iterator[InternalRow],
         skipEmittingInitialStateKeys: Boolean): Iterator[InternalRow] = {
       throw SparkUnsupportedOperationException()
+      planChangeLogger.warn("processNewDataWithInitialState(childDataIter,initStateIter,skipEmittingInitialStateKeys)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", childDataIter, initStateIter, skipEmittingInitialStateKeys)
     }
 
     override def processTimedOutState(): Iterator[InternalRow] = {
@@ -171,11 +174,13 @@ case class FlatMapGroupsInPandasWithStateExec(
 
         process(processIter, hasTimedOut = true)
       } else Iterator.empty
+      planChangeLogger.warn("processTimedOutState()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     private def process(
         iter: Iterator[(UnsafeRow, StateData, Iterator[InternalRow])],
         hasTimedOut: Boolean): Iterator[InternalRow] = {
+         val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       val runner = new ApplyInPandasWithStatePythonRunner(
         chainedFunc,
         PythonEvalType.SQL_GROUPED_MAP_PANDAS_UDF_WITH_STATE,
@@ -192,6 +197,7 @@ case class FlatMapGroupsInPandasWithStateExec(
 
       val context = TaskContext.get()
 
+      planChangeLogger.warn("process(iter,hasTimedOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, hasTimedOut)
       val processIter = iter.map { case (keyRow, stateData, valueIter) =>
         val groupedState = GroupStateImpl.createForStreaming(
           Option(stateData.stateObj).map { r => assert(r.isInstanceOf[Row]); r },

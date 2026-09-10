@@ -31,6 +31,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.Utils
 
 object TypedAggregateExpression {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply[BUF : Encoder, OUT : Encoder](
       aggregator: Aggregator[_, BUF, OUT]): TypedAggregateExpression = {
     val bufferEncoder = encoderFor[BUF]
@@ -49,6 +50,7 @@ object TypedAggregateExpression {
       }
     }
 
+    planChangeLogger.warn("apply(aggregator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", aggregator)
     // If the buffer object is simple, use `SimpleTypedAggregateExpression`, which supports whole
     // stage codegen.
     if (isSimpleBuffer) {
@@ -249,6 +251,7 @@ case class ComplexTypedAggregateExpression(
     } else {
       buffer
     }
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   override def merge(buffer: Any, input: Any): Any = {
@@ -282,10 +285,12 @@ case class ComplexTypedAggregateExpression(
 
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): ComplexTypedAggregateExpression =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(
       newInputAggBufferOffset: Int): ComplexTypedAggregateExpression =
+    planChangeLogger.warn("withNewInputAggBufferOffset(newInputAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputAggBufferOffset)
     copy(inputAggBufferOffset = newInputAggBufferOffset)
 
   override def withInputInfo(

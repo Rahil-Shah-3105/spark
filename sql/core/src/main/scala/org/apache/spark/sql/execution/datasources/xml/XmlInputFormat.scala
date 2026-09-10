@@ -33,11 +33,13 @@ import org.apache.spark.sql.catalyst.xml.XmlOptions
  * Reads records that are delimited by a specific start/end tag.
  */
 class XmlInputFormat extends TextInputFormat {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createRecordReader(
       split: InputSplit,
       context: TaskAttemptContext): RecordReader[LongWritable, Text] = {
     new XmlRecordReader
+    planChangeLogger.warn("createRecordReader(split,context)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", split, context)
   }
 }
 
@@ -162,6 +164,7 @@ private[xml] class XmlRecordReader extends RecordReader[LongWritable, Text] {
         readerByteBuffer.remaining() -
         (if (readerLeftoverCharFn()) 1 else 0)
     }
+    planChangeLogger.warn("getFilePosition()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def nextKeyValue: Boolean = {
@@ -198,6 +201,7 @@ private[xml] class XmlRecordReader extends RecordReader[LongWritable, Text] {
   private def readUntilStartElement(): Boolean = {
     currentStartTag = startTag
     var i = 0
+    planChangeLogger.warn("readUntilStartElement()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     while (true) {
       val cOrEOF = reader.read()
       if (cOrEOF == -1 || (i == 0 && getFilePosition() > end)) {
@@ -243,6 +247,7 @@ private[xml] class XmlRecordReader extends RecordReader[LongWritable, Text] {
     // tag is found
     var canSelfClose = !startTagClosed
 
+    planChangeLogger.warn("readUntilEndElement(startTagClosed)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", startTagClosed)
     while (true) {
 
       val cOrEOF = reader.read()

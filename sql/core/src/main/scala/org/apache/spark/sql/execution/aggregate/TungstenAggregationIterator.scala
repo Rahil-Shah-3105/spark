@@ -113,6 +113,7 @@ class TungstenAggregationIterator(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   ///////////////////////////////////////////////////////////////////////////
   // Part 1: Initializing aggregate functions.
@@ -139,6 +140,7 @@ class TungstenAggregationIterator(
     // Initialize declarative aggregates' buffer values
     expressionAggInitialProjection.target(buffer)(EmptyRow)
     // Initialize imperative aggregates' buffer values
+    planChangeLogger.warn("createNewAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     aggregateFunctions.collect { case f: ImperativeAggregate => f }.foreach(_.initialize(buffer))
     buffer
   }
@@ -224,6 +226,7 @@ class TungstenAggregationIterator(
       // below remains.
       var nextCheckRow = minRows
       // The partial aggregation is ineffective when it does not collapse `minCompaction` rows into
+      planChangeLogger.warn("processInputs(fallbackStartsAt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fallbackStartsAt)
       // one key. There is no fast map on this path, so the map's keys are all the operator holds.
       def ineffective(): Boolean =
         processedRows < hashMap.getNumKeys().toDouble * adaptiveMinCompaction
@@ -408,6 +411,7 @@ class TungstenAggregationIterator(
         firstRowInNextGroup.copyFrom(inputAggregationBuffer)
       }
     }
+    planChangeLogger.warn("processCurrentSortedGroup()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // We have not seen a new group. It means that there is no new row in the input
     // iter. The current group is the last group of the sortedKVIterator.
     if (!findNextPartition) {

@@ -44,6 +44,7 @@ from pyspark.sql.types import StringType, BinaryType, ArrayType, LongType, MapTy
 from pyspark.sql import functions as F
 from pyspark.sql.functions import pandas_udf
 import pyspark.pandas as ps
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
@@ -475,8 +476,10 @@ class StringMethods:
         1    None
         dtype: object
         """
+        logger.warning("get(self,i)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, i)
 
         def pandas_get(s) -> ps.Series[str]:  # type: ignore[no-untyped-def]
+            logger.warning("pandas_get(s)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
             return s.str.get(i)
 
         return self._data.pandas_on_spark.transform_batch(pandas_get)
@@ -1090,8 +1093,10 @@ class StringMethods:
         2   -1
         dtype: int64
         """
+        logger.warning("find(self,sub,start,end)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, sub, start, end)
 
         def pandas_find(s) -> ps.Series[int]:  # type: ignore[no-untyped-def]
+            logger.warning("pandas_find(s)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
             return s.str.find(sub, start, end)
 
         return self._data.pandas_on_spark.transform_batch(pandas_find)
@@ -1174,6 +1179,7 @@ class StringMethods:
         2    [b, b]
         dtype: object
         """
+        logger.warning("findall(self,pat,flags)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, pat, flags)
         str_dtype = is_str_dtype(self._data.dtype)
 
         # type hint does not support to specify array type yet.
@@ -1704,8 +1710,10 @@ class StringMethods:
         2   -1
         dtype: int64
         """
+        logger.warning("rfind(self,sub,start,end)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, sub, start, end)
 
         def pandas_rfind(s) -> ps.Series[int]:  # type: ignore[no-untyped-def]
+            logger.warning("pandas_rfind(s)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
             return s.str.rfind(sub, start, end)
 
         return self._data.pandas_on_spark.transform_batch(pandas_rfind)

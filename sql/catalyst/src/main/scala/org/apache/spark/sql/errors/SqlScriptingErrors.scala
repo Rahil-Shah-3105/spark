@@ -31,6 +31,7 @@ import org.apache.spark.sql.internal.SQLConf
 private[sql] object SqlScriptingErrors {
 
   def duplicateLabels(origin: Origin, label: String): Throwable = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     new SqlScriptingException(
       origin = origin,
       errorClass = "LABEL_OR_FOR_VARIABLE_ALREADY_EXISTS",
@@ -100,6 +101,7 @@ private[sql] object SqlScriptingErrors {
       origin = origin,
       messageParameters = Map(
         "sqlScriptingEnabled" -> toSQLConf(SQLConf.SQL_SCRIPTING_ENABLED.key)))
+    planChangeLogger.warn("sqlScriptingNotEnabled(origin)={}): EUAIACT-AUDIT: State change recorded for the audit trail", origin)
   }
 
   def positionalParametersAreNotSupportedWithSqlScripting(): Throwable = {

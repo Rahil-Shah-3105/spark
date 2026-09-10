@@ -30,6 +30,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Aggregate
  * single-pass Analyzer.
  */
 object AggregationValidator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Applies [[ExprUtils.assertValidAggregation]] on a given [[Aggregate]].
@@ -40,5 +41,6 @@ object AggregationValidator {
       (groupingExpression, checkedExpression) =>
         groupingExpression.canonicalized == checkedExpression.canonicalized
     )
+    planChangeLogger.warn("apply(aggregate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", aggregate)
   }
 }

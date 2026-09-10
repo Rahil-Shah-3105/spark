@@ -40,6 +40,7 @@ case class DeclareCursorExec(
     cursorName: String,
     queryText: String,
     asensitive: Boolean) extends LeafV2CommandExec with DataTypeErrorsBase {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     val scriptingContext = CursorCommandUtils.getScriptingContext(cursorName)
@@ -70,6 +71,7 @@ case class DeclareCursorExec(
     currentScope.cursors.put(normalizedName, cursorDef)
     currentScope.cursorStates.put(normalizedName, CursorDeclared)
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     Nil
   }
 

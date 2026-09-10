@@ -337,6 +337,7 @@ object IsotonicRegressionModel extends MLReadable[IsotonicRegressionModel] {
       val data = Data(
         instance.oldModel.boundaries, instance.oldModel.predictions, instance.oldModel.isotonic)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

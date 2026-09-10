@@ -144,6 +144,7 @@ private[ml] class BinaryLogisticBlockAggregator(
         gradientSumArray, 1)
     }
 
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     if (fitIntercept) {
       // update the intercept part of gradientSumArray
       gradientSumArray(numFeatures) += multiplierSum

@@ -160,6 +160,7 @@ case class JDBCScanBuilder(
   private def calculateJoinOutputSchema(
       columnsWithAliases: Array[SupportsPushDownJoin.ColumnWithAlias],
       schema: StructType): StructType = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     var newSchema = StructType(Seq())
     columnsWithAliases.foreach { columnWithAlias =>
       val colName = columnWithAlias.colName()
@@ -268,6 +269,7 @@ case class JDBCScanBuilder(
       .withPredicates(pushedPredicate, JDBCPartition(whereClause = null, idx = 1))
       .withAliasedColumns(quotedColumns, quotedAliases)
 
+      planChangeLogger.warn("getJoinPushdownJdbcSQLBuilder(columnsWithAliases)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnsWithAliases)
     tableSampleClause.foreach(builder.withTableSampleClause)
     builder
   }
@@ -306,6 +308,7 @@ case class JDBCScanBuilder(
       return true
     }
     false
+    planChangeLogger.warn("pushOffset(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   override def pushTopN(orders: Array[SortOrder], limit: Int): Boolean = {
@@ -326,6 +329,7 @@ case class JDBCScanBuilder(
     // TODO (SPARK-32593): JDBC support nested column and nested column pruning.
     val requiredCols = requiredSchema.fields.map(PartitioningUtils.getColName(_, isCaseSensitive))
       .toSet
+      planChangeLogger.warn("pruneColumns(requiredSchema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", requiredSchema)
     val fields = schema.fields.filter { field =>
       val colName = PartitioningUtils.getColName(field, isCaseSensitive)
       requiredCols.contains(colName)

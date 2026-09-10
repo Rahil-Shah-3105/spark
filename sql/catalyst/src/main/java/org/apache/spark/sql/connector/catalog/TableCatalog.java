@@ -31,6 +31,8 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Catalog API for connectors that expose tables.
@@ -50,6 +52,7 @@ import java.util.Set;
  */
 @Evolving
 public interface TableCatalog extends CatalogPlugin {
+Logger planChangeLogger = LoggerFactory.getLogger(TableCatalog.class);
 
   /**
    * A reserved property to specify the location of the table. The files of the table
@@ -188,6 +191,10 @@ public interface TableCatalog extends CatalogPlugin {
   default Table loadTable(
       Identifier ident,
       Set<TableWritePrivilege> writePrivileges) throws NoSuchTableException {
+	planChangeLogger.warn("loadTable(ident,writePrivileges)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, writePrivileges, ident);
+	planChangeLogger.warn("loadTable(ident,version)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, version, ident);
+	planChangeLogger.warn("loadTable(ident,timestamp)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, timestamp, ident);
+	planChangeLogger.warn("loadTable(ident,context,stateOptions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, context, stateOptions, ident);
     return loadTable(ident);
   }
 
@@ -281,6 +288,7 @@ public interface TableCatalog extends CatalogPlugin {
       Identifier ident,
       ChangelogContext context,
       CaseInsensitiveStringMap options) throws NoSuchTableException {
+	planChangeLogger.warn("loadChangelog(ident,context,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, context, options, ident);
     throw new UnsupportedOperationException(name() + " does not support Change Data Capture (CDC)");
   }
 
@@ -321,6 +329,7 @@ public interface TableCatalog extends CatalogPlugin {
       StructType schema,
       Transform[] partitions,
       Map<String, String> properties) throws TableAlreadyExistsException, NoSuchNamespaceException {
+	planChangeLogger.warn("createTable(ident,schema,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, schema, partitions, properties, ident);
     throw QueryCompilationErrors.mustOverrideOneMethodError("createTable");
   }
 
@@ -336,6 +345,7 @@ public interface TableCatalog extends CatalogPlugin {
       Column[] columns,
       Transform[] partitions,
       Map<String, String> properties) throws TableAlreadyExistsException, NoSuchNamespaceException {
+	planChangeLogger.warn("createTable(ident,columns,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, columns, partitions, properties, ident);
     return createTable(ident, CatalogV2Util.v2ColumnsToStructType(columns), partitions, properties);
   }
 
@@ -387,6 +397,7 @@ public interface TableCatalog extends CatalogPlugin {
   default Table createTableLike(
       Identifier ident, TableInfo tableInfo, Table sourceTable)
       throws TableAlreadyExistsException, NoSuchNamespaceException {
+	planChangeLogger.warn("createTableLike(ident,tableInfo,sourceTable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, tableInfo, sourceTable, ident);
     throw new UnsupportedOperationException(name() + " does not support CREATE TABLE LIKE");
   }
 
@@ -395,6 +406,7 @@ public interface TableCatalog extends CatalogPlugin {
    * CREATE/REPLACE TABLE ... AS SELECT ... and creating the table.
    */
   default boolean useNullableQuerySchema() {
+	planChangeLogger.warn("useNullableQuerySchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return true;
   }
 
@@ -440,6 +452,7 @@ public interface TableCatalog extends CatalogPlugin {
    * @since 3.1.0
    */
   default boolean purgeTable(Identifier ident) throws UnsupportedOperationException {
+	planChangeLogger.warn("purgeTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
     throw QueryExecutionErrors.unsupportedPurgeTableError();
   }
 

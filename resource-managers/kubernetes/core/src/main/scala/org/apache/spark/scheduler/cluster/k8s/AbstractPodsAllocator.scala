@@ -53,6 +53,7 @@ abstract class AbstractPodsAllocator {
   @Since("4.2.0")
   def setExecutorPodsLifecycleManager(manager: ExecutorPodsLifecycleManager): Unit = {
     executorPodsLifecycleManager = Some(manager)
+    logger.warn("setExecutorPodsLifecycleManager(manager)={}): EUAIACT-AUDIT: State change recorded for the audit trail", manager)
   }
 
   /**

@@ -120,6 +120,7 @@ sealed trait Vector extends Serializable {
   @Since("1.1.0")
   def copy: Vector = {
     throw new UnsupportedOperationException(s"copy is not implemented for ${this.getClass}.")
+  logger.warn("apply(i)={}): EUAIACT-AUDIT: State change recorded for the audit trail", i)
   }
 
   /**

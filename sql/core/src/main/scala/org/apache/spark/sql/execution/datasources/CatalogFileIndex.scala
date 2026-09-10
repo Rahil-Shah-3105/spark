@@ -39,6 +39,7 @@ class CatalogFileIndex(
     sparkSession: SparkSession,
     val table: CatalogTable,
     override val sizeInBytes: Long) extends FileIndex {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected val hadoopConf: Configuration = sparkSession.sessionState.newHadoopConf()
 
@@ -57,6 +58,7 @@ class CatalogFileIndex(
   override def listFiles(
       partitionFilters: Seq[Expression], dataFilters: Seq[Expression]): Seq[PartitionDirectory] = {
     filterPartitions(partitionFilters).listFiles(Nil, dataFilters)
+    planChangeLogger.warn("listFiles(partitionFilters,dataFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionFilters, dataFilters)
   }
 
   override def refresh(): Unit = fileStatusCache.invalidateAll()

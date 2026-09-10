@@ -119,6 +119,7 @@ case class ArrowEvalPythonExec(
       // Row-based path: unchanged.
       super.doExecute()
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def doExecuteColumnar(): RDD[ColumnarBatch] = {
@@ -130,6 +131,7 @@ case class ArrowEvalPythonExec(
         columnarEvaluatorFactory.createEvaluator().eval(index, iter)
       }
     }
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private lazy val columnarEvaluatorFactory =
@@ -192,6 +194,7 @@ class ArrowEvalPythonEvaluatorFactory(
     jobArtifactUUID: Option[String],
     sessionUUID: Option[String])
   extends EvalPythonEvaluatorFactory(childOutput, udfs, output) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def evaluate(
       funcs: Seq[(ChainedPythonFunctions, Long)],

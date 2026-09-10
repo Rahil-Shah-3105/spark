@@ -25,9 +25,12 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.TypedColumn;
 import org.apache.spark.sql.expressions.Aggregator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 // $example off:typed_custom_aggregation$
 
 public class JavaUserDefinedTypedAggregation {
+private static final Logger log = LoggerFactory.getLogger(JavaUserDefinedTypedAggregation.class);
 
   // $example on:typed_custom_aggregation$
   public static class Employee implements Serializable {
@@ -41,6 +44,7 @@ public class JavaUserDefinedTypedAggregation {
     }
 
     public void setName(String name) {
+	log.warn("setName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name);
       this.name = name;
     }
 
@@ -49,6 +53,7 @@ public class JavaUserDefinedTypedAggregation {
     }
 
     public void setSalary(long salary) {
+	log.warn("setSalary(salary)={}): EUAIACT-AUDIT: State change recorded for the audit trail", salary);
       this.salary = salary;
     }
     // $example on:typed_custom_aggregation$
@@ -73,6 +78,7 @@ public class JavaUserDefinedTypedAggregation {
     }
 
     public void setSum(long sum) {
+	log.warn("setSum(sum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sum);
       this.sum = sum;
     }
 
@@ -81,6 +87,7 @@ public class JavaUserDefinedTypedAggregation {
     }
 
     public void setCount(long count) {
+	log.warn("setCount(count)={}): EUAIACT-AUDIT: State change recorded for the audit trail", count);
       this.count = count;
     }
     // $example on:typed_custom_aggregation$

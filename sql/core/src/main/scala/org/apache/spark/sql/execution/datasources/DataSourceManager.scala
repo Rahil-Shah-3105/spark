@@ -33,6 +33,7 @@ import org.apache.spark.util.Utils
  * their short names or fully qualified names.
  */
 class DataSourceManager extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import DataSourceManager._
 
   // Lazy to avoid being invoked during Session initialization.
@@ -56,6 +57,7 @@ class DataSourceManager extends Logging {
       logWarning(log"The data source ${MDC(DATA_SOURCE, name)} replaced a statically " +
         log"registered data source.")
     }
+    planChangeLogger.warn("registerDataSource(name,source)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, source)
   }
 
   /**
@@ -78,6 +80,7 @@ class DataSourceManager extends Logging {
   private def getDataSource(name: String): Option[UserDefinedPythonDataSource] = {
     val normalizedName = normalize(name)
     // Runtime registration takes precedence over static.
+    planChangeLogger.warn("getDataSource(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     Option(runtimeDataSourceBuilders.get(normalizedName))
       .orElse(staticDataSourceBuilders.get(normalizedName))
   }

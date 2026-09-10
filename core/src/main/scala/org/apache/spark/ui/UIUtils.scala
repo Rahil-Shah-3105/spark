@@ -56,6 +56,7 @@ private[spark] object UIUtils extends Logging {
     dateTimeFormatter.format(Instant.ofEpochMilli(timestamp))
 
   def formatDuration(milliseconds: Long): String = {
+    _driverLogger = DriverLogger(_conf)
     if (milliseconds < 100) {
       return "%d ms".format(milliseconds)
     }
@@ -447,6 +448,7 @@ private[spark] object UIUtils extends Logging {
       // When tooltipHeaders is not empty, it should have the same length as headers parameter
       tooltipHeaders: Seq[Option[String]] = Seq.empty): Seq[Node] = {
 
+       _driverLogger.warn("listingTable(headers,generateDataRow,data,fixedWidth,id,empty,headerClasses,stripeRowsWithCss,sortable,None,empty,tooltipHeaders)={},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", headers, generateDataRow, data, fixedWidth, id, empty, headerClasses, stripeRowsWithCss, sortable, None, empty, tooltipHeaders, fixedWidth)
     val listingTableClass = {
       val _tableClass = if (stripeRowsWithCss) TABLE_CLASS_STRIPED else TABLE_CLASS_NOT_STRIPED
       if (sortable) {
@@ -464,6 +466,7 @@ private[spark] object UIUtils extends Logging {
       } else {
         ""
       }
+      _driverLogger.warn("getClass(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
     }
 
     def getTooltip(index: Int): Option[String] = {
@@ -472,6 +475,7 @@ private[spark] object UIUtils extends Logging {
       } else {
         None
       }
+      _driverLogger.warn("getTooltip(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
     }
 
     val newlinesInHeader = headers.exists(_.contains("\n"))
@@ -483,6 +487,7 @@ private[spark] object UIUtils extends Logging {
       } else {
         Text(header)
       }
+      _driverLogger.warn("getHeaderContent(header)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", header)
     }
 
     val headerRow: Seq[Node] = {
@@ -777,6 +782,7 @@ private[spark] object UIUtils extends Logging {
     "window.onload = " +
       s"initLogPage('${StringEscapeUtils.escapeEcmaScript(logParams)}', " +
       s"$curLogLength, $startByte, $endByte, $logLength, $byteLength);"
+      _driverLogger.warn("logPageOnloadScript(logParams,curLogLength,startByte,endByte,logLength,byteLength)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", logParams, curLogLength, startByte, endByte, logLength, byteLength)
   }
 
   /**
@@ -813,6 +819,7 @@ private[spark] object UIUtils extends Logging {
       }
       (xValue, dataPadding.toMap)
     }
+    _driverLogger.warn("durationDataPadding(values)={}): EUAIACT-AUDIT: State change recorded for the audit trail", values)
   }
 
   def detailsUINode(isMultiline: Boolean, message: String): Seq[Node] = {

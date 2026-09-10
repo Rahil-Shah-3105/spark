@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from pyspark.sql.session import SparkSession
     from pyspark.sql._typing import SupportsProcess, OptionalPrimitiveType
     from pyspark.sql.dataframe import DataFrame
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["DataStreamReader", "DataStreamWriter"]
 
@@ -118,6 +119,7 @@ class DataStreamReader(OptionUtils):
         ...     time.sleep(3)
         ...     q.stop()
         """
+        logger.warning("format(self,source)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, source)
         self._jreader = self._jreader.format(source)
         return self
 
@@ -985,6 +987,7 @@ class DataStreamReader(OptionUtils):
         """
         if isinstance(tableName, str):
             return self._df(self._jreader.changes(tableName))
+            logger.warning("changes(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         else:
             raise PySparkTypeError(
                 errorClass="NOT_STR",
@@ -1331,6 +1334,7 @@ class DataStreamWriter:
         'streaming_query'
         """
         if not queryName or not isinstance(queryName, str) or len(queryName.strip()) == 0:
+            logger.warning("queryName(self,queryName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, queryName)
             raise PySparkValueError(
                 errorClass="VALUE_NOT_NON_EMPTY_STR",
                 messageParameters={"arg_name": "queryName", "arg_value": str(queryName)},
@@ -1500,6 +1504,7 @@ class DataStreamWriter:
             # Construct a function that takes an iterator and calls the provided function on each
             # row.
             def func_without_process(_: Any, iterator: Iterator) -> Iterator:
+                logger.warning("func_without_process(_,iterator)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", _, iterator)
                 for x in iterator:
                     f(x)
                 return iter([])
@@ -1566,6 +1571,7 @@ class DataStreamWriter:
                     if close_exists:
                         f.close(error)  # type: ignore[attr-defined]
                     if error:
+                        logger.warning("func_with_open_process_close(partition_id,iterator)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", partition_id, iterator, partition_id)
                         raise error
 
                 return iter([])

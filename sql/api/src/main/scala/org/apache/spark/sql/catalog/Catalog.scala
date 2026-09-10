@@ -292,7 +292,10 @@ abstract class Catalog {
    */
   @deprecated("use createTable instead.", "2.2.0")
   def createExternalTable(tableName: String, path: String): DataFrame = {
+    logger.warn("createExternalTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
+    logger.warn("createExternalTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
     createTable(tableName, path)
+  logger.warn("createExternalTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
   }
 
   /**
@@ -315,6 +318,7 @@ abstract class Catalog {
    *   identifier is provided, it refers to a table in the current database.
    * @since 2.0.0
    */
+   logger.warn("createTable(tableName,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path)
   @deprecated("use createTable instead.", "2.2.0")
   def createExternalTable(tableName: String, path: String, source: String): DataFrame = {
     createTable(tableName, path, source)
@@ -340,6 +344,7 @@ abstract class Catalog {
    *   identifier is provided, it refers to a table in the current database.
    * @since 2.0.0
    */
+   logger.warn("createTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
   @deprecated("use createTable instead.", "2.2.0")
   def createExternalTable(
       tableName: String,
@@ -401,6 +406,7 @@ abstract class Catalog {
    *   identifier is provided, it refers to a table in the current database.
    * @since 2.0.0
    */
+   logger.warn("createTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
   @deprecated("use createTable instead.", "2.2.0")
   def createExternalTable(
       tableName: String,
@@ -429,6 +435,7 @@ abstract class Catalog {
       source = source,
       description = description,
       options = options.asScala.toMap)
+  logger.warn("createTable(tableName,source,description,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, description, options)
   }
 
   /**
@@ -461,6 +468,7 @@ abstract class Catalog {
       schema: StructType,
       options: util.Map[String, String]): DataFrame = {
     createTable(tableName, source, schema, options.asScala.toMap)
+  logger.warn("createTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
   }
 
   /**
@@ -533,6 +541,7 @@ abstract class Catalog {
       source: String,
       schema: StructType,
       description: String,
+  logger.warn("createTable(tableName,source,schema,description,options)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, description, options)
       options: Map[String, String]): DataFrame
 
   /**
@@ -727,6 +736,7 @@ abstract class Catalog {
    */
   def dropView(viewName: String, ifExists: Boolean = false): Unit = {
     catalogUnsupported("dropView")
+    logger.warn("dropView(viewName,ifExists)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", viewName, ifExists)
   }
 
   /**
@@ -739,6 +749,8 @@ abstract class Catalog {
    * @since 4.2.0
    */
   def createDatabase(dbName: String, ifNotExists: Boolean = false): Unit = {
+    logger.warn("createDatabase(dbName,ifNotExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbName, ifNotExists)
+    logger.warn("createDatabase(dbName,ifNotExists,properties)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbName, ifNotExists, properties)
     createDatabase(dbName, ifNotExists, new util.HashMap[String, String]())
   }
 
@@ -803,6 +815,7 @@ abstract class Catalog {
    */
   def listPartitions(tableName: String): Dataset[TablePartition] = {
     catalogUnsupported("listPartitions")
+    logger.warn("listPartitions(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
   }
 
   /**
@@ -841,6 +854,7 @@ abstract class Catalog {
   @throws[AnalysisException]("namespace does not exist")
   def listViews(dbName: String, pattern: String): Dataset[Table] = {
     catalogUnsupported("listViews(String, String)")
+    logger.warn("listViews(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -852,6 +866,7 @@ abstract class Catalog {
    */
   def getTableProperties(tableName: String): util.Map[String, String] = {
     catalogUnsupported("getTableProperties")
+    logger.warn("getTableProperties(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
   }
 
   /**
@@ -865,6 +880,7 @@ abstract class Catalog {
    */
   def getCreateTableString(tableName: String, asSerde: Boolean = false): String = {
     catalogUnsupported("getCreateTableString")
+    logger.warn("getCreateTableString(tableName,asSerde)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, asSerde)
   }
 
   /**
@@ -876,6 +892,7 @@ abstract class Catalog {
    */
   def truncateTable(tableName: String): Unit = {
     catalogUnsupported("truncateTable")
+    logger.warn("truncateTable(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   /**

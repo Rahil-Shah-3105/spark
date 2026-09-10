@@ -198,6 +198,7 @@ import org.apache.spark.util.collection.Utils
  * techniques.
  */
 object RewriteDistinctAggregates extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private def mustRewrite(
       distinctAggs: Seq[AggregateExpression],
       groupingExpressions: Seq[Expression]): Boolean = {
@@ -205,6 +206,7 @@ object RewriteDistinctAggregates extends Rule[LogicalPlan] {
     // Also, if there are no grouping expressions and all distinct aggregate expressions are
     // foldable, we need to rewrite the query, e.g. SELECT COUNT(DISTINCT 1). Without this case,
     // non-grouping aggregation queries with distinct aggregate expressions will be incorrectly
+    planChangeLogger.warn("mustRewrite(distinctAggs,groupingExpressions)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", distinctAggs)
     // handled by the aggregation strategy, causing wrong results when working with empty tables.
     distinctAggs.exists(_.filter.isDefined) || (groupingExpressions.isEmpty &&
       distinctAggs.exists(_.aggregateFunction.children.forall(_.foldable)))
@@ -214,6 +216,7 @@ object RewriteDistinctAggregates extends Rule[LogicalPlan] {
     val aggExpressions = collectAggregateExprs(a)
     val distinctAggs = aggExpressions.filter(_.isDistinct)
     // We need at least two distinct aggregates or the single distinct aggregate group exists filter
+    planChangeLogger.warn("mayNeedtoRewrite(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
     // clause for this rule because aggregation strategy can handle a single distinct aggregate
     // group without filter clause.
     distinctAggs.size > 1 || mustRewrite(distinctAggs, a.groupingExpressions)
@@ -246,6 +249,7 @@ object RewriteDistinctAggregates extends Rule[LogicalPlan] {
           ExpressionSet(e.aggregateFunction.children.take(1))
         }
     }
+    planChangeLogger.warn("rewrite(origAgg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", origAgg)
 
     // Aggregation strategy can handle queries with a single distinct group without filter clause.
     if (distinctAggGroups.size > 1 || mustRewrite(distinctAggs, a.groupingExpressions)) {

@@ -37,6 +37,7 @@ class CSVOptions(
     private val defaultTimeZoneId: String,
     private val defaultColumnNameOfCorruptRecord: String)
   extends FileSourceOptions(parameters) with Logging {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   import CSVOptions._
 
@@ -90,6 +91,7 @@ class CSVOptions(
       case Some(value) if value.length == 1 => value.charAt(0)
       case Some(value) => throw QueryExecutionErrors.paramExceedOneCharError(paramName, value)
     }
+    planChangeLogger.warn("getChar(paramName,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", paramName, default)
   }
 
   private def getInt(paramName: String, default: Int): Int = {
@@ -104,6 +106,7 @@ class CSVOptions(
           throw QueryExecutionErrors.paramIsNotIntegerError(paramName, value)
       }
     }
+    planChangeLogger.warn("getInt(paramName,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", paramName, default)
   }
 
   private def getBool(paramName: String, default: Boolean = false): Boolean = {
@@ -117,6 +120,7 @@ class CSVOptions(
         case _ => throw QueryExecutionErrors.paramIsNotBooleanValueError(paramName)
       }
     }
+    planChangeLogger.warn("getBool(paramName,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", paramName, default)
   }
 
   val delimiter = CSVExprUtils.toDelimiterStr(

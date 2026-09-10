@@ -36,6 +36,7 @@ class SQLHadoopMapReduceCommitProtocol(
     dynamicPartitionOverwrite: Boolean = false)
   extends HadoopMapReduceCommitProtocol(jobId, path, dynamicPartitionOverwrite)
     with Serializable with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def setupCommitter(context: TaskAttemptContext): OutputCommitter = {
     var committer = super.setupCommitter(context)
@@ -66,6 +67,7 @@ class SQLHadoopMapReduceCommitProtocol(
         committer = ctor.newInstance()
       }
     }
+    planChangeLogger.warn("setupCommitter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
     logInfo(log"Using output committer class " +
       log"${MDC(CLASS_NAME, committer.getClass.getCanonicalName)}")
     committer

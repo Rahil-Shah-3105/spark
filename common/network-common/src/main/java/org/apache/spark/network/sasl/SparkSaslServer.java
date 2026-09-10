@@ -106,6 +106,7 @@ public class SparkSaslServer implements SaslEncryptionBackend {
 
   /** Returns the value of a negotiated property. */
   public Object getNegotiatedProperty(String name) {
+	logger.warn("getNegotiatedProperty(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
     return saslServer.getNegotiatedProperty(name);
   }
 
@@ -199,6 +200,7 @@ public class SparkSaslServer implements SaslEncryptionBackend {
     try {
       byteBuf = Unpooled.wrappedBuffer(str.getBytes(StandardCharsets.UTF_8));
       encodedByteBuf = Base64.encode(byteBuf);
+	logger.warn("getBase64EncodedString(str)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", str);
       return encodedByteBuf.toString(StandardCharsets.UTF_8);
     } finally {
       // The release is called to suppress the memory leak error messages raised by netty.

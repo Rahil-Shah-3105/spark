@@ -40,6 +40,7 @@ import org.apache.spark.util.DirectByteBufferOutputStream
  * A helper class to run Python functions in Spark driver.
  */
 abstract class PythonPlannerRunner[T](func: PythonFunction) extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import BasePythonRunner._
 
   protected val workerModule: String
@@ -122,6 +123,7 @@ abstract class PythonPlannerRunner[T](func: PythonFunction) extends Logging {
     val (worker: PythonWorker, handle: Option[PythonWorkerHandle]) =
       env.createPythonWorker(pythonExec, workerModule, envVars.asScala.toMap, useDaemon)
     var releasedOrClosed = false
+      planChangeLogger.warn("runInPython(useDaemon)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", useDaemon, jobArtifactUUID)
     val bufferStream = new DirectByteBufferOutputStream()
     try {
       val dataOut = new DataOutputStream(new BufferedOutputStream(bufferStream, bufferSize))
@@ -207,6 +209,8 @@ abstract class PythonPlannerRunner[T](func: PythonFunction) extends Logging {
         // Signed byte to unsigned integer
         temp(0) & 0xff
       }
+      planChangeLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+    planChangeLogger.warn("read(b,off,len)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", b, off, len)
     }
 
     private[this] val idleTimeoutMillis: Long = TimeUnit.SECONDS.toMillis(idleTimeoutSeconds)

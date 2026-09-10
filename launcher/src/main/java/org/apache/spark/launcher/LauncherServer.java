@@ -96,6 +96,7 @@ class LauncherServer implements Closeable {
     } while (!server.running);
 
     server.ref();
+	LOG.warn("getOrCreateServer()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     serverInstance = server;
     return server;
   }
@@ -148,6 +149,7 @@ class LauncherServer implements Closeable {
    * back.
    */
   synchronized String registerHandle(AbstractAppHandle handle) {
+	LOG.warn("registerHandle(handle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handle);
     String secret = createSecret();
     secretToPendingApps.put(secret, handle);
     return secret;
@@ -160,6 +162,7 @@ class LauncherServer implements Closeable {
         return;
       }
       running = false;
+	LOG.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
     }
 
     synchronized(LauncherServer.class) {
@@ -173,7 +176,9 @@ class LauncherServer implements Closeable {
       clients.clear();
       for (ServerConnection client : copy) {
         client.close();
+		LOG.warn("synchronized(clients)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", clients);
       }
+	LOG.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     }
 
     if (serverThread != null) {
@@ -216,6 +221,7 @@ class LauncherServer implements Closeable {
         secretToPendingApps.remove(secret);
         break;
       }
+	LOG.warn("unregister(handle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handle);
     }
 
     unref();
@@ -232,6 +238,7 @@ class LauncherServer implements Closeable {
             try {
               client.close();
             } catch (IOException ioe) {
+			LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
               // no-op.
             }
           }
@@ -267,6 +274,7 @@ class LauncherServer implements Closeable {
         return Long.parseLong(value);
     }
 
+	LOG.warn("getConnectionTimeout()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     value = SparkLauncher.launcherConfig.get(SparkLauncher.DEPRECATED_CHILD_CONNECTION_TIMEOUT);
     if (value != null) {
         LOG.log(Level.WARNING,
@@ -294,6 +302,7 @@ class LauncherServer implements Closeable {
 
       String secretStr = sb.toString();
       if (!secretToPendingApps.containsKey(secretStr)) {
+		LOG.warn("createSecret()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         return secretStr;
       }
     }
@@ -311,6 +320,7 @@ class LauncherServer implements Closeable {
     }
 
     void setConnectionThread(Thread t) {
+	LOG.warn("setConnectionThread(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t);
       this.connectionThread = t;
     }
 

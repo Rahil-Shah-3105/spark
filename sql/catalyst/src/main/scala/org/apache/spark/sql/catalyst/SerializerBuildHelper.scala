@@ -33,35 +33,43 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
 object SerializerBuildHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private def nullOnOverflow: Boolean = !SQLConf.get.ansiEnabled
 
   def createSerializerForBoolean(inputObject: Expression): Expression = {
     Invoke(inputObject, "booleanValue", BooleanType)
+    planChangeLogger.warn("createSerializerForBoolean(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForByte(inputObject: Expression): Expression = {
     Invoke(inputObject, "byteValue", ByteType)
+    planChangeLogger.warn("createSerializerForByte(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForShort(inputObject: Expression): Expression = {
     Invoke(inputObject, "shortValue", ShortType)
+    planChangeLogger.warn("createSerializerForShort(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForInteger(inputObject: Expression): Expression = {
     Invoke(inputObject, "intValue", IntegerType)
+    planChangeLogger.warn("createSerializerForInteger(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForLong(inputObject: Expression): Expression = {
     Invoke(inputObject, "longValue", LongType)
+    planChangeLogger.warn("createSerializerForLong(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForFloat(inputObject: Expression): Expression = {
     Invoke(inputObject, "floatValue", FloatType)
+    planChangeLogger.warn("createSerializerForFloat(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForDouble(inputObject: Expression): Expression = {
     Invoke(inputObject, "doubleValue", DoubleType)
+    planChangeLogger.warn("createSerializerForDouble(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForGeographyType(inputObject: Expression, gt: GeographyType): Expression = {
@@ -71,6 +79,7 @@ object SerializerBuildHelper {
       "serializeGeogFromWKB",
       inputObject :: Literal.fromObject(gt) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForGeographyType(inputObject,gt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, gt)
   }
 
   def createSerializerForGeometryType(inputObject: Expression, gt: GeometryType): Expression = {
@@ -80,6 +89,7 @@ object SerializerBuildHelper {
       "serializeGeomFromWKB",
       inputObject :: Literal.fromObject(gt) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForGeometryType(inputObject,gt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, gt)
   }
 
   def createSerializerForChar(inputObject: Expression, length: Int): Expression = {
@@ -89,6 +99,7 @@ object SerializerBuildHelper {
       "charTypeWriteSideCheck",
       createSerializerForString(inputObject) :: Literal(length) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForChar(inputObject,length)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, length)
   }
 
   def createSerializerForVarchar(inputObject: Expression, length: Int): Expression = {
@@ -98,6 +109,7 @@ object SerializerBuildHelper {
       "varcharTypeWriteSideCheck",
       createSerializerForString(inputObject) :: Literal(length) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForVarchar(inputObject,length)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, length)
   }
 
   def createSerializerForString(inputObject: Expression): Expression = {
@@ -107,6 +119,7 @@ object SerializerBuildHelper {
       "fromString",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForString(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForJavaInstant(inputObject: Expression): Expression = {
@@ -116,6 +129,7 @@ object SerializerBuildHelper {
       "instantToMicros",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForJavaInstant(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForScalaEnum(inputObject: Expression): Expression = {
@@ -125,6 +139,7 @@ object SerializerBuildHelper {
         "toString",
         ObjectType(classOf[String]),
         returnNullable = false))
+    planChangeLogger.warn("createSerializerForScalaEnum(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForJavaEnum(inputObject: Expression): Expression =
@@ -137,6 +152,7 @@ object SerializerBuildHelper {
       "fromJavaTimestamp",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForSqlTimestamp(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForAnyTimestamp(inputObject: Expression): Expression = {
@@ -146,6 +162,7 @@ object SerializerBuildHelper {
       "anyToMicros",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForAnyTimestamp(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForLocalDateTime(inputObject: Expression): Expression = {
@@ -155,6 +172,7 @@ object SerializerBuildHelper {
       "localDateTimeToMicros",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForLocalDateTime(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForJavaLocalDate(inputObject: Expression): Expression = {
@@ -164,6 +182,7 @@ object SerializerBuildHelper {
       "localDateToDays",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForJavaLocalDate(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForSqlDate(inputObject: Expression): Expression = {
@@ -173,6 +192,7 @@ object SerializerBuildHelper {
       "fromJavaDate",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForSqlDate(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForAnyDate(inputObject: Expression): Expression = {
@@ -182,6 +202,7 @@ object SerializerBuildHelper {
       "anyToDays",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForAnyDate(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForJavaDuration(inputObject: Expression): Expression = {
@@ -191,6 +212,7 @@ object SerializerBuildHelper {
       "durationToMicros",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForJavaDuration(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForJavaPeriod(inputObject: Expression): Expression = {
@@ -200,10 +222,13 @@ object SerializerBuildHelper {
       "periodToMonths",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForJavaPeriod(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForBigDecimal(inputObject: Expression): Expression = {
     createSerializerForBigDecimal(inputObject, DecimalType.SYSTEM_DEFAULT)
+    planChangeLogger.warn("createSerializerForBigDecimal(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
+  planChangeLogger.warn("createSerializerForBigDecimal(inputObject,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, dt)
   }
 
   def createSerializerForBigDecimal(inputObject: Expression, dt: DecimalType): Expression = {
@@ -222,6 +247,7 @@ object SerializerBuildHelper {
       "fromDecimal",
       inputObject :: Nil,
       returnNullable = false), dt, nullOnOverflow)
+    planChangeLogger.warn("createSerializerForAnyDecimal(inputObject,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, dt)
   }
 
   def createSerializerForBigInteger(inputObject: Expression): Expression = {
@@ -231,6 +257,7 @@ object SerializerBuildHelper {
       "apply",
       inputObject :: Nil,
       returnNullable = false), DecimalType.BigIntDecimal, nullOnOverflow)
+    planChangeLogger.warn("createSerializerForBigInteger(inputObject)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputObject)
   }
 
   def createSerializerForPrimitiveArray(
@@ -242,6 +269,7 @@ object SerializerBuildHelper {
       "fromPrimitiveArray",
       inputObject :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createSerializerForPrimitiveArray(inputObject,dataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, dataType)
   }
 
   def createSerializerForGenericArray(
@@ -252,6 +280,7 @@ object SerializerBuildHelper {
       classOf[GenericArrayData],
       inputObject :: Nil,
       dataType = ArrayType(dataType, nullable))
+    planChangeLogger.warn("createSerializerForGenericArray(inputObject,dataType,nullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, dataType, nullable)
   }
 
   def createSerializerForMapObjects(
@@ -259,6 +288,7 @@ object SerializerBuildHelper {
       dataType: ObjectType,
       funcForNewExpr: Expression => Expression): Expression = {
     MapObjects(funcForNewExpr, inputObject, dataType)
+    planChangeLogger.warn("createSerializerForMapObjects(inputObject,dataType,funcForNewExpr)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, dataType, funcForNewExpr)
   }
 
   case class MapElementInformation(
@@ -279,6 +309,7 @@ object SerializerBuildHelper {
       valueInformation.funcForNewExpr,
       valueNullable = valueInformation.nullable
     )
+    planChangeLogger.warn("createSerializerForMap(inputObject,keyInformation,valueInformation)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, keyInformation, valueInformation)
   }
 
   private def argumentsForFieldSerializer(
@@ -299,6 +330,7 @@ object SerializerBuildHelper {
     } else {
       nonNullOutput
     }
+    planChangeLogger.warn("createSerializerForObject(inputObject,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, fields)
   }
 
   def createSerializerForUserDefinedType(
@@ -307,6 +339,7 @@ object SerializerBuildHelper {
       udtClass: Class[_]): Expression = {
     val obj = NewInstance(udtClass, Nil, dataType = ObjectType(udtClass))
     Invoke(obj, "serialize", udt, inputObject :: Nil)
+    planChangeLogger.warn("createSerializerForUserDefinedType(inputObject,udt,udtClass)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, udt, udtClass)
   }
 
   /**
@@ -317,6 +350,7 @@ object SerializerBuildHelper {
   def createSerializer(enc: AgnosticEncoder[_]): Expression = {
     val input = BoundReference(0, lenientExternalDataTypeFor(enc), nullable = enc.nullable)
     createSerializer(enc, input)
+    planChangeLogger.warn("createSerializer(enc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enc)
   }
 
   /**
@@ -379,6 +413,7 @@ object SerializerBuildHelper {
     case OptionEncoder(valueEnc) =>
       createSerializer(valueEnc, UnwrapOption(externalDataTypeFor(valueEnc), input))
 
+    planChangeLogger.warn("createSerializerDefault(enc,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", enc, input)
     case ArrayEncoder(elementEncoder, containsNull) =>
       if (elementEncoder.isPrimitive) {
         createSerializerForPrimitiveArray(input, elementEncoder.dataType)

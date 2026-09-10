@@ -33,6 +33,7 @@ from pyspark.errors.exceptions.base import IllegalArgumentException
 
 if TYPE_CHECKING:
     from pyspark.sql.pandas._typing import DataFrameLike as PandasDataFrameLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["TwsTester"]
 
@@ -44,22 +45,29 @@ class _InMemoryTimers:
         self._key_to_timers: dict[Any, set[int]] = {}
 
     def registerTimer(self, grouping_key: Any, expiryTimestampMs: int) -> None:
+        logger.warning("registerTimer(self,grouping_key,expiryTimestampMs)=%s,<redacted>,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
         if grouping_key not in self._key_to_timers:
             self._key_to_timers[grouping_key] = set()
         self._key_to_timers[grouping_key].add(expiryTimestampMs)
+        logger.warning("registerTimer(self,expiryTimestampMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
 
     def deleteTimer(self, grouping_key: Any, expiryTimestampMs: int) -> None:
         if grouping_key in self._key_to_timers:
+            logger.warning("deleteTimer(self,grouping_key,expiryTimestampMs)=%s,<redacted>,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
             self._key_to_timers[grouping_key].discard(expiryTimestampMs)
             if not self._key_to_timers[grouping_key]:
                 del self._key_to_timers[grouping_key]
+                logger.warning("deleteTimer(self,expiryTimestampMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
 
     def listTimers(self, grouping_key: Any) -> Iterator[int]:
+        logger.warning("listTimers(self,grouping_key)=%s,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         if grouping_key in self._key_to_timers:
             return iter(sorted(self._key_to_timers[grouping_key]))
+        logger.warning("listTimers(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return iter([])
 
     def getAllKeysWithTimers(self) -> Iterator[Any]:
+        logger.warning("getAllKeysWithTimers(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return iter(self._key_to_timers.keys())
 
 
@@ -81,10 +89,12 @@ class _InMemoryValueState(ValueState):
         return self._get_value() is not None
 
     def get(self) -> Optional[tuple]:
+        logger.warning("get(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._get_value()
 
     def update(self, newValue: tuple) -> None:
         key = self.handle.grouping_key
+        logger.warning("update(self,newValue)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, newValue)
         self.state[key] = newValue
 
     def clear(self) -> None:
@@ -125,6 +135,7 @@ class _InMemoryListState(ListState):
 
     def appendList(self, newState: list[tuple]) -> None:
         key = self.handle.grouping_key
+        logger.warning("appendList(self,newState)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, newState)
         if not self.exists():
             self.state[key] = []
         self.state[key].extend(newState)
@@ -153,6 +164,7 @@ class _InMemoryMapState(MapState):
 
     def getValue(self, key: tuple) -> Optional[tuple]:
         map_state = self._get_map()
+        logger.warning("getValue(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         if map_state is None:
             return None
         return map_state.get(key, None)
@@ -165,6 +177,7 @@ class _InMemoryMapState(MapState):
 
     def updateValue(self, key: tuple, value: tuple) -> None:
         grouping_key = self.handle.grouping_key
+        logger.warning("updateValue(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         if not self.exists():
             self.state[grouping_key] = {}
         self.state[grouping_key][key] = value
@@ -188,6 +201,7 @@ class _InMemoryMapState(MapState):
         return iter(map_state.values())
 
     def removeKey(self, key: tuple) -> None:
+        logger.warning("removeKey(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         map_state = self._get_map()
         if map_state is not None and key in map_state:
             del map_state[key]
@@ -210,11 +224,14 @@ class _InMemoryStatefulProcessorHandle(StatefulProcessorHandle):
         self._currentWatermarkMs: int = 0
 
     def setGroupingKey(self, key: Any) -> None:
+        logger.warning("setGroupingKey(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         self.grouping_key = key
 
     def setWatermark(self, watermarkMs: int) -> None:
         """Updates the current watermark. Used by TwsTester to sync watermark state."""
+        logger.warning("setWatermark(self,watermarkMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, watermarkMs)
         self._currentWatermarkMs = watermarkMs
+        logger.warning("setWatermark(self,currentWatermarkMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, currentWatermarkMs)
 
     def getValueState(
         self,
@@ -281,6 +298,7 @@ class _InMemoryStatefulProcessorHandle(StatefulProcessorHandle):
         if stateName in self.value_states:
             del self.value_states[stateName]
         if stateName in self.list_states:
+            logger.warning("deleteIfExists(self,stateName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName)
             del self.list_states[stateName]
         if stateName in self.map_states:
             del self.map_states[stateName]
@@ -292,12 +310,14 @@ class _InMemoryStatefulProcessorHandle(StatefulProcessorHandle):
             self.list_states[stateName].clear()
         elif stateName in self.map_states:
             self.map_states[stateName].clear()
+            logger.warning("deleteState(self,stateName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName)
         else:
             raise PySparkAssertionError(
                 errorClass="STATE_NOT_EXISTS",
                 messageParameters={},
             )
 
+            logger.warning("deleteState(self,stateName,key)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName, key)
 
 def _asRowList(x: list[Any]) -> list[Row]:
     return cast(list[Row], x)
@@ -521,6 +541,7 @@ class TwsTester:
 
     def updateValueState(self, stateName: str, key: Any, value: tuple) -> None:
         """Sets the value state for a given key."""
+        logger.warning("updateValueState(self,stateName,key,value)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName, key, value)
         assert stateName in self.handle.value_states, f"State {stateName} has not been initialized."
         self.handle.value_states[stateName].state[key] = value
 
@@ -536,6 +557,7 @@ class TwsTester:
 
     def updateListState(self, stateName: str, key: Any, value: list[tuple]) -> None:
         """Sets the list state for a given key."""
+        logger.warning("updateListState(self,stateName,key,value)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName, key, value)
         assert stateName in self.handle.list_states, f"State {stateName} has not been initialized."
         self.handle.list_states[stateName].state[key] = value
 
@@ -545,12 +567,14 @@ class TwsTester:
 
         Returns an empty list if the state does not exist for the given key.
         """
+        logger.warning("peekListState(self,stateName,key)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, stateName, key)
         assert stateName in self.handle.list_states, f"State {stateName} has not been initialized."
         self.handle.setGroupingKey(key)
         return list(self.handle.list_states[stateName].get())
 
     def updateMapState(self, stateName: str, key: Any, value: dict) -> None:
         """Sets the map state for a given key."""
+        logger.warning("updateMapState(self,stateName,key,value)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName, key, value)
         assert stateName in self.handle.map_states, f"State {stateName} has not been initialized."
         self.handle.map_states[stateName].state[key] = dict(value)
 
@@ -649,6 +673,7 @@ class TwsTester:
                 },
             )
         if currentTimeMs <= self._currentProcessingTimeMs:
+            logger.warning("setProcessingTime(self,currentTimeMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, currentTimeMs)
             raise IllegalArgumentException(
                 message=f"Processing time must move forward. "
                 f"Current: {self._currentProcessingTimeMs} ms, provided: {currentTimeMs} ms."

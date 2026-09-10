@@ -31,8 +31,10 @@ private[columnar] object CachedColumnIndices {
    * if the attribute is not part of the cached schema.
    */
   def apply(cacheAttributes: Seq[Attribute], selectedAttributes: Seq[Attribute]): Array[Int] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // The explicit AttributeSeq wrapper is required. On a bare Seq[Attribute] the inherited
     // Seq.indexOf[B >: Attribute](elem: B) wins overload resolution with B inferred as Any, so
+    planChangeLogger.warn("apply(cacheAttributes,selectedAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cacheAttributes, selectedAttributes)
     // the implicit conversion never fires and every column silently resolves to -1.
     val cacheAttributeSeq = AttributeSeq(cacheAttributes)
     selectedAttributes.map(a => cacheAttributeSeq.indexOf(a.exprId)).toArray

@@ -93,12 +93,14 @@ private[spark] class DiskBlockManager(
   // This method should be kept in sync with
   // org.apache.spark.network.shuffle.ExecutorDiskUtils#getFilePath().
   def getFile(filename: String): File = {
+    _driverLogger = DriverLogger(_conf)
     // Figure out which local directory it hashes to, and which subdirectory in that
     val hash = Utils.nonNegativeHash(filename)
     val dirId = hash % localDirs.length
     val subDirId = (hash / localDirs.length) % subDirsPerLocalDir
 
     // Create the subdirectory if it doesn't already exist
+    _driverLogger.warn("getFile(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", filename, dirId)
     val subDir = subDirs(dirId).synchronized {
       val old = subDirs(dirId)(subDirId)
       if (old != null) {
@@ -144,6 +146,8 @@ private[spark] class DiskBlockManager(
         throw SparkException.internalError(
           s"Only merged block ID is supported, but got $blockId", category = "STORAGE")
     }
+        _driverLogger.warn("getMergedShuffleFile(blockId,dirs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, dirs, blockId)
+        _driverLogger.warn("getMergedShuffleFile(filename,dirs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filename, dirs)
   }
 
   private def getMergedShuffleFile(filename: String, dirs: Option[Array[String]]): File = {
@@ -171,6 +175,7 @@ private[spark] class DiskBlockManager(
       val files = dir.listFiles()
       if (files != null) files.toImmutableArraySeq else Seq.empty
     }.toImmutableArraySeq
+    _driverLogger.warn("getAllFiles()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** List all the blocks currently stored on disk by the disk manager. */
@@ -201,6 +206,7 @@ private[spark] class DiskBlockManager(
     val currentPerms = Files.getPosixFilePermissions(path)
     currentPerms.add(PosixFilePermission.OTHERS_READ)
     Files.setPosixFilePermissions(path, currentPerms)
+    _driverLogger.warn("createWorldReadableFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /**
@@ -216,6 +222,7 @@ private[spark] class DiskBlockManager(
       createWorldReadableFile(tmpFile)
     }
     tmpFile
+    _driverLogger.warn("createTempFileWith(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /** Produces a unique block id and File suitable for storing local intermediate results. */
@@ -225,6 +232,7 @@ private[spark] class DiskBlockManager(
       blockId = TempLocalBlockId(UUID.randomUUID())
     }
     (blockId, getFile(blockId))
+    _driverLogger.warn("createTempLocalBlock()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId)
   }
 
   /** Produces a unique block id and File suitable for storing shuffled intermediate results. */
@@ -233,6 +241,7 @@ private[spark] class DiskBlockManager(
     while (getFile(blockId).exists()) {
       blockId = TempShuffleBlockId(UUID.randomUUID())
     }
+    _driverLogger.warn("createTempShuffleBlock()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId)
     val tmpFile = getFile(blockId)
     if (permissionChangingRequired) {
       // SPARK-37618: we need to make the file world readable because the parent will
@@ -261,6 +270,7 @@ private[spark] class DiskBlockManager(
           None
       }
     }
+    _driverLogger.warn("createLocalDirs(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -299,6 +309,7 @@ private[spark] class DiskBlockManager(
         }
       }
     }
+    _driverLogger.warn("createLocalDirsForMergedShuffleBlocks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -308,6 +319,7 @@ private[spark] class DiskBlockManager(
    */
   def createDirWithPermission770(dirToCreate: File): Unit = {
     var attempts = 0
+    _driverLogger.warn("createDirWithPermission770(dirToCreate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dirToCreate)
     val maxAttempts = Utils.MAX_DIR_CREATION_ATTEMPTS
     var created: File = null
     while (created == null) {
@@ -341,6 +353,7 @@ private[spark] class DiskBlockManager(
     mapper.registerModule(DefaultScalaModule)
     val jsonString = mapper.writeValueAsString(mergedMetaMap)
     jsonString
+    _driverLogger.warn("getMergeDirectoryAndAttemptIDJsonString()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def addShutdownHook(): AnyRef = {
@@ -349,6 +362,7 @@ private[spark] class DiskBlockManager(
       logInfo("Shutdown hook called")
       DiskBlockManager.this.doStop()
     }
+    _driverLogger.warn("addShutdownHook()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Cleanup local dirs and stop shuffle sender. */

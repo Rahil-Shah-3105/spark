@@ -56,5 +56,6 @@ private[sql] object SqlApiConfHelper {
    */
   def setConfGetter(getter: () => SqlApiConf): Unit = {
     confGetter.set(getter)
+    logger.warn("setConfGetter(getter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getter)
   }
 }

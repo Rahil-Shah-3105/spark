@@ -30,6 +30,7 @@ import org.apache.spark.sql.types._
  * Functions to help with checking for valid data types and value comparison of various types.
  */
 object TypeUtils extends QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def checkForOrderingExpr(dt: DataType, caller: String): TypeCheckResult = {
     if (RowOrdering.isOrderable(dt)) {
@@ -102,6 +103,7 @@ object TypeUtils extends QueryErrorsBase {
     } else {
       PhysicalNumericType.numeric(t.asInstanceOf[NumericType])
     }
+    planChangeLogger.warn("getNumeric(t,exactNumericRequired)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t, exactNumericRequired)
   }
 
   @scala.annotation.tailrec
@@ -110,6 +112,7 @@ object TypeUtils extends QueryErrorsBase {
       case udt: UserDefinedType[_] => getInterpretedOrdering(udt.sqlType)
       case other => PhysicalDataType.ordering(other)
     }
+    planChangeLogger.warn("getInterpretedOrdering(t)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", t)
   }
 
   /**

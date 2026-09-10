@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.IntegerType
  * [[Tail]] integer expressions.
  */
 class LimitLikeExpressionValidator extends QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def validateLimitLikeExpr(
       limitLikeExpression: Expression,
       partiallyResolvedLimitLike: LogicalPlan
@@ -50,6 +51,7 @@ class LimitLikeExpressionValidator extends QueryErrorsBase {
         }
       case _ =>
     }
+    planChangeLogger.warn("checkValidLimitWithOffset(evaluatedExpression,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", evaluatedExpression, plan)
   }
 
   /**

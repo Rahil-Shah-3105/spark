@@ -115,6 +115,7 @@ class GBTRegressor @Since("1.4.0") (@Since("1.4.0") override val uid: String)
   def setImpurity(value: String): this.type = {
     logWarning("GBTRegressor.setImpurity should NOT be used")
     this
+    logger.warn("setImpurity(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   // Parameters from TreeEnsembleParams:
@@ -152,6 +153,7 @@ class GBTRegressor @Since("1.4.0") (@Since("1.4.0") override val uid: String)
   @Since("2.4.0")
   def setValidationIndicatorCol(value: String): this.type = {
     set(validationIndicatorCol, value)
+    logger.warn("setValidationIndicatorCol(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**
@@ -370,6 +372,7 @@ object GBTRegressionModel extends MLReadable[GBTRegressionModel] {
         "numFeatures" -> instance.numFeatures,
         "numTrees" -> instance.getNumTrees)
       EnsembleModelReadWrite.saveImpl(instance, path, sparkSession, extraMetadata)
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 

@@ -133,6 +133,7 @@ trait TestGroupState[S] extends GroupState[S] {
 }
 
 object TestGroupState {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Creates TestGroupState instances for general testing purposes.
@@ -168,5 +169,6 @@ object TestGroupState {
       timeoutConf,
       hasTimedOut,
       eventTimeWatermarkMs.isPresent())
+    planChangeLogger.warn("create(optionalState,timeoutConf,batchProcessingTimeMs,eventTimeWatermarkMs,hasTimedOut)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", optionalState, timeoutConf, batchProcessingTimeMs, eventTimeWatermarkMs, hasTimedOut)
   }
 }

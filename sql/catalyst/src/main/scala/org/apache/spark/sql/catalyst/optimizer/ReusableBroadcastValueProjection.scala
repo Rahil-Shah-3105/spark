@@ -34,6 +34,7 @@ private[sql] object ReusableBroadcastValueProjection extends PredicateHelper {
   // references, and preserve their time-zone, collation, and equality semantics. Extend it only
   // when those properties hold; runtime limits and recoverable failures disable projection.
   private def isSafeValueExpression(expression: Expression): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     expression.deterministic && !expression.exists {
       case _: OuterReference | _: SubqueryExpression => true
       case _ => false
@@ -64,6 +65,7 @@ private[sql] object ReusableBroadcastValueProjection extends PredicateHelper {
       valueExpression: Expression,
       valuePlan: LogicalPlan,
       excludedPlan: LogicalPlan): Option[BroadcastValueProjection] = {
+       planChangeLogger.warn("find(valueExpression,valuePlan,excludedPlan)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", valueExpression, valuePlan, excludedPlan)
 
     def descend(
         value: Expression,

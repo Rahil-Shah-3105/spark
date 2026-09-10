@@ -68,6 +68,7 @@ class ResolverGuard(
     catalogManager: CatalogManager,
     tracker: Option[QueryPlanningTracker] = None
 ) extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val v1SessionCatalog = catalogManager.v1SessionCatalog
 
   /**
@@ -86,6 +87,7 @@ class ResolverGuard(
       checkOperator(operator)
     }
 
+    planChangeLogger.warn("apply(operator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operator)
     tryThrowUnsupportedSinglePassAnalyzerFeature(unsupportedReason)
 
     ResolverGuardResult(unsupportedReason)
@@ -340,6 +342,7 @@ class ResolverGuard(
 
   private def checkUnresolvedSubqueryColumnAliases(
       unresolvedSubqueryColumnAliases: UnresolvedSubqueryColumnAliases) =
+    planChangeLogger.warn("checkUnresolvedSubqueryColumnAliases(unresolvedSubqueryColumnAliases)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedSubqueryColumnAliases)
     checkOperator(unresolvedSubqueryColumnAliases.child)
 
   private def checkSubqueryAlias(subqueryAlias: SubqueryAlias) =
@@ -459,6 +462,7 @@ class ResolverGuard(
 
   private def checkGetStructField(getStructField: GetStructField) = {
     checkExpression(getStructField.child)
+    planChangeLogger.warn("checkGetStructField(getStructField)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getStructField)
   }
 
   private def checkNamePlaceholder() = None
@@ -503,6 +507,7 @@ class ResolverGuard(
 
   private def checkCreateNamedStruct(createNamedStruct: CreateNamedStruct) = {
     createNamedStruct.children.collectFirst { case CheckExpression(reason) => reason }
+    planChangeLogger.warn("checkCreateNamedStruct(createNamedStruct)={}): EUAIACT-AUDIT: State change recorded for the audit trail", createNamedStruct)
   }
 
   /**

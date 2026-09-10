@@ -39,6 +39,7 @@ import org.apache.spark.unsafe.types.{CalendarInterval, TimestampNanosVal, UTF8S
  * precision.
  */
 object DateTimeUtils extends SparkDateTimeUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // See http://stackoverflow.com/questions/466321/convert-unix-timestamp-to-julian
   // It's 2440587.5, rounding up to be compatible with Hive.
@@ -103,6 +104,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getHours(micros: Long, zoneId: ZoneId): Int = {
     getLocalDateTime(micros, zoneId).getHour
+    planChangeLogger.warn("getHours(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   /**
@@ -110,6 +112,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getHoursOfTime(nanos: Long): Int = {
     nanosToLocalTime(nanos).getHour
+    planChangeLogger.warn("getHoursOfTime(nanos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nanos)
   }
 
   /**
@@ -118,6 +121,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getMinutes(micros: Long, zoneId: ZoneId): Int = {
     getLocalDateTime(micros, zoneId).getMinute
+    planChangeLogger.warn("getMinutes(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   /**
@@ -125,6 +129,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getMinutesOfTime(nanos: Long): Int = {
     nanosToLocalTime(nanos).getMinute
+    planChangeLogger.warn("getMinutesOfTime(nanos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nanos)
   }
 
   /**
@@ -133,6 +138,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getSeconds(micros: Long, zoneId: ZoneId): Int = {
     getLocalDateTime(micros, zoneId).getSecond
+    planChangeLogger.warn("getSeconds(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   /**
@@ -140,12 +146,14 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getSecondsOfTime(nanos: Long): Int = {
     nanosToLocalTime(nanos).getSecond
+    planChangeLogger.warn("getSecondsOfTime(nanos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nanos)
   }
   /**
    * Returns the seconds part and its fractional part with microseconds.
    */
   def getSecondsWithFraction(micros: Long, zoneId: ZoneId): Decimal = {
     Decimal(getMicroseconds(micros, zoneId), 8, 6)
+    planChangeLogger.warn("getSecondsWithFraction(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   /**
@@ -160,6 +168,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
     val nanosOfMinute =
       getMicroseconds(ts.epochMicros, zoneId) * NANOS_PER_MICROS + ts.nanosWithinMicro
     Decimal(nanosOfMinute, 11, 9)
+    planChangeLogger.warn("getSecondsWithFractionNanos(ts,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ts, zoneId, zoneId)
   }
 
   /**
@@ -173,6 +182,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
   def getSecondsOfTimeWithFraction(nanos: Long, precision: Int): Decimal = {
     val seconds = (nanos / NANOS_PER_SECOND) % SECONDS_PER_MINUTE
     val scaleFactor = math.pow(10, precision).toLong
+    planChangeLogger.warn("getSecondsOfTimeWithFraction(nanos,precision)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nanos, precision)
     val scaledFraction = (nanos % NANOS_PER_SECOND) * scaleFactor / NANOS_PER_SECOND
     val fraction = scaledFraction.toDouble / scaleFactor
     Decimal(seconds + fraction, 2 + precision, precision)
@@ -187,6 +197,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
   def getMicroseconds(micros: Long, zoneId: ZoneId): Int = {
     val lt = getLocalDateTime(micros, zoneId)
     (lt.getLong(ChronoField.MICRO_OF_SECOND) + lt.getSecond * MICROS_PER_SECOND).toInt
+    planChangeLogger.warn("getMicroseconds(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   /**
@@ -237,6 +248,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getWeekOfYear(days: Int): Int = {
     LocalDate.ofEpochDay(days).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+    planChangeLogger.warn("getWeekOfYear(days)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", days)
   }
 
   /**
@@ -245,6 +257,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def dateAddMonths(days: Int, months: Int): Int = {
     localDateToDays(daysToLocalDate(days).plusMonths(months))
+    planChangeLogger.warn("dateAddMonths(days,months)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", days, months)
   }
 
   /**
@@ -255,6 +268,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       .of(getMonth(days))
       .getDisplayName(TextStyle.SHORT, DateFormatter.defaultLocale)
 
+      planChangeLogger.warn("getMonthName(days)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", days)
     UTF8String.fromString(monthName)
   }
 
@@ -266,6 +280,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       .of(getWeekDay(days) + 1)
       .getDisplayName(TextStyle.SHORT, DateFormatter.defaultLocale)
 
+      planChangeLogger.warn("getDayName(days)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", days)
     UTF8String.fromString(dayName)
   }
 
@@ -281,6 +296,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def timestampAddMonths(micros: Long, months: Int, zoneId: ZoneId): Long = {
     instantToMicros(microsToInstant(micros).atZone(zoneId).plusMonths(months).toInstant)
+    planChangeLogger.warn("timestampAddMonths(micros,months,zoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", micros, months, zoneId, zoneId)
   }
 
   /**
@@ -315,6 +331,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       .plusDays(days)
       .plus(microseconds, ChronoUnit.MICROS)
     instantToMicros(resultTimestamp.toInstant)
+      planChangeLogger.warn("timestampAddDayTime(micros,dayTime,zoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", micros, dayTime, zoneId, zoneId)
   }
 
   /**
@@ -421,6 +438,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
   def dateAddInterval(
      start: Int,
      interval: CalendarInterval): Int = {
+      planChangeLogger.warn("dateAddInterval(start,interval)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", start, interval)
     if (interval.microseconds != 0) {
       throw QueryExecutionErrors.invalidIntervalWithMicrosecondsAdditionError()
     }
@@ -509,6 +527,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
           errorClass = "ILLEGAL_DAY_OF_WEEK",
           messageParameters = Map("string" -> string.toString))
     }
+    planChangeLogger.warn("getDayOfWeekFromString(string)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", string)
   }
 
   /**
@@ -517,12 +536,14 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def getNextDateForDayOfWeek(startDay: Int, dayOfWeek: Int): Int = {
     startDay + 1 + ((dayOfWeek - 1 - startDay) % 7 + 7) % 7
+    planChangeLogger.warn("getNextDateForDayOfWeek(startDay,dayOfWeek)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", startDay, dayOfWeek)
   }
 
   /** Returns last day of the month for the given number of days since 1970-01-01. */
   def getLastDayOfMonth(days: Int): Int = {
     val localDate = daysToLocalDate(days)
     (days - localDate.getDayOfMonth) + localDate.lengthOfMonth()
+    planChangeLogger.warn("getLastDayOfMonth(days)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", days)
   }
 
   // The constants are visible for testing purpose only.
@@ -561,11 +582,13 @@ object DateTimeUtils extends SparkDateTimeUtils {
         // caller make sure that this should never be reached
         throw QueryExecutionErrors.unreachableError(s": Invalid trunc level: $level")
     }
+    planChangeLogger.warn("truncDate(days,level)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", days, level)
   }
 
   private def truncToUnit(micros: Long, zoneId: ZoneId, unit: ChronoUnit): Long = {
     val truncated = microsToInstant(micros).atZone(zoneId).truncatedTo(unit)
     instantToMicros(truncated.toInstant)
+    planChangeLogger.warn("truncToUnit(micros,zoneId,unit)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", micros, zoneId, unit, zoneId)
   }
 
   /**
@@ -608,6 +631,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
     val originalSec = Math.floorDiv(micros, MICROS_PER_SECOND)
     val originalOffsetSec =
       rules.getOffset(Instant.ofEpochSecond(originalSec)).getTotalSeconds.toLong
+      planChangeLogger.warn("truncTimestamp(micros,level,zoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", micros, level, zoneId, zoneId)
     val offsetMicros = originalOffsetSec * MICROS_PER_SECOND
     try {
       val local = Math.addExact(micros, offsetMicros)
@@ -655,6 +679,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       case TRUNC_TO_DAY => truncToUnit(micros, zoneId, ChronoUnit.DAYS)
       case _ => daysToMicros(truncDate(microsToDays(micros, zoneId), level), zoneId)
     }
+    planChangeLogger.warn("truncTimestampSlow(micros,level,zoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", micros, level, zoneId, zoneId)
   }
 
   /**
@@ -686,6 +711,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       case _ =>
         throw QueryExecutionErrors.invalidTimeUnitError("time_trunc", level.toString)
     }
+    planChangeLogger.warn("parseTimeTruncLevel(level)={}): EUAIACT-AUDIT: State change recorded for the audit trail", level)
   }
 
   /**
@@ -694,6 +720,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
    */
   def timeTrunc(level: UTF8String, nanos: Long): Long = {
     localTimeToNanos(nanosToLocalTime(nanos).truncatedTo(parseTimeTruncLevel(level)))
+    planChangeLogger.warn("timeTrunc(level,nanos)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", level, nanos)
   }
 
   /**
@@ -718,6 +745,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
         case _ => TRUNC_INVALID
       }
     }
+    planChangeLogger.warn("parseTruncLevel(format)={}): EUAIACT-AUDIT: State change recorded for the audit trail", format)
   }
 
   /**
@@ -899,6 +927,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       case _ =>
         throw QueryExecutionErrors.invalidTimeUnitError(functionName, unitStr)
     }
+    planChangeLogger.warn("getNanosPerTimeUnit(unit,functionName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", unit, functionName)
   }
 
   /**
@@ -989,6 +1018,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       case e: Throwable =>
         throw SparkException.internalError(s"Failure of 'timestampAdd': ${e.getMessage}")
     }
+    planChangeLogger.warn("timestampAdd(unit,quantity,micros,zoneId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", unit, quantity, micros, zoneId, zoneId)
   }
 
   private val timestampDiffMap = Map[String, (Temporal, Temporal) => Long](
@@ -1275,6 +1305,7 @@ object DateTimeUtils extends SparkDateTimeUtils {
       throw QueryExecutionErrors.timeAddIntervalOverflowError(
         time, timePrecision, interval, intervalEndField)
     }
+    planChangeLogger.warn("timeAddInterval(time,timePrecision,interval,intervalEndField,targetPrecision)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", time, timePrecision, interval, intervalEndField, targetPrecision, result)
   }
 
   /**

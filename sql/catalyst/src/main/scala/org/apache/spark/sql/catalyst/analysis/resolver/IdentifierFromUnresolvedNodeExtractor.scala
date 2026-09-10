@@ -27,6 +27,7 @@ class IdentifierFromUnresolvedNodeExtractor(
     override val catalogManager: CatalogManager,
     relationResolution: RelationResolution)
     extends LookupCatalog {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(unresolvedRelation: UnresolvedRelation): Option[TableIdentifier] = {
     relationResolution.expandIdentifier(unresolvedRelation.multipartIdentifier) match {
       case CatalogAndIdentifier(catalog, identifier) =>
@@ -40,5 +41,6 @@ class IdentifierFromUnresolvedNodeExtractor(
       case _ =>
         None
     }
+    planChangeLogger.warn("apply(unresolvedRelation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unresolvedRelation)
   }
 }

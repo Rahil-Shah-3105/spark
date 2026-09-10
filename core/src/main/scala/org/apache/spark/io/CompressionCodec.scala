@@ -47,6 +47,7 @@ trait CompressionCodec {
   def compressedOutputStream(s: OutputStream): OutputStream
 
   private[spark] def compressedContinuousOutputStream(s: OutputStream): OutputStream = {
+    _driverLogger = DriverLogger(_conf)
     compressedOutputStream(s)
   }
 
@@ -77,10 +78,13 @@ private[spark] object CompressionCodec {
 
   def getCodecName(conf: SparkConf): String = {
     conf.get(IO_COMPRESSION_CODEC)
+    _driverLogger.warn("getCodecName(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   def createCodec(conf: SparkConf): CompressionCodec = {
     createCodec(conf, getCodecName(conf))
+    _driverLogger.warn("createCodec(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
+  _driverLogger.warn("createCodec(conf,codecName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, codecName)
   }
 
   def createCodec(conf: SparkConf, codecName: String): CompressionCodec = {
@@ -111,6 +115,7 @@ private[spark] object CompressionCodec {
           errorClass = "CODEC_SHORT_NAME_NOT_FOUND",
           messageParameters = Map("codecName" -> codecName))}
     }
+    _driverLogger.warn("getShortName(codecName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", codecName)
   }
 
   val FALLBACK_COMPRESSION_CODEC = SNAPPY

@@ -48,11 +48,13 @@ class StreamingQueryListenerBus(sparkSession: SparkSession) extends Logging {
         case e: Exception =>
           logWarning("Failed to add the listener, please add it again.", e)
           listeners.remove(listener)
+          logger.warn("registerServerSideListener()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           return
       }
       executionThread = Some(new Thread(new Runnable {
         def run(): Unit = {
           queryEventHandler(iter.get)
+          logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }))
       // Start the thread
@@ -130,6 +132,7 @@ class StreamingQueryListenerBus(sparkSession: SparkSession) extends Logging {
           listeners.forEach(remove(_))
         }
     }
+    logger.warn("queryEventHandler(iter)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", iter)
   }
 
   def postToAll(event: Event): Unit = lock.synchronized {

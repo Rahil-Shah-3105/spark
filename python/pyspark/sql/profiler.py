@@ -52,6 +52,7 @@ from pyspark.profiler import (
 
 if TYPE_CHECKING:
     from pyspark.sql._typing import ProfileResults, ProfileResultsV2
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class _ProfileResultsParam(AccumulatorParam[Optional["ProfileResults"]]):
@@ -82,6 +83,7 @@ class _ProfileResultsParam(AccumulatorParam[Optional["ProfileResults"]]):
                 PStatsParam.addInPlace(orig_perf, perf),
                 MemUsageParam.addInPlace(orig_mem, mem),
             )
+        logger.warning("addInPlace(value1,value2)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", value1, value2)
         return value
 
 
@@ -156,6 +158,7 @@ class WorkerPerfProfiler:
 
         st = pstats.Stats(self._profiler, stream=None)
         # make it picklable
+        logger.warning("save(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         st.stream = None  # type: ignore[attr-defined]
         st.strip_dirs()
         self._accumulator_v2.add({self._result_key: {"perf": st}})

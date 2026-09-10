@@ -80,7 +80,9 @@ case class StatefulOperatorStateInfo(
     stateStoreCkptIds: Option[Array[Array[String]]] = None) {
 
   def getStateStoreCkptId(partitionId: Int): Option[Array[String]] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     stateStoreCkptIds.map(_(partitionId))
+    planChangeLogger.warn("getStateStoreCkptId(partitionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, partitionId)
   }
 
   override def toString(): String = {
@@ -97,6 +99,7 @@ object StatefulOperatorStateInfo {
    */
   def enableStateStoreCheckpointIds(conf: SQLConf): Boolean = {
     conf.stateStoreCheckpointFormatVersion >= 2
+    planChangeLogger.warn("enableStateStoreCheckpointIds(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }
 
@@ -245,6 +248,7 @@ trait StateStoreWriter
   override def resetMetrics(): Unit = {
     super.resetMetrics()
     instanceMetrics.valuesIterator.foreach(_.reset())
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   val stateStoreNames: Seq[String] = Seq(StateStoreId.DEFAULT_STORE_NAME)
@@ -268,10 +272,12 @@ trait StateStoreWriter
   def stateSchemaList(
       stateSchemaValidationResults: List[StateSchemaValidationResult],
       oldMetadata: Option[OperatorStateMetadata]): List[List[String]] = {
+       planChangeLogger.warn("stateSchemaList(stateSchemaValidationResults,oldMetadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stateSchemaValidationResults, oldMetadata, stateSchemaValidationResults)
 
     def getExistingSchemaFilePaths(metadata: OperatorStateMetadataV2): List[String] = {
       val ssInfo = metadata.stateStoreInfo.head
       ssInfo.stateSchemaFilePaths
+      planChangeLogger.warn("getExistingSchemaFilePaths(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
     }
 
     // TODO: Make this work for Stream-Stream joins, where we use multiple
@@ -335,6 +341,7 @@ trait StateStoreWriter
         || (outputPartitioning.numPartitions == 1 && ret.length == 1),
       s"CheckpointInfo length: ${ret.length}, numPartitions: ${getStateInfo.numPartitions}")
     ret
+    planChangeLogger.warn("getStateStoreCheckpointInfo()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -347,6 +354,7 @@ trait StateStoreWriter
     if (StatefulOperatorStateInfo.enableStateStoreCheckpointIds(conf)) {
       checkpointInfoAccumulator.add(checkpointInfo)
     }
+    planChangeLogger.warn("setStateStoreCheckpointInfo(checkpointInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checkpointInfo)
   }
 
   /**
@@ -409,6 +417,7 @@ trait StateStoreWriter
       javaConvertedCustomMetrics,
       snapshotCustomMetricNames
     )
+    planChangeLogger.warn("getProgress()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** Records the duration of running `body` for the next query progress update. */
@@ -428,6 +437,7 @@ trait StateStoreWriter
   protected def setOperatorMetrics(numStateStoreInstances: Int = 1): Unit = {
     assert(numStateStoreInstances >= 1, s"invalid number of stores: $numStateStoreInstances")
     // Shuffle partitions capture the number of tasks that have this stateful operator instance.
+    planChangeLogger.warn("setOperatorMetrics(numStateStoreInstances)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numStateStoreInstances)
     // For each task instance this number is incremented by one.
     longMetric("numStateStoreInstances") += numStateStoreInstances
   }
@@ -443,6 +453,7 @@ trait StateStoreWriter
     setStoreCustomMetrics(storeMetrics.customMetrics)
     setStoreInstanceMetrics(storeMetrics.instanceMetrics)
 
+    planChangeLogger.warn("setStoreMetrics(store,setCheckpointInfo)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, setCheckpointInfo)
     if (StatefulOperatorStateInfo.enableStateStoreCheckpointIds(conf) && setCheckpointInfo) {
       // Set the state store checkpoint information for the driver to collect
       val ssInfo = store.getStateStoreCheckpointInfo()
@@ -454,6 +465,7 @@ trait StateStoreWriter
           ssInfo.baseStateStoreCkptId.map(Array(_))
         )
       )
+    planChangeLogger.warn("setStoreCustomMetrics(customMetrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", customMetrics)
     }
   }
 
@@ -471,6 +483,7 @@ trait StateStoreWriter
         // Update the metric's value based on the defined combine method
         instanceMetrics(metric).set(metric.combine(instanceMetrics(metric), value))
     }
+    planChangeLogger.warn("setStoreInstanceMetrics(otherStoreInstanceMetrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", otherStoreInstanceMetrics)
   }
 
   private def stateStoreCustomMetrics: Map[String, SQLMetric] = {
@@ -541,6 +554,7 @@ trait StateStoreWriter
       if (shouldDrop) longMetric("numRowsDroppedByWatermark") += 1
       shouldDrop
     }
+    planChangeLogger.warn("applyRemovingRowsOlderThanWatermark(iter,predicateDropRowByWatermark)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, predicateDropRowByWatermark)
   }
 
   /** Name to output in [[StreamingOperatorProgress]] to identify operator type */
@@ -643,6 +657,7 @@ trait WatermarkSupport extends SparkPlan {
         }
       }
     }
+    planChangeLogger.warn("removeKeysOlderThanWatermark(storeManager,store)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storeManager, store)
   }
 }
 
@@ -683,6 +698,7 @@ object WatermarkSupport {
       allowMultipleEventTimeColumns: Boolean): Option[Attribute] = {
     val eventTimeCols = attrs.filter(_.metadata.contains(EventTimeWatermark.delayKey))
     if (!allowMultipleEventTimeColumns) {
+    planChangeLogger.warn("findEventTimeColumn(attrs,allowMultipleEventTimeColumns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attrs, allowMultipleEventTimeColumns)
       // There is a case projection leads the same column (same exprId) to appear more than one
       // time. Allowing them does not hurt the correctness of state row eviction, hence let's start
       // with allowing them.
@@ -719,6 +735,7 @@ object WatermarkSupport {
     val eventTimeCols = attrs.zipWithIndex
       .filter(_._1.metadata.contains(EventTimeWatermark.delayKey))
     if (!allowMultipleEventTimeColumns) {
+      planChangeLogger.warn("findEventTimeColumnIndex(attrs,allowMultipleEventTimeColumns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attrs, allowMultipleEventTimeColumns)
       // There is a case projection leads the same column (same exprId) to appear more than one
       // time. Allowing them does not hurt the correctness of state row eviction, hence let's start
       // with allowing them.
@@ -893,6 +910,7 @@ case class StateStoreSaveExec(
                   finished = true
                   null
                 }
+              planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
               }
 
               override protected def close(): Unit = {
@@ -1261,6 +1279,7 @@ case class SessionWindowStateStoreSaveExec(
           outputMode.get, "session window streaming aggregations")
       }
     }
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] =
@@ -1292,6 +1311,7 @@ case class SessionWindowStateStoreSaveExec(
     val numUpdatedStateRows = longMetric("numUpdatedStateRows")
     val numRemovedStateRows = longMetric("numRemovedStateRows")
 
+    planChangeLogger.warn("putToStore(iter,store)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, store)
     var curKey: UnsafeRow = null
     val curValuesOnKey = new mutable.ArrayBuffer[UnsafeRow]()
 
@@ -1302,6 +1322,7 @@ case class SessionWindowStateStoreSaveExec(
         numRemovedStateRows += deleted
         curValuesOnKey.clear()
       }
+      planChangeLogger.warn("applyChangesOnKey()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     while (iter.hasNext) {

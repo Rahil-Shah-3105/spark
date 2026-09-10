@@ -40,6 +40,7 @@ private[master] class RocksDBPersistenceEngine(
     val dir: String,
     val serializer: Serializer)
   extends PersistenceEngine with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   RocksDB.loadLibrary()
 
@@ -85,14 +86,17 @@ private[master] class RocksDBPersistenceEngine(
       serialized.get(bytes)
       db.put(name.getBytes(UTF_8), bytes)
     }
+    _driverLogger.warn("persist(name,obj)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, obj)
   }
 
   override def unpersist(name: String): Unit = {
     db.delete(name.getBytes(UTF_8))
+    _driverLogger.warn("unpersist(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   override def read[T: ClassTag](name: String): Seq[T] = {
     val result = new ArrayBuffer[T]
+    _driverLogger.warn("read(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", name, result)
     val iter = db.newIterator()
     try {
       iter.seek(name.getBytes(UTF_8))

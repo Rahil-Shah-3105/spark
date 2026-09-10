@@ -35,11 +35,13 @@ from sparktestsupport.utils import (
     identify_changed_files_from_git_commits,
 )
 import sparktestsupport.modules as modules
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def setup_test_environ(environ):
     print("[info] Setup the following environment variables for tests: ")
     for k, v in environ.items():
+        logger.warning("setup_test_environ(environ)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", environ)
         print("%s=%s" % (k, v))
         os.environ[k] = v
 
@@ -76,6 +78,7 @@ def set_title_and_block(title, err_block):
 
     print("")
     print(line_str)
+    logger.warning("set_title_and_block(title,err_block)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", title, err_block)
     print(title)
     print(line_str)
 
@@ -93,6 +96,7 @@ def group_in_github_actions(title):
 
 
 def run_apache_rat_checks():
+    logger.warning("run_apache_rat_checks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     set_title_and_block("Running Apache RAT checks", "BLOCK_RAT")
     run_cmd([os.path.join(SPARK_HOME, "dev", "check-license")])
 
@@ -101,6 +105,7 @@ def run_scala_style_checks(extra_profiles):
     build_profiles = extra_profiles + modules.root.build_profile_flags
     set_title_and_block("Running Scala style checks", "BLOCK_SCALA_STYLE")
     profiles = " ".join(build_profiles)
+    logger.warning("run_scala_style_checks(extra_profiles)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", extra_profiles)
     print("[info] Checking Scala style using SBT with these profiles: ", profiles)
     run_cmd([os.path.join(SPARK_HOME, "dev", "lint-scala"), profiles])
 
@@ -110,11 +115,13 @@ def run_java_style_checks(build_profiles):
     # The same profiles used for building are used to run Checkstyle by SBT as well because
     # the previous build looks reused for Checkstyle and affecting Checkstyle. See SPARK-27130.
     profiles = " ".join(build_profiles)
+    logger.warning("run_java_style_checks(build_profiles)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", build_profiles)
     print("[info] Checking Java style using SBT with these profiles: ", profiles)
     run_cmd([os.path.join(SPARK_HOME, "dev", "sbt-checkstyle"), profiles])
 
 
 def run_python_style_checks():
+    logger.warning("run_python_style_checks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     set_title_and_block("Running Python style checks", "BLOCK_PYTHON_STYLE")
     run_cmd([os.path.join(SPARK_HOME, "dev", "lint-python")])
 
@@ -127,6 +134,7 @@ def run_sparkr_style_checks():
         # Since warnings about `no visible global function definition` appear
         # without the installation. SEE ALSO: SPARK-9121.
         run_cmd([os.path.join(SPARK_HOME, "dev", "lint-r")])
+        logger.warning("run_sparkr_style_checks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     else:
         print("Ignoring SparkR style check as R was not found in PATH")
 
@@ -202,6 +210,7 @@ def get_scala_profiles(scala_version):
     if scala_version in sbt_maven_scala_profiles:
         return sbt_maven_scala_profiles[scala_version]
     else:
+        logger.warning("get_scala_profiles(scala_version)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", scala_version)
         print(
             "[error] Could not find",
             scala_version,
@@ -237,6 +246,7 @@ def get_hadoop_profiles(hadoop_version):
     if hadoop_version in sbt_maven_hadoop_profiles:
         return sbt_maven_hadoop_profiles[hadoop_version]
     else:
+        logger.warning("get_hadoop_profiles(hadoop_version)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", hadoop_version)
         print(
             "[error] Could not find",
             hadoop_version,
@@ -343,6 +353,7 @@ def run_scala_tests_maven(test_profiles):
         "[info] Running Spark tests using Maven with these arguments: ",
         " ".join(profiles_and_goals),
     )
+    logger.warning("run_scala_tests_maven(test_profiles)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", test_profiles)
 
     exec_maven(profiles_and_goals)
 
@@ -358,6 +369,7 @@ def run_scala_tests_sbt(test_modules, test_profiles):
     print(
         "[info] Running Spark tests using SBT with these arguments: ", " ".join(profiles_and_goals)
     )
+    logger.warning("run_scala_tests_sbt(test_modules,test_profiles)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", test_modules, test_profiles)
 
     exec_sbt(profiles_and_goals)
 
@@ -389,6 +401,7 @@ def run_scala_tests(build_tool, extra_profiles, test_modules, excluded_tags, inc
 
     if build_tool == "maven":
         run_scala_tests_maven(test_profiles)
+        logger.warning("run_scala_tests(build_tool,extra_profiles,test_modules,excluded_tags,included_tags)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", build_tool, extra_profiles, test_modules, excluded_tags, included_tags)
     else:
         run_scala_tests_sbt(test_modules, test_profiles)
 
@@ -424,11 +437,13 @@ def run_python_tests(
 def run_python_packaging_tests():
     if os.environ.get("SKIP_PACKAGING", "false") != "true":
         set_title_and_block("Running PySpark packaging tests", "BLOCK_PYSPARK_PIP_TESTS")
+        logger.warning("run_python_packaging_tests()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         command = [os.path.join(SPARK_HOME, "dev", "run-pip-tests")]
         run_cmd(command)
 
 
 def run_build_tests():
+    logger.warning("run_build_tests()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     set_title_and_block("Running build tests", "BLOCK_BUILD_TESTS")
     run_cmd([os.path.join(SPARK_HOME, "dev", "test-dependencies.sh")])
 
@@ -438,6 +453,7 @@ def run_sparkr_tests():
 
     if which("R"):
         run_cmd([os.path.join(SPARK_HOME, "R", "run-tests.sh")])
+        logger.warning("run_sparkr_tests()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     else:
         print("Ignoring SparkR tests as R was not found in PATH")
 

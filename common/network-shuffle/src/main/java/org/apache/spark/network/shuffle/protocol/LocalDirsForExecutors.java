@@ -28,6 +28,7 @@ import static org.apache.spark.network.shuffle.protocol.BlockTransferMessage.Typ
 
 /** The reply to get local dirs giving back the dirs for each of the requested executors. */
 public class LocalDirsForExecutors extends BlockTransferMessage {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private final String[] execIds;
   private final int[] numLocalDirsByExec;
   private final String[] allLocalDirs;
@@ -101,6 +102,7 @@ public class LocalDirsForExecutors extends BlockTransferMessage {
   public Map<String, String[]> getLocalDirsByExec() {
     Map<String, String[]> localDirsByExec = new HashMap<>();
     int index = 0;
+	logger.warn("getLocalDirsByExec()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     int localDirsIndex = 0;
     for (int length: numLocalDirsByExec) {
       localDirsByExec.put(execIds[index],

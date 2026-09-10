@@ -81,6 +81,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
       operation: proto.ConfigRequest.Set,
       conf: RuntimeConfig): proto.ConfigResponse.Builder = {
     val silent = operation.hasSilent && operation.getSilent
+    logger.warn("handleSet(operation,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operation, conf)
     val builder = proto.ConfigResponse.newBuilder()
     operation.getPairsList.asScala.iterator.foreach { pair =>
       val (key, value) = SparkConnectConfigHandler.toKeyValue(pair)
@@ -103,6 +104,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
       operation: proto.ConfigRequest.Get,
       conf: RuntimeConfig,
       redactionPattern: Regex): proto.ConfigResponse.Builder = {
+       logger.warn("handleGet(operation,conf,redactionPattern)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", operation, conf, redactionPattern)
     val builder = proto.ConfigResponse.newBuilder()
     operation.getKeysList.asScala.iterator.foreach { key =>
       val value = conf.get(key)
@@ -120,6 +122,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
       operation: proto.ConfigRequest.GetWithDefault,
       conf: RuntimeConfig,
       redactionPattern: Regex): proto.ConfigResponse.Builder = {
+       logger.warn("handleGetWithDefault(operation,conf,redactionPattern)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", operation, conf, redactionPattern)
     val builder = proto.ConfigResponse.newBuilder()
     operation.getPairsList.asScala.iterator.foreach { pair =>
       val (key, default) = SparkConnectConfigHandler.toKeyValue(pair)
@@ -140,6 +143,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
       operation: proto.ConfigRequest.GetOption,
       conf: RuntimeConfig,
       redactionPattern: Regex): proto.ConfigResponse.Builder = {
+       logger.warn("handleGetOption(operation,conf,redactionPattern)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", operation, conf, redactionPattern)
     val builder = proto.ConfigResponse.newBuilder()
     operation.getKeysList.asScala.iterator.foreach { key =>
       val stored = conf.getOption(key)
@@ -183,6 +187,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
   private def handleUnset(
       operation: proto.ConfigRequest.Unset,
       conf: RuntimeConfig): proto.ConfigResponse.Builder = {
+       logger.warn("handleUnset(operation,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operation, conf)
     val builder = proto.ConfigResponse.newBuilder()
     operation.getKeysList.asScala.iterator.foreach { key =>
       conf.unset(key)
@@ -209,6 +214,7 @@ class SparkConnectConfigHandler(responseObserver: StreamObserver[proto.ConfigRes
     } else {
       SQLConf.deprecatedSQLConfigs.get(key).map(_.toDeprecationString)
     }
+    logger.warn("getWarning(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 }
 

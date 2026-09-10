@@ -199,6 +199,7 @@ private[sql] class SharedState(
 }
 
 object SharedState extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   @volatile private var fsUrlStreamHandlerFactoryInitialized = false
 
   private def setFsUrlStreamHandlerFactory(conf: SparkConf, hadoopConf: Configuration): Unit = {
@@ -216,6 +217,7 @@ object SharedState extends Logging {
         }
       }
     }
+    planChangeLogger.warn("setFsUrlStreamHandlerFactory(conf,hadoopConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, hadoopConf)
   }
 
   private val HIVE_EXTERNAL_CATALOG_CLASS_NAME = "org.apache.spark.sql.hive.HiveExternalCatalog"

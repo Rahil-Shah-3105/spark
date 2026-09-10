@@ -45,6 +45,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
  *    be resource constrained, and `numPartitions` can be tweaked to help reach the desired speed.
  */
 class RateStreamProvider extends SimpleTableProvider with DataSourceRegister {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import RateStreamProvider._
 
   override def getTable(options: CaseInsensitiveStringMap): Table = {
@@ -65,6 +66,7 @@ class RateStreamProvider extends SimpleTableProvider with DataSourceRegister {
     val numPartitions = options.getInt(
       NUM_PARTITIONS, SparkSession.active.sparkContext.defaultParallelism)
     if (numPartitions <= 0) {
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
       throw new IllegalArgumentException(
         s"Invalid value '$numPartitions'. The option 'numPartitions' must be positive")
     }

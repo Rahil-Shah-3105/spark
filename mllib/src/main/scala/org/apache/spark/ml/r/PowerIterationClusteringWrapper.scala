@@ -34,6 +34,7 @@ private[r] object PowerIterationClusteringWrapper {
       .setSrcCol(srcCol)
       .setDstCol(dstCol)
     if (weightCol != null) pic.setWeightCol(weightCol)
+      logger.warn("getPowerIterationClustering(k,initMode,maxIter,srcCol,dstCol,weightCol)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", k, initMode, maxIter, srcCol, dstCol, weightCol)
     pic
   }
 }

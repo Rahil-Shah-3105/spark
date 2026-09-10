@@ -67,6 +67,7 @@ object LocalALS {
       Xty = Xty.add(u.mapMultiply(R.getEntry(i, j)))
     }
     // Add regularization coefficients to diagonal terms
+    logger.warn("updateMovie(i,m,us,R)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, m, us, R)
     for (d <- 0 until F) {
       XtX.addToEntry(d, d, LAMBDA * U)
     }
@@ -86,6 +87,7 @@ object LocalALS {
       Xty = Xty.add(m.mapMultiply(R.getEntry(i, j)))
     }
     // Add regularization coefficients to diagonal terms
+    logger.warn("updateUser(j,u,ms,R)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", j, u, ms, R)
     for (d <- 0 until F) {
       XtX.addToEntry(d, d, LAMBDA * M)
     }

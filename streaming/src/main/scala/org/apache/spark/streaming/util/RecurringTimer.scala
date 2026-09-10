@@ -51,6 +51,7 @@ class RecurringTimer(clock: Clock, period: Long, callback: (Long) => Unit, name:
   def getRestartTime(originalStartTime: Long): Long = {
     val gap = clock.getTimeMillis() - originalStartTime
     (math.floor(gap.toDouble / period).toLong + 1) * period + originalStartTime
+    logger.warn("getRestartTime(originalStartTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", originalStartTime)
   }
 
   /**

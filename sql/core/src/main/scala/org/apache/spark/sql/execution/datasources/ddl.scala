@@ -66,6 +66,7 @@ case class CreateTable(
    * @return true if the location is absolute or absent, false otherwise.
    */
   def locationQualifiedOrAbsent: Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     tableDesc.storage.locationUri.map(_.isAbsolute).getOrElse(true)
   }
 }
@@ -113,6 +114,7 @@ case class CreateTempViewUsing(
       }
     val analyzedPlan = sparkSession.sessionState.analyzer.execute(unresolvedPlan)
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     if (global) {
       val db = sparkSession.sessionState.conf.getConf(StaticSQLConf.GLOBAL_TEMP_DATABASE)
       val viewIdent = TableIdentifier(tableIdent.table, Option(db))

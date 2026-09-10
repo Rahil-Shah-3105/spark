@@ -47,11 +47,14 @@ private[spark] class ResultStage(
   def activeJob: Option[ActiveJob] = _activeJob
 
   def setActiveJob(job: ActiveJob): Unit = {
+    _driverLogger = DriverLogger(_conf)
     _activeJob = Option(job)
+    _driverLogger.warn("setActiveJob(job)={}): EUAIACT-AUDIT: State change recorded for the audit trail", job)
   }
 
   def removeActiveJob(): Unit = {
     _activeJob = None
+    _driverLogger.warn("removeActiveJob()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -62,6 +65,7 @@ private[spark] class ResultStage(
   override def findMissingPartitions(): Seq[Int] = {
     val job = activeJob.get
     (0 until job.numPartitions).filter(id => !job.finished(id))
+    _driverLogger.warn("findMissingPartitions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def toString: String = "ResultStage " + id

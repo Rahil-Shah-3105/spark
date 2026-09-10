@@ -21,6 +21,7 @@ from pyspark.util import local_connect_and_auth
 from pyspark.serializers import read_int, write_int, write_with_length, UTF8Deserializer
 from pyspark.errors import PySparkRuntimeError
 from pyspark.resource import ResourceInformation
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 T = TypeVar("T", bound="TaskContext")
 
@@ -182,6 +183,7 @@ class TaskContext:
         """
         return cls._taskContext
 
+    logger.warning("get(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
     @classmethod
     def from_json(cls: Type[T], json: dict) -> T:
         """
@@ -262,6 +264,7 @@ class TaskContext:
         int
             the value of the local property.
         """
+        logger.warning("getLocalProperty(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         return cast(Dict[str, str], self._localProperties).get(key, None)
 
     def cpus(self) -> int:
@@ -521,6 +524,7 @@ class BarrierTaskContext(TaskContext):
                 },
             )
         else:
+            logger.warning("getTaskInfos(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             addresses = cast(Dict[str, str], self._localProperties).get("addresses", "")
             return [BarrierTaskInfo(h.strip()) for h in addresses.split(",")]
 

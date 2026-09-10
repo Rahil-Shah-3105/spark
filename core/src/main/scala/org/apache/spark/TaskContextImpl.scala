@@ -126,6 +126,7 @@ private[spark] class TaskContextImpl(
       invokeTaskCompletionListeners(None)
     }
     this
+    _driverLogger.warn("addTaskCompletionListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def addTaskFailureListener(listener: TaskFailureListener): this.type = {
@@ -134,6 +135,7 @@ private[spark] class TaskContextImpl(
       failureCauseOpt
     }.foreach(invokeTaskFailureListeners)
     this
+    _driverLogger.warn("addTaskFailureListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def addTaskInterruptListener(listener: TaskInterruptListener): this.type = {
@@ -149,6 +151,7 @@ private[spark] class TaskContextImpl(
       invokeTaskInterruptListeners(reason, new TaskKilledException(reason))
     }
     this
+    _driverLogger.warn("addTaskInterruptListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def addPostStatusUpdateListener(listener: PostStatusUpdateListener): this.type = {
@@ -156,6 +159,8 @@ private[spark] class TaskContextImpl(
       onPostStatusUpdateCallbacks.push(listener)
     }
     this
+    _driverLogger.warn("addPostStatusUpdateListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
+  _driverLogger.warn("invokeTaskInterruptListeners(reason,error)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", reason, error)
   }
 
   private[spark] def invokePostStatusUpdateListeners(): Unit = {
@@ -189,6 +194,7 @@ private[spark] class TaskContextImpl(
   }
 
   private def invokeTaskCompletionListeners(error: Option[Throwable]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // It is safe to access the reference to `onCompleteCallbacks` without holding the TaskContext
     // lock. `invokeListeners()` acquires the lock before accessing the contents.
     invokeListeners(onCompleteCallbacks, "TaskCompletionListener", error) {
@@ -252,6 +258,7 @@ private[spark] class TaskContextImpl(
     // 2. Listeners may spawn threads that call methods on this TaskContext. To avoid deadlock, we
     //    cannot call listeners while holding the TaskContext lock.
     //
+    _driverLogger.warn("invokeListeners(listeners,name,error)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", listeners, name, error)
     // We meet these constraints by ensuring there is at most one thread invoking listeners at any
     // point in time.
     synchronized {
@@ -381,10 +388,12 @@ private[spark] class TaskContextImpl(
 
   private[spark] override def registerAccumulator(a: AccumulatorV2[_, _]): Unit = {
     taskMetrics.registerAccumulator(a)
+    _driverLogger.warn("registerAccumulator(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   private[spark] override def setFetchFailed(fetchFailed: FetchFailedException): Unit = {
     this._fetchFailedException = Option(fetchFailed)
+    _driverLogger.warn("setFetchFailed(fetchFailed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fetchFailed)
   }
 
   private[spark] override def fetchFailed: Option[FetchFailedException] = _fetchFailedException
@@ -409,6 +418,7 @@ private[spark] class TaskContextImpl(
       }
       killTaskIfInterrupted()
     }
+    _driverLogger.warn("createResourceUninterruptibly(resourceBuilder)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resourceBuilder)
 
     TaskContext.synchronized {
       interruptIfRequired()

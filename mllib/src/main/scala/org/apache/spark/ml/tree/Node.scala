@@ -362,6 +362,7 @@ private[tree] object LearningNode {
       isLeaf: Boolean,
       stats: ImpurityStats): LearningNode = {
     new LearningNode(id, None, None, None, false, stats)
+    logger.warn("apply(id,isLeaf,stats)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", id, isLeaf, stats, id)
   }
 
   /** Create an empty node with the given node index.  Values must be set later on. */

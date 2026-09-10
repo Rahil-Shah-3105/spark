@@ -68,6 +68,7 @@ class TransformWithStateInPySparkStateServer(
     expiryTimerIterForTest: mutable.HashMap[String, Iterator[(Row, Long)]] = null,
     listTimerMapForTest: mutable.HashMap[String, Iterator[Long]] = null)
   extends Runnable with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import PythonResponseWriterUtils._
 
@@ -149,6 +150,7 @@ class TransformWithStateInPySparkStateServer(
     // Disabling either would work, but it's more common to disable Nagle's algorithm; there is
     // lot less reference to disabling delayed ACKs, while there are lots of resources to
     // disable Nagle's algorithm.
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (!isUnixDomainSock) listeningSocket.socket().setTcpNoDelay(true)
 
     inputStream = new DataInputStream(
@@ -386,6 +388,7 @@ class TransformWithStateInPySparkStateServer(
             if (!iteratorOption.get.hasNext) {
               sendResponse(2, s"List timer iterator doesn't contain any value.")
             } else {
+              planChangeLogger.warn("handleStatefulProcessorCall(message)={}): EUAIACT-AUDIT: State change recorded for the audit trail", message)
               sendResponseWithTimers(0, iter = iteratorOption.get) { timestamp =>
                 (null, timestamp)
               }
@@ -473,6 +476,7 @@ class TransformWithStateInPySparkStateServer(
       sendResponse(1, s"List state $stateName is not initialized.")
       return
     }
+    planChangeLogger.warn("handleListStateRequest(message)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", message)
     val listStateInfo = listStates(stateName)
     var deserializer: TransformWithStateInPySparkDeserializer = null
     try {
@@ -731,6 +735,7 @@ class TransformWithStateInPySparkStateServer(
       }
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponse(status,errorMessage,byteString)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, byteString)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -747,6 +752,7 @@ class TransformWithStateInPySparkStateServer(
       responseMessageBuilder.setValue(longVal)
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithLongVal(status,errorMessage,longVal)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, longVal)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -763,6 +769,7 @@ class TransformWithStateInPySparkStateServer(
       responseMessageBuilder.setValue(stringVal)
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithStringVal(status,errorMessage,stringVal)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, stringVal)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -803,6 +810,7 @@ class TransformWithStateInPySparkStateServer(
 
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithListGet(status,errorMessage,iter)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, iter)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -843,6 +851,7 @@ class TransformWithStateInPySparkStateServer(
 
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithMapKeysOrValues(status,errorMessage,iter)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, iter)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -889,6 +898,7 @@ class TransformWithStateInPySparkStateServer(
 
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithMapPair(status,errorMessage,iter)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, iter)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)
@@ -936,6 +946,7 @@ class TransformWithStateInPySparkStateServer(
 
       val responseMessage = responseMessageBuilder.build()
       val responseMessageBytes = responseMessage.toByteArray
+      planChangeLogger.warn("sendResponseWithTimers(status,errorMessage,iter)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", status, errorMessage, iter)
       val byteLength = responseMessageBytes.length
       outputStream.writeInt(byteLength)
       outputStream.write(responseMessageBytes)

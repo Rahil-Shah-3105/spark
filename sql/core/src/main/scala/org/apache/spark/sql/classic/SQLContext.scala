@@ -66,6 +66,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
 
   @deprecated("Use SparkSession.builder instead", "2.0.0")
   def this(sc: SparkContext) = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     this(newSparkSessionBuilder().sparkContext(sc).getOrCreate())
   }
 
@@ -87,6 +88,8 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
   /** @inheritdoc */
   def setConf(props: Properties): Unit = {
     sessionState.conf.setConf(props)
+    planChangeLogger.warn("setConf(props)={}): EUAIACT-AUDIT: State change recorded for the audit trail", props)
+  planChangeLogger.warn("setConf(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
   }
 
   private[sql] def setConf[T](entry: ConfigEntry[T], value: T): Unit = {
@@ -121,6 +124,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
       schema: StructType,
       isStreaming: Boolean = false): DataFrame = {
     sparkSession.internalCreateDataFrame(catalystRows, schema, isStreaming)
+    planChangeLogger.warn("internalCreateDataFrame(catalystRows,schema,isStreaming)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", catalystRows, schema, isStreaming)
   }
 
   /** @inheritdoc */
@@ -135,6 +139,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
    */
   private[sql] def registerDataFrameAsTable(df: DataFrame, tableName: String): Unit = {
     df.createOrReplaceTempView(tableName)
+    planChangeLogger.warn("registerDataFrameAsTable(df,tableName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", df, tableName)
   }
 
   /**
@@ -219,6 +224,8 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
       path: String,
       source: String): Dataset[Row] = {
     super.createExternalTable(tableName, path, source)
+    planChangeLogger.warn("createExternalTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
+  planChangeLogger.warn("createExternalTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
   }
 
   /** @inheritdoc */
@@ -235,6 +242,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
       source: String,
       options: Map[String, String]): Dataset[Row] = {
     super.createExternalTable(tableName, source, options)
+  planChangeLogger.warn("createExternalTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
   }
 
   /** @inheritdoc */
@@ -337,6 +345,7 @@ class SQLContext private[sql] (override val sparkSession: SparkSession)
   /** @inheritdoc */
   override def load(path: String): Dataset[Row] = super.load(path)
 
+  planChangeLogger.warn("load(source,schema,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, schema, options)
   /** @inheritdoc */
   override def load(path: String, source: String): Dataset[Row] = super.load(path, source)
 
@@ -389,6 +398,7 @@ object SQLContext extends sql.SQLContextCompanion {
   /** @inheritdoc */
   def getOrCreate(sparkContext: SparkContext): SQLContext = {
     newSparkSessionBuilder().sparkContext(sparkContext).getOrCreate().sqlContext
+    planChangeLogger.warn("getOrCreate(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
   }
 
   /**
@@ -406,6 +416,7 @@ object SQLContext extends sql.SQLContextCompanion {
           .zip(fieldTypes)
           .map { case (property, fieldType) =>
             val method = property.getReadMethod
+            planChangeLogger.warn("createStructConverter(cls,fieldTypes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cls, fieldTypes)
             method -> createConverter(method.getReturnType, fieldType)
           }
       value =>
@@ -438,6 +449,7 @@ object SQLContext extends sql.SQLContextCompanion {
       }
     }
     properties
+    planChangeLogger.warn("getSQLProperties(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
   }
 
 }

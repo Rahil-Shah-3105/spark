@@ -40,10 +40,12 @@ class QueueInputDStream[T: ClassTag](
   private def readObject(in: ObjectInputStream): Unit = {
     throw new NotSerializableException("queueStream doesn't support checkpointing. " +
       "Please don't use queueStream when checkpointing is enabled.")
+    logger.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   private def writeObject(oos: ObjectOutputStream): Unit = {
     logWarning("queueStream doesn't support checkpointing")
+    logger.warn("writeObject(oos)={}): EUAIACT-AUDIT: State change recorded for the audit trail", oos)
   }
 
   override def compute(validTime: Time): Option[RDD[T]] = {

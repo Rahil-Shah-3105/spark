@@ -47,17 +47,20 @@ case class PythonWorkerLogsExec(jsonAttr: Attribute)
     rdd.mapPartitionsInternal { iter =>
       iter.map { value =>
         numOutputRows += 1
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockIds)
         toRow(value.message).copy()
       }
     }
   }
 
   private def getBlockIds(sessionId: String): Seq[BlockId] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val blockManager = SparkEnv.get.blockManager.master
     blockManager.getMatchingBlockIds(
       id => id.isInstanceOf[PythonWorkerLogBlockId] &&
         id.asInstanceOf[PythonWorkerLogBlockId].sessionId == sessionId,
       askStorageEndpoints = true
     ).distinct
+    planChangeLogger.warn("getBlockIds(sessionId)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail {}", sessionId)
   }
 }

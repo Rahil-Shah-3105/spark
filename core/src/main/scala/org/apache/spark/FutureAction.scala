@@ -65,6 +65,7 @@ trait FutureAction[T] extends Future[T] {
    * @throws Exception exception during action execution
    * @return the result value if the action is completed within the specific maximum wait time
    */
+   _driverLogger.warn("ready(atMost)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", atMost)
   @throws(classOf[Exception])
   override def result(atMost: Duration)(implicit permit: CanAwait): T
 
@@ -116,6 +117,7 @@ trait FutureAction[T] extends Future[T] {
 @DeveloperApi
 class SimpleFutureAction[T] private[spark](jobWaiter: JobWaiter[_], resultFunc: => T)
   extends FutureAction[T] {
+   _driverLogger = DriverLogger(_conf)
 
   @volatile private var _cancelled: Boolean = false
 
@@ -174,6 +176,7 @@ trait JobSubmitter {
     partitions: Seq[Int],
     resultHandler: (Int, U) => Unit,
     resultFunc: => R): FutureAction[R]
+_driverLogger.warn("submitJob(rdd,processPartition,partitions,resultHandler,resultFunc)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, processPartition, partitions, resultHandler, resultFunc, resultHandler)
 }
 
 
@@ -284,6 +287,7 @@ class JavaFutureActionWrapper[S, T](futureAction: FutureAction[S], converter: S 
           throw new ExecutionException("Exception thrown by job", exception)
         }
     }
+    _driverLogger.warn("getImpl(timeout)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", timeout)
   }
 
   override def get(): T = getImpl(Duration.Inf)

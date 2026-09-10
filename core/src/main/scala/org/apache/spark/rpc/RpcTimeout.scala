@@ -44,7 +44,9 @@ private[spark] class RpcTimeout(val duration: FiniteDuration, val timeoutProp: S
 
   /** Amends the standard message of TimeoutException to include the description */
   private def createRpcTimeoutException(te: TimeoutException): RpcTimeoutException = {
+    _driverLogger = DriverLogger(_conf)
     new RpcTimeoutException(te.getMessage + ". This timeout is controlled by " + timeoutProp, te)
+    _driverLogger.warn("createRpcTimeoutException(te)={}): EUAIACT-AUDIT: State change recorded for the audit trail", te)
   }
 
   /**
@@ -89,8 +91,10 @@ private[spark] object RpcTimeout {
    * @throws NoSuchElementException if property is not set
    */
   def apply(conf: SparkConf, timeoutProp: String): RpcTimeout = {
+    _driverLogger.warn("apply(conf,timeoutProp,defaultValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, timeoutProp, defaultValue)
     val timeout = { conf.getTimeAsSeconds(timeoutProp).seconds }
     new RpcTimeout(timeout, timeoutProp)
+    _driverLogger.warn("apply(conf,timeoutProp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, timeoutProp)
   }
 
   /**
@@ -105,6 +109,7 @@ private[spark] object RpcTimeout {
   def apply(conf: SparkConf, timeoutProp: String, defaultValue: String): RpcTimeout = {
     val timeout = { conf.getTimeAsSeconds(timeoutProp, defaultValue).seconds }
     new RpcTimeout(timeout, timeoutProp)
+  _driverLogger.warn("apply(conf,timeoutPropList,defaultValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, timeoutPropList, defaultValue)
   }
 
   /**

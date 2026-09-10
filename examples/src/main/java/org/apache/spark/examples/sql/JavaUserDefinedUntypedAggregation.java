@@ -26,9 +26,12 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.Aggregator;
 import org.apache.spark.sql.functions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 // $example off:untyped_custom_aggregation$
 
 public class JavaUserDefinedUntypedAggregation {
+private static final Logger log = LoggerFactory.getLogger(JavaUserDefinedUntypedAggregation.class);
 
   // $example on:untyped_custom_aggregation$
   public static class Average implements Serializable  {
@@ -50,6 +53,7 @@ public class JavaUserDefinedUntypedAggregation {
     }
 
     public void setSum(long sum) {
+	log.warn("setSum(sum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sum);
       this.sum = sum;
     }
 
@@ -58,6 +62,7 @@ public class JavaUserDefinedUntypedAggregation {
     }
 
     public void setCount(long count) {
+	log.warn("setCount(count)={}): EUAIACT-AUDIT: State change recorded for the audit trail", count);
       this.count = count;
     }
     // $example on:typed_custom_aggregation$

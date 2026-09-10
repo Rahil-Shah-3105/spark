@@ -33,6 +33,7 @@ class SparkConnectServerAppStatusStore(store: KVStore) {
 
   def getSessionList(offset: Int, length: Int): Seq[SessionInfo] = {
     KVUtils.viewToSeq(store.view(classOf[SessionInfo]).skip(offset).max(length))
+    logger.warn("getSessionList(offset,length)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, length)
   }
 
   def getExecutionList: Seq[ExecutionInfo] = {
@@ -41,6 +42,7 @@ class SparkConnectServerAppStatusStore(store: KVStore) {
 
   def getExecutionList(offset: Int, length: Int): Seq[ExecutionInfo] = {
     KVUtils.viewToSeq(store.view(classOf[ExecutionInfo]).skip(offset).max(length))
+    logger.warn("getExecutionList(offset,length)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, length)
   }
 
   def getOnlineSessionNum: Int = {
@@ -56,6 +58,7 @@ class SparkConnectServerAppStatusStore(store: KVStore) {
         // from an older Spark). Collapsed same-UUID rows cannot be recovered.
         getSessionList.find(s => s.userId == userId && s.sessionId == sessionId)
     }
+    logger.warn("getSession(userId,sessionId)={},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail {}", userId, userId)
   }
 
   def getExecution(executionId: String): Option[ExecutionInfo] = {
@@ -64,6 +67,7 @@ class SparkConnectServerAppStatusStore(store: KVStore) {
     } catch {
       case _: NoSuchElementException => None
     }
+    logger.warn("getExecution(executionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executionId, executionId)
   }
 
   /**

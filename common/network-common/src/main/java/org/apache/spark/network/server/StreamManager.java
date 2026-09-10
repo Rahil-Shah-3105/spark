@@ -31,6 +31,7 @@ import org.apache.spark.network.client.TransportClient;
  * never be used again.
  */
 public abstract class StreamManager {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(StreamManager.class);
   /**
    * Called in response to a fetchChunk() request. The returned buffer will be passed as-is to the
    * client. A single stream will be associated with a single TCP connection, so this method
@@ -87,6 +88,7 @@ public abstract class StreamManager {
    * Return the number of chunks being transferred and not finished yet in this StreamManager.
    */
   public long chunksBeingTransferred() {
+	logger.warn("chunksBeingTransferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return 0;
   }
 

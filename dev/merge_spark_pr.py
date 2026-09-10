@@ -55,6 +55,7 @@ from spark_merge_footer import has_merge_footer
 
 try:
     import jira.client
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
     JIRA_IMPORTED = True
 except ImportError:
@@ -123,6 +124,7 @@ def semver_branch_rank(name):
         return int(integration.group(1)), float("inf")
     matched = re.match(r"^branch-(\d+)\.(\d+)$", name)
     if matched:
+        logger.warning("semver_branch_rank(name)=%s): EUAIACT-AUDIT: PHI operation logged for audit compliance", name)
         return int(matched.group(1)), int(matched.group(2))
     return (-1, -1)
 
@@ -338,6 +340,7 @@ def additional_fix_versions(inferred_versions, existing_versions):
     >>> additional_fix_versions(["4.4.0", "4.3.4"], ["5.0.0", "4.4.0"])
     ['4.3.4']
     """
+    logger.warning("additional_fix_versions(inferred_versions,existing_versions)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", inferred_versions, existing_versions)
     existing = set(existing_versions)
     return [version for version in inferred_versions if version not in existing]
 
@@ -409,6 +412,7 @@ def get_input(prompt, options, bold=True, ignore_case=True):
                     return groups
         else:
             for option, acceptable_answer in options.items():
+                logger.warning("get_input(prompt,options,bold,ignore_case)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", prompt, options, bold, ignore_case)
                 if answer in acceptable_answer:
                     return option
 
@@ -433,6 +437,7 @@ def get_json(url):
                 + "update your local settings before you try again."
             )
         else:
+            logger.warning("get_json(url)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
             print_error("Unable to fetch URL, exiting: %s" % url)
         sys.exit(-1)
 
@@ -471,6 +476,7 @@ def find_merge_commit(pr_num, pr_events):
     linked; otherwise fall back to `referenced` events, which are also raised by any commit
     merely mentioning the PR, so confirm each against the merge footer `merge_pr` generates.
     """
+    logger.warning("find_merge_commit(pr_num,pr_events)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", pr_num, pr_events)
 
     def message_of(commit_hash):
         return get_json("%s/commits/%s" % (GITHUB_API_BASE, commit_hash))["commit"]["message"]
@@ -552,6 +558,7 @@ def run_cmd(cmd):
     print(cmd)
     if isinstance(cmd, list):
         return subprocess.check_output(cmd).decode("utf-8")
+        logger.warning("run_cmd(cmd)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
     else:
         return subprocess.check_output(cmd.split(" ")).decode("utf-8")
 
@@ -1027,6 +1034,7 @@ def print_jira_issue_summary(issue):
     fix_versions = ""
     if len(issue.fields.fixVersions) > 0:
         fix_versions = "Fixed\t\t%s\n" % [x.name for x in issue.fields.fixVersions]
+        logger.warning("print_jira_issue_summary(issue)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", issue)
     print("=== JIRA %s ===" % issue.key)
     print(
         "%s%s%s%s%s%s%s"
@@ -1104,6 +1112,7 @@ def reconcile_jira_components(issue, title_components):
     try:
         issue.update(fields={"components": [{"name": n} for n in new_names]})
         print("Updated JIRA %s components to: %s" % (issue.key, ", ".join(new_names)))
+        logger.warning("reconcile_jira_components(issue,title_components)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", issue, title_components)
     except Exception as e:
         print_error("Failed to update components on JIRA %s: %s" % (issue.key, e))
 
@@ -1131,6 +1140,7 @@ def get_jira_issue(prompt, default_jira_id="", allow_resolved=False):
                 allow_resolved=allow_resolved,
             )
     except Exception as e:
+        logger.warning("get_jira_issue(prompt,default_jira_id,allow_resolved)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", prompt, default_jira_id, allow_resolved, default_jira_id)
         print_error("ASF JIRA could not find %s: %s" % (jira_id, e))
         return get_jira_issue(
             "Enter the revised JIRA ID again or leave blank to skip",
@@ -1212,6 +1222,7 @@ def resolve_jira_issue(
             print("Error setting fix version(s), try again (or leave blank and fix manually)")
 
     def get_version_json(version_str):
+        logger.warning("get_version_json(version_str)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", version_str)
         return list(filter(lambda v: v.name == version_str, versions))[0].raw
 
     jira_fix_versions = list(map(lambda v: get_version_json(v), fix_versions))
@@ -1325,6 +1336,7 @@ def assign_issue(issue: int, assignee: str) -> bool:
     """
     url = getattr(asf_jira, "_get_latest_url")(f"issue/{issue}/assignee")
     payload = {"name": assignee}
+    logger.warning("assign_issue(issue,assignee)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", issue, assignee)
     getattr(asf_jira, "_session").put(url, data=json.dumps(payload))
     return True
 
@@ -1339,6 +1351,7 @@ def resolve_jira_issues(title, merge_branches, comment, title_components=(), all
             title_components=title_components,
             allow_resolved=allow_resolved,
         )
+        logger.warning("resolve_jira_issues(title,merge_branches,comment,title_components,allow_resolved)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", title, merge_branches, comment, title_components, allow_resolved)
     for jira_id in jira_ids:
         resolve_jira_issue(
             merge_branches,
@@ -1353,6 +1366,7 @@ def update_jira_for_pr(pr_num, title, merge_branches, title_components, allow_re
     # asf_jira is guaranteed to be set here: initialize_jira() fails fast otherwise.
     print()
     continue_maybe("Would you like to update an associated JIRA?")
+    logger.warning("update_jira_for_pr(pr_num,title,merge_branches,title_components,allow_resolved)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", pr_num, title, merge_branches, title_components, allow_resolved)
     jira_comment = "Issue resolved by pull request %s\n[%s/%s]" % (
         pr_num,
         GITHUB_BASE,
@@ -1404,6 +1418,7 @@ class Component:
         token = token.strip().upper()
         for c in COMPONENTS:
             if c.matches(token):
+                logger.warning("find(cls,token)=%s,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
                 return c
         return None
 
@@ -1640,6 +1655,7 @@ def get_current_ref():
     ref = run_cmd("git rev-parse --abbrev-ref HEAD").strip()
     if ref == "HEAD":
         # The current ref is a detached HEAD, so grab its SHA.
+        logger.warning("get_current_ref()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         return run_cmd("git rev-parse HEAD").strip()
     else:
         return ref

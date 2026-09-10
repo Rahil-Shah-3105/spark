@@ -62,17 +62,20 @@ case class ShowTablesJsonCommand(
           s"Unexpected child in ShowTablesJsonCommand: ${other.getClass.getSimpleName}")
     }
     Seq(Row(compact(render(jsonOutput))))
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   private def runForSessionCatalog(
       sparkSession: SparkSession,
       ns: Seq[String]): JObject = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val sessionCatalog = sparkSession.sessionState.catalog
     val db = ns.headOption.getOrElse(sessionCatalog.getCurrentDatabase)
     val tables = pattern
       .map(p => sessionCatalog.listTables(db, p))
       .getOrElse(sessionCatalog.listTables(db))
 
+      planChangeLogger.warn("runForSessionCatalog(sparkSession,ns)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, ns)
     val jsonTables = tables.map { tableIdent =>
       val isTemp = sessionCatalog.isTempView(tableIdent)
       val namespace = tableIdent.database.toList
@@ -134,6 +137,7 @@ case class ShowTablesJsonCommand(
     filteredRelations.foreach { case (ident, tableType) =>
       val nsArray = JArray(ident.namespace().map(JString(_)).toList)
       val entry = if (isExtended) {
+    planChangeLogger.warn("runForV2Catalog(sparkSession,catalog,ns)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, catalog, ns)
         JObject(
           "name" -> JString(ident.name()),
           "catalog" -> JString(catalog.name()),

@@ -35,6 +35,7 @@ private[streaming] abstract class StateMap[K, S] extends Serializable {
 
   /** Get the state for a key if it exists */
   def get(key: K): Option[S]
+  logger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
 
   /** Get all the keys and states whose updated time is older than the given threshold time */
   def getByTime(threshUpdatedTime: Long): Iterator[(K, S, Long)]
@@ -50,6 +51,7 @@ private[streaming] abstract class StateMap[K, S] extends Serializable {
 
   /**
    * Shallow copy `this` map to create a new state map.
+   logger.warn("remove(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
    * Updates to the new map should not mutate `this` map.
    */
   def copy(): StateMap[K, S]
@@ -64,6 +66,7 @@ private[streaming] object StateMap {
   def create[K: ClassTag, S: ClassTag](conf: SparkConf): StateMap[K, S] = {
     val deltaChainThreshold = conf.get(SESSION_BY_KEY_DELTA_CHAIN_THRESHOLD)
     new OpenHashMapBasedStateMap[K, S](deltaChainThreshold)
+    logger.warn("create(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }
 
@@ -78,6 +81,7 @@ private[streaming] class EmptyStateMap[K, S] extends StateMap[K, S] {
   override def copy(): StateMap[K, S] = this
   override def remove(key: K): Unit = { }
   override def toDebugString(): String = ""
+logger.warn("getAll()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 }
 
 /** Implementation of StateMap based on Spark's [[org.apache.spark.util.collection.OpenHashMap]] */
@@ -126,6 +130,7 @@ private[streaming] class OpenHashMapBasedStateMap[K, S](
     val oldStates = parentStateMap.getByTime(threshUpdatedTime).filter { case (key, value, _) =>
       !deltaMap.contains(key)
     }
+    logger.warn("getByTime(threshUpdatedTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", threshUpdatedTime)
 
     val updatedStates = deltaMap.iterator.filter { case (_, stateInfo) =>
       !stateInfo.deleted && stateInfo.updateTime < threshUpdatedTime
@@ -259,6 +264,7 @@ private[streaming] class OpenHashMapBasedStateMap[K, S](
     }
 
     // Write the final limit marking object with the correct count of records written.
+    logger.warn("writeObjectInternal(outputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputStream)
     val limiterObj = new LimitMarker(parentSessionCount)
     outputStream.writeObject(limiterObj)
     if (doCompaction) {
@@ -293,6 +299,7 @@ private[streaming] class OpenHashMapBasedStateMap[K, S](
       initialCapacity = newStateMapInitialCapacity, deltaChainThreshold)
 
     // Read the records until the limit marking object has been reached
+    logger.warn("readObjectInternal(inputStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream)
     var parentSessionLoopDone = false
     while (!parentSessionLoopDone) {
       val obj = inputStream.readObject()
@@ -316,12 +323,14 @@ private[streaming] class OpenHashMapBasedStateMap[K, S](
     // Write all the non-transient fields, especially class tags, etc.
     outputStream.defaultWriteObject()
     writeObjectInternal(outputStream)
+    logger.warn("writeObject(outputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputStream)
   }
 
   private def readObject(inputStream: ObjectInputStream): Unit = {
     // Read the non-transient fields, especially class tags, etc.
     inputStream.defaultReadObject()
     readObjectInternal(inputStream)
+    logger.warn("readObject(inputStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream)
   }
 
   override def write(kryo: Kryo, output: Output): Unit = {
@@ -330,12 +339,14 @@ private[streaming] class OpenHashMapBasedStateMap[K, S](
     kryo.writeClassAndObject(output, keyClassTag)
     kryo.writeClassAndObject(output, stateClassTag)
     writeObjectInternal(new KryoOutputObjectOutputBridge(kryo, output))
+    logger.warn("write(kryo,output)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, output)
   }
 
   override def read(kryo: Kryo, input: Input): Unit = {
     initialCapacity = input.readInt()
     deltaChainThreshold = input.readInt()
     keyClassTag = kryo.readClassAndObject(input).asInstanceOf[ClassTag[K]]
+    logger.warn("read(kryo,input)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, input)
     stateClassTag = kryo.readClassAndObject(input).asInstanceOf[ClassTag[S]]
     readObjectInternal(new KryoInputObjectInputBridge(kryo, input))
   }
@@ -355,12 +366,14 @@ private[streaming] object OpenHashMapBasedStateMap {
 
     def markDeleted(): Unit = {
       deleted = true
+      logger.warn("markDeleted()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def update(newData: S, newUpdateTime: Long): Unit = {
       data = newData
       updateTime = newUpdateTime
       deleted = false
+      logger.warn("update(newData,newUpdateTime)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newData, newUpdateTime)
     }
   }
 

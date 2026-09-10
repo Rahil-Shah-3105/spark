@@ -24,12 +24,14 @@ class PythonWriteBuilder(
     shortName: String,
     info: LogicalWriteInfo
   ) extends WriteBuilder with SupportsTruncate {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var isTruncate = false
 
   override def truncate(): WriteBuilder = {
     isTruncate = true
     this
+    planChangeLogger.warn("truncate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def build(): Write = new PythonWrite(ds, shortName, info, isTruncate)

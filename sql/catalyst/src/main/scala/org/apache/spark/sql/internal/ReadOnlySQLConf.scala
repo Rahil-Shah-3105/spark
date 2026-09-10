@@ -28,6 +28,7 @@ import org.apache.spark.sql.errors.QueryExecutionErrors
  * configs from the local properties which are propagated from driver to executors.
  */
 class ReadOnlySQLConf(context: TaskContext) extends SQLConf {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   @transient override val settings: JMap[String, String] = {
     context.getLocalProperties.asInstanceOf[JMap[String, String]]
@@ -39,10 +40,13 @@ class ReadOnlySQLConf(context: TaskContext) extends SQLConf {
 
   override protected def setConfWithCheck(key: String, value: String): Unit = {
     throw QueryExecutionErrors.cannotMutateReadOnlySQLConfError()
+    planChangeLogger.warn("setConfWithCheck(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   override def unsetConf(key: String): Unit = {
     throw QueryExecutionErrors.cannotMutateReadOnlySQLConfError()
+    planChangeLogger.warn("unsetConf(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
+  planChangeLogger.warn("unsetConf(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
   }
 
   override def unsetConf(entry: ConfigEntry[_]): Unit = {

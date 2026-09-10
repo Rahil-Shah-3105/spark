@@ -50,6 +50,7 @@ import io.netty.buffer.CompositeByteBuf;
  */
 public abstract sealed class StreamingShuffleMessage
   permits CreditControlMessage, DataMessage, TerminationAckMessage, TerminationControlMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(StreamingShuffleMessage.class);
   protected ByteBuf ownedBuf = null;
   private Runnable releaseCallback = null;
 
@@ -68,6 +69,7 @@ public abstract sealed class StreamingShuffleMessage
   // Essentially, other message types from reader to writer won't have a valid sequence number.
   private long seqNum;
   public void setSeqNum(long seqNum) {
+	logger.warn("setSeqNum(seqNum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seqNum);
     this.seqNum = seqNum;
   }
   public long getSeqNum() { return seqNum; }
@@ -104,6 +106,7 @@ public abstract sealed class StreamingShuffleMessage
    * Replaces any previously-registered callback. Not thread-safe; see {@link #release()}.
    */
   public void setReleaseCallback(Runnable releaseCallback) {
+	logger.warn("setReleaseCallback(releaseCallback)={}): EUAIACT-AUDIT: State change recorded for the audit trail", releaseCallback);
     this.releaseCallback = releaseCallback;
   }
 

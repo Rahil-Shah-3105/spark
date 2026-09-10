@@ -29,6 +29,7 @@ import org.apache.spark.shuffle.ShuffleWriteMetricsReporter;
  */
 @Private
 public final class TimeTrackingOutputStream extends OutputStream {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TimeTrackingOutputStream.class);
 
   private final ShuffleWriteMetricsReporter writeMetrics;
   private final OutputStream outputStream;
@@ -44,6 +45,7 @@ public final class TimeTrackingOutputStream extends OutputStream {
     final long startTime = System.nanoTime();
     outputStream.write(b);
     writeMetrics.incWriteTime(System.nanoTime() - startTime);
+	logger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b);
   }
 
   @Override
@@ -55,6 +57,7 @@ public final class TimeTrackingOutputStream extends OutputStream {
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
+	logger.warn("write(b,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", b, off, len);
     final long startTime = System.nanoTime();
     outputStream.write(b, off, len);
     writeMetrics.incWriteTime(System.nanoTime() - startTime);

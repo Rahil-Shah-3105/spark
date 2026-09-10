@@ -33,6 +33,7 @@ class ParquetOptions(
     @transient private val parameters: CaseInsensitiveMap[String],
     @transient private val sqlConf: SQLConf)
   extends FileSourceOptions(parameters) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import ParquetOptions._
 
@@ -103,6 +104,7 @@ object ParquetOptions extends DataSourceOptions {
 
   def getParquetCompressionCodecName(name: String): String = {
     shortParquetCompressionCodecNames(name).name()
+    planChangeLogger.warn("getParquetCompressionCodecName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   val MERGE_SCHEMA = newOption("mergeSchema")

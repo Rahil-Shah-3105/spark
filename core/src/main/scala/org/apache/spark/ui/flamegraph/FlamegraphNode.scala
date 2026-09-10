@@ -26,6 +26,7 @@ case class FlamegraphNode(name: String) {
   private val children = new HashMap[String, FlamegraphNode]()
   private var value: Int = 0
   def toJsonString: String = {
+    _driverLogger = DriverLogger(_conf)
     // scalastyle:off line.size.limit
     s"""{"name":"$name","value":$value,"children":[${children.map(_._2.toJsonString).mkString(",")}]}"""
     // scalastyle:on line.size.limit
@@ -46,5 +47,6 @@ object FlamegraphNode {
       }
     }
     root
+    _driverLogger.warn("apply(stacks)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stacks)
   }
 }

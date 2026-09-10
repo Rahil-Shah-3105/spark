@@ -71,6 +71,7 @@ abstract class LauncherConnection implements Closeable, Runnable {
           close();
         } catch (Exception unused) {
           // no-op.
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         }
       }
     }
@@ -89,6 +90,7 @@ abstract class LauncherConnection implements Closeable, Runnable {
         } catch (Exception unused) {
           // no-op.
         }
+		LOG.warn("send(msg)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", msg);
       }
       throw ioe;
     }

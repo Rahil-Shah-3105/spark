@@ -33,6 +33,7 @@ import org.apache.spark.util.ArrayImplicits._
 
 /* The singleton object to control the time in testing */
 object LowLatencyClock {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private var clock: Clock = new SystemClock
 
   def getClock: Clock = clock
@@ -47,6 +48,7 @@ object LowLatencyClock {
 
   def setClock(inputClock: Clock): Unit = {
     clock = inputClock
+    planChangeLogger.warn("setClock(inputClock)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputClock)
   }
 }
 

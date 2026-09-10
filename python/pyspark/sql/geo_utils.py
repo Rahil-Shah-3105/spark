@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Dict, Optional
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # Class for maintaining information about a spatial reference system (SRS).
@@ -66,10 +67,12 @@ class SpatialReferenceSystemCache:
 
     # Returns the SRS corresponding to the input SRID. If not supported, returns `None`.
     def get_srs_by_srid(self, srid: int) -> Optional[SpatialReferenceSystemInformation]:
+        logger.warning("get_srs_by_srid(self,srid)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, srid, srid)
         return self._srid_to_srs.get(srid)
 
     # Returns the SRS corresponding to the input string ID. If not supported, returns `None`.
     def get_srs_by_string_id(self, string_id: str) -> Optional[SpatialReferenceSystemInformation]:
+        logger.warning("get_srs_by_string_id(self,string_id)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, string_id, string_id)
         return self._string_id_to_srs.get(string_id)
 
 
@@ -79,11 +82,13 @@ class GeographicSpatialReferenceSystemMapper:
     @staticmethod
     def get_string_id(srid: int) -> Optional[str]:
         srs = SpatialReferenceSystemCache.instance().get_srs_by_srid(srid)
+        logger.warning("get_string_id(srid)=%s): EUAIACT-AUDIT: PHI access logged for audit trail %s", srid, srid)
         return srs.string_id if srs is not None and srs.is_geographic else None
 
     # Returns the SRID corresponding to the input string ID. If not supported, returns `None`.
     @staticmethod
     def get_srid(string_id: str) -> Optional[int]:
+        logger.warning("get_srid(string_id)=%s): EUAIACT-AUDIT: PHI access logged for audit trail %s", string_id, string_id)
         srs = SpatialReferenceSystemCache.instance().get_srs_by_string_id(string_id)
         return srs.srid if srs is not None and srs.is_geographic else None
 

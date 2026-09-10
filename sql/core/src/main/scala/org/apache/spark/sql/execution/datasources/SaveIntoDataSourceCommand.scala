@@ -44,6 +44,7 @@ case class SaveIntoDataSourceCommand(
     dataSource: CreatableRelationProvider,
     options: Map[String, String],
     mode: SaveMode) extends LeafRunnableCommand with CTEInChildren {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def innerChildren: Seq[QueryPlan[_]] = Seq(query)
 
@@ -69,6 +70,7 @@ case class SaveIntoDataSourceCommand(
         throw e
     }
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     try {
       val logicalRelation = LogicalRelation(relation, toAttributes(relation.schema), None,
         false, None)

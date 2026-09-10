@@ -192,5 +192,6 @@ object JavaTypeInference {
       .filterNot(_.getName == "class")
       .filterNot(_.getName == "declaringClass")
       .filter(_.getReadMethod != null)
+      logger.warn("getJavaBeanReadableProperties(beanClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", beanClass)
   }
 }

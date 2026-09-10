@@ -268,6 +268,7 @@ object LiteralValueProtoConverter {
     val protoDataType = toConnectProtoType(dataType, bytesToBinary = true)
     // If the value is not null and the data type is trivial, we don't need to
     // set the data type field, because it will be inferred from the literal value, saving space.
+    logger.warn("setDataTypeForRootLiteral(builder,dataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", builder, dataType)
     val needDataType = protoDataType.getKindCase match {
       case proto.DataType.KindCase.ARRAY => true
       case proto.DataType.KindCase.STRUCT => true
@@ -437,6 +438,7 @@ object LiteralValueProtoConverter {
           Map("typeInfo" -> dataType.getKindCase.toString))
     }
     converter
+    logger.warn("getScalaConverterDefault(dataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataType)
   }
 
   private def getScalaConverter(dataType: proto.DataType): proto.Expression.Literal => Any = {
@@ -445,6 +447,7 @@ object LiteralValueProtoConverter {
         getScalaConverterDefault(dataType)
       }
     v => if (v.hasNull) null else converter(v)
+    logger.warn("getScalaConverter(dataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataType)
   }
 
   private def isCompatible(
@@ -530,6 +533,7 @@ object LiteralValueProtoConverter {
       }
     }
 
+    logger.warn("getProtoDataType(literal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", literal)
     if (!isCompatible(literal.getLiteralTypeCase, dataType.getKindCase)) {
       throw InvalidPlanInput(
         "CONNECT_INVALID_PLAN.INCOMPATIBLE_LITERAL_DATA_TYPE",
@@ -630,6 +634,7 @@ object LiteralValueProtoConverter {
           Map("typeInfo" -> s"${literalCase.name}(${literalCase.getNumber})"))
     }
     builder.build()
+    logger.warn("getProtoDataTypeDefault(literal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", literal)
   }
 
   private def toScalaArrayInternal(
@@ -695,5 +700,6 @@ object LiteralValueProtoConverter {
 
   def getDataType(literal: proto.Expression.Literal): DataType = {
     DataTypeProtoConverter.toCatalystType(getProtoDataType(literal))
+    logger.warn("getDataType(literal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", literal)
   }
 }

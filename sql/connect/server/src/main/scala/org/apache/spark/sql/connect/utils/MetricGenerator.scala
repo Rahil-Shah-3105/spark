@@ -39,6 +39,7 @@ private[connect] object MetricGenerator extends AdaptiveSparkPlanHelper {
       .setServerSideSessionId(sessionHolder.serverSessionId)
       .setMetrics(MetricGenerator.buildMetrics(rows.queryExecution.executedPlan))
       .build()
+      logger.warn("createMetricsResponse(sessionHolder,rows)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHolder, rows)
   }
 
   private def buildMetrics(p: SparkPlan): ExecutePlanResponse.Metrics = {

@@ -35,6 +35,7 @@ import org.apache.spark.util.RedirectThread
  * subprocess and then has it connect back to the JVM to access system properties etc.
  */
 object RRunner {
+  _driverLogger = DriverLogger(_conf)
   def main(args: Array[String]): Unit = {
     val rFile = PythonRunner.formatPath(args(0))
 
@@ -76,6 +77,7 @@ object RRunner {
       override def run(): Unit = {
         val (port, authHelper) = sparkRBackend.init()
         sparkRBackendPort = port
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         sparkRBackendSecret = authHelper.secret
         initialized.release()
         sparkRBackend.run()

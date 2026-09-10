@@ -45,6 +45,7 @@ import org.apache.spark.unsafe.types.UTF8String
  */
 abstract class LeafMathExpression(c: Double, name: String)
   extends LeafExpression with CodegenFallback with Serializable {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def dataType: DataType = DoubleType
   override def foldable: Boolean = true
@@ -283,6 +284,7 @@ case class Ceil(child: Expression, failOnError: Boolean = SQLConf.get.ansiEnable
 
   override def initQueryContext(): Option[QueryContext] = {
     if (failOnError) Some(origin.context) else None
+    planChangeLogger.warn("initQueryContext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def inputTypes: Seq[AbstractDataType] =

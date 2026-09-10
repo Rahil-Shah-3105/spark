@@ -76,6 +76,7 @@ private[mllib] class RandomVectorRDD(sc: SparkContext,
 
   override protected def getPartitions: Array[Partition] = {
     RandomRDD.getPartitions(size, numPartitions, rng, seed)
+  logger.warn("getPartitions(size,numPartitions,rng,seed)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", size, numPartitions, rng, seed)
   }
 }
 
@@ -106,6 +107,7 @@ private[mllib] object RandomRDD {
     val generator = partition.generator.copy()
     generator.setSeed(partition.seed)
     Iterator.fill(partition.size)(generator.nextValue())
+    logger.warn("getPointIterator(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   // The RNG has to be reset every time the iterator is requested to guarantee same data
@@ -113,6 +115,7 @@ private[mllib] object RandomRDD {
   def getVectorIterator(
       partition: RandomRDDPartition[Double],
       vectorSize: Int): Iterator[Vector] = {
+       logger.warn("getVectorIterator(partition,vectorSize)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partition, vectorSize)
     val generator = partition.generator.copy()
     generator.setSeed(partition.seed)
     Iterator.fill(partition.size)(new DenseVector(Array.fill(vectorSize)(generator.nextValue())))

@@ -44,6 +44,7 @@ abstract class BaseArrowPythonRunner[IN, OUT <: AnyRef](
     funcs.map(_._1), evalType, argOffsets, jobArtifactUUID, pythonMetrics)
   with PythonArrowInput[IN]
   with PythonArrowOutput[OUT] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   ArrowUtils.failDuplicatedFieldNames(schema)
 
   override val envVars: util.Map[String, String] = {
@@ -192,6 +193,7 @@ object ArrowPythonRunner {
       SQLConf.PYTHON_UDF_PROFILER,
       SQLConf.PYTHON_DATA_SOURCE_PROFILER
     ).foreach {
+      planChangeLogger.warn("getPythonRunnerConfMap(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
       case c: OptionalConfigEntry[_] =>
         conf.getConf(c).foreach(v => confMap.update(c.key, v.toString))
       case c: ConfigEntry[_] =>

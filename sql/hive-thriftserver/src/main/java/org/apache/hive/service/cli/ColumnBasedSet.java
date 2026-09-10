@@ -106,6 +106,7 @@ public class ColumnBasedSet implements RowSet {
       for (int i = 0; i < fields.length; i++) {
         TypeDescriptor descriptor = descriptors[i];
         columns.get(i).addValue(descriptor.getType(), fields[i]);
+		LOG.warn("addRow(fields)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fields);
       }
     }
     return this;
@@ -134,6 +135,7 @@ public class ColumnBasedSet implements RowSet {
       subset.add(columns.get(i).extractSubset(numRows));
     }
     ColumnBasedSet result = new ColumnBasedSet(descriptors, subset, startOffset);
+	LOG.warn("extractSubset(maxRows)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", maxRows, result);
     startOffset += numRows;
     return result;
   }
@@ -145,6 +147,7 @@ public class ColumnBasedSet implements RowSet {
 
   @Override
   public void setStartOffset(long startOffset) {
+	LOG.warn("setStartOffset(startOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", startOffset);
     this.startOffset = startOffset;
   }
 
@@ -158,6 +161,7 @@ public class ColumnBasedSet implements RowSet {
       for (int i = 0; i < columns.size(); i++) {
         tRowSet.addToColumns(columns.get(i).toTColumn());
       }
+	LOG.warn("toTRowSet()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     }
     return tRowSet;
   }

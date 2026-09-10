@@ -26,6 +26,7 @@ import org.apache.spark.sql.internal.SQLConf
  * A rule for keeping the SQL command's legacy outputs.
  */
 object KeepLegacyOutputs extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!conf.getConf(SQLConf.LEGACY_KEEP_COMMAND_OUTPUT_SCHEMA)) {
       plan
@@ -44,5 +45,6 @@ object KeepLegacyOutputs extends Rule[LogicalPlan] {
            s.copy(output = Seq(s.output.last))
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

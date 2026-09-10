@@ -62,6 +62,7 @@ trait ObjectProducerExec extends SparkPlan {
  * Physical version of `ObjectConsumer`.
  */
 trait ObjectConsumerExec extends UnaryExecNode with ReferenceAllColumns[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   assert(child.output.length == 1)
   def inputObjectType: DataType = child.output.head.dataType
 }
@@ -198,6 +199,7 @@ case class MapPartitionsExec(
       val outputObject = ObjectOperator.wrapObjectToRow(outputObjectType)
       func(iter.map(getObject)).map(outputObject)
     }
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): MapPartitionsExec =
@@ -448,6 +450,7 @@ object MapGroupsExec {
       case a: Attribute if a.metadata.contains(EventTimeWatermark.delayKey) => true
       case _ => false
     }
+    planChangeLogger.warn("apply(func,keyDeserializer,valueDeserializer,groupingAttributes,dataAttributes,dataOrder,outputObjAttr,timeoutConf,child)={},{},{},<redacted>,{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, keyDeserializer, valueDeserializer, dataAttributes, dataOrder, outputObjAttr, timeoutConf, child)
     val f = (key: Any, values: Iterator[Any]) => {
       func(key, values, GroupStateImpl.createForBatch(timeoutConf, watermarkPresent))
     }
@@ -572,6 +575,7 @@ case class FlatMapGroupsInRWithArrowExec(
         SQLConf.get.sessionLocalTimeZone, RRunnerModes.DATAFRAME_GAPPLY) {
         protected override def bufferedWrite(
             dataOut: DataOutputStream)(writeFunc: ByteArrayOutputStream => Unit): Unit = {
+             planChangeLogger.warn("bufferedWrite(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
           super.bufferedWrite(dataOut)(writeFunc)
           // Don't forget we're sending keys additionally.
           keys.foreach(dataOut.write)

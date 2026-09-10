@@ -114,6 +114,7 @@ import org.apache.spark.sql.internal.SQLConf
  */
 // scalastyle:on line.size.limit
 object ResolveLateralColumnAliasReference extends Rule[LogicalPlan] with AliasHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   case class AliasEntry(alias: Alias, index: Int)
 
   private def assignAlias(expr: Expression): NamedExpression = {
@@ -151,6 +152,7 @@ object ResolveLateralColumnAliasReference extends Rule[LogicalPlan] with AliasHe
           && pOriginal.projectList.exists(_.containsPattern(LATERAL_COLUMN_ALIAS_REFERENCE)) =>
         val p @ Project(projectList, child) = pOriginal.mapChildren(apply0)
         var aliasMap = AttributeMap.empty[AliasEntry]
+        planChangeLogger.warn("apply0(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
         val referencedAliases = new LinkedHashSet[AliasEntry]
         def unwrapLCAReference(e: NamedExpression): NamedExpression = {
           e.transformWithPruning(_.containsPattern(LATERAL_COLUMN_ALIAS_REFERENCE)) {
@@ -307,5 +309,6 @@ object ResolveLateralColumnAliasReference extends Rule[LogicalPlan] with AliasHe
       // phase 2: unwrap
       apply0(plan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

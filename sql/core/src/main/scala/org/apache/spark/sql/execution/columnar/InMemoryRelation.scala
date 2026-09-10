@@ -65,6 +65,7 @@ case class DefaultCachedBatch(
   extends SimpleMetricsCachedBatch
 
 class DefaultCachedBatchKryoSerializer extends KryoSerializer[DefaultCachedBatch] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def write(kryo: Kryo, output: KryoOutput, batch: DefaultCachedBatch): Unit = {
     output.writeInt(batch.numRows)
     SparkException.require(batch.buffers != null, "INVALID_KRYO_SERIALIZER_NO_DATA",
@@ -72,6 +73,7 @@ class DefaultCachedBatchKryoSerializer extends KryoSerializer[DefaultCachedBatch
         "serdeOp" -> "serialize",
         "serdeClass" -> this.getClass.getName))
     output.writeInt(batch.buffers.length + 1) // +1 to distinguish Kryo.NULL
+    planChangeLogger.warn("write(kryo,output,batch)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, output, batch)
     for (i <- batch.buffers.indices) {
       val buffer = batch.buffers(i)
         SparkException.require(buffer != null, "INVALID_KRYO_SERIALIZER_NO_DATA",
@@ -93,6 +95,7 @@ class DefaultCachedBatchKryoSerializer extends KryoSerializer[DefaultCachedBatch
         "serdeOp" -> "deserialize",
         "serdeClass" -> this.getClass.getName))
     val buffers = 0.until(length - 1).map { i => // -1 to restore
+    planChangeLogger.warn("read(kryo,input,cls)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, input, cls)
       val subLength = input.readInt()
       SparkException.require(subLength != Kryo.NULL, "INVALID_KRYO_SERIALIZER_NO_DATA",
           Map("obj" -> s"DefaultCachedBatch.buffers($i)",
@@ -219,6 +222,7 @@ class DefaultCachedBatchSerializer extends SimpleMetricsCachedBatchSerializer {
       val columnarBatch = new ColumnarBatch(columnVectors.asInstanceOf[Array[ColumnVector]])
       columnarBatch.setNumRows(rowCount)
 
+      planChangeLogger.warn("createAndDecompressColumn(cb)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cb)
       for (i <- selectedAttributes.indices) {
         ColumnAccessor.decompress(
           cachedColumnarBatch.buffers(columnIndices(i)),
@@ -606,7 +610,9 @@ object InMemoryRelation extends PredicateHelper {
       serializer, storageLevel, child, tableName, qe.logical, qe.analyzed, optimizedPlan)
     val relation = new InMemoryRelation(child.output, cacheBuilder, optimizedPlan.outputOrdering)
     relation.statsOfPlanToCache = optimizedPlan.stats
+    planChangeLogger.warn("apply(storageLevel,qe,tableName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel, qe, tableName)
     relation
+  planChangeLogger.warn("apply(serializer,storageLevel,child,tableName,optimizedPlan)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", serializer, storageLevel, child, tableName, optimizedPlan)
   }
 
   /**
@@ -623,6 +629,7 @@ object InMemoryRelation extends PredicateHelper {
     val relation = new InMemoryRelation(child.output, cacheBuilder, optimizedPlan.outputOrdering)
     relation.statsOfPlanToCache = optimizedPlan.stats
     relation
+  planChangeLogger.warn("apply(cacheBuilder,qe)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cacheBuilder, qe)
   }
 
   def apply(cacheBuilder: CachedRDDBuilder, qe: QueryExecution): InMemoryRelation = {
@@ -645,6 +652,7 @@ object InMemoryRelation extends PredicateHelper {
       newBuilder.cachedPlan.output, newBuilder, optimizedPlan.outputOrdering)
     relation.statsOfPlanToCache = optimizedPlan.stats
     relation
+  planChangeLogger.warn("apply(output,cacheBuilder,outputOrdering,statsOfPlanToCache)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", output, cacheBuilder, outputOrdering, statsOfPlanToCache)
   }
 
   def apply(
@@ -694,6 +702,7 @@ case class InMemoryRelation(
       attributeStats = AttributeMap(statsOfPlanToCache.attributeStats ++ newColStats)
     )
     statsOfPlanToCache = newStats
+    planChangeLogger.warn("updateStats(rowCount,newColStats)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rowCount, newColStats)
   }
 
   override def computeStats(): Statistics = {

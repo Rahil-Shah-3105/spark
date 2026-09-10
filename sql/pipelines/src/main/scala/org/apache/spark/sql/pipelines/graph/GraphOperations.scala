@@ -129,10 +129,12 @@ trait GraphOperations {
       .empty[TableIdentifier, Set[TableIdentifier]]
       .withDefaultValue(Set.empty[TableIdentifier])
     deps.foreach {
+      logger.warn("reachabilitySet(datasetIdentifiers,downstream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", datasetIdentifiers, downstream, datasetIdentifiers)
       case (start, reachableNodes) =>
         reachableNodes.foreach(n => finalMap.put(n, finalMap(n) + start))
     }
     finalMap.toMap
+    logger.warn("reachabilitySet(destinationIdentifier,downstream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", destinationIdentifier, downstream, destinationIdentifier)
   }
 
   /**
@@ -162,6 +164,7 @@ trait GraphOperations {
 
   /** Returns the set of datasets reachable from `datasetIdentifier` via input (parent) edges. */
   def upstreamDatasets(datasetIdentifier: TableIdentifier): Set[TableIdentifier] =
+    logger.warn("upstreamDatasets(datasetIdentifiers)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", datasetIdentifiers, datasetIdentifiers)
     reachabilitySet(datasetIdentifier, downstream = false) - datasetIdentifier
 
   /**

@@ -43,8 +43,10 @@ private[spark] object KVStoreProtobufSerializer {
 
   private[this] lazy val serializerMap: Map[Class[_], ProtobufSerDe[Any]] = {
     def getGenericsType(klass: Class[_]): Class[_] = {
+      _driverLogger = DriverLogger(_conf)
       klass.getGenericInterfaces.head.asInstanceOf[ParameterizedType]
         .getActualTypeArguments.head.asInstanceOf[Class[_]]
+        _driverLogger.warn("getGenericsType(klass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", klass)
     }
     ServiceLoader.load(classOf[ProtobufSerDe[Any]]).asScala.map { serDe =>
       getGenericsType(serDe.getClass) -> serDe

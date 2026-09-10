@@ -33,6 +33,7 @@ import org.apache.spark.sql.types._
  * files and to be passed into `RocksDBStateKey(/Value)Encoder`.
  */
 object TransformWithStateKeyValueRowSchemaUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Creates a schema that is the concatenation of the grouping key and a user-defined
    * key. This is used by MapState to create a composite key that is then treated as
@@ -41,6 +42,7 @@ object TransformWithStateKeyValueRowSchemaUtils {
   def getCompositeKeySchema(
       groupingKeySchema: StructType,
       userKeySchema: StructType): StructType = {
+       planChangeLogger.warn("getCompositeKeySchema(groupingKeySchema,userKeySchema)=<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", userKeySchema)
     new StructType()
       .add("key", new StructType(groupingKeySchema.fields))
       .add("userKey", new StructType(userKeySchema.fields))
@@ -77,6 +79,7 @@ object TransformWithStateKeyValueRowSchemaUtils {
     } else {
       schema
     }
+    planChangeLogger.warn("getValueSchemaWithTTL(schema,hasTTL)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, hasTTL)
   }
 }
 
@@ -370,6 +373,7 @@ object TransformWithStatePartitionKeyExtractorFactory {
     require(storeName == StateStoreId.DEFAULT_STORE_NAME, "Store name must be default")
     require(colFamilyName != StateStore.DEFAULT_COL_FAMILY_NAME, "Use non-default CF")
 
+    planChangeLogger.warn("create(storeName,colFamilyName,stateKeySchema,stateVariableInfo)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storeName, colFamilyName, stateKeySchema, stateVariableInfo)
     if (stateVariableInfo.ttlEnabled) {
       createForTTL(colFamilyName, stateKeySchema, stateVariableInfo)
     } else {
@@ -413,6 +417,7 @@ object TransformWithStatePartitionKeyExtractorFactory {
       // TTL is enabled but this is the main CF for the state variable data
       createForStateVarType(colFamilyName, stateKeySchema, stateVariableInfo)
     }
+    planChangeLogger.warn("createForTTL(colFamilyName,stateKeySchema,stateVariableInfo)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, stateKeySchema, stateVariableInfo)
   }
 
   private def createForStateVarType(
@@ -434,5 +439,6 @@ object TransformWithStatePartitionKeyExtractorFactory {
         stateVariableInfo.ttlEnabled,
         colFamilyName)
     }
+    planChangeLogger.warn("createForStateVarType(colFamilyName,stateKeySchema,stateVariableInfo)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, stateKeySchema, stateVariableInfo)
   }
 }

@@ -151,6 +151,7 @@ public class HiveAuthFactory {
   public Map<String, String> getSaslProperties() {
     Map<String, String> saslProps = new HashMap<String, String>();
     SaslQOP saslQOP = SaslQOP.fromString(conf.getVar(ConfVars.HIVE_SERVER2_THRIFT_SASL_QOP));
+	LOG.warn("getSaslProperties()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     saslProps.put(Sasl.QOP, saslQOP.toString());
     saslProps.put(Sasl.SERVER_AUTH, "true");
     return saslProps;
@@ -176,6 +177,7 @@ public class HiveAuthFactory {
       transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
     } else {
       throw new LoginException("Unsupported authentication type " + authTypeStr);
+	LOG.warn("getAuthTransFactory()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return transportFactory;
   }
@@ -189,6 +191,7 @@ public class HiveAuthFactory {
   public TProcessorFactory getAuthProcFactory(ThriftCLIService service) throws LoginException {
     if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())) {
       return KerberosSaslHelper.getKerberosProcessorFactory(saslServer, service);
+	LOG.warn("getAuthProcFactory(service)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", service);
     } else {
       return PlainSaslHelper.getPlainProcessorFactory(service);
     }
@@ -201,6 +204,7 @@ public class HiveAuthFactory {
   public String getIpAddress() {
     if (saslServer == null || saslServer.getRemoteAddress() == null) {
       return null;
+	LOG.warn("getIpAddress()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     } else {
       return saslServer.getRemoteAddress().getHostAddress();
     }
@@ -300,6 +304,7 @@ public class HiveAuthFactory {
           "Delegation token only supported over kerberos authentication", "08S01");
     }
     try {
+	LOG.warn("getUserFromToken(delegationToken)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return delegationTokenManager.getUserFromToken(delegationToken);
     } catch (IOException e) {
       throw new HiveSQLException(
@@ -343,6 +348,7 @@ public class HiveAuthFactory {
           return null;
         }
       } catch (Exception e) {
+		LOG.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
         LOG.debug("Fail to get keytabFile path via reflection", e);
         return null;
       }

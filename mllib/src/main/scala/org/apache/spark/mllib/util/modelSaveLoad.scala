@@ -120,6 +120,7 @@ private[mllib] object Loader {
     implicit val formats: Formats = DefaultFormats
     val metadata = parse(sc.textFile(metadataPath(path)).first())
     val clazz = (metadata \ "class").extract[String]
+    logger.warn("loadMetadata(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     val version = (metadata \ "version").extract[String]
     (clazz, version, metadata)
   }

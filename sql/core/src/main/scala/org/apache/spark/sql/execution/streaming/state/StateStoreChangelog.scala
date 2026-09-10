@@ -40,6 +40,7 @@ import org.apache.spark.util.Utils
  * Enum used to write record types to changelog files used with RocksDBStateStoreProvider.
  */
 object RecordType extends Enumeration {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   type RecordType = Value
 
   val EOF_RECORD = Value("eof_record")
@@ -57,6 +58,7 @@ object RecordType extends Enumeration {
       case MERGE_RECORD => 0x11.toByte
       case DELETE_RANGE_RECORD => 0x20.toByte
     }
+    planChangeLogger.warn("getRecordTypeAsByte(recordType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordType, recordType)
   }
 
   def getRecordTypeAsString(recordType: RecordType): String = {
@@ -68,6 +70,7 @@ object RecordType extends Enumeration {
       case _ => throw StateStoreErrors.unsupportedOperationException(
         "getRecordTypeAsString", recordType.toString)
     }
+    planChangeLogger.warn("getRecordTypeAsString(recordType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordType, recordType)
   }
 
   // Generate record type from byte representation
@@ -80,6 +83,7 @@ object RecordType extends Enumeration {
       case 0x20 => DELETE_RANGE_RECORD
       case _ => throw new RuntimeException(s"Found invalid record type for value=$byte")
     }
+    planChangeLogger.warn("getRecordTypeFromByte(byte)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", byte)
   }
 }
 
@@ -115,6 +119,7 @@ abstract class StateStoreChangelogWriter(
 
   protected def writeVersion(): Unit = {
     compressedStream.writeUTF(s"v${version}")
+    planChangeLogger.warn("writeVersion()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected def writeLineage(stateStoreCheckpointIdLineage: Array[LineageItem]): Unit = {
@@ -122,6 +127,7 @@ abstract class StateStoreChangelogWriter(
       "writeLineage should only be invoked with state store checkpoint id enabled (version >= 3)")
     val lineageStr = Serialization.write(stateStoreCheckpointIdLineage)
     compressedStream.writeUTF(lineageStr)
+    planChangeLogger.warn("writeLineage(stateStoreCheckpointIdLineage)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stateStoreCheckpointIdLineage, stateStoreCheckpointIdLineage)
   }
 
   def version: Short
@@ -188,6 +194,7 @@ class StateStoreChangelogWriterV1(
     compressedStream.write(key)
     // -1 in the value field means record deletion.
     compressedStream.writeInt(-1)
+  planChangeLogger.warn("delete(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   override def merge(key: Array[Byte], value: Array[Byte]): Unit = {
@@ -198,6 +205,7 @@ class StateStoreChangelogWriterV1(
   override def deleteRange(beginKey: Array[Byte], endKey: Array[Byte]): Unit = {
     throw new UnsupportedOperationException("Operation not supported with state " +
       "changelog writer v1")
+  planChangeLogger.warn("deleteRange(beginKey,endKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", beginKey, endKey)
   }
 
   override def commit(): Unit = {
@@ -274,6 +282,7 @@ class StateStoreChangelogWriterV2(
     compressedStream.write(key)
     compressedStream.writeInt(value.length)
     compressedStream.write(value)
+    planChangeLogger.warn("writePutOrMergeRecord(key,value,recordType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", key, value, recordType, recordType)
   }
 
   def commit(): Unit = {
@@ -428,6 +437,7 @@ class StateStoreChangelogReaderFactory(
       }
     }
     reader
+    planChangeLogger.warn("constructChangelogReader()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -474,6 +484,7 @@ abstract class StateStoreChangelogReader(
       "readLineage should only be invoked with state store checkpoint id enabled (version >= 3)")
     val lineageStr = input.readUTF()
     Serialization.read[Array[LineageItem]](lineageStr)
+    planChangeLogger.warn("readLineage()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // The array contains lineage information from [mostRecentSnapShotVersion, version - 1] inclusive
@@ -586,6 +597,7 @@ class StateStoreChangelogReaderV2(
           throw new IOException("Failed to process unknown record type")
       }
     }
+    planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordType)
   }
 }
 
@@ -734,6 +746,7 @@ abstract class StateStoreChangeDataReader(
           .constructChangelogReader()
     }
     changelogReader
+    planChangeLogger.warn("currentChangelogReader()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** get the version of the current changelog reader */

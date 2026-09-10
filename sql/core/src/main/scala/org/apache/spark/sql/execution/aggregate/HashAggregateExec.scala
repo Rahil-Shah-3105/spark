@@ -104,6 +104,7 @@ case class HashAggregateExec(
     val aggTime = longMetric("aggTime")
     val numTasksFallBacked = longMetric("numTasksFallBacked")
     // Registered only when the feature applies, and only read from the pass-through path.
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val numBypassingRows = if (adaptivePartialAggEnabled) longMetric("numBypassingRows") else null
 
     child.execute().mapPartitionsWithIndex { (partIndex, iter) =>
@@ -258,6 +259,7 @@ case class HashAggregateExec(
    * This is called by generated Java class, should be public.
    */
   def createHashMap(): UnsafeFixedWidthAggregationMap = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // create initialized aggregate buffer
     val initExpr = declFunctions.flatMap(f => f.initialValues)
     val initialBuffer = UnsafeProjection.create(initExpr)(EmptyRow)
@@ -271,6 +273,7 @@ case class HashAggregateExec(
       1024 * 16, // initial capacity
       TaskContext.get().taskMemoryManager().pageSizeBytes
     )
+    planChangeLogger.warn("createHashMap()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getTaskContext(): TaskContext = {
@@ -285,12 +288,14 @@ case class HashAggregateExec(
    */
   def addFastHashMapCloseHook(fastHashMap: AutoCloseable): Unit = {
     TaskContext.get().addTaskCompletionListener[Unit](_ => fastHashMap.close())
+    planChangeLogger.warn("addFastHashMapCloseHook(fastHashMap)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getEmptyAggregationBuffer(): InternalRow = {
     val initExpr = declFunctions.flatMap(f => f.initialValues)
     val initialBuffer = UnsafeProjection.create(initExpr)(EmptyRow)
     initialBuffer
+    planChangeLogger.warn("getEmptyAggregationBuffer()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -298,6 +303,7 @@ case class HashAggregateExec(
    */
   def createUnsafeJoiner(): UnsafeRowJoiner = {
     GenerateUnsafeRowJoiner.create(groupingKeySchema, bufferSchema)
+    planChangeLogger.warn("createUnsafeJoiner()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -530,6 +536,7 @@ case class HashAggregateExec(
       // We enforce to first level to be a vectorized hashmap, instead of the default row-based one.
       isVectorizedHashMapEnabled = conf.enableVectorizedHashMap
     }
+    planChangeLogger.warn("enableTwoLevelHashMap()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected override def needHashTable: Boolean = true

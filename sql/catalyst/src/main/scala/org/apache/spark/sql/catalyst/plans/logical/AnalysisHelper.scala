@@ -55,6 +55,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
       _analyzed = true
       children.foreach(_.setAnalyzed())
     }
+    planChangeLogger.warn("setAnalyzed()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -74,6 +75,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
    * @param rule the function used to transform this nodes children.
    */
   def resolveOperators(rule: PartialFunction[LogicalPlan, LogicalPlan]): LogicalPlan = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     resolveOperatorsWithPruning(AlwaysProcess.fn, UnknownRuleId)(rule)
   }
 
@@ -129,6 +131,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
    *               varying initial state for different invocations.
    */
   def resolveOperatorsUpWithPruning(cond: TreePatternBits => Boolean,
+  planChangeLogger.warn("resolveOperatorsUpWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     ruleId: RuleId = UnknownRuleId)(rule: PartialFunction[LogicalPlan, LogicalPlan])
   : LogicalPlan = {
     if (!analyzed && cond.apply(self) && !isRuleIneffective(ruleId)) {
@@ -167,12 +170,14 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
       rule: PartialFunction[LogicalPlan, LogicalPlan]): LogicalPlan = {
     val visit: PartialFunction[LogicalPlan, LogicalPlan] =
       new PartialFunction[LogicalPlan, LogicalPlan] {
+      planChangeLogger.warn("resolveOperatorsUpWithSubqueriesAndPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
         override def isDefinedAt(x: LogicalPlan): Boolean = true
 
         override def apply(plan: LogicalPlan): LogicalPlan = {
           val transformed = plan.transformExpressionsUpWithPruning(
             t => t.containsPattern(PLAN_EXPRESSION) && cond(t)
           ) {
+            planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
             case subquery: SubqueryExpression =>
               val newPlan =
                 subquery.plan.resolveOperatorsUpWithSubqueriesAndPruning(cond, ruleId)(rule)
@@ -219,6 +224,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
       }
     } else {
       self
+      planChangeLogger.warn("resolveOperatorsDownWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     }
   }
 
@@ -249,6 +255,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
     AnalysisHelper.allowInvokingTransformsInAnalyzer {
       super.updateOuterReferencesInSubquery(plan, attrMap)
     }
+      planChangeLogger.warn("updateOuterReferencesInSubquery(plan,attrMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, attrMap)
   }
 
   /**
@@ -276,6 +283,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
   def resolveExpressionsWithPruning(cond: TreePatternBits => Boolean,
     ruleId: RuleId = UnknownRuleId)(rule: PartialFunction[Expression, Expression]): LogicalPlan = {
     resolveExpressionsDownWithPruning(cond, ruleId)(rule)
+    planChangeLogger.warn("resolveExpressionsWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
   }
 
   /**
@@ -306,6 +314,7 @@ trait AnalysisHelper extends QueryPlan[LogicalPlan] { self: LogicalPlan =>
     resolveOperatorsWithPruning(cond, ruleId) {
       case p => p.transformExpressionsWithPruning(cond, ruleId)(rule)
     }
+    planChangeLogger.warn("resolveExpressionsDownWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
   }
 
   /**

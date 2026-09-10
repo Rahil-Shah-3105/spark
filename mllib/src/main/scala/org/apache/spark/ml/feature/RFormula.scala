@@ -458,6 +458,7 @@ object RFormulaModel extends MLReadable[RFormulaModel] {
         ResolvedRFormula.serializeData
       )
       // Save pipeline model
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       val pmPath = new Path(path, "pipelineModel").toString
       instance.pipelineModel.save(pmPath)
     }

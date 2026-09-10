@@ -23,6 +23,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A equivalent implementation of {@link DefaultUDAFEvaluatorResolver}, but eliminate calls
@@ -32,6 +34,7 @@ import java.util.List;
  */
 @SuppressWarnings("deprecation")
 public class SparkDefaultUDAFEvaluatorResolver implements UDAFEvaluatorResolver {
+private static final Logger log = LoggerFactory.getLogger(SparkDefaultUDAFEvaluatorResolver.class);
 
   /**
    * The class of the UDAF.
@@ -98,6 +101,7 @@ public class SparkDefaultUDAFEvaluatorResolver implements UDAFEvaluatorResolver 
         }
       }
     }
+	log.warn("getEvaluatorClass(argClasses)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", argClasses);
     assert (found != -1);
 
     return cList.get(found);

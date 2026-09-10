@@ -91,6 +91,7 @@ public class TransportServer implements Closeable {
 
   public int getPort() {
     if (port == -1) {
+	logger.warn("getPort()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       throw new IllegalStateException("Server not initialized");
     }
     return port;

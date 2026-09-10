@@ -49,6 +49,7 @@ private[netty] class NettyStreamManager(rpcEnv: NettyRpcEnv)
 
   override def getChunk(streamId: Long, chunkIndex: Int): ManagedBuffer = {
     throw new UnsupportedOperationException()
+    _driverLogger.warn("getChunk(streamId,chunkIndex)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", streamId, chunkIndex, streamId)
   }
 
   override def openStream(streamId: String): ManagedBuffer = {
@@ -77,6 +78,7 @@ private[netty] class NettyStreamManager(rpcEnv: NettyRpcEnv)
       s"File ${file.getName} was already registered with a different path " +
         s"(old path = $existingPath, new path = $file")
     s"${rpcEnv.address.toSparkURL}/files/${Utils.encodeFileNameToURIRawPath(file.getName())}"
+    _driverLogger.warn("addFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   override def addJar(file: File): String = {
@@ -86,6 +88,7 @@ private[netty] class NettyStreamManager(rpcEnv: NettyRpcEnv)
       s"File ${file.getName} was already registered with a different path " +
         s"(old path = $existingPath, new path = $file")
     s"${rpcEnv.address.toSparkURL}/jars/${Utils.encodeFileNameToURIRawPath(file.getName())}"
+    _driverLogger.warn("addJar(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   override def addDirectory(baseUri: String, path: File): String = {
@@ -93,11 +96,14 @@ private[netty] class NettyStreamManager(rpcEnv: NettyRpcEnv)
     require(dirs.putIfAbsent(fixedBaseUri.stripPrefix("/"), path.getCanonicalFile) == null,
       s"URI '$fixedBaseUri' already registered.")
     s"${rpcEnv.address.toSparkURL}$fixedBaseUri"
+    _driverLogger.warn("addDirectory(baseUri,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseUri, path)
   }
 
   override def addDirectoryIfAbsent(baseUri: String, path: File): String = {
+    _driverLogger = DriverLogger(_conf)
     val fixedBaseUri = validateDirectoryUri(baseUri)
     dirs.putIfAbsent(fixedBaseUri.stripPrefix("/"), path.getCanonicalFile)
     s"${rpcEnv.address.toSparkURL}$fixedBaseUri"
+    _driverLogger.warn("addDirectoryIfAbsent(baseUri,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseUri, path)
   }
 }

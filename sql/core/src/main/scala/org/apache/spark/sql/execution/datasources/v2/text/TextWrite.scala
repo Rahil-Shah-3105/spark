@@ -33,6 +33,7 @@ case class TextWrite(
     supportsDataType: DataType => Boolean,
     info: LogicalWriteInfo) extends FileWrite {
   private def verifySchema(schema: StructType): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (schema.size != 1) {
       throw QueryCompilationErrors.textDataSourceWithMultiColumnsError(schema)
     }
@@ -47,6 +48,7 @@ case class TextWrite(
 
     val textOptions = new TextOptions(options)
     val conf = job.getConfiguration
+    planChangeLogger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
 
     textOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(conf, codec)
@@ -62,6 +64,7 @@ case class TextWrite(
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".txt" + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }

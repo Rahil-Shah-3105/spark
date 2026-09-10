@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.StructType
  * Base class for all ANTLR4 [[ParserInterface]] implementations.
  */
 abstract class AbstractSqlParser extends AbstractParser with ParserInterface {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def astBuilder: AstBuilder
 
   /** Creates Expression for a given SQL string. */
@@ -80,6 +81,7 @@ abstract class AbstractSqlParser extends AbstractParser with ParserInterface {
         astBuilder.visitSingleTemporalTableIdentifier(ctx)
       }
     }
+    planChangeLogger.warn("parseTemporalTableIdentifier(sqlText)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sqlText)
   }
 
   /** Creates LogicalPlan for a given SQL string of query. */

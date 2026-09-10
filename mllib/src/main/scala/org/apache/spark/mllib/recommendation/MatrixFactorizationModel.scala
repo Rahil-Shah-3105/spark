@@ -212,6 +212,8 @@ class MatrixFactorizationModel @Since("0.8.0") (
   @Since("1.3.0")
   override def save(sc: SparkContext, path: String): Unit = {
     MatrixFactorizationModel.SaveLoadV1_0.save(this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(model,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", model, path)
   }
 
   /**
@@ -367,6 +369,7 @@ object MatrixFactorizationModel extends Loader[MatrixFactorizationModel] {
           s"(class: $loadedClassName, version: $formatVersion). Supported:\n" +
           s"  ($classNameV1_0, 1.0)")
     }
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private[recommendation]

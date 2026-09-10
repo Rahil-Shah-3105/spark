@@ -39,6 +39,7 @@ object RuleExecutor {
   /** Resets statistics about time spent running specific rules */
   def resetMetrics(): Unit = {
     queryExecutionMeter.resetMetrics()
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getCurrentMetrics(): QueryExecutionMetrics = {
@@ -206,6 +207,7 @@ abstract class RuleExecutor[TreeType <: TreeNode[_]] extends Logging {
     QueryPlanningTracker.withTracker(tracker) {
       execute(plan)
     }
+    planChangeLogger.warn("executeAndTrack(plan,tracker)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, tracker)
   }
 
   /**
@@ -319,6 +321,7 @@ abstract class RuleExecutor[TreeType <: TreeNode[_]] extends Logging {
 
       planChangeLogger.logBatch(batch.name, batchStartPlan, curPlan)
     }
+    planChangeLogger.warn("execute(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, fullValidation)
     planChangeLogger.logMetrics(name, RuleExecutor.getCurrentMetrics() - beforeMetrics)
 
     curPlan

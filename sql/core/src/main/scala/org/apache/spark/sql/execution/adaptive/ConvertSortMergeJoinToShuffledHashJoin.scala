@@ -66,6 +66,7 @@ case class ConvertSortMergeJoinToShuffledHashJoin(ensureRequirements: EnsureRequ
   private def preferShuffledHashJoin(
       mapStats: MapOutputStatistics,
       sizeInBytesFactor: Double): Boolean = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val maxShuffledHashJoinLocalMapThreshold =
       conf.getConf(SQLConf.ADAPTIVE_MAX_SHUFFLE_HASH_JOIN_LOCAL_MAP_THRESHOLD)
     val advisoryPartitionSize = conf.getConf(SQLConf.ADVISORY_PARTITION_SIZE_IN_BYTES)
@@ -109,6 +110,7 @@ case class ConvertSortMergeJoinToShuffledHashJoin(ensureRequirements: EnsureRequ
     }
     val lookThroughOperatorsEnabled =
       conf.convertSortMergeJoinToShuffledHashJoinLookThroughOperatorsEnabled
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val optimizedPlan = plan.transformUp {
       case smj @ SortMergeJoinExec(leftKeys, rightKeys, joinType, condition, left, right, false)
           // Do not convert if the join keys are not hash-join-compatible (e.g. collated or other
@@ -203,6 +205,7 @@ case class ConvertSortMergeJoinToShuffledHashJoin(ensureRequirements: EnsureRequ
       findShuffleStage(w.child, lookThroughOperatorsEnabled)
     case join: BaseJoinExec =>
       join.joinType match {
+      planChangeLogger.warn("findShuffleStage(plan,lookThroughOperatorsEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, lookThroughOperatorsEnabled)
         case LeftExistence(_) => findShuffleStage(join.left, lookThroughOperatorsEnabled)
         case _ => None
       }

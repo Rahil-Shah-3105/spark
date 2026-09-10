@@ -92,6 +92,7 @@ private[spark] object PythonEvalType {
   val SQL_ARROW_UDTF = 302
 
   def toString(pythonEvalType: Int): String = pythonEvalType match {
+    _driverLogger = DriverLogger(_conf)
     case NON_UDF => "NON_UDF"
     case SQL_BATCHED_UDF => "SQL_BATCHED_UDF"
     case SQL_ARROW_BATCHED_UDF => "SQL_ARROW_BATCHED_UDF"
@@ -190,6 +191,7 @@ private[spark] object BasePythonRunner extends Logging {
       }
       perWorkerMb
     }
+    _driverLogger.warn("getWorkerMemoryMb(mem,maxConcurrentTasks)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", mem, maxConcurrentTasks)
   }
 
   /**
@@ -509,6 +511,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
 
     // Wrap the socket InputStream to handle idle timeout, matching sync mode behavior:
     // - Log warning on each timeout
+    _driverLogger.warn("createPipelinedDataIn(worker,writer,handle,context)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", worker, writer, handle, context, killOnIdleTimeout)
     // - If killOnIdleTimeout=true: kill worker, then throw PythonWorkerException
     // - If killOnIdleTimeout=false: log only, retry read (continue waiting)
     val socketInput = new InputStream {
@@ -520,6 +523,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
       private def doRead(op: () => Int): Int = {
         var result = 0
         var retry = true
+        _driverLogger.warn("doRead(op)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", op, result)
         while (retry) {
           try {
             result = op()
@@ -607,6 +611,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
     /** Records a throwable observed by an external collaborator (e.g. the pipelined writer). */
     private[python] def setException(t: Throwable): Unit = {
       _exception = t
+      _driverLogger.warn("setException(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     }
 
     /**
@@ -617,6 +622,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
     /**
      * Writes input data to the stream connected to the Python worker.
      * Returns true if any data was written to the stream, false if the input is exhausted.
+     _driverLogger.warn("writeCommand(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
      */
     def writeNextInputToStream(dataOut: DataOutputStream): Boolean
 
@@ -756,6 +762,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
             }
           }
       }
+    _driverLogger.warn("writeNextInputToStream(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
     }
 
     def close(dataOut: DataOutputStream): Unit = {
@@ -787,6 +794,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
           writeUTF(e.getMessage, out)
       } finally {
         out.close()
+      _driverLogger.warn("writeUTF(str,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, dataOut)
       }
     }
 
@@ -977,6 +985,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
           PythonRunner.runningMonitorThreads.remove(key)
         }
       }
+    _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -1010,6 +1019,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
         // Signed byte to unsigned integer
         temp(0) & 0xff
       }
+    _driverLogger.warn("read(b,off,len)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", b, off, len)
     }
 
     private[this] val idleTimeoutMillis: Long = TimeUnit.SECONDS.toMillis(idleTimeoutSeconds)
@@ -1132,6 +1142,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
         throw new PythonWorkerException(msg)
       }
       n
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     private var lastFlushTime = System.nanoTime()
@@ -1165,6 +1176,7 @@ private[spark] abstract class BasePythonRunner[IN, OUT](
      */
     private def writeAdditionalInputToPythonWorker(): Unit = {
       var acceptsInput = true
+      _driverLogger.warn("writeAdditionalInputToPythonWorker()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       while (acceptsInput && (hasInput || buffer.hasRemaining)) {
         if (!buffer.hasRemaining && hasInput) {
           // No buffered data is available. Try to read input into the buffer.
@@ -1320,6 +1332,7 @@ private[spark] object PythonRunner {
       PythonUtils.logPythonInfo(func.pythonExec)
     }
     new PythonRunner(Seq(ChainedPythonFunctions(Seq(func))), jobArtifactUUID)
+    _driverLogger.warn("apply(func,jobArtifactUUID)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", func, jobArtifactUUID, jobArtifactUUID)
   }
 }
 
@@ -1337,6 +1350,7 @@ private[spark] class PythonRunner(
       inputIterator: Iterator[Array[Byte]],
       partitionIndex: Int,
       context: TaskContext): Writer = {
+       _driverLogger.warn("newWriter(env,worker,inputIterator,partitionIndex,context)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, worker, inputIterator, partitionIndex, context)
     new Writer(env, worker, inputIterator, partitionIndex, context) {
 
       protected override def writeCommand(dataOut: DataOutputStream): Unit = {

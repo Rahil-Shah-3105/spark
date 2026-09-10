@@ -59,6 +59,7 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
       taskSetManager: TaskSetManager,
       tid: Long,
       serializedData: ByteBuffer): Unit = {
+       _driverLogger = DriverLogger(_conf)
     getTaskResultExecutor.execute(new Runnable {
       override def run(): Unit = Utils.logUncaughtExceptions {
         try {
@@ -163,6 +164,7 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
       case e: RejectedExecutionException if sparkEnv.isStopped =>
         // ignore it
     }
+    _driverLogger.warn("enqueueFailedTask(taskSetManager,tid,taskState,serializedData)={},{},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", taskSetManager, tid, taskState, serializedData, tid)
   }
 
   // This method calls `TaskSchedulerImpl.handlePartitionCompleted` asynchronously. We do not want

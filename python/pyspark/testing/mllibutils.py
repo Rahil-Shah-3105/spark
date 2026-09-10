@@ -19,11 +19,13 @@ import unittest
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class MLlibTestCase(unittest.TestCase):
     def setUp(self):
         self.sc = SparkContext("local[4]", "MLlib tests")
+        logger.warning("setUp(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self.spark = SparkSession(self.sc)
 
     def tearDown(self):

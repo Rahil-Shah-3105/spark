@@ -46,6 +46,7 @@ private[columnar] case object PassThrough extends CompressionScheme {
 
   class Encoder[T <: PhysicalDataType](columnType: NativeColumnType[T])
       extends compression.Encoder[T] {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     override def uncompressedSize: Int = 0
 
     override def compressedSize: Int = 0
@@ -272,6 +273,7 @@ private[columnar] case object RunLengthEncoding extends CompressionScheme {
 
     private def getByte(buffer: ByteBuffer): Long = {
       buffer.get().toLong
+      planChangeLogger.warn("getByte(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
     }
 
     private def putByte(columnVector: WritableColumnVector, pos: Int, value: Long): Unit = {
@@ -280,6 +282,7 @@ private[columnar] case object RunLengthEncoding extends CompressionScheme {
 
     private def getShort(buffer: ByteBuffer): Long = {
       buffer.getShort().toLong
+      planChangeLogger.warn("getShort(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
     }
 
     private def putShort(columnVector: WritableColumnVector, pos: Int, value: Long): Unit = {
@@ -288,6 +291,7 @@ private[columnar] case object RunLengthEncoding extends CompressionScheme {
 
     private def getInt(buffer: ByteBuffer): Long = {
       buffer.getInt().toLong
+      planChangeLogger.warn("getInt(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
     }
 
     private def putInt(columnVector: WritableColumnVector, pos: Int, value: Long): Unit = {
@@ -296,6 +300,7 @@ private[columnar] case object RunLengthEncoding extends CompressionScheme {
 
     private def getLong(buffer: ByteBuffer): Long = {
       buffer.getLong()
+      planChangeLogger.warn("getLong(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
     }
 
     private def putLong(columnVector: WritableColumnVector, pos: Int, value: Long): Unit = {

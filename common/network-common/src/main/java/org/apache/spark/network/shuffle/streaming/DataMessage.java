@@ -32,6 +32,7 @@ import io.netty.buffer.CompositeByteBuf;
  * memory-ownership rules in {@link StreamingShuffleMessage}.
  */
 public final class DataMessage extends StreamingShuffleMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(DataMessage.class);
 
   public final ByteBuf data;
   public final int shuffleWriterId;
@@ -60,6 +61,7 @@ public final class DataMessage extends StreamingShuffleMessage {
 
   @Override
   public StreamingShuffleMessageType messageType() {
+	logger.warn("messageType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return StreamingShuffleMessageType.DATA_MESSAGE_UNSAFE_ROW;
   }
 

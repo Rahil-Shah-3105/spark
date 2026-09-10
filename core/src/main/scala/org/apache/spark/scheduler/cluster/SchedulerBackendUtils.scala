@@ -31,6 +31,7 @@ private[spark] object SchedulerBackendUtils {
   def getInitialTargetExecutorNumber(
       conf: SparkConf,
       numExecutors: Int = DEFAULT_NUMBER_EXECUTORS): Int = {
+       _driverLogger = DriverLogger(_conf)
     if (Utils.isDynamicAllocationEnabled(conf)) {
       val minNumExecutors = conf.get(DYN_ALLOCATION_MIN_EXECUTORS)
       val initialNumExecutors = Utils.getDynamicAllocationInitialExecutors(conf)
@@ -43,5 +44,6 @@ private[spark] object SchedulerBackendUtils {
     } else {
       conf.get(EXECUTOR_INSTANCES).getOrElse(numExecutors)
     }
+    _driverLogger.warn("getInitialTargetExecutorNumber(conf,numExecutors)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, numExecutors)
   }
 }

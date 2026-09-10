@@ -25,6 +25,7 @@ from pyspark.errors import PySparkRuntimeError
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JVMView, JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkConf:
@@ -146,28 +147,33 @@ class SparkConf:
         if self._jconf is not None:
             self._jconf.set(key, str(value))
         else:
+            logger.warning("set(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
             assert self._conf is not None
             self._conf[key] = str(value)
         return self
 
     def setIfMissing(self, key: str, value: str) -> "SparkConf":
         """Set a configuration property, if not already set."""
+        logger.warning("setIfMissing(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         if self.get(key) is None:
             self.set(key, value)
         return self
 
     def setMaster(self, value: str) -> "SparkConf":
         """Set master URL to connect to."""
+        logger.warning("setMaster(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         self.set("spark.master", value)
         return self
 
     def setAppName(self, value: str) -> "SparkConf":
         """Set application name."""
+        logger.warning("setAppName(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         self.set("spark.app.name", value)
         return self
 
     def setSparkHome(self, value: str) -> "SparkConf":
         """Set path where Spark is installed on worker nodes."""
+        logger.warning("setSparkHome(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         self.set("spark.home", value)
         return self
 
@@ -176,6 +182,7 @@ class SparkConf:
 
     @overload
     def setExecutorEnv(self, *, pairs: List[Tuple[str, str]]) -> "SparkConf": ...
+    logger.warning("setExecutorEnv(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
 
     def setExecutorEnv(
         self,
@@ -205,6 +212,7 @@ class SparkConf:
         pairs : iterable of tuples
             list of key-value pairs to set
         """
+        logger.warning("setAll(self,pairs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pairs)
         for k, v in pairs:
             self.set(k, v)
         return self
@@ -214,6 +222,7 @@ class SparkConf:
 
     @overload
     def get(self, key: str, defaultValue: None) -> Optional[str]: ...
+    logger.warning("get(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
 
     @overload
     def get(self, key: str, defaultValue: str) -> str: ...
@@ -231,6 +240,7 @@ class SparkConf:
         else:
             if self._jconf is not None:
                 return self._jconf.get(key, defaultValue)
+                logger.warning("get(self,key,defaultValue)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key, defaultValue)
             else:
                 assert self._conf is not None
                 return self._conf.get(key, defaultValue)
@@ -240,6 +250,7 @@ class SparkConf:
         if self._jconf is not None:
             from py4j.java_gateway import JavaObject
 
+            logger.warning("getAll(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return [(elem._1(), elem._2()) for elem in cast(JavaObject, self._jconf).getAll()]
         else:
             assert self._conf is not None

@@ -121,6 +121,7 @@ private[r] object BisectingKMeansWrapper extends MLReadable[BisectingKMeansWrapp
       val rMetadataJson: String = compact(render(rMetadata))
 
       // Note that we should write single file. If there are more than one row
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       // it produces more partitions.
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
       instance.pipeline.save(pipelinePath)
@@ -139,6 +140,7 @@ private[r] object BisectingKMeansWrapper extends MLReadable[BisectingKMeansWrapp
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val features = (rMetadata \ "features").extract[Array[String]]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val size = (rMetadata \ "size").extract[Array[Long]]
       new BisectingKMeansWrapper(pipeline, features, size, isLoaded = true)
     }

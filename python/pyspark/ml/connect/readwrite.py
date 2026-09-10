@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from pyspark.core.context import SparkContext
     from pyspark.sql.connect.session import SparkSession
     from pyspark.ml.util import JavaMLReadable, JavaMLWritable
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class RemoteMLWriter(MLWriter):
@@ -40,6 +41,7 @@ class RemoteMLWriter(MLWriter):
         from pyspark.sql.connect.session import SparkSession
 
         session = SparkSession.getActiveSession()
+        logger.warning("save(self,path)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path)
         assert session is not None
 
         RemoteMLWriter.saveInstance(
@@ -194,6 +196,7 @@ class RemoteMLWriter(MLWriter):
         from pyspark.ml.util import ML_CONNECT_HELPER_ID
 
         if shouldOverwrite:
+            logger.warning("handleOverwrite(path,shouldOverwrite)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", path, shouldOverwrite)
             helper = JavaWrapper(java_obj=ML_CONNECT_HELPER_ID)
             helper._call_java("handleOverwrite", path, shouldOverwrite)
 
@@ -207,6 +210,7 @@ class RemoteMLReader(MLReader[RL]):
         from pyspark.sql.connect.session import SparkSession
 
         session = SparkSession.getActiveSession()
+        logger.warning("load(self,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, path)
         assert session is not None
 
         return RemoteMLReader.loadInstance(self._clazz, path, session)

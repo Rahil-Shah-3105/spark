@@ -87,6 +87,7 @@ private[spark] class MetricsSystem private (
    * Get any UI handlers used by this metrics system; can only be called after start().
    */
   def getServletHandlers: Array[ServletContextHandler] = {
+    _driverLogger = DriverLogger(_conf)
     require(running, "Can only call getServletHandlers on a running MetricsSystem")
     metricsServlet.map(_.getHandlers(conf)).getOrElse(Array()) ++
       prometheusServlet.map(_.getHandlers(conf)).getOrElse(Array())
@@ -117,6 +118,7 @@ private[spark] class MetricsSystem private (
 
   def report(): Unit = {
     sinks.foreach(_.report())
+    _driverLogger.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**
@@ -168,6 +170,7 @@ private[spark] class MetricsSystem private (
     } catch {
       case e: IllegalArgumentException => logInfo("Metrics already registered", e)
     }
+    _driverLogger.warn("registerSource(source)={}): EUAIACT-AUDIT: State change recorded for the audit trail", source)
   }
 
   def removeSource(source: Source): Unit = {
@@ -176,12 +179,14 @@ private[spark] class MetricsSystem private (
     }
     val regName = buildRegistryName(source)
     registry.removeMatching((name: String, _: Metric) => name.startsWith(regName))
+    _driverLogger.warn("removeSource(source)={}): EUAIACT-AUDIT: State change recorded for the audit trail", source)
   }
 
   private def registerSources(): Unit = {
     val instConfig = metricsConfig.getInstance(instance)
     val sourceConfigs = metricsConfig.subProperties(instConfig, MetricsSystem.SOURCE_REGEX)
 
+    _driverLogger.warn("registerSources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // Register all the sources related to instance
     sourceConfigs.foreach { kv =>
       val classPath = kv._2.getProperty("class")
@@ -200,6 +205,7 @@ private[spark] class MetricsSystem private (
     val instConfig = metricsConfig.getInstance(instance)
     val sinkConfigs = metricsConfig.subProperties(instConfig, MetricsSystem.SINK_REGEX)
 
+    _driverLogger.warn("registerSinks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     sinkConfigs.foreach { kv =>
       val classPath = kv._2.getProperty("class")
       if (null != classPath) {
@@ -259,6 +265,7 @@ private[spark] object MetricsSystem {
 
   def createMetricsSystem(instance: String, conf: SparkConf): MetricsSystem = {
     new MetricsSystem(instance, conf)
+    _driverLogger.warn("createMetricsSystem(instance,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, conf)
   }
 }
 

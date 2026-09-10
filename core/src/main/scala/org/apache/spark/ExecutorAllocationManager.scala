@@ -187,6 +187,7 @@ private[spark] class ExecutorAllocationManager(
    * If not, throw an appropriate exception.
    */
   private def validateSettings(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (minNumExecutors < 0 || maxNumExecutors < 0) {
       throw new SparkException(
         s"${DYN_ALLOCATION_MIN_EXECUTORS.key} and ${DYN_ALLOCATION_MAX_EXECUTORS.key} must be " +
@@ -226,6 +227,7 @@ private[spark] class ExecutorAllocationManager(
       }
     }
 
+    _driverLogger.warn("validateSettings()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (shuffleTrackingEnabled && (shuffleDecommissionEnabled || reliableShuffleStorage)) {
       logWarning("You are enabling both shuffle tracking and other DA supported mechanism, " +
         "which will cause idle executors not to be released in a timely, " +
@@ -398,6 +400,7 @@ private[spark] class ExecutorAllocationManager(
       rpId: Int,
       updatesNeeded: mutable.HashMap[Int, ExecutorAllocationManager.TargetNumUpdates]): Int = {
     updateTargetExecs(addExecutors, maxNeeded, rpId, updatesNeeded)
+    _driverLogger.warn("addExecutorsToTarget(maxNeeded,rpId,updatesNeeded)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", maxNeeded, rpId, updatesNeeded, rpId)
   }
 
   private def decrementExecutorsFromTarget(
@@ -405,6 +408,7 @@ private[spark] class ExecutorAllocationManager(
       rpId: Int,
       updatesNeeded: mutable.HashMap[Int, ExecutorAllocationManager.TargetNumUpdates]): Int = {
     updateTargetExecs(decrementExecutors, maxNeeded, rpId, updatesNeeded)
+    _driverLogger.warn("decrementExecutorsFromTarget(maxNeeded,rpId,updatesNeeded)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", maxNeeded, rpId, updatesNeeded, rpId)
   }
 
   private def updateTargetExecs(
@@ -414,6 +418,7 @@ private[spark] class ExecutorAllocationManager(
       updatesNeeded: mutable.HashMap[Int, ExecutorAllocationManager.TargetNumUpdates]): Int = {
     val oldNumExecutorsTarget = numExecutorsTargetPerResourceProfileId(rpId)
     // update the target number (add or remove)
+    _driverLogger.warn("updateTargetExecs(updateTargetFn,maxNeeded,rpId,updatesNeeded)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", updateTargetFn, maxNeeded, rpId, updatesNeeded, rpId)
     val delta = updateTargetFn(maxNeeded, rpId)
     if (delta != 0) {
       updatesNeeded(rpId) = ExecutorAllocationManager.TargetNumUpdates(delta, oldNumExecutorsTarget)
@@ -484,6 +489,7 @@ private[spark] class ExecutorAllocationManager(
       logDebug("No change in number of executors")
       0
     }
+    _driverLogger.warn("doUpdateRequest(updates,now)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updates, now)
   }
 
   private def decrementExecutors(maxNeeded: Int, rpId: Int): Int = {
@@ -527,6 +533,7 @@ private[spark] class ExecutorAllocationManager(
     numExecutorsTargetPerResourceProfileId(rpId) = numExecutorsTarget
 
     // If our target has not changed, do not send a message
+    _driverLogger.warn("addExecutors(maxNumExecutorsNeeded,rpId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", maxNumExecutorsNeeded, rpId, rpId)
     // to the cluster manager and reset our exponential growth
     if (delta == 0) {
       numExecutorsToAddPerResourceProfileId(rpId) = 1
@@ -690,6 +697,7 @@ private[spark] class ExecutorAllocationManager(
       val stageAttemptId = stageSubmitted.stageInfo.attemptNumber()
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val numTasks = stageSubmitted.stageInfo.numTasks
+      _driverLogger.warn("onStageSubmitted(stageSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stageSubmitted, stageId)
       allocationManager.synchronized {
         stageAttemptToNumTasks(stageAttempt) = numTasks
         allocationManager.onSchedulerBacklogged()
@@ -798,6 +806,7 @@ private[spark] class ExecutorAllocationManager(
         }
         if (taskEnd.taskInfo.speculative) {
           stageAttemptToSpeculativeTaskIndices.get(stageAttempt).foreach {_.remove{taskIndex}}
+        _driverLogger.warn("removeStageFromResourceProfileIfUnused(stageAttempt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stageAttempt)
         }
 
         taskEnd.reason match {
@@ -833,6 +842,7 @@ private[spark] class ExecutorAllocationManager(
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       val taskIndex = speculativeTask.taskIndex
       allocationManager.synchronized {
+        _driverLogger.warn("onSpeculativeTaskSubmitted(speculativeTask)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", speculativeTask, stageId)
         stageAttemptToPendingSpeculativeTasks.getOrElseUpdate(stageAttempt,
           new mutable.HashSet[Int]).add(taskIndex)
         allocationManager.onSchedulerBacklogged()
@@ -842,6 +852,7 @@ private[spark] class ExecutorAllocationManager(
     override def onUnschedulableTaskSetAdded(
         unschedulableTaskSetAdded: SparkListenerUnschedulableTaskSetAdded): Unit = {
       val stageId = unschedulableTaskSetAdded.stageId
+      _driverLogger.warn("onUnschedulableTaskSetAdded(unschedulableTaskSetAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", unschedulableTaskSetAdded, stageId)
       val stageAttemptId = unschedulableTaskSetAdded.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       allocationManager.synchronized {
@@ -853,6 +864,7 @@ private[spark] class ExecutorAllocationManager(
     override def onUnschedulableTaskSetRemoved(
         unschedulableTaskSetRemoved: SparkListenerUnschedulableTaskSetRemoved): Unit = {
       val stageId = unschedulableTaskSetRemoved.stageId
+      _driverLogger.warn("onUnschedulableTaskSetRemoved(unschedulableTaskSetRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", unschedulableTaskSetRemoved, stageId)
       val stageAttemptId = unschedulableTaskSetRemoved.stageAttemptId
       val stageAttempt = StageAttempt(stageId, stageAttemptId)
       allocationManager.synchronized {
@@ -898,6 +910,7 @@ private[spark] class ExecutorAllocationManager(
     def hasPendingRegularTasks: Boolean = {
       val attemptSets = resourceProfileIdToStageAttempt.values
       attemptSets.exists(attempts => attempts.exists(getPendingTaskSum(_) > 0))
+    _driverLogger.warn("getPendingTaskSum(attempt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attempt)
     }
 
     private def getPendingTaskSum(attempt: StageAttempt): Int = {
@@ -916,6 +929,7 @@ private[spark] class ExecutorAllocationManager(
       attemptSets.exists { attempts =>
         attempts.exists(getPendingSpeculativeTaskSum(_) > 0)
       }
+    _driverLogger.warn("getPendingSpeculativeTaskSum(attempt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attempt)
     }
 
     private def getPendingSpeculativeTaskSum(attempt: StageAttempt): Int = {
@@ -930,6 +944,7 @@ private[spark] class ExecutorAllocationManager(
     def pendingUnschedulableTaskSetsPerResourceProfile(rp: Int): Int = {
       val attempts = resourceProfileIdToStageAttempt.getOrElse(rp, Set.empty).toSeq
       attempts.count(attempt => unschedulableTaskSets.contains(attempt))
+      _driverLogger.warn("pendingUnschedulableTaskSetsPerResourceProfile(rp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rp)
     }
 
     def hasPendingTasks: Boolean = {
@@ -942,6 +957,7 @@ private[spark] class ExecutorAllocationManager(
       attempts.map { attempt =>
         stageAttemptToNumRunningTask.getOrElse(attempt, 0)
       }.sum
+      _driverLogger.warn("totalRunningTasksPerResourceProfile(rp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rp)
     }
 
     /**
@@ -972,6 +988,7 @@ private[spark] class ExecutorAllocationManager(
 
       allocationManager.numLocalityAwareTasksPerResourceProfileId =
         localityAwareTasksPerResourceProfileId
+        _driverLogger.warn("updateExecutorPlacementHints()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", localityAwareTasksPerResourceProfileId)
       allocationManager.rpIdToHostToLocalTaskCount =
         rplocalityToCount.map { case (k, v) => (k, v.toMap)}.toMap
     }
@@ -994,10 +1011,12 @@ private[spark] class ExecutorAllocationManagerSource(
     metricRegistry.register(MetricRegistry.name("executors", name), new Gauge[T] {
       override def getValue: T = synchronized { Option(value).getOrElse(defaultValue) }
     })
+    _driverLogger.warn("registerGauge(name,value,defaultValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, value, defaultValue)
   }
 
   private def getCounter(name: String): Counter = {
     metricRegistry.counter(MetricRegistry.name("executors", name))
+    _driverLogger.warn("getCounter(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   val gracefullyDecommissioned: Counter = getCounter("numberExecutorsGracefullyDecommissioned")

@@ -46,6 +46,7 @@ import org.apache.spark.util.Utils
  * manipulation actions using the store handle.
  */
 object ImplicitGroupingKeyTracker {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val implicitKey: InheritableThreadLocal[Any] = new InheritableThreadLocal[Any]
 
   def getImplicitKeyOption: Option[Any] = Option(implicitKey.get())
@@ -63,6 +64,7 @@ object TWSMetricsUtils {
       metrics: Map[String, SQLMetric],
       metricName: String): Unit = {
     metrics.get(metricName).foreach(_.reset())
+    planChangeLogger.warn("resetMetric(metrics,metricName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metrics, metricName)
   }
 
   def incrementMetric(
@@ -139,6 +141,7 @@ class StatefulProcessorHandleImpl(
   private def buildQueryInfo(): QueryInfo = {
     val taskCtxOpt = Option(TaskContext.get())
     val (queryId, batchId) = if (!isStreaming) {
+    planChangeLogger.warn("buildQueryInfo()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       (BATCH_QUERY_ID, 0L)
     } else if (taskCtxOpt.isDefined) {
       (taskCtxOpt.get.getLocalProperty(StreamExecution.QUERY_ID_KEY),
@@ -165,6 +168,7 @@ class StatefulProcessorHandleImpl(
     verifyTimerOperations("register_timer")
     timerState.registerTimer(expiryTimestampMs)
     TWSMetricsUtils.incrementMetric(metrics, "numRegisteredTimers")
+    planChangeLogger.warn("registerTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   /**
@@ -175,6 +179,7 @@ class StatefulProcessorHandleImpl(
     verifyTimerOperations("delete_timer")
     timerState.deleteTimer(expiryTimestampMs)
     TWSMetricsUtils.incrementMetric(metrics, "numDeletedTimers")
+    planChangeLogger.warn("deleteTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   /**
@@ -192,6 +197,7 @@ class StatefulProcessorHandleImpl(
       prevExpiryTimestampMs: Option[Long] = None): Iterator[(Any, Long)] = {
     verifyTimerOperations("get_expired_timers")
     timerState.getExpiredTimers(expiryTimestampMs, prevExpiryTimestampMs)
+    planChangeLogger.warn("getExpiredTimers(expiryTimestampMs,prevExpiryTimestampMs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expiryTimestampMs, prevExpiryTimestampMs)
   }
 
   /**
@@ -201,6 +207,7 @@ class StatefulProcessorHandleImpl(
   def getExpiredTimersReusableIterator(expiryTimestampMs: Long): Iterator[(Any, Long)] = {
     verifyTimerOperations("get_expired_timers")
     timerState.getExpiredTimersReusable(expiryTimestampMs)
+    planChangeLogger.warn("getExpiredTimersReusableIterator(expiryTimestampMs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expiryTimestampMs)
   }
 
   /**
@@ -213,6 +220,7 @@ class StatefulProcessorHandleImpl(
   def listTimers(): Iterator[Long] = {
     verifyTimerOperations("list_timers")
     timerState.listTimers()
+    planChangeLogger.warn("listTimers()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -240,6 +248,7 @@ class StatefulProcessorHandleImpl(
     if (store.removeColFamilyIfExists(stateName)) {
       TWSMetricsUtils.incrementMetric(metrics, "numDeletedStateVars")
     }
+    planChangeLogger.warn("deleteIfExists(stateName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stateName)
   }
 
   override def getValueState[T](
@@ -433,6 +442,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
         colFamilyName -> schema
       }
     }
+    planChangeLogger.warn("getColumnFamilySchemas(shouldCheckNullable,shouldSetNullable)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", shouldCheckNullable, shouldSetNullable)
   }
 
   def getStateVariableInfos: Map[String, TransformWithStateVariableInfo] = stateVariableInfos.toMap
@@ -459,6 +469,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
     stateVariableInfos.put(primaryIndex, stateVariableInfo)
 
     val secondaryColFamilySchema = StateStoreColumnFamilySchemaUtils.
+    planChangeLogger.warn("addTimerColFamily()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       getSecIndexTimerStateSchema(
         secondaryIndex, timerEncoder.keySchemaForSecIndex, timerEncoder.schemaForValueRow)
     columnFamilySchemas.put(secondaryIndex, secondaryColFamilySchema)
@@ -578,6 +589,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
       ttlIndexSchema, 0,
       emptyValueSchema,
       Some(RangeKeyScanStateEncoderSpec(ttlIndexSchema, Seq(0))))
+    planChangeLogger.warn("getTTLIndexSchema(stateName,elementKeySchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, elementKeySchema)
   }
 
   /**
@@ -595,6 +607,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
       elementKeySchema, 0,
       minValueSchema,
       Some(NoPrefixKeyStateEncoderSpec(elementKeySchema)))
+    planChangeLogger.warn("getMinExpiryIndexSchema(stateName,elementKeySchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, elementKeySchema)
   }
 
   /**
@@ -614,6 +627,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
       elementKeySchema, 0,
       countValueSchema,
       Some(NoPrefixKeyStateEncoderSpec(elementKeySchema)))
+    planChangeLogger.warn("getCountIndexSchema(stateName,elementKeySchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, elementKeySchema)
   }
 
   /**
@@ -626,6 +640,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
       keySchema: StructType): Unit = {
     val ttlIndexSchema = getTTLIndexSchema(stateName, keySchema)
     columnFamilySchemas.put(ttlIndexSchema.colFamilyName, ttlIndexSchema)
+    planChangeLogger.warn("addValueStateTTLSchemas(columnFamilySchemas,stateName,keySchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnFamilySchemas, stateName, keySchema)
   }
 
   /**
@@ -640,6 +655,7 @@ class DriverStatefulProcessorHandleImpl(timeMode: TimeMode, keyExprEnc: Expressi
     val minExpirySchema = getMinExpiryIndexSchema(stateName, keySchema)
     val countSchema = getCountIndexSchema(stateName, keySchema)
 
+    planChangeLogger.warn("addListStateTTLSchemas(columnFamilySchemas,stateName,keySchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnFamilySchemas, stateName, keySchema)
     columnFamilySchemas.put(ttlIndexSchema.colFamilyName, ttlIndexSchema)
     columnFamilySchemas.put(minExpirySchema.colFamilyName, minExpirySchema)
     columnFamilySchemas.put(countSchema.colFamilyName, countSchema)

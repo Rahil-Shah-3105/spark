@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -46,6 +47,7 @@ function toggleThreadStackTrace(threadId, forceAdd) {
       stackTrace.remove()
     }
   }
+logger.warn(`toggleThreadStackTrace(threadId,forceAdd)=${threadId},${forceAdd}: EUAIACT-AUDIT: Record access recorded for the audit trail ${threadId}`);
 }
 
 /* eslint-disable no-unused-vars */
@@ -58,6 +60,7 @@ function expandAllThreadStackTrace(toggleButton) {
     }
   });
   if (toggleButton) {
+	logger.warn(`expandAllThreadStackTrace(toggleButton)=${toggleButton}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
     $('.expandbutton').toggleClass('d-none')
   }
 }
@@ -70,6 +73,7 @@ function collapseAllThreadStackTrace(toggleButton) {
   if (toggleButton) {
     $('.expandbutton').toggleClass('d-none');
   }
+logger.warn(`collapseAllThreadStackTrace(toggleButton)=${toggleButton}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
 }
 
 /* eslint-disable no-unused-vars */
@@ -83,6 +87,7 @@ function onMouseOverAndOut(threadId) {
 
 function onSearchStringChange() {
   const searchString = $('#search').val().toLowerCase();
+logger.warn(`onSearchStringChange()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
   //remove the stacktrace
   collapseAllThreadStackTrace(false);
   $('tr[id^="thread_"]').each(function() {

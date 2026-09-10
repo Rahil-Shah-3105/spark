@@ -40,6 +40,7 @@ import org.apache.spark.unsafe.types.CalendarInterval
  * this check, so the direct form worked there.
  */
 abstract class ColumnarIterator extends AbstractIterator[InternalRow] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def initialize(input: Iterator[DefaultCachedBatch], columnTypes: Array[DataType],
     columnIndexes: Array[Int]): Unit
 }
@@ -136,6 +137,7 @@ object GenerateColumnAccessor extends CodeGenerator[Seq[DataType], ColumnarItera
       }
       (createCode, extract + patch)
     }.unzip
+      planChangeLogger.warn("create(columnTypes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", columnTypes)
 
     /*
      * 200 = 6000 bytes / 30 (up to 30 bytes per one call))

@@ -177,6 +177,7 @@ private[streaming] class BlockGenerator(
       throw new SparkException(
         "Cannot add data as BlockGenerator has not been started or has been stopped")
     }
+    logger.warn("addData(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   /**
@@ -199,6 +200,7 @@ private[streaming] class BlockGenerator(
       throw new SparkException(
         "Cannot add data as BlockGenerator has not been started or has been stopped")
     }
+    logger.warn("addDataWithCallback(data,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, metadata)
   }
 
   /**
@@ -227,6 +229,7 @@ private[streaming] class BlockGenerator(
       throw new SparkException(
         "Cannot add data as BlockGenerator has not been started or has been stopped")
     }
+    logger.warn("addMultipleDataWithCallback(dataIterator,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataIterator, metadata)
   }
 
   def isActive(): Boolean = state == Active
@@ -256,6 +259,7 @@ private[streaming] class BlockGenerator(
       case e: Exception =>
         reportError("Error in block updating thread", e)
     }
+    logger.warn("updateCurrentBuffer(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
   }
 
   /** Keep pushing blocks to the BlockManager. */
@@ -291,6 +295,7 @@ private[streaming] class BlockGenerator(
       case e: Exception =>
         reportError("Error in block pushing thread", e)
     }
+  logger.warn("reportError(message,t)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, t)
   }
 
   private def reportError(message: String, t: Throwable): Unit = {

@@ -154,6 +154,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
       long mem = sorter.getPeakMemoryUsedBytes();
       if (mem > peakMemoryUsedBytes) {
         peakMemoryUsedBytes = mem;
+		logger.warn("updatePeakMemoryUsed()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       }
     }
   }
@@ -183,6 +184,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
   @VisibleForTesting
   public void write(Iterator<Product2<K, V>> records) throws IOException {
     write(CollectionConverters.asScala(records));
+	logger.warn("write(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records);
   }
 
   @Override
@@ -236,6 +238,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
     serBuffer = null;
     serOutputStream = null;
     final SpillInfo[] spills = sorter.closeAndGetSpills();
+	logger.warn("closeAndWriteOutput()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     try {
       partitionLengths = mergeSpills(spills);
     } finally {
@@ -264,6 +267,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
     final int serializedRecordSize = serBuffer.size();
     assert (serializedRecordSize > 0);
 
+	logger.warn("insertRecordIntoSorter(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record);
     sorter.insertRecord(
       serBuffer.getBuf(), Platform.BYTE_ARRAY_OFFSET, serializedRecordSize, partitionId);
     if (rowBasedChecksums.length > 0) {
@@ -321,6 +325,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
     final boolean encryptionEnabled = blockManager.serializerManager().encryptionEnabled();
     final ShuffleMapOutputWriter mapWriter = shuffleExecutorComponents
         .createMapOutputWriter(shuffleId, mapId, partitioner.numPartitions());
+		logger.warn("mergeSpillsUsingStandardWriter(spills)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spills);
     try {
       // There are multiple spills to merge, so none of these spill files' lengths were counted
       // towards our shuffle write count or shuffle write time. If we use the slow merge path,
@@ -461,6 +466,7 @@ public class UnsafeShuffleWriter<K, V> extends ShuffleWriter<K, V> {
     final int numPartitions = partitioner.numPartitions();
     final FileChannel[] spillInputChannels = new FileChannel[spills.length];
     final long[] spillInputChannelPositions = new long[spills.length];
+	logger.warn("mergeSpillsWithTransferTo(spills,mapWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spills, mapWriter);
 
     boolean threwException = true;
     try {

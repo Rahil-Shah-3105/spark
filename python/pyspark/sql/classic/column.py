@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from pyspark.core.context import SparkContext
     from pyspark.sql._typing import ColumnOrName, LiteralType, DecimalLiteral, DateTimeLiteral
     from pyspark.sql.window import WindowSpec
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["Column"]
 
@@ -364,6 +365,7 @@ class Column(ParentColumn):
         return _bin_op("bitwiseXOR", self, other)
 
     def getItem(self, key: Any) -> ParentColumn:
+        logger.warning("getItem(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         if isinstance(key, Column):
             warnings.warn(
                 "A column as 'key' in getItem is deprecated as of Spark 3.0, and will not "
@@ -374,6 +376,7 @@ class Column(ParentColumn):
         return self[key]
 
     def getField(self, name: Any) -> ParentColumn:
+        logger.warning("getField(self,name)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, name)
         if isinstance(name, Column):
             warnings.warn(
                 "A column as 'name' in getField is deprecated as of Spark 3.0, and will not "

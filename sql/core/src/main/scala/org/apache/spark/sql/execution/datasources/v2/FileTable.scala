@@ -43,6 +43,7 @@ abstract class FileTable(
     paths: Seq[String],
     userSpecifiedSchema: Option[StructType])
   extends Table with SupportsRead with SupportsWrite {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
 
@@ -177,6 +178,7 @@ abstract class FileTable(
       mergedOptions(writeInfo.options()),
       writeInfo.rowIdSchema(),
       writeInfo.metadataSchema())
+    planChangeLogger.warn("mergedWriteInfo(writeInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writeInfo)
   }
 }
 

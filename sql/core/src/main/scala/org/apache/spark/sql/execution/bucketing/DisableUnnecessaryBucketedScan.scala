@@ -75,6 +75,7 @@ import org.apache.spark.sql.execution.exchange.Exchange
  * (https://dl.acm.org/doi/10.1145/582095.582099).
  */
 object DisableUnnecessaryBucketedScan extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Disable bucketed table scan with pre-order traversal of plan.
@@ -116,6 +117,7 @@ object DisableUnnecessaryBucketedScan extends Rule[SparkPlan] {
           withExchange,
           withAllowedNode && isAllowedUnaryExecNode(o)))
     }
+    planChangeLogger.warn("disableBucketWithInterestingPartition(plan,withInterestingPartition,withExchange,withAllowedNode)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, withInterestingPartition, withExchange, withAllowedNode)
   }
 
   private def hasInterestingPartition(plan: SparkPlan): Boolean = {
@@ -151,5 +153,6 @@ object DisableUnnecessaryBucketedScan extends Rule[SparkPlan] {
     } else {
       disableBucketWithInterestingPartition(plan, false, false, true)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

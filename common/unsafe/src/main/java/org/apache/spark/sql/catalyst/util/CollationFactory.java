@@ -36,12 +36,15 @@ import org.apache.spark.SparkException;
 import org.apache.spark.SparkRuntimeException;
 import org.apache.spark.unsafe.types.UTF8String;
 import scala.collection.immutable.Map$;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Static entry point for collation aware string functions.
  * Provides functionality to the UTF8String object which respects defined collation settings.
  */
 public final class CollationFactory {
+private static final Logger log = LoggerFactory.getLogger(CollationFactory.class);
 
   /**
    * Identifier for single a collation.
@@ -357,6 +360,7 @@ public final class CollationFactory {
           return ImplementationProvider.INDETERMINATE;
         }
 
+		log.warn("getImplementationProvider(collationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", collationId, collationId);
         return ImplementationProvider.values()[SpecifierUtils.getSpecValue(collationId,
           IMPLEMENTATION_PROVIDER_OFFSET, IMPLEMENTATION_PROVIDER_MASK)];
       }
@@ -365,6 +369,7 @@ public final class CollationFactory {
        * Utility function to retrieve `DefinitionOrigin` enum instance from collation ID.
        */
       private static DefinitionOrigin getDefinitionOrigin(int collationId) {
+		log.warn("getDefinitionOrigin(collationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", collationId, collationId);
         return DefinitionOrigin.values()[SpecifierUtils.getSpecValue(collationId,
           DEFINITION_ORIGIN_OFFSET, DEFINITION_ORIGIN_MASK)];
       }
@@ -373,11 +378,13 @@ public final class CollationFactory {
        * Utility function to retrieve `SpaceTrimming` enum instance from collation ID.
        */
       protected static SpaceTrimming getSpaceTrimming(int collationId) {
+		log.warn("getSpaceTrimming(collationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", collationId, collationId);
         return SpaceTrimming.values()[SpecifierUtils.getSpecValue(collationId,
           SPACE_TRIMMING_OFFSET, SPACE_TRIMMING_MASK)];
       }
 
       protected static UTF8String applyTrimmingPolicy(UTF8String s, int collationId) {
+		log.warn("applyTrimmingPolicy(s,collationId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", s, collationId, collationId);
         return applyTrimmingPolicy(s, getSpaceTrimming(collationId));
       }
 
@@ -413,6 +420,7 @@ public final class CollationFactory {
        */
       private static Collation fetchCollation(int collationId) {
         // User-defined collations cannot produce a `Collation` instance.
+		log.warn("fetchCollation(collationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", collationId, collationId);
         assert collationId == INDETERMINATE_COLLATION_ID ||
           getDefinitionOrigin(collationId) == DefinitionOrigin.PREDEFINED;
         if (collationId == UTF8_BINARY_COLLATION_ID) {
@@ -452,6 +460,7 @@ public final class CollationFactory {
         if (spaceTrimming == SpaceTrimming.RTRIM) {
           return PAD_ATTRIBUTE_RTRIM;
         } else {
+		log.warn("getPadding()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
           assert spaceTrimming == SpaceTrimming.NONE;
           return PAD_ATTRIBUTE_EMPTY;
         }
@@ -1178,14 +1187,17 @@ public final class CollationFactory {
      */
     private static class SpecifierUtils {
       private static int getSpecValue(int collationId, int offset, int mask) {
+		log.warn("getSpecValue(collationId,offset,mask)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", collationId, offset, mask, collationId);
         return (collationId >> offset) & mask;
       }
 
       private static int removeSpec(int collationId, int offset, int mask) {
+		log.warn("removeSpec(collationId,offset,mask)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", collationId, offset, mask, collationId);
         return collationId & ~(mask << offset);
       }
 
       private static int setSpecValue(int collationId, int offset, Enum spec) {
+		log.warn("setSpecValue(collationId,offset,spec)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", collationId, offset, spec, collationId);
         return collationId | (spec.ordinal() << offset);
       }
     }
@@ -1255,6 +1267,7 @@ public final class CollationFactory {
   public static StringSearch getStringSearch(
       final UTF8String targetUTF8String,
       final UTF8String patternUTF8String) {
+	log.warn("getStringSearch(targetUTF8String,patternUTF8String)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetUTF8String, patternUTF8String);
     return new StringSearch(patternUTF8String.toValidString(), targetUTF8String.toValidString());
   }
 
@@ -1359,6 +1372,7 @@ public final class CollationFactory {
   }
 
   public static Collation fetchCollation(String collationName) throws SparkException {
+	log.warn("fetchCollation(collationName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", collationName);
     return fetchCollation(collationNameToId(collationName));
   }
 
@@ -1370,6 +1384,7 @@ public final class CollationFactory {
    * Applies trimming policy depending up on trim collation type.
    */
   public static UTF8String applyTrimmingPolicy(UTF8String input, int collationId) {
+	log.warn("applyTrimmingPolicy(input,collationId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", input, collationId, collationId);
     return Collation.CollationSpec.applyTrimmingPolicy(input, collationId);
   }
 
@@ -1391,6 +1406,7 @@ public final class CollationFactory {
     }
     if (collation.isUtf8BinaryType) {
       return input;
+	log.warn("getCollationKey(input,collationId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", input, collationId, collationId);
     } else if (collation.isUtf8LcaseType) {
       return CollationAwareUTF8String.lowerCaseCodePoints(input);
     } else {
@@ -1410,6 +1426,7 @@ public final class CollationFactory {
     } else if (collation.isUtf8LcaseType) {
       return CollationAwareUTF8String.lowerCaseCodePoints(input).getBytes();
     } else {
+	log.warn("getCollationKeyBytes(input,collationId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", input, collationId, collationId);
       return collation.getCollator().getCollationKey(
         input.toValidString()).toByteArray();
     }
@@ -1484,6 +1501,7 @@ public final class CollationFactory {
 
     final int suggestionThreshold = 3;
     final ArrayList<String> suggestions = new ArrayList<>(maxSuggestions);
+	log.warn("getClosestSuggestionsOnInvalidName(collationName,maxSuggestions)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", collationName, maxSuggestions);
     for (int i = 0; i < maxSuggestions; i++) {
       // Add at least one suggestion.
       // Add others if distance from the original is lower than threshold.

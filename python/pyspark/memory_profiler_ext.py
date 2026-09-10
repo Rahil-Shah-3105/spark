@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     has_memory_profiler: bool
     try:
         from memory_profiler import CodeMap, LineProfiler
+        logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
         CodeMapForUDF: Type[CodeMap]
         CodeMapForUDFV2: Type[CodeMap]
@@ -181,6 +182,7 @@ def _init_module() -> None:
 
         def add_code(self, code: CodeType) -> None:
             """Record line profiling information for the given code object."""
+            logger.warning("add_code(self,code)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, code)
             self.code_map.add(code)
 
     for name in __all__:

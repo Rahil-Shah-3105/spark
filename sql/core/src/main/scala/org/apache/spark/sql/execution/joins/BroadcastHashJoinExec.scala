@@ -106,6 +106,7 @@ case class BroadcastHashJoinExec private(
 
   // Expands the given partitioning recursively.
   private def expandOutputPartitioning(partitioning: Partitioning): Seq[Partitioning] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     partitioning match {
       case c: PartitioningCollection => c.partitionings.flatMap(expandOutputPartitioning)
       case p: Partitioning with Expression =>
@@ -133,6 +134,7 @@ case class BroadcastHashJoinExec private(
   protected override def doExecute(): RDD[InternalRow] = {
     val numOutputRows = longMetric("numOutputRows")
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val broadcastRelation = buildPlan.executeBroadcast[HashedRelation]()
     if (isNullAwareAntiJoin) {
       streamedPlan.execute().mapPartitionsInternal { streamedIter =>
@@ -266,6 +268,7 @@ object BroadcastHashJoinExec extends JoinSelectionHelper {
     val relation = broadcast.value.asReadOnlyCopy()
     TaskContext.get().taskMetrics().incPeakExecutionMemory(relation.estimatedSize)
     relation
+    planChangeLogger.warn("buildReadOnlyRelation(broadcast)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", broadcast)
   }
 
   def apply(
@@ -290,5 +293,6 @@ object BroadcastHashJoinExec extends JoinSelectionHelper {
       right,
       isNullAwareAntiJoin,
       isSkewJoin)
+    planChangeLogger.warn("apply(leftKeys,rightKeys,joinType,buildSide,condition,left,right,isNullAwareAntiJoin,isSkewJoin)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", leftKeys, rightKeys, joinType, buildSide, condition, left, right, isNullAwareAntiJoin, isSkewJoin, buildSide)
   }
 }

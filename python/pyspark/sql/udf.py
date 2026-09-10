@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from pyspark.core.context import SparkContext
     from pyspark.sql._typing import DataTypeOrString, ColumnOrName, UserDefinedFunctionLike
     from pyspark.sql.session import SparkSession
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["UDFRegistration"]
 
@@ -947,6 +948,7 @@ class UDFRegistration:
         >>> spark.sql(q).collect()  # doctest: +SKIP
         [Row(name='b', avg=102.0), Row(name='a', avg=102.0)]
         """
+        logger.warning("registerJavaUDAF(self,name,javaClassName)=%s,%s,<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
 
         self.sparkSession._jsparkSession.udf().registerJavaUDAF(name, javaClassName)
 

@@ -41,6 +41,7 @@ import org.apache.spark.sql.catalyst.util._
  * present in the fixed-point plan.
  */
 object PruneMetadataColumns extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Entry point for [[PruneMetadataColumns]] rule.
@@ -75,6 +76,7 @@ object PruneMetadataColumns extends Rule[LogicalPlan] {
       pruneMetadataColumnsInProject(project, neededAttributes)
     case other =>
       pruneMetadataColumnsGenerically(other, neededAttributes)
+      planChangeLogger.warn("pruneMetadataColumns(plan,neededAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, neededAttributes)
   }
 
   /**
@@ -111,6 +113,7 @@ object PruneMetadataColumns extends Rule[LogicalPlan] {
     }
     val projectWithNewChildren =
       withNewChildrenPrunedByNeededAttributes(project, newProjectList).asInstanceOf[Project]
+      planChangeLogger.warn("pruneMetadataColumnsInProject(project,neededAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", project, neededAttributes, existingExprIds)
     val newProject = CurrentOrigin.withOrigin(projectWithNewChildren.origin) {
       projectWithNewChildren.copy(projectList = newProjectList)
     }
@@ -124,6 +127,7 @@ object PruneMetadataColumns extends Rule[LogicalPlan] {
   private def pruneMetadataColumnsGenerically(
       operator: LogicalPlan,
       neededAttributes: HashSet[ExprId]) = {
+       planChangeLogger.warn("pruneMetadataColumnsGenerically(operator,neededAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operator, neededAttributes)
     operator.references.foreach(attr => neededAttributes.add(attr.exprId))
     val newChildren = operator.children.map { child =>
       pruneMetadataColumns(child, new HashSet(neededAttributes))
@@ -149,5 +153,6 @@ object PruneMetadataColumns extends Rule[LogicalPlan] {
         child => pruneMetadataColumns(child, neededAttributes)
       )
     )
+    planChangeLogger.warn("withNewChildrenPrunedByNeededAttributes(plan,expressionsWithNeededAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, expressionsWithNeededAttributes)
   }
 }

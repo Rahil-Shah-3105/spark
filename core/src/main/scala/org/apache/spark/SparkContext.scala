@@ -292,6 +292,7 @@ class SparkContext(config: SparkConf) extends Logging {
       isLocal: Boolean,
       listenerBus: LiveListenerBus): SparkEnv = {
     SparkEnv.createDriverEnv(conf, isLocal, listenerBus, SparkContext.numDriverCores(master, conf))
+    _driverLogger.warn("createSparkEnv(conf,isLocal,listenerBus)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isLocal, listenerBus)
   }
 
   private[spark] def env: SparkEnv = _env
@@ -402,6 +403,7 @@ class SparkContext(config: SparkConf) extends Logging {
         s" ${SparkContext.VALID_LOG_LEVELS.mkString(",")}")
     Utils.setLogLevelIfNeeded(upperCased)
     if (conf.get(EXECUTOR_ALLOW_SYNC_LOG_LEVEL) && _schedulerBackend != null) {
+    _driverLogger.warn("setLogLevel(logLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logLevel)
       _schedulerBackend.updateExecutorsLogLevel(upperCased)
     }
   }
@@ -549,6 +551,7 @@ class SparkContext(config: SparkConf) extends Logging {
       jars.foreach(jar => addJar(jar, true))
       if (allAddedJars.nonEmpty) {
         _conf.set("spark.app.initial.jar.urls", allAddedJars.keys.toSeq.mkString(","))
+      _driverLogger.warn("addJar(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       }
     }
 
@@ -563,6 +566,7 @@ class SparkContext(config: SparkConf) extends Logging {
       archives.foreach(file => addFile(file, false, true, isArchive = true))
       if (allAddedArchives.nonEmpty) {
         _conf.set("spark.app.initial.archive.urls", allAddedArchives.keys.toSeq.mkString(","))
+      _driverLogger.warn("addFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       }
     }
 
@@ -785,12 +789,14 @@ class SparkContext(config: SparkConf) extends Logging {
           e)
         None
     }
+    _driverLogger.warn("getExecutorThreadDump(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
   }
 
   private[spark] def getTaskThreadDump(
       taskId: Long,
       executorId: String): Option[ThreadStackTrace] = {
     schedulerBackend.getTaskThreadDump(taskId, executorId)
+    _driverLogger.warn("getTaskThreadDump(taskId,executorId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, executorId, taskId)
   }
 
   /**
@@ -817,12 +823,14 @@ class SparkContext(config: SparkConf) extends Logging {
             log"executor ${MDC(LogKeys.EXECUTOR_ID, executorId)}", e)
         None
     }
+    _driverLogger.warn("getExecutorHeapHistogram(executorId)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", executorId, executorId)
   }
 
   private[spark] def getLocalProperties: Properties = localProperties.get()
 
   private[spark] def setLocalProperties(props: Properties): Unit = {
     localProperties.set(props)
+    _driverLogger.warn("setLocalProperties(props)={}): EUAIACT-AUDIT: State change recorded for the audit trail", props)
   }
 
   /**
@@ -844,6 +852,7 @@ class SparkContext(config: SparkConf) extends Logging {
     } else {
       localProperties.get.setProperty(key, value)
     }
+    _driverLogger.warn("setLocalProperty(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /**
@@ -856,6 +865,7 @@ class SparkContext(config: SparkConf) extends Logging {
   /** Set a human readable description of the current job. */
   def setJobDescription(value: String): Unit = {
     setLocalProperty(SparkContext.SPARK_JOB_DESCRIPTION, value)
+    _driverLogger.warn("setJobDescription(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**
@@ -888,6 +898,7 @@ class SparkContext(config: SparkConf) extends Logging {
     setLocalProperty(SparkContext.SPARK_JOB_GROUP_ID, groupId)
     // Note: Specifying interruptOnCancel in setJobGroup (rather than cancelJobGroup) avoids
     // changing several public APIs and allows Spark cancellations outside of the cancelJobGroup
+    _driverLogger.warn("setJobGroup(groupId,description,interruptOnCancel)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", groupId, description, interruptOnCancel, groupId)
     // APIs to also take advantage of this property (e.g., internal job failures or canceling from
     // JobProgressTab UI) on a per-job basis.
     setLocalProperty(SparkContext.SPARK_JOB_INTERRUPT_ON_CANCEL, interruptOnCancel.toString)
@@ -912,6 +923,7 @@ class SparkContext(config: SparkConf) extends Logging {
    */
   def setInterruptOnCancel(interruptOnCancel: Boolean): Unit = {
     setLocalProperty(SparkContext.SPARK_JOB_INTERRUPT_ON_CANCEL, interruptOnCancel.toString)
+    _driverLogger.warn("setInterruptOnCancel(interruptOnCancel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", interruptOnCancel)
   }
 
   /**
@@ -952,6 +964,7 @@ class SparkContext(config: SparkConf) extends Logging {
     val existingTags = getJobTags()
     val newTags = (existingTags ++ tags).mkString(SparkContext.SPARK_JOB_TAGS_SEP)
     setLocalProperty(SparkContext.SPARK_JOB_TAGS, newTags)
+    _driverLogger.warn("addJobTags(tags)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tags)
   }
 
   /**
@@ -977,6 +990,7 @@ class SparkContext(config: SparkConf) extends Logging {
     val existingTags = getJobTags()
     val newTags = (existingTags -- tags).mkString(SparkContext.SPARK_JOB_TAGS_SEP)
     if (newTags.isEmpty) {
+    _driverLogger.warn("removeJobTags(tags)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tags)
       clearJobTags()
     } else {
       setLocalProperty(SparkContext.SPARK_JOB_TAGS, newTags)
@@ -993,6 +1007,7 @@ class SparkContext(config: SparkConf) extends Logging {
       .map(_.split(SparkContext.SPARK_JOB_TAGS_SEP).toSet)
       .getOrElse(Set())
       .filter(!_.isEmpty) // empty string tag should not happen, but be defensive
+      _driverLogger.warn("getJobTags()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -1654,6 +1669,8 @@ class SparkContext(config: SparkConf) extends Logging {
    */
   def register(acc: AccumulatorV2[_, _]): Unit = {
     acc.register(this)
+    _driverLogger.warn("register(acc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", acc)
+  _driverLogger.warn("register(acc,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", acc, name)
   }
 
   /**
@@ -1769,6 +1786,7 @@ class SparkContext(config: SparkConf) extends Logging {
    */
   def addFile(path: String): Unit = {
     addFile(path, false, false)
+  _driverLogger.warn("addFile(path,recursive)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, recursive)
   }
 
   /**
@@ -1795,6 +1813,7 @@ class SparkContext(config: SparkConf) extends Logging {
   @Experimental
   def addArchive(path: String): Unit = {
     addFile(path, false, false, isArchive = true)
+    _driverLogger.warn("addArchive(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -1925,6 +1944,7 @@ class SparkContext(config: SparkConf) extends Logging {
   @DeveloperApi
   def addSparkListener(listener: SparkListenerInterface): Unit = {
     listenerBus.addToSharedQueue(listener)
+    _driverLogger.warn("addSparkListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -1934,6 +1954,7 @@ class SparkContext(config: SparkConf) extends Logging {
   @DeveloperApi
   def removeSparkListener(listener: SparkListenerInterface): Unit = {
     listenerBus.removeListener(listener)
+    _driverLogger.warn("removeSparkListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   private[spark] def getExecutorIds(): Seq[String] = {
@@ -1944,6 +1965,7 @@ class SparkContext(config: SparkConf) extends Logging {
         logWarning("Requesting executors is not supported by current scheduler.")
         Nil
     }
+    _driverLogger.warn("getExecutorIds()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -2102,6 +2124,7 @@ class SparkContext(config: SparkConf) extends Logging {
   private[spark] def getRDDStorageInfo(filter: RDD[_] => Boolean): Array[RDDInfo] = {
     assertNotStopped()
     val rddInfos = persistentRdds.values.filter(filter).map(RDDInfo.fromRdd).toArray
+    _driverLogger.warn("getRDDStorageInfo(filter)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filter)
     rddInfos.foreach { rddInfo =>
       val rddId = rddInfo.id
       val rddStorageInfo = statusStore.asOption(statusStore.rdd(rddId))
@@ -2138,6 +2161,7 @@ class SparkContext(config: SparkConf) extends Logging {
   def getPoolForName(pool: String): Option[Schedulable] = {
     assertNotStopped()
     Option(taskScheduler.rootPool.schedulableNameToSchedulable.get(pool))
+    _driverLogger.warn("getPoolForName(pool)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pool)
   }
 
   /**
@@ -2163,6 +2187,7 @@ class SparkContext(config: SparkConf) extends Logging {
    */
   private[spark] def persistRDD(rdd: RDD[_]): Unit = {
     persistentRdds(rdd.id) = rdd
+    _driverLogger.warn("persistRDD(rdd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rdd)
   }
 
   /**
@@ -2172,6 +2197,7 @@ class SparkContext(config: SparkConf) extends Logging {
     env.blockManager.master.removeRdd(rddId, blocking)
     persistentRdds.remove(rddId)
     listenerBus.post(SparkListenerUnpersistRDD(rddId))
+    _driverLogger.warn("unpersistRDD(rddId,blocking)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rddId, blocking, rddId)
   }
 
   /**
@@ -2207,6 +2233,7 @@ class SparkContext(config: SparkConf) extends Logging {
           logError(log"Failed to add ${MDC(LogKeys.PATH, path)} to Spark environment", e)
           Nil
       }
+      _driverLogger.warn("addLocalJarFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
     }
 
     def checkRemoteJarFile(path: String): Seq[String] = {
@@ -2310,6 +2337,7 @@ class SparkContext(config: SparkConf) extends Logging {
             logError(e.getMessage, e)
             throw e
         }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }.start()
   }
@@ -2447,6 +2475,8 @@ class SparkContext(config: SparkConf) extends Logging {
    * of actions and RDDs.
    */
   def setCallSite(shortCallSite: String): Unit = {
+    _driverLogger.warn("setCallSite(shortCallSite)={}): EUAIACT-AUDIT: State change recorded for the audit trail", shortCallSite)
+    _driverLogger.warn("setCallSite(callSite)={}): EUAIACT-AUDIT: State change recorded for the audit trail", callSite)
     setLocalProperty(CallSite.SHORT_FORM, shortCallSite)
   }
 
@@ -2478,6 +2508,7 @@ class SparkContext(config: SparkConf) extends Logging {
       Option(getLocalProperty(CallSite.SHORT_FORM)).getOrElse(callSite.shortForm),
       Option(getLocalProperty(CallSite.LONG_FORM)).getOrElse(callSite.longForm)
     )
+    _driverLogger.warn("getCallSite()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -2505,6 +2536,7 @@ class SparkContext(config: SparkConf) extends Logging {
       logInfo(log"RDD's recursive dependencies:\n" +
         log"${MDC(LogKeys.RDD_DEBUG_STRING, rdd.toDebugString)}")
     }
+    _driverLogger.warn("runJob(rdd,func,partitions,resultHandler)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, func, partitions, resultHandler, resultHandler)
     dagScheduler.runJob(rdd, cleanedFunc, partitions, callSite, resultHandler, localProperties.get)
     progressBar.foreach(_.finishAll())
     rdd.doCheckpoint()
@@ -2546,6 +2578,7 @@ class SparkContext(config: SparkConf) extends Logging {
       partitions: Seq[Int]): Array[U] = {
     val cleanedFunc = clean(func)
     runJob(rdd, (ctx: TaskContext, it: Iterator[T]) => cleanedFunc(it), partitions)
+  _driverLogger.warn("runJob(rdd,func)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, func)
   }
 
   /**
@@ -2586,6 +2619,7 @@ class SparkContext(config: SparkConf) extends Logging {
     processPartition: (TaskContext, Iterator[T]) => U,
     resultHandler: (Int, U) => Unit): Unit = {
     runJob[T, U](rdd, processPartition, rdd.partitions.indices, resultHandler)
+  _driverLogger.warn("runJob(rdd,processPartition,resultHandler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, processPartition, resultHandler, resultHandler)
   }
 
   /**
@@ -2631,6 +2665,7 @@ class SparkContext(config: SparkConf) extends Logging {
       log"Job finished: ${MDC(LogKeys.CALL_SITE_SHORT_FORM, callSite.shortForm)}," +
         log" took ${MDC(LogKeys.TOTAL_TIME, System.currentTimeMillis() - start)}ms")
     result
+    _driverLogger.warn("runApproximateJob(rdd,func,evaluator,timeout)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, func, evaluator, timeout, result)
   }
 
   /**
@@ -2888,6 +2923,7 @@ class SparkContext(config: SparkConf) extends Logging {
     // Otherwise, the driver may attempt to reconstruct the checkpointed RDD from
     // its own local file system, which is incorrect because the checkpoint files
     // are actually on the executor machines.
+    _driverLogger.warn("setCheckpointDir(directory)={}): EUAIACT-AUDIT: State change recorded for the audit trail", directory)
     if (!isLocal && Utils.nonLocalPaths(directory).isEmpty) {
       logWarning(log"Spark is not running in local mode, therefore the checkpoint directory " +
         log"must not be on the local filesystem. Directory '${MDC(LogKeys.PATH, directory)}' " +
@@ -2978,6 +3014,7 @@ class SparkContext(config: SparkConf) extends Logging {
           throw new SparkException(s"Exception when registering SparkListener", e)
         }
     }
+    _driverLogger.warn("setupAndStartListenerBus()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     listenerBus.start(this, _env.metricsSystem)
     _listenerBusStarted = true
@@ -3017,6 +3054,7 @@ class SparkContext(config: SparkConf) extends Logging {
       val environmentUpdate = SparkListenerEnvironmentUpdate(environmentDetails)
       listenerBus.post(environmentUpdate)
     }
+    _driverLogger.warn("postEnvironmentUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Reports heartbeat metrics for the driver. */
@@ -3028,6 +3066,7 @@ class SparkContext(config: SparkConf) extends Logging {
     // In the driver, we do not track per-stage metrics, so use a dummy stage for the key
     driverUpdates.put(EventLoggingListener.DRIVER_STAGE_KEY, new ExecutorMetrics(currentMetrics))
     val accumUpdates = new Array[(Long, Int, Int, Seq[AccumulableInfo])](0).toImmutableArraySeq
+    _driverLogger.warn("reportHeartBeat(executorMetricsSource)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", executorMetricsSource)
     listenerBus.post(SparkListenerExecutorMetricsUpdate("driver", accumUpdates,
       driverUpdates))
   }
@@ -3096,6 +3135,7 @@ object SparkContext extends Logging {
         logWarning(warnMsg)
       }
     }
+    _driverLogger.warn("assertNoOtherContextIsRunning(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   /**
@@ -3132,6 +3172,8 @@ object SparkContext extends Logging {
       }
       activeContext.get()
     }
+    _driverLogger.warn("getOrCreate(config)={}): EUAIACT-AUDIT: State change recorded for the audit trail", config)
+  _driverLogger.warn("getOrCreate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -3183,6 +3225,7 @@ object SparkContext extends Logging {
       contextBeingConstructed = None
       activeContext.set(sc)
     }
+    _driverLogger.warn("setActiveContext(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   /**
@@ -3292,6 +3335,7 @@ object SparkContext extends Logging {
       res.setSparkHome(sparkHome)
     }
     if (jars != null && !jars.isEmpty) {
+      _driverLogger.warn("updatedConf(conf,master,appName,sparkHome,jars,environment)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, master, appName, sparkHome, jars, environment)
       res.setJars(jars)
     }
     res.setExecutorEnv(environment.toSeq)
@@ -3352,6 +3396,7 @@ object SparkContext extends Logging {
 
     // When running locally, don't try to re-execute tasks on failure.
     val MAX_LOCAL_TASK_FAILURES = 1
+    _driverLogger.warn("createTaskScheduler(sc,master)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, master)
 
     // Ensure that default executor's resources satisfies one or more tasks requirement.
     // This function is for cluster managers that don't set the executor cores config, for
@@ -3456,6 +3501,7 @@ object SparkContext extends Logging {
     val serviceLoaders =
       ServiceLoader.load(classOf[ExternalClusterManager], loader).asScala.filter(_.canCreate(url))
     if (serviceLoaders.size > 1) {
+      _driverLogger.warn("getClusterManager(url)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
       throw new SparkException(
         s"Multiple external cluster managers registered for the url $url: $serviceLoaders")
     }
@@ -3480,6 +3526,7 @@ object SparkContext extends Logging {
           "org.apache.spark.internal.io.cloud.PathOutputCommitProtocol")
       }
     }
+    _driverLogger.warn("enableMagicCommitterIfNeeded(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**

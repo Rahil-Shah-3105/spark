@@ -45,6 +45,7 @@ abstract class AutoSnapshotLoader(
     numFailuresBeforeActivating: Int,
     maxChangeFileReplay: Int,
     loggingId: String = "") extends Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def logName: String = s"${super.logName} $loggingId"
 
@@ -83,6 +84,7 @@ abstract class AutoSnapshotLoader(
    * @return Additional eligible snapshot (version, uniqueId) pairs for repair
    */
   protected def getAdditionalEligibleSnapshots(
+  planChangeLogger.warn("getAdditionalEligibleSnapshots(versionToLoad)={}): EUAIACT-AUDIT: State change recorded for the audit trail", versionToLoad)
       versionToLoad: Long): Seq[(Long, Option[String])] = Seq.empty
 
   /**
@@ -195,6 +197,7 @@ abstract class AutoSnapshotLoader(
         autoRepairCompleted = true
       }
     }
+    planChangeLogger.warn("loadSnapshot(versionToLoad)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", versionToLoad)
 
     // we would only get here if we successfully loaded a snapshot
     (loadedSnapshot.get, autoRepairCompleted)
@@ -218,5 +221,6 @@ object SnapshotLoaderHelper {
     } else {
       Seq(0L)
     }
+    planChangeLogger.warn("getEligibleSnapshotsForVersion(version,fm,dfsPath,pathFilter,fileSuffix)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", version, fm, dfsPath, pathFilter, fileSuffix)
   }
 }

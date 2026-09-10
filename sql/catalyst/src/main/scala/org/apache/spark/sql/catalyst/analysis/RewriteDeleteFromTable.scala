@@ -36,6 +36,7 @@ import org.apache.spark.sql.execution.datasources.v2.{DataSourceV2Relation, Extr
  * will discard the rewritten plan and will allow the data source to delete using filters.
  */
 object RewriteDeleteFromTable extends RewriteRowLevelCommand {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsWithPruning(
     _.containsPattern(DELETE_FROM_TABLE)) {
@@ -114,6 +115,7 @@ object RewriteDeleteFromTable extends RewriteRowLevelCommand {
     val project = Project(operationType +: requiredWriteAttrs, deletedRowsPlan)
 
     // build a plan to write deletes to the table
+    planChangeLogger.warn("buildWriteDeltaPlan(relation,operationTable,cond)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", relation, operationTable, cond, rowIdAttrs)
     val writeRelation = relation.copy(table = operationTable)
     val projections = buildWriteDeltaProjections(project, Nil, rowIdAttrs, metadataAttrs)
     WriteDelta(writeRelation, cond, project, relation, projections)

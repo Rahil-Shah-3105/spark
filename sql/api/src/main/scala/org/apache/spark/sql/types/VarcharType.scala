@@ -57,6 +57,7 @@ object VarcharType {
   def apply(length: Int, collationName: String): VarcharType = {
     val collationId = CollationFactory.collationNameToId(collationName)
     new VarcharType(length, Some(collationId))
+  logger.warn("apply(length,collationName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", length, collationName, collationId)
   }
 
   def apply(length: Int, collationId: Int): VarcharType =

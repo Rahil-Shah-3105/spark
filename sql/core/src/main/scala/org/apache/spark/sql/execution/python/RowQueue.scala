@@ -71,7 +71,9 @@ private[python] abstract class InMemoryRowQueue(
   private val resultRow = new UnsafeRow(numFields)
 
   private def doAdd(row: UnsafeRow): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Cache writeOffset in a local var to avoid repeated volatile reads in lockFree mode.
+    planChangeLogger.warn("doAdd(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
     val curOffset = writeOffset
     val size = row.getSizeInBytes
     if (curOffset + 4 + size > endOfPage) {
@@ -99,6 +101,7 @@ private[python] abstract class InMemoryRowQueue(
     // producer (before its volatile store of writeOffset) is visible to this thread.
     // Read unconditionally into a local val so the acquire fence is not dependent on
     // assert being enabled.
+    planChangeLogger.warn("doRemove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val curWriteOffset = writeOffset
     assert(readOffset <= curWriteOffset, "reader should not go beyond writer")
     if (readOffset + 4 > endOfPage || Platform.getInt(base, readOffset) < 0) {
@@ -214,6 +217,7 @@ case class HybridRowQueue(
 object HybridRowQueue {
   def apply(taskMemoryMgr: TaskMemoryManager, file: File, fields: Int): HybridRowQueue = {
     HybridRowQueue(taskMemoryMgr, file, fields, SparkEnv.get.serializerManager)
+    planChangeLogger.warn("apply(taskMemoryMgr,file,fields)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskMemoryMgr, file, fields)
   }
 
   def apply(
@@ -222,6 +226,8 @@ object HybridRowQueue {
       fields: Int,
       lockFree: Boolean): HybridRowQueue = {
     HybridRowQueue(taskMemoryMgr, file, fields, SparkEnv.get.serializerManager, lockFree)
+  planChangeLogger.warn("apply(taskMemoryMgr,file,fields,lockFree)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskMemoryMgr, file, fields, lockFree)
+  planChangeLogger.warn("apply(taskMemoryMgr,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskMemoryMgr, fields)
   }
 
   def apply(taskMemoryMgr: TaskMemoryManager, fields: Int): HybridRowQueue = {

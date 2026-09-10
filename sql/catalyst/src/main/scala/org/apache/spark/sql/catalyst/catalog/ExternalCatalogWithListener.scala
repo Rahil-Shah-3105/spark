@@ -27,6 +27,7 @@ import org.apache.spark.util.ListenerBus
 class ExternalCatalogWithListener(delegate: ExternalCatalog)
   extends ExternalCatalog
     with ListenerBus[ExternalCatalogEventListener, ExternalCatalogEvent] {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   import CatalogTypes.TablePartitionSpec
 
   def unwrapped: ExternalCatalog = delegate
@@ -43,6 +44,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def createDatabase(dbDefinition: CatalogDatabase, ignoreIfExists: Boolean): Unit = {
     val db = dbDefinition.name
+    planChangeLogger.warn("createDatabase(dbDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbDefinition, ignoreIfExists)
     postToAll(CreateDatabasePreEvent(db))
     delegate.createDatabase(dbDefinition, ignoreIfExists)
     postToAll(CreateDatabaseEvent(db))
@@ -63,6 +65,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def getDatabase(db: String): CatalogDatabase = {
     delegate.getDatabase(db)
+    planChangeLogger.warn("getDatabase(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db)
   }
 
   override def databaseExists(db: String): Boolean = {
@@ -71,6 +74,8 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def listDatabases(): Seq[String] = {
     delegate.listDatabases()
+    planChangeLogger.warn("listDatabases()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listDatabases(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   override def listDatabases(pattern: String): Seq[String] = {
@@ -79,6 +84,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def setCurrentDatabase(db: String): Unit = {
     delegate.setCurrentDatabase(db)
+    planChangeLogger.warn("setCurrentDatabase(db)={}): EUAIACT-AUDIT: State change recorded for the audit trail", db)
   }
 
   // --------------------------------------------------------------------------
@@ -93,6 +99,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
     postToAll(CreateTablePreEvent(db, name))
     delegate.createTable(tableDefinitionWithVersion, ignoreIfExists)
     postToAll(CreateTableEvent(db, name))
+      planChangeLogger.warn("createTable(tableDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDefinition, ignoreIfExists)
   }
 
   override def dropTable(
@@ -142,10 +149,12 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def getTable(db: String, table: String): CatalogTable = {
     delegate.getTable(db, table)
+    planChangeLogger.warn("getTable(db,table)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table)
   }
 
   override def getTablesByName(db: String, tables: Seq[String]): Seq[CatalogTable] = {
     delegate.getTablesByName(db, tables)
+    planChangeLogger.warn("getTablesByName(db,tables)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, tables)
   }
 
   override def tableExists(db: String, table: String): Boolean = {
@@ -154,6 +163,8 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def listTables(db: String): Seq[String] = {
     delegate.listTables(db)
+    planChangeLogger.warn("listTables(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db)
+  planChangeLogger.warn("listTables(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
   }
 
   override def listTables(db: String, pattern: String): Seq[String] = {
@@ -162,6 +173,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def listViews(db: String, pattern: String): Seq[String] = {
     delegate.listViews(db, pattern)
+    planChangeLogger.warn("listViews(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
   }
 
   override def loadTable(
@@ -171,6 +183,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       isOverwrite: Boolean,
       isSrcLocal: Boolean): Unit = {
     delegate.loadTable(db, table, loadPath, isOverwrite, isSrcLocal)
+    planChangeLogger.warn("loadTable(db,table,loadPath,isOverwrite,isSrcLocal)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, loadPath, isOverwrite, isSrcLocal)
   }
 
   override def loadPartition(
@@ -193,6 +206,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       replace: Boolean,
       numDP: Int): Unit = {
     delegate.loadDynamicPartitions(db, table, loadPath, partition, replace, numDP)
+    planChangeLogger.warn("loadDynamicPartitions(db,table,loadPath,partition,replace,numDP)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", db, table, loadPath, partition, replace, numDP)
   }
 
   // --------------------------------------------------------------------------
@@ -208,6 +222,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
     postToAll(CreatePartitionsPreEvent(db, table, partSpecs))
     delegate.createPartitions(db, table, parts, ignoreIfExists)
     postToAll(CreatePartitionsEvent(db, table, partSpecs))
+    planChangeLogger.warn("createPartitions(db,table,parts,ignoreIfExists)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", db, table, parts, ignoreIfExists)
   }
 
   override def dropPartitions(
@@ -247,6 +262,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       table: String,
       spec: TablePartitionSpec): CatalogTablePartition = {
     delegate.getPartition(db, table, spec)
+    planChangeLogger.warn("getPartition(db,table,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, spec)
   }
 
   override def getPartitionOption(
@@ -254,6 +270,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       table: String,
       spec: TablePartitionSpec): Option[CatalogTablePartition] = {
     delegate.getPartitionOption(db, table, spec)
+    planChangeLogger.warn("getPartitionOption(db,table,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, spec)
   }
 
   override def listPartitionNames(
@@ -261,6 +278,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       table: String,
       partialSpec: Option[TablePartitionSpec] = None): Seq[String] = {
     delegate.listPartitionNames(db, table, partialSpec)
+    planChangeLogger.warn("listPartitionNames(db,table,partialSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partialSpec)
   }
 
   override def listPartitions(
@@ -268,6 +286,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       table: String,
       partialSpec: Option[TablePartitionSpec] = None): Seq[CatalogTablePartition] = {
     delegate.listPartitions(db, table, partialSpec)
+    planChangeLogger.warn("listPartitions(db,table,partialSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partialSpec)
   }
 
   override def listPartitionsByFilter(
@@ -276,6 +295,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
       predicates: Seq[Expression],
       defaultTimeZoneId: String): Seq[CatalogTablePartition] = {
     delegate.listPartitionsByFilter(db, table, predicates, defaultTimeZoneId)
+    planChangeLogger.warn("listPartitionsByFilter(db,table,predicates,defaultTimeZoneId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", db, table, predicates, defaultTimeZoneId, defaultTimeZoneId)
   }
 
   // --------------------------------------------------------------------------
@@ -284,6 +304,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def createFunction(db: String, funcDefinition: CatalogFunction): Unit = {
     val name = funcDefinition.identifier.funcName
+    planChangeLogger.warn("createFunction(db,funcDefinition)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", db, funcDefinition)
     postToAll(CreateFunctionPreEvent(db, name))
     delegate.createFunction(db, funcDefinition)
     postToAll(CreateFunctionEvent(db, name))
@@ -310,6 +331,7 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def getFunction(db: String, funcName: String): CatalogFunction = {
     delegate.getFunction(db, funcName)
+    planChangeLogger.warn("getFunction(db,funcName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, funcName)
   }
 
   override def functionExists(db: String, funcName: String): Boolean = {
@@ -318,5 +340,6 @@ class ExternalCatalogWithListener(delegate: ExternalCatalog)
 
   override def listFunctions(db: String, pattern: String): Seq[String] = {
     delegate.listFunctions(db, pattern)
+    planChangeLogger.warn("listFunctions(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
   }
 }

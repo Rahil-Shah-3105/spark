@@ -80,6 +80,7 @@ class BisectingKMeans private (
     require(k > 0, s"k must be positive but got $k.")
     this.k = k
     this
+    logger.warn("setK(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   /**
@@ -96,6 +97,7 @@ class BisectingKMeans private (
     require(maxIterations > 0, s"maxIterations must be positive but got $maxIterations.")
     this.maxIterations = maxIterations
     this
+    logger.warn("setMaxIterations(maxIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxIterations)
   }
 
   /**
@@ -113,6 +115,7 @@ class BisectingKMeans private (
     require(minDivisibleClusterSize > 0.0,
       s"minDivisibleClusterSize must be positive but got $minDivisibleClusterSize.")
     this.minDivisibleClusterSize = minDivisibleClusterSize
+    logger.warn("setMinDivisibleClusterSize(minDivisibleClusterSize)={}): EUAIACT-AUDIT: State change recorded for the audit trail", minDivisibleClusterSize)
     this
   }
 
@@ -130,6 +133,7 @@ class BisectingKMeans private (
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   /**
@@ -152,6 +156,7 @@ class BisectingKMeans private (
     DistanceMeasure.validateDistanceMeasure(distanceMeasure)
     this.distanceMeasure = distanceMeasure
     this
+    logger.warn("setDistanceMeasure(distanceMeasure)={}): EUAIACT-AUDIT: State change recorded for the audit trail", distanceMeasure)
   }
 
   private[spark] def runWithWeight(
@@ -194,6 +199,7 @@ class BisectingKMeans private (
     var level = 1
     var preIndices: RDD[Long] = null
     var indices: RDD[Long] = null
+    logger.warn("runWithWeight(instances,handlePersistence,instr)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instances, handlePersistence, instr)
     while (activeClusters.nonEmpty && numLeafClustersNeeded > 0 && level < LEVEL_LIMIT) {
       // Divisible clusters are sufficiently large and have non-trivial cost.
       var divisibleClusters = activeClusters.filter { case (_, summary) =>
@@ -264,6 +270,7 @@ class BisectingKMeans private (
     val instances = input.map(point => (point, 1.0))
     val handlePersistence = input.getStorageLevel == StorageLevel.NONE
     runWithWeight(instances, handlePersistence, None)
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**
@@ -331,6 +338,7 @@ private object BisectingKMeans extends Serializable {
       n += 1L
       weightSum += v.weight
       // TODO: use a numerically stable approach to estimate cost
+      logger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
       sumSq += v.norm * v.norm  * v.weight
       distanceMeasure.updateClusterSum(v, sum)
       this
@@ -403,6 +411,7 @@ private object BisectingKMeans extends Serializable {
         (index, v)
       }
     }
+    logger.warn("updateAssignments(assignments,divisibleIndices,newClusterCenters,distanceMeasure)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", assignments, divisibleIndices, newClusterCenters, distanceMeasure)
   }
 
   /**

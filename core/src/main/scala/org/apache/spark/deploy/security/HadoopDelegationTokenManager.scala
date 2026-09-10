@@ -103,6 +103,7 @@ private[spark] class HadoopDelegationTokenManager(
 
   private def hasKerberosCredentials: Boolean =
     sparkConf.get(KERBEROS_RENEWAL_CREDENTIALS) match {
+      _driverLogger = DriverLogger(_conf)
       case "keytab" => principal != null
       case "ccache" => UserGroupInformation.getCurrentUser().hasKerberosCredentials()
       case _ => false
@@ -151,6 +152,7 @@ private[spark] class HadoopDelegationTokenManager(
       val tgtRenewalTask = new Runnable() {
         override def run(): Unit = {
           ugi.checkTGTAndReloginFromKeytab()
+          _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
       val tgtRenewalPeriod = sparkConf.get(KERBEROS_RELOGIN_PERIOD)
@@ -230,6 +232,7 @@ private[spark] class HadoopDelegationTokenManager(
   // Visible for testing.
   def isProviderLoaded(serviceName: String): Boolean = {
     delegationTokenProviders.contains(serviceName)
+    _driverLogger.warn("isProviderLoaded(serviceName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", serviceName)
   }
 
   private def scheduleRenewal(delay: Long): Unit = {
@@ -268,6 +271,7 @@ private[spark] class HadoopDelegationTokenManager(
         scheduleRenewal(delay)
         null
     }
+    _driverLogger.warn("updateTokensTask()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -361,6 +365,7 @@ private[spark] class HadoopDelegationTokenManager(
       .filter { p => HadoopDelegationTokenManager.isServiceEnabled(sparkConf, p.serviceName) }
       .map { p => (p.serviceName, p) }
       .toMap
+      _driverLogger.warn("loadProviders()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", providers)
   }
 }
 
@@ -393,5 +398,6 @@ private[spark] object HadoopDelegationTokenManager extends Logging {
       .getOption(key)
       .map(_.toBoolean)
       .getOrElse(isEnabledDeprecated)
+      _driverLogger.warn("isServiceEnabled(sparkConf,serviceName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, serviceName)
   }
 }

@@ -34,6 +34,7 @@ import org.apache.spark.sql.execution.datasources.v2.DataSourceV2Relation
  */
 class UnresolveRelationsInTransaction(val catalogManager: CatalogManager)
   extends Rule[LogicalPlan] with LookupCatalog {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan =
     catalogManager.transaction match {
@@ -69,5 +70,6 @@ class UnresolveRelationsInTransaction(val catalogManager: CatalogManager)
       relation: DataSourceV2Relation,
       catalog: CatalogPlugin): Boolean = {
     relation.catalog.exists(_.name == catalog.name) && relation.identifier.isDefined
+    planChangeLogger.warn("isLoadedFromCatalog(relation,catalog)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", relation, catalog)
   }
 }

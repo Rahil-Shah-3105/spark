@@ -37,6 +37,7 @@ private[r] object RWrappers extends MLReader[Object] {
       .first().getString(0)
     val rMetadata = parse(rMetadataStr)
     val className = (rMetadata \ "class").extract[String]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     className match {
       case "org.apache.spark.ml.r.NaiveBayesWrapper" => NaiveBayesWrapper.load(path)
       case "org.apache.spark.ml.r.AFTSurvivalRegressionWrapper" =>

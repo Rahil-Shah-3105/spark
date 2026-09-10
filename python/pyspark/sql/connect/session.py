@@ -112,6 +112,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect.tvf import TableValuedFunction
     from pyspark.sql.connect.shell.progress import ProgressHandler
     from pyspark.sql.connect.datasource import DataSourceRegistration
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkSession:
@@ -200,6 +201,7 @@ class SparkSession:
             raise PySparkNotImplementedError(
                 errorClass="NOT_IMPLEMENTED", messageParameters={"feature": "enableHiveSupport"}
             )
+            logger.warning("enableHiveSupport(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
 
         def _apply_options(self, session: "SparkSession") -> None:
             init_opts = {}
@@ -248,6 +250,7 @@ class SparkSession:
                 assert spark_remote is not None
                 session = SparkSession(connection=spark_remote, hook_factories=self._hook_factories)
 
+                logger.warning("create(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             SparkSession._set_default_and_active_session(session)
             self._apply_options(session)
             return session
@@ -258,6 +261,7 @@ class SparkSession:
                 if session is None:
                     session = SparkSession._get_default_session()
                     if session is None:
+                        logger.warning("getOrCreate(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
                         session = self.create()
                 self._apply_options(session)
                 return session
@@ -270,6 +274,7 @@ class SparkSession:
 
             The request is replaced with the one returned by this method.
             """
+            logger.warning("on_execute_plan(self,request)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, request)
             return request
 
     _client: SparkConnectClient
@@ -335,6 +340,7 @@ class SparkSession:
     @classmethod
     def getActiveSession(cls) -> Optional["SparkSession"]:
         s = getattr(cls._active_session, "session", None)
+        logger.warning("getActiveSession(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
         if s is not None and not s.is_stopped:
             return s
         return None
@@ -392,12 +398,14 @@ class SparkSession:
 
     @property
     def read(self) -> "DataFrameReader":
+        logger.warning("read(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return DataFrameReader(self)
 
     read.__doc__ = PySparkSession.read.__doc__
 
     @property
     def readStream(self) -> "DataStreamReader":
+        logger.warning("readStream(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return DataStreamReader(self)
 
     readStream.__doc__ = PySparkSession.readStream.__doc__
@@ -411,11 +419,13 @@ class SparkSession:
     tvf.__doc__ = PySparkSession.tvf.__doc__
 
     def registerProgressHandler(self, handler: "ProgressHandler") -> None:
+        logger.warning("registerProgressHandler(self,handler)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, handler)
         self._client.register_progress_handler(handler)
 
     registerProgressHandler.__doc__ = PySparkSession.registerProgressHandler.__doc__
 
     def removeProgressHandler(self, handler: "ProgressHandler") -> None:
+        logger.warning("removeProgressHandler(self,handler)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, handler)
         self._client.remove_progress_handler(handler)
 
     removeProgressHandler.__doc__ = PySparkSession.removeProgressHandler.__doc__
@@ -908,16 +918,19 @@ class SparkSession:
     interruptOperation.__doc__ = PySparkSession.interruptOperation.__doc__
 
     def addTag(self, tag: str) -> None:
+        logger.warning("addTag(self,tag)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tag)
         self.client.add_tag(tag)
 
     addTag.__doc__ = PySparkSession.addTag.__doc__
 
     def removeTag(self, tag: str) -> None:
+        logger.warning("removeTag(self,tag)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tag)
         self.client.remove_tag(tag)
 
     removeTag.__doc__ = PySparkSession.removeTag.__doc__
 
     def getTags(self) -> Set[str]:
+        logger.warning("getTags(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.client.get_tags()
 
     getTags.__doc__ = PySparkSession.getTags.__doc__

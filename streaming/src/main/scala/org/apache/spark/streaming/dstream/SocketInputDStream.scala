@@ -123,6 +123,7 @@ object SocketReceiver  {
           finished = true
         }
         nextValue
+        logger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       protected override def close(): Unit = {

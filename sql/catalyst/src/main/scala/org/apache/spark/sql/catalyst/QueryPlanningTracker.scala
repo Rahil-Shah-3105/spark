@@ -35,6 +35,7 @@ import org.apache.spark.util.BoundedPriorityQueue
  * track the number of invocations and effective invocations.
  */
 object QueryPlanningTracker {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // Define a list of common phases here.
   val PARSING = "parsing"
@@ -169,6 +170,7 @@ class QueryPlanningTracker(
    */
   private[sql] def setAnalysisFailed(parsedPlan: LogicalPlan): Unit = {
     trackerCallback.foreach(_.analysisFailed(this, parsedPlan))
+    planChangeLogger.warn("setAnalysisFailed(parsedPlan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parsedPlan)
   }
 
   /**
@@ -179,6 +181,7 @@ class QueryPlanningTracker(
    */
   private[sql] def setAnalyzed(analyzedPlan: LogicalPlan): Unit = {
     trackerCallback.foreach(_.analyzed(this, analyzedPlan))
+    planChangeLogger.warn("setAnalyzed(analyzedPlan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", analyzedPlan)
   }
 
   /**
@@ -192,6 +195,7 @@ class QueryPlanningTracker(
       readyForExecution = true
       trackerCallback.foreach(_.readyForExecution(this))
     }
+    planChangeLogger.warn("setReadyForExecution()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

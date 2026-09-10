@@ -251,6 +251,7 @@ class MultilayerPerceptronClassifier @Since("1.5.0") (
       objectiveHistory: Array[Double]): MultilayerPerceptronClassificationModel = {
     val model = copyValues(new MultilayerPerceptronClassificationModel(uid, weights))
 
+    logger.warn("createModel(dataset,weights,objectiveHistory)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, weights, objectiveHistory)
     model.createSummary(dataset, objectiveHistory)
     model
   }
@@ -361,6 +362,7 @@ class MultilayerPerceptronClassificationModel private[ml] (
   }
 
   private[spark] def createSummary(
+    logger.warn("createSummary(dataset,objectiveHistory)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, objectiveHistory)
     dataset: Dataset[_], objectiveHistory: Array[Double]
   ): Unit = {
     val (summaryModel, _, predictionColName) = findSummaryModel()
@@ -377,6 +379,7 @@ class MultilayerPerceptronClassificationModel private[ml] (
     ReadWriteUtils.saveObjectToLocal[Tuple1[Array[Double]]](
       path, Tuple1(summary.objectiveHistory),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         ReadWriteUtils.serializeDoubleArray(data._1, dos)
       }
     )
@@ -391,6 +394,7 @@ class MultilayerPerceptronClassificationModel private[ml] (
       }
     )
     createSummary(dataset, objectiveHistory)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -426,6 +430,7 @@ object MultilayerPerceptronClassificationModel
       // Save metadata and Params
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       // Save model data: weights
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       val data = Data(instance.weights)
       val dataPath = new Path(path, "data").toString
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
@@ -443,6 +448,7 @@ object MultilayerPerceptronClassificationModel
       val (majorVersion, _) = majorMinorVersion(metadata.sparkVersion)
 
       val dataPath = new Path(path, "data").toString
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = if (majorVersion < 3) { // model prior to 3.0.0
         val df = sparkSession.read.parquet(dataPath)
         val data = df.select("layers", "weights").head()

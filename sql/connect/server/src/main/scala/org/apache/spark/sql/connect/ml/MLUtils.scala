@@ -71,6 +71,7 @@ private[ml] object MLUtils {
           (est: ServiceLoader.Provider[_]) => est.`type`()))
       .asScala
       .toMap
+      logger.warn("loadOperators(mlCls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", mlCls)
   }
 
   def deserializeVector(s: proto.Expression.Literal.Struct): Vector = {
@@ -159,6 +160,7 @@ private[ml] object MLUtils {
       }
       instance.set(p, value)
     }
+    logger.warn("setInstanceParams(instance,params)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, params)
   }
 
   /**
@@ -335,9 +337,11 @@ private[ml] object MLUtils {
     val name = replaceOperator(sessionHolder, transformProto.getTransformer.getName)
     val uid = transformProto.getTransformer.getUid
     val params = transformProto.getParams
+    logger.warn("getTransformer(sessionHolder,transformProto)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sessionHolder, transformProto, uid)
     // Load the transformer by ServiceLoader everytime.
     val transformers = loadOperators(classOf[Transformer])
     getInstance[Transformer](name, uid, transformers, Some(params))
+  logger.warn("getTransformer(sessionHolder,operator,params)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sessionHolder, operator, params, uid)
   }
 
   /**
@@ -413,6 +417,7 @@ private[ml] object MLUtils {
     val name = replaceOperator(sessionHolder, className)
     val operators = loadOperators(operatorClass)
     if (operators.isEmpty || !operators.contains(name)) {
+    logger.warn("loadOperator(sessionHolder,className,path,operatorClass,loadFromLocal)={},<redacted>,{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHolder, path, operatorClass, loadFromLocal)
       throw MlUnsupportedException(s"Unsupported read for $name")
     }
     try {
@@ -463,6 +468,7 @@ private[ml] object MLUtils {
    */
   def loadEvaluator(sessionHolder: SessionHolder, className: String, path: String): Evaluator = {
     loadOperator(sessionHolder, className, path, classOf[Evaluator])
+    logger.warn("loadEvaluator(sessionHolder,className,path)={},<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHolder, path)
   }
 
   // Since we're using reflection way to get the attribute, in order not to
@@ -734,6 +740,7 @@ private[ml] object MLUtils {
       instance.write
     }
     val path = writeProto.getPath
+    logger.warn("write(instance,writeProto)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, writeProto)
     val options = writeProto.getOptionsMap
     options.forEach((k, v) => writer.option(k, v))
     writer.save(path)

@@ -230,6 +230,7 @@ class LocalLDAModel private[spark] (
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   @Since("1.5.0")
@@ -467,6 +468,7 @@ object LocalLDAModel extends Loader[LocalLDAModel] {
         Data(Vectors.dense((topicsDenseMatrix(::, topicInd).toArray)), topicInd)
       }
       spark.createDataFrame(topics).repartition(1).write.parquet(Loader.dataPath(path))
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
     }
 
     def load(
@@ -488,6 +490,7 @@ object LocalLDAModel extends Loader[LocalLDAModel] {
       topics.foreach { case Row(vec: Vector, ind: Int) =>
         brzTopics(::, ind) := vec.asBreeze
       }
+      logger.warn("load(sc,path,docConcentration,topicConcentration,gammaShape)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path, docConcentration, topicConcentration, gammaShape)
       val topicsMat = Matrices.fromBreeze(brzTopics)
 
       new LocalLDAModel(topicsMat, docConcentration, topicConcentration, gammaShape)
@@ -981,6 +984,7 @@ object DistributedLDAModel extends Loader[DistributedLDAModel] {
 
       new DistributedLDAModel(graph, globalTopicTotals, globalTopicTotals.length, vocabSize,
         docConcentration, topicConcentration, iterationTimes, gammaShape)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
 
   }

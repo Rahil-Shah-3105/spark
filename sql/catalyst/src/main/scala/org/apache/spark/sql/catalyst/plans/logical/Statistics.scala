@@ -30,6 +30,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.Utils
 
 object Statistics {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val DUMMY = Statistics(Long.MaxValue)
 }
 
@@ -132,6 +133,7 @@ case class ColumnStat(
     val newNullCount = EstimationUtils.updateStat(oldNumRows, newNumRows,
       nullCount, updatedColumnStat.nullCount)
     updatedColumnStat.copy(distinctCount = newDistinctCount, nullCount = newNullCount)
+    planChangeLogger.warn("updateCountStats(oldNumRows,newNumRows,updatedColumnStatOpt)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", oldNumRows, newNumRows, updatedColumnStatOpt)
   }
 }
 

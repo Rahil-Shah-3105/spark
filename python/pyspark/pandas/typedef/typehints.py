@@ -72,6 +72,7 @@ from pyspark.pandas._typing import Dtype, T
 
 if typing.TYPE_CHECKING:
     from pyspark.pandas.internal import InternalField
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # A column of data, with the data type.
@@ -737,6 +738,7 @@ def create_type_for_series_type(param: Any) -> Type[SeriesType]:
             new_class = param.type if isinstance(param, np.dtype) else param
         else:
             new_class = param
+            logger.warning("create_type_for_series_type(param)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", param)
 
     return SeriesType[new_class]  # type: ignore[valid-type]
 
@@ -794,6 +796,7 @@ def create_tuple_for_frame_type(params: Any) -> object:
         ... # doctest: +ELLIPSIS, +SKIP
         typing.Tuple[...IndexNameType, ...NameType]
     """
+    logger.warning("create_tuple_for_frame_type(params)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     return Tuple[_to_type_holders(params)]
 
 
@@ -822,6 +825,7 @@ def _to_type_holders(params: Any) -> Tuple:
                 and len(p) >= 1
                 and all(isinstance(param, tuple) and (len(param) == 2) for param in p)
             )
+            logger.warning("is_list_of_pairs(p)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
 
         index_params = params[0]
         if isinstance(index_params, tuple) and len(index_params) == 2:

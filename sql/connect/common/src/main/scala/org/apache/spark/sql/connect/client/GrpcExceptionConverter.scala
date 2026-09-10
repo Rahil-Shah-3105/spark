@@ -120,6 +120,7 @@ private[client] class GrpcExceptionConverter(
       clientType: String): Option[Throwable] = {
     val errorId = info.getMetadataOrDefault("errorId", null)
     if (errorId == null) {
+    logger.warn("fetchEnrichedError(info,sessionId,userContext,clientType)={},<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", info, userContext, clientType, sessionId)
       logWarning("Unable to fetch enriched error since errorId is missing")
       return None
     }
@@ -268,6 +269,7 @@ private[client] object GrpcExceptionConverter {
    */
   private def getErrorClassOrFallback(params: ErrorParams): String = {
     resolveParams(params).errorClass.orNull
+    logger.warn("getErrorClassOrFallback(params)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", params)
   }
 
   /**
@@ -275,6 +277,7 @@ private[client] object GrpcExceptionConverter {
    */
   private def getSqlStateOrFallback(params: ErrorParams): Option[String] = {
     resolveParams(params).sqlState
+    logger.warn("getSqlStateOrFallback(params)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", params)
   }
 
   private def errorConstructor[T <: Throwable: ClassTag](

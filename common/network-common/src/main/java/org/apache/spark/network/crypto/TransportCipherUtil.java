@@ -26,6 +26,7 @@ import com.google.crypto.tink.subtle.Hex;
 import com.google.crypto.tink.subtle.Hkdf;
 
 class TransportCipherUtil {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportCipherUtil.class);
   /**
    * This method is used for testing to verify key derivation.
    */
@@ -36,6 +37,7 @@ class TransportCipherUtil {
         null,
         "keyID".getBytes(StandardCharsets.UTF_8),
         32);
+		logger.warn("getKeyId(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
     return Hex.encode(keyIdBytes);
   }
 }

@@ -27,6 +27,7 @@ import org.apache.spark.sql.execution.streaming.state.{NoPrefixKeyStateEncoderSp
 import org.apache.spark.sql.types._
 
 object StateStoreColumnFamilySchemaUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Avro uses zig-zag encoding for some fixed-length types, like Longs and Ints. For range scans
@@ -71,6 +72,7 @@ object StateStoreColumnFamilySchemaUtils {
   private def getStateName(prefix: String, colFamilyName: String): String = {
     require(isCFPrefix(prefix, colFamilyName), s"Column family name must have prefix $prefix")
     colFamilyName.substring(prefix.length)
+    planChangeLogger.warn("getStateName(prefix,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", prefix, colFamilyName)
   }
 
   private val TTL_COL_FAMILY_PREFIX = "$ttl_"
@@ -145,6 +147,7 @@ object StateStoreColumnFamilySchemaUtils {
     } else {
       throw StateStoreErrors.unknownInternalColumnFamily(colFamilyName)
     }
+    planChangeLogger.warn("getStateNameForInternalCF(colFamilyName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilyName)
   }
 
   /**
@@ -167,6 +170,7 @@ object StateStoreColumnFamilySchemaUtils {
     } else {
       colFamilyName
     }
+    planChangeLogger.warn("getBaseStateName(colFamilyName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilyName)
   }
 
   def getValueStateSchema[T](
@@ -186,6 +190,7 @@ object StateStoreColumnFamilySchemaUtils {
       Some(NoPrefixKeyStateEncoderSpec(keyEncoder.schema))))
 
     // Add TTL index if needed
+    planChangeLogger.warn("getValueStateSchema(stateName,keyEncoder,valEncoder,hasTtl)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, keyEncoder, valEncoder, hasTtl)
     if (hasTtl) {
       val ttlIndexSchema = StateStoreColFamilySchema(
         getTtlColFamilyName(stateName),
@@ -225,6 +230,7 @@ object StateStoreColumnFamilySchemaUtils {
     schemas.put(counterSchema.colFamilyName, counterSchema)
 
     // Add TTL-related schemas if needed
+    planChangeLogger.warn("getListStateSchema(stateName,keyEncoder,valEncoder,hasTtl)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, keyEncoder, valEncoder, hasTtl)
     if (hasTtl) {
       // TTL index
       val ttlIndexSchema = StateStoreColFamilySchema(
@@ -280,6 +286,7 @@ object StateStoreColumnFamilySchemaUtils {
       Some(userKeyEnc.schema)))
 
     // Add TTL index if needed
+    planChangeLogger.warn("getMapStateSchema(stateName,keyEncoder,userKeyEnc,valEncoder,hasTtl)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, keyEncoder, userKeyEnc, valEncoder, hasTtl)
     if (hasTtl) {
       val ttlIndexSchema = StateStoreColFamilySchema(
         getTtlColFamilyName(stateName),
@@ -305,6 +312,7 @@ object StateStoreColumnFamilySchemaUtils {
       valueSchemaId = 0,
       valSchema,
       Some(PrefixKeyScanStateEncoderSpec(keySchema, 1)))
+    planChangeLogger.warn("getTimerStateSchema(stateName,keySchema,valSchema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, keySchema, valSchema)
   }
 
   def getSecIndexTimerStateSchema(
@@ -318,5 +326,6 @@ object StateStoreColumnFamilySchemaUtils {
       valueSchemaId = 0,
       valSchema,
       Some(RangeKeyScanStateEncoderSpec(keySchema, Seq(0))))
+    planChangeLogger.warn("getSecIndexTimerStateSchema(stateName,keySchema,valSchema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, keySchema, valSchema)
   }
 }

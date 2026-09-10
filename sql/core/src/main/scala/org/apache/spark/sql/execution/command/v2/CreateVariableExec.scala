@@ -37,6 +37,7 @@ case class CreateVariableExec(
     resolvedIdentifiers: Seq[ResolvedIdentifier],
     defaultExpr: DefaultValueExpression,
     replace: Boolean) extends LeafV2CommandExec with ExpressionsEvaluator {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def stringArgs: Iterator[Any] =
     Iterator(resolvedIdentifiers.map(_.name), defaultExpr, s"replace=$replace")
@@ -96,6 +97,7 @@ case class CreateVariableExec(
       uniqueNames.add(name)
     })
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     variableTuples.foreach(variable => {
       val nameParts: Seq[String] = variable._1
       val varDef: VariableDefinition = variable._2

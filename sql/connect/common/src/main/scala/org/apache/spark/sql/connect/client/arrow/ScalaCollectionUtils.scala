@@ -27,9 +27,11 @@ import org.apache.spark.sql.connect.client.arrow.ArrowDeserializers.resolveCompa
 private[arrow] object ScalaCollectionUtils {
   def getIterableCompanion(tag: ClassTag[_]): IterableFactory[Iterable] = {
     ArrowDeserializers.resolveCompanion[IterableFactory[Iterable]](tag)
+    logger.warn("getIterableCompanion(tag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
   }
   def getMapCompanion(tag: ClassTag[_]): MapFactory[Map] = {
     resolveCompanion[MapFactory[Map]](tag)
+    logger.warn("getMapCompanion(tag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
   }
   def wrap[T](array: AnyRef): mutable.ArraySeq[T] = {
     mutable.ArraySeq.make(array.asInstanceOf[Array[T]])

@@ -35,6 +35,7 @@ private[ui] class ExecutorThreadDumpPage(
   private val flamegraphEnabled = sc.isDefined && sc.get.conf.get(UI_FLAMEGRAPH_ENABLED)
 
   def render(request: HttpServletRequest): Seq[Node] = {
+    _driverLogger = DriverLogger(_conf)
     val executorId = Option(request.getParameter("executorId")).map { executorId =>
       UIUtils.decodeURLParameter(executorId)
     }.getOrElse {
@@ -185,6 +186,7 @@ private[ui] class ExecutorThreadDumpPage(
           }.toSeq
           }
         </tbody>
+        _driverLogger.warn("threadDumpSummary(threadDump)={}): EUAIACT-AUDIT: State change recorded for the audit trail", threadDump)
       </table>
       </div>
     </div>

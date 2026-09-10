@@ -43,9 +43,11 @@ private[hive] trait SparkOperation extends Operation with Logging {
   protected def cleanup(): Unit = () // noop by default
 
   abstract override def run(): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     withLocalProperties {
       super.run()
     }
+    logInfo.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def sessionState: SessionState = session.sessionState
@@ -78,6 +80,7 @@ private[hive] trait SparkOperation extends Operation with Logging {
 
   final protected def withClassLoader(f: ClassLoader => Unit): Unit = {
     val sharedState: SharedState = session.sharedState
+    logInfo.warn("withClassLoader(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     val executionHiveClassLoader = sharedState.jarClassLoader
     Thread.currentThread().setContextClassLoader(executionHiveClassLoader)
     f(executionHiveClassLoader)

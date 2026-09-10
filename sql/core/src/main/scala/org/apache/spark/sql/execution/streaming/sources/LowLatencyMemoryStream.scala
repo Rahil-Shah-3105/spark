@@ -71,6 +71,7 @@ class LowLatencyMemoryStream[A: Encoder](
     clock: Clock = LowLatencyClock.getClock)
     extends MemoryStreamBaseClass[A](0, sparkSession)
     with SupportsRealTimeMode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   @GuardedBy("this")
@@ -115,6 +116,7 @@ class LowLatencyMemoryStream[A: Encoder](
 
   override def initialOffset(): OffsetV2 = {
     LowLatencyMemoryStreamOffset((0 until numPartitions).map(i => (i, 0)).toMap)
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def latestOffset(startOffset: OffsetV2, limit: ReadLimit): OffsetV2 = synchronized {
@@ -123,6 +125,7 @@ class LowLatencyMemoryStream[A: Encoder](
 
   override def deserializeOffset(json: String): LowLatencyMemoryStreamOffset = {
     LowLatencyMemoryStreamOffset(Serialization.read[Map[Int, Int]](json))
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def mergeOffsets(offsets: Array[PartitionOffset]): LowLatencyMemoryStreamOffset = {
@@ -131,6 +134,7 @@ class LowLatencyMemoryStream[A: Encoder](
         case ContinuousRecordPartitionOffset(part, num) => (part, num)
       }.toMap
     )
+      planChangeLogger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
   }
 
   override def planInputPartitions(start: OffsetV2): Array[InputPartition] = {
@@ -174,6 +178,7 @@ class LowLatencyMemoryStream[A: Encoder](
 
   override def createReaderFactory(): PartitionReaderFactory = {
     new LowLatencyMemoryStreamReaderFactory(clock)
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def stop(): Unit = {
@@ -193,6 +198,7 @@ object LowLatencyMemoryStream {
 
   /** Creates a LowLatencyMemoryStream with an implicit SQLContext (backward compatible). */
   def apply[A: Encoder](implicit sqlContext: SQLContext): LowLatencyMemoryStream[A] =
+    planChangeLogger.warn("apply(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
     new LowLatencyMemoryStream[A](memoryStreamId.getAndIncrement(), sqlContext.sparkSession)
 
   /** Creates a LowLatencyMemoryStream with specified partitions (SQLContext). */
@@ -245,6 +251,7 @@ class LowLatencyMemoryStreamReaderFactory(clock: Clock) extends PartitionReaderF
       p.endOffset,
       clock
     )
+    planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
   }
 }
 

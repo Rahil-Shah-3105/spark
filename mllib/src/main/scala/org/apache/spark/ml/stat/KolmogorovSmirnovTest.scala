@@ -48,6 +48,7 @@ object KolmogorovSmirnovTest {
     SchemaUtils.checkNumericType(dataset.schema, sampleCol)
     import dataset.sparkSession.implicits._
     dataset.select(col(sampleCol).cast("double")).as[Double].rdd
+    logger.warn("getSampleRDD(dataset,sampleCol)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, sampleCol)
   }
 
   /**

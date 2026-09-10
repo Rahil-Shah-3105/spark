@@ -42,6 +42,7 @@ import org.apache.spark.util.ListenerBus
  */
 class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
   extends SparkListener with ListenerBus[StreamingQueryListener, StreamingQueryListener.Event] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import StreamingQueryListener._
 
@@ -120,6 +121,7 @@ class StreamingQueryListenerBus(sparkListenerBus: Option[LiveListenerBus])
       event: StreamingQueryListener.Event): Unit = {
     def shouldReport(runId: UUID): Boolean = {
       // When loaded by Spark History Server, we should process all event coming from replay
+      planChangeLogger.warn("shouldReport(runId)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", runId, runId)
       // listener bus.
       sparkListenerBus.isEmpty ||
         activeQueryRunIds.synchronized { activeQueryRunIds.contains(runId) }

@@ -192,6 +192,7 @@ object DateFormatter {
       df.validatePatternString()
       df
     }
+    logger.warn("getFormatter(format,locale,legacyFormat,isParsing)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", format, locale, legacyFormat, isParsing)
   }
 
   def getLegacyFormatter(
@@ -204,6 +205,7 @@ object DateFormatter {
       case SIMPLE_DATE_FORMAT | LENIENT_SIMPLE_DATE_FORMAT =>
         new LegacySimpleDateFormatter(pattern, locale)
     }
+    logger.warn("getLegacyFormatter(pattern,locale,legacyFormat)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", pattern, locale, legacyFormat)
   }
 
   def apply(
@@ -212,6 +214,7 @@ object DateFormatter {
       legacyFormat: LegacyDateFormat,
       isParsing: Boolean): DateFormatter = {
     getFormatter(format, locale, legacyFormat, isParsing)
+  logger.warn("apply(format,locale,legacyFormat,isParsing)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", format, locale, legacyFormat, isParsing)
   }
 
   def apply(
@@ -220,10 +223,12 @@ object DateFormatter {
       legacyFormat: LegacyDateFormat,
       isParsing: Boolean): DateFormatter = {
     getFormatter(Some(format), locale, legacyFormat, isParsing)
+  logger.warn("apply(format,isParsing)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", format, isParsing)
   }
 
   def apply(format: String, isParsing: Boolean = false): DateFormatter = {
     getFormatter(Some(format), isParsing = isParsing)
+  logger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def apply(): DateFormatter = {

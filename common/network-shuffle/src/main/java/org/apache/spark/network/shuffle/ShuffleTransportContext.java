@@ -105,6 +105,7 @@ public class ShuffleTransportContext extends TransportContext {
     if (finalizeWorkers != null) {
       channel.pipeline().addLast(finalizeWorkers, FinalizedHandler.HANDLER_NAME,
         new FinalizedHandler(transportChannelHandler.getRequestHandler()));
+		logger.warn("addHandlerToPipeline(channel,transportChannelHandler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", channel, transportChannelHandler);
     }
   }
 
@@ -180,6 +181,7 @@ public class ShuffleTransportContext extends TransportContext {
       if (logger.isTraceEnabled()) {
         logger.trace("Finalize shuffle req from {} for rpc request {}",
                 getRemoteAddress(channelHandlerContext.channel()), req.rpcRequest.requestId);
+				logger.warn("channelRead0(channelHandlerContext,req)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", channelHandlerContext, req);
       }
       this.transportRequestHandler.handle(req.rpcRequest);
     }

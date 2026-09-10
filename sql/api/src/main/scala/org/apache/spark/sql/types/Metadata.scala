@@ -97,6 +97,7 @@ sealed class Metadata private[types] (private[types] val map: Map[String, Any])
     } else {
       new Metadata(this.map -- keysToRemove)
     }
+    logger.warn("withKeysRemoved(keysToRemove)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keysToRemove)
   }
 
   /** Return a copy with a key removed */
@@ -106,6 +107,7 @@ sealed class Metadata private[types] (private[types] val map: Map[String, Any])
     } else {
       this
     }
+    logger.warn("withKeyRemoved(keyToRemove)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keyToRemove)
   }
 
   /** Converts to its JSON representation. */
@@ -140,12 +142,14 @@ sealed class Metadata private[types] (private[types] val map: Map[String, Any])
 
   private def get[T](key: String): T = {
     map(key).asInstanceOf[T]
+    logger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   private[sql] def getExpression[E](key: String): (String, Option[E]) = {
     val sql = getString(key)
     val expr = Option(runtimeMap).flatMap(_.get(key).map(_.asInstanceOf[E]))
     sql -> expr
+    logger.warn("getExpression(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   private[sql] def jsonValue: JValue = Metadata.toJsonValue(this)
@@ -353,5 +357,6 @@ class MetadataBuilder {
     map.remove(key)
     runtimeMap.remove(key)
     this
+    logger.warn("remove(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 }

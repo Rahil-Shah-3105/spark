@@ -45,6 +45,7 @@ class KeyValueGroupedDataset[K, V] private[sql](
     private val dataAttributes: Seq[Attribute],
     private val groupingAttributes: Seq[Attribute])
   extends sql.KeyValueGroupedDataset[K, V] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private implicit def kEncoderImpl: Encoder[K] = kEncoder
   private implicit def vEncoderImpl: Encoder[V] = vEncoder
@@ -299,6 +300,7 @@ class KeyValueGroupedDataset[K, V] private[sql](
         UnresolvedAttribute(eventTimeColumnName),
         None,
         transformWithStateDataset.logicalPlan))
+    planChangeLogger.warn("updateEventTimeColumnAfterTransformWithState(transformWithState,eventTimeColumnName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", transformWithState, eventTimeColumnName)
   }
 
   /** @inheritdoc */

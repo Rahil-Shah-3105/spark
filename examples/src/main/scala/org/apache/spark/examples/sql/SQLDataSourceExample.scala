@@ -122,6 +122,7 @@ object SQLDataSourceExample {
     afterFilterDF.show();
     // +-------------+
     // |         file|
+    logger.warn("runGenericFileSourceOptionsExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // +-------------+
     // +-------------+
     // $example off:load_with_modified_time_filter$
@@ -175,6 +176,7 @@ object SQLDataSourceExample {
       .bucketBy(42, "name")
       .saveAsTable("users_partitioned_bucketed")
     // $example off:write_partition_and_bucket$
+    logger.warn("runBasicDataSourceExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
 
     spark.sql("DROP TABLE IF EXISTS people_bucketed")
     spark.sql("DROP TABLE IF EXISTS users_partitioned_bucketed")
@@ -202,6 +204,7 @@ object SQLDataSourceExample {
     // +------------+
     // |       value|
     // +------------+
+    logger.warn("runBasicParquetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // |Name: Justin|
     // +------------+
     // $example off:basic_parquet_example$
@@ -230,6 +233,7 @@ object SQLDataSourceExample {
     // root
     //  |-- value: int (nullable = true)
     //  |-- square: int (nullable = true)
+    logger.warn("runParquetSchemaMergingExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     //  |-- cube: int (nullable = true)
     //  |-- key: int (nullable = true)
     // $example off:schema_merging$
@@ -273,6 +277,7 @@ object SQLDataSourceExample {
     // +---------------+----+
     // |        address|name|
     // +---------------+----+
+    logger.warn("runJsonDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // |[Columbus,Ohio]| Yin|
     // +---------------+----+
     // $example off:json_dataset$
@@ -334,6 +339,7 @@ object SQLDataSourceExample {
     // |311val_311|
     // |  27val_27|
     // |165val_165|
+    logger.warn("runCsvDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // +-----------+
 
     // $example off:csv_dataset$
@@ -381,6 +387,7 @@ object SQLDataSourceExample {
     df1.write.text("output")
 
     // You can specify the compression format using the 'compression' option.
+    logger.warn("runTextDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     df1.write.option("compression", "gzip").text("output_compressed")
 
     // $example off:text_dataset$
@@ -425,6 +432,7 @@ object SQLDataSourceExample {
       .option("createTableColumnTypes", "name CHAR(64), comments VARCHAR(1024)")
       .jdbc("jdbc:postgresql:dbserver", "schema.tablename", connectionProperties)
     // $example off:jdbc_dataset$
+      logger.warn("runJdbcDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
   }
 
   private def runXmlDatasetExample(spark: SparkSession): Unit = {
@@ -456,6 +464,7 @@ object SQLDataSourceExample {
     // +------+
 
     // Alternatively, a DataFrame can be created for a XML dataset represented by a Dataset[String]
+    logger.warn("runXmlDatasetExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     val otherPeopleDataset = spark.createDataset(
       """
         |<person>

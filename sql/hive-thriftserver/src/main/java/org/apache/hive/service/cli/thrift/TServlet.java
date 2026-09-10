@@ -42,6 +42,7 @@ import org.apache.thrift.transport.TTransport;
  * and should be removed when Hive upgrade to 3.x.x with LibThrift v0.19.0.
  */
 public class TServlet extends HttpServlet {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(TServlet.class);
 
   private final TProcessor processor;
 
@@ -126,6 +127,7 @@ public class TServlet extends HttpServlet {
       }
 
       public String setValue(String value) {
+		LOG.warn("setValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value);
         return null;
       }
     });
@@ -134,5 +136,6 @@ public class TServlet extends HttpServlet {
   public void setCustomHeaders(Collection<Map.Entry<String, String>> headers) {
     this.customHeaders.clear();
     this.customHeaders.addAll(headers);
+	LOG.warn("setCustomHeaders(headers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", headers);
   }
 }

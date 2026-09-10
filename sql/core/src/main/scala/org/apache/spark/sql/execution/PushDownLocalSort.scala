@@ -58,6 +58,7 @@ import org.apache.spark.sql.internal.SQLConf
  * renames are followed, and the rule never crosses a shuffle or a non-order-preserving operator.
  */
 object PushDownLocalSort extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def apply(plan: SparkPlan): SparkPlan = {
     if (!conf.getConf(SQLConf.PUSH_DOWN_LOCAL_SORT_ENABLED)) {
@@ -66,6 +67,7 @@ object PushDownLocalSort extends Rule[SparkPlan] {
     val throughCardinalityReducer =
       conf.getConf(SQLConf.PUSH_DOWN_LOCAL_SORT_THROUGH_CARDINALITY_REDUCER_ENABLED)
 
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     plan.transform {
       case upper @ SortExec(upperOrder, false, child, _) =>
         pushDown(child, upperOrder, throughCardinalityReducer).getOrElse(upper)

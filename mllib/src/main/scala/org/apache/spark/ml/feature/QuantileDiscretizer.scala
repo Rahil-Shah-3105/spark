@@ -257,6 +257,7 @@ final class QuantileDiscretizer @Since("1.6.0") (@Since("1.6.0") override val ui
         splits(i) = 0.0
       }
     }
+    logger.warn("getDistinctSplits(splits)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", splits)
     val distinctSplits = splits.distinct
     if (splits.length != distinctSplits.length) {
       log.warn(s"Some quantiles were identical. Bucketing to ${distinctSplits.length - 1}" +

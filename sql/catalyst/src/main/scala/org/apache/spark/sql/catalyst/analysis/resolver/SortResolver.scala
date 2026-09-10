@@ -47,6 +47,7 @@ class SortResolver(operatorResolver: Resolver, expressionResolver: ExpressionRes
     extends TreeNodeResolver[Sort, LogicalPlan]
     with RewritesAliasesInTopLcaProject
     with ResolvesNameByHiddenOutput {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val scopes: NameScopeStack = operatorResolver.getNameScopes
   private val cteRegistry = operatorResolver.getCteRegistry
   private val operatorResolutionContextStack = operatorResolver.getOperatorResolutionContextStack
@@ -396,6 +397,7 @@ class SortResolver(operatorResolver: Resolver, expressionResolver: ExpressionRes
         operatorResolutionContextStack.current.subqueryExpressionsToValidate.add(subqueryExpression)
       case _ =>
     }
+    planChangeLogger.warn("updateSubqueryExpressionsInTheContextOfOperator(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 
   /**

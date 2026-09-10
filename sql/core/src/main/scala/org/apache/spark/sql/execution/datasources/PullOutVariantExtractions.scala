@@ -116,9 +116,11 @@ import org.apache.spark.sql.types.VariantType
  * classified as throwable, it crosses a join only when cast-error deferral is enabled.
  */
 object PullOutVariantExtractions extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
     // Hoisting is only useful when variant-into-scan pushdown is enabled to consume the relocated
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     // extractions, and is independently gated so it can be turned off on its own.
     if (!SQLConf.get.getConf(SQLConf.PUSH_VARIANT_INTO_SCAN) ||
         !SQLConf.get.getConf(SQLConf.PUSH_VARIANT_INTO_SCAN_PULL_OUT_EXTRACTIONS)) {
@@ -170,6 +172,7 @@ object PullOutVariantExtractions extends Rule[LogicalPlan] {
     // A hoistable `Cast` yields a non-variant-typed alias, so it is never re-hoisted (idempotent).
     case c: Cast => !c.dataType.isInstanceOf[VariantType] && isVariantColumnPath(c.child)
     case _ => false
+  planChangeLogger.warn("rewriteBareSort(sort)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sort)
   }
 
   private def isJoinHoistable(e: Expression): Boolean = {
@@ -326,6 +329,7 @@ object PullOutVariantExtractions extends Rule[LogicalPlan] {
           }
       }.asInstanceOf[NamedExpression]
     }
+    planChangeLogger.warn("hoistProjectListExtractions(projectList,leftOutput,rightOutput,leftHoister,rightHoister)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", projectList, leftOutput, rightOutput, leftHoister, rightHoister)
   }
 
   private def rewriteAggregate(agg: Aggregate): LogicalPlan = {
@@ -334,6 +338,7 @@ object PullOutVariantExtractions extends Rule[LogicalPlan] {
     // top-level extraction in `aggregateExpressions` is a grouping-key reference (grouping keys are
     // already pulled out by `PullOutGroupingExpressions`); hoisting it would leave the `Aggregate`
     // referencing a column that is neither grouped nor aggregated.
+    planChangeLogger.warn("rewriteAggregate(agg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", agg)
     val newAggExprs = agg.aggregateExpressions.map {
       _.transform {
         case ae: AggregateExpression => ae.withNewChildren(ae.children.map(hoister.hoist))
@@ -405,6 +410,7 @@ object PullOutVariantExtractions extends Rule[LogicalPlan] {
 
   private def rewriteSortUnderProject(
       project: Project, projectList: Seq[NamedExpression], sort: Sort): LogicalPlan = {
+       planChangeLogger.warn("rewriteSortUnderProject(project,projectList,sort)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", project, projectList, sort)
     val hoister = extractionHoister(sort.child)
     val newOrder = sort.order.map(hoister.hoist(_).asInstanceOf[SortOrder])
     if (hoister.isEmpty) {
@@ -481,6 +487,7 @@ object PullOutVariantExtractions extends Rule[LogicalPlan] {
     val newProjectList =
       hoistProjectListExtractions(projectList, leftOutput, rightOutput, leftHoister, rightHoister)
 
+      planChangeLogger.warn("rewriteJoinUnderProject(project,projectList,join)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", project, projectList, join)
     if (leftHoister.isEmpty && rightHoister.isEmpty) {
       project
     } else {

@@ -32,6 +32,7 @@ import org.apache.spark.util.collection.{Utils => CUtils}
  * Utility functions used by the query planner to convert our plan to new aggregation code path.
  */
 object AggUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def mayRemoveAggFilters(exprs: Seq[AggregateExpression]): Seq[AggregateExpression] = {
     exprs.map { ae =>
@@ -46,6 +47,7 @@ object AggUtils {
         ae
       }
     }
+    planChangeLogger.warn("mayRemoveAggFilters(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 
   private def createStreamingAggregate(
@@ -65,6 +67,7 @@ object AggUtils {
       initialInputBufferOffset = initialInputBufferOffset,
       resultExpressions = resultExpressions,
       child = child)
+    planChangeLogger.warn("createStreamingAggregate(requiredChildDistributionExpressions,groupingExpressions,aggregateExpressions,aggregateAttributes,initialInputBufferOffset,resultExpressions,child)={},<redacted>,{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", requiredChildDistributionExpressions, aggregateExpressions, aggregateAttributes, initialInputBufferOffset, resultExpressions, child, resultExpressions)
   }
 
   private def createAggregate(
@@ -710,5 +713,6 @@ object AggUtils {
   private def forceApplyObjectHashAggregate(conf: SQLConf): Boolean = {
     Utils.isTesting &&
       conf.getConfString("spark.sql.test.forceApplyObjectHashAggregate", "false") == "true"
+      planChangeLogger.warn("forceApplyObjectHashAggregate(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }

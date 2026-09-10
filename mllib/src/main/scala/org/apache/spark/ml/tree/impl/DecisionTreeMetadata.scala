@@ -91,6 +91,7 @@ private[spark] class DecisionTreeMetadata(
    * For a continuous feature, number of bins is number of splits plus 1.
    */
   def setNumSplits(featureIndex: Int, numSplits: Int): Unit = {
+    logger.warn("setNumSplits(featureIndex,numSplits)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", featureIndex, numSplits)
     require(isContinuous(featureIndex),
       s"Only number of bin for a continuous feature can be set.")
     numBins(featureIndex) = numSplits + 1

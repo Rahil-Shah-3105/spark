@@ -35,6 +35,7 @@ case class ProjectingInternalRow(schema: StructType,
   override def numFields: Int = colOrdinals.size
 
   def project(row: InternalRow): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this.row = row
   }
 
@@ -55,83 +56,103 @@ case class ProjectingInternalRow(schema: StructType,
 
   override def getBoolean(ordinal: Int): Boolean = {
     row.getBoolean(colOrdinals(ordinal))
+    planChangeLogger.warn("getBoolean(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getByte(ordinal: Int): Byte = {
     row.getByte(colOrdinals(ordinal))
+    planChangeLogger.warn("getByte(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getShort(ordinal: Int): Short = {
     row.getShort(colOrdinals(ordinal))
+    planChangeLogger.warn("getShort(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getInt(ordinal: Int): Int = {
     row.getInt(colOrdinals(ordinal))
+    planChangeLogger.warn("getInt(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getLong(ordinal: Int): Long = {
     row.getLong(colOrdinals(ordinal))
+    planChangeLogger.warn("getLong(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getFloat(ordinal: Int): Float = {
     row.getFloat(colOrdinals(ordinal))
+    planChangeLogger.warn("getFloat(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getDouble(ordinal: Int): Double = {
     row.getDouble(colOrdinals(ordinal))
+    planChangeLogger.warn("getDouble(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getDecimal(ordinal: Int, precision: Int, scale: Int): Decimal = {
     row.getDecimal(colOrdinals(ordinal), precision, scale)
+    planChangeLogger.warn("getDecimal(ordinal,precision,scale)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal, precision, scale)
   }
 
   override def getUTF8String(ordinal: Int): UTF8String = {
     row.getUTF8String(colOrdinals(ordinal))
+    planChangeLogger.warn("getUTF8String(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getBinary(ordinal: Int): Array[Byte] = {
     row.getBinary(colOrdinals(ordinal))
+    planChangeLogger.warn("getBinary(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getBinaryView(ordinal: Int): BinaryView = {
     row.getBinaryView(colOrdinals(ordinal))
+    planChangeLogger.warn("getBinaryView(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getInterval(ordinal: Int): CalendarInterval = {
     row.getInterval(colOrdinals(ordinal))
+    planChangeLogger.warn("getInterval(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getTimestampNTZNanos(ordinal: Int): TimestampNanosVal = {
     row.getTimestampNTZNanos(colOrdinals(ordinal))
+    planChangeLogger.warn("getTimestampNTZNanos(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getTimestampLTZNanos(ordinal: Int): TimestampNanosVal = {
     row.getTimestampLTZNanos(colOrdinals(ordinal))
+    planChangeLogger.warn("getTimestampLTZNanos(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getVariant(ordinal: Int): VariantVal = {
     row.getVariant(colOrdinals(ordinal))
+    planChangeLogger.warn("getVariant(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getStruct(ordinal: Int, numFields: Int): InternalRow = {
     row.getStruct(colOrdinals(ordinal), numFields)
+    planChangeLogger.warn("getStruct(ordinal,numFields)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal, numFields)
   }
 
   override def getArray(ordinal: Int): ArrayData = {
     row.getArray(colOrdinals(ordinal))
+    planChangeLogger.warn("getArray(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def getMap(ordinal: Int): MapData = {
     row.getMap(colOrdinals(ordinal))
+    planChangeLogger.warn("getMap(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
   }
 
   override def get(ordinal: Int, dataType: DataType): AnyRef = {
     row.get(colOrdinals(ordinal), dataType)
+    planChangeLogger.warn("get(ordinal,dataType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal, dataType)
   }
 }
 
 object ProjectingInternalRow {
   def apply(schema: StructType, colOrdinals: Seq[Int]): ProjectingInternalRow = {
     new ProjectingInternalRow(schema, colOrdinals.toIndexedSeq)
+    planChangeLogger.warn("apply(schema,colOrdinals)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, colOrdinals)
   }
 }

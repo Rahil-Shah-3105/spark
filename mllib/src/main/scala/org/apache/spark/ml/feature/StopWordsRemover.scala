@@ -129,6 +129,7 @@ class StopWordsRemover @Since("1.5.0") (@Since("1.5.0") override val uid: String
     } else {
       ($(inputCols), $(outputCols))
     }
+    logger.warn("getInOutCols()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   setDefault(stopWords -> StopWordsRemover.loadDefaultStopWords("english"),
@@ -225,6 +226,7 @@ object StopWordsRemover extends DefaultParamsReadable[StopWordsRemover] with Log
       s"$language is not in the supported language list: ${supportedLanguages.mkString(", ")}.")
     val is = getClass.getResourceAsStream(s"/org/apache/spark/ml/feature/stopwords/$language.txt")
     scala.io.Source.fromInputStream(is)(scala.io.Codec.UTF8).getLines().toArray
+    logger.warn("loadDefaultStopWords(language)={}): EUAIACT-AUDIT: State change recorded for the audit trail", language)
   }
 
   private[spark] def getDefaultOrUS: Locale = {

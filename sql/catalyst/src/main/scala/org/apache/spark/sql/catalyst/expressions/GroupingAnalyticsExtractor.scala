@@ -26,6 +26,7 @@ package org.apache.spark.sql.catalyst.expressions
  *  2. A distinct list of all group-by expressions used across all grouping sets
  */
 object GroupingAnalyticsExtractor {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(expressions: Seq[Expression]): Option[(Seq[Seq[Expression]], Seq[Expression])] = {
     val groups = expressions.flatMap {
@@ -38,6 +39,7 @@ object GroupingAnalyticsExtractor {
       case other: Expression => Seq(Seq(other))
     }
 
+    planChangeLogger.warn("apply(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
     val selectedGroupByExprs = unmergedSelectedGroupByExprs.tail
       .foldLeft(unmergedSelectedGroupByExprs.head) { (x, y) =>
         for (a <- x; b <- y) yield a ++ b

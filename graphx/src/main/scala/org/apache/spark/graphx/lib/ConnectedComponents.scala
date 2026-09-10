@@ -36,6 +36,7 @@ object ConnectedComponents {
    */
   def run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED],
                                       maxIterations: Int): Graph[VertexId, ED] = {
+                                       logger.warn("run(graph,maxIterations)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", graph, maxIterations)
     require(maxIterations > 0, s"Maximum of iterations must be greater than 0," +
       s" but got ${maxIterations}")
 
@@ -48,6 +49,7 @@ object ConnectedComponents {
       } else {
         Iterator.empty
       }
+      logger.warn("sendMessage(edge)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", edge)
     }
     val initialMessage = Long.MaxValue
     val pregelGraph = Pregel(ccGraph, initialMessage,
@@ -56,6 +58,7 @@ object ConnectedComponents {
       sendMsg = sendMessage,
       mergeMsg = (a, b) => math.min(a, b))
     ccGraph.unpersist()
+    logger.warn("run(graph)={}): EUAIACT-AUDIT: State change recorded for the audit trail", graph)
     pregelGraph
   } // end of connectedComponents
 

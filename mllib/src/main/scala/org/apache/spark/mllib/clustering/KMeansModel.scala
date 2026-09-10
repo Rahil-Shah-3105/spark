@@ -129,6 +129,7 @@ class KMeansModel (@Since("1.0.0") val clusterCenters: Array[Vector],
   @Since("1.4.0")
   override def save(sc: SparkContext, path: String): Unit = {
     KMeansModel.SaveLoadV2_0.save(sc, this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 }
 
@@ -158,6 +159,7 @@ object KMeansModel extends Loader[KMeansModel] {
   private[KMeansModel] object Cluster {
     def apply(r: Row): Cluster = {
       Cluster(r.getInt(0), r.getAs[Vector](1))
+      logger.warn("apply(r)={}): EUAIACT-AUDIT: State change recorded for the audit trail", r)
     }
   }
 
@@ -178,6 +180,7 @@ object KMeansModel extends Loader[KMeansModel] {
           Cluster(id, p.vector)
         }
       spark.createDataFrame(dataRDD).write.parquet(Loader.dataPath(path))
+    logger.warn("save(sc,model,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, model, path)
     }
 
     def load(sc: SparkContext, path: String): KMeansModel = {
@@ -192,6 +195,7 @@ object KMeansModel extends Loader[KMeansModel] {
       val localCentroids = centroids.rdd.map(Cluster.apply).collect()
       assert(k == localCentroids.length)
       new KMeansModel(localCentroids.sortBy(_.id).map(_.point))
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sc, path, centroids)
     }
   }
 

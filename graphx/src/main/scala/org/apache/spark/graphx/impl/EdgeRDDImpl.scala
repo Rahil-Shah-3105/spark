@@ -36,6 +36,7 @@ class EdgeRDDImpl[ED: ClassTag, VD: ClassTag] private[graphx] (
       partitionsRDD.setName(_name)
     }
     this
+    logger.warn("setName(_name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", _name)
   }
   setName("EdgeRDD")
 
@@ -56,11 +57,13 @@ class EdgeRDDImpl[ED: ClassTag, VD: ClassTag] private[graphx] (
   override def persist(newLevel: StorageLevel): this.type = {
     partitionsRDD.persist(newLevel)
     this
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
   }
 
   override def unpersist(blocking: Boolean = false): this.type = {
     partitionsRDD.unpersist(blocking)
     this
+    logger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   /**
@@ -134,6 +137,7 @@ class EdgeRDDImpl[ED: ClassTag, VD: ClassTag] private[graphx] (
   override private[graphx] def withTargetStorageLevel(
       targetStorageLevel: StorageLevel): EdgeRDDImpl[ED, VD] = {
     new EdgeRDDImpl(this.partitionsRDD, targetStorageLevel)
+    logger.warn("withTargetStorageLevel(targetStorageLevel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", targetStorageLevel)
   }
 
 }

@@ -91,12 +91,14 @@ private[parquet] trait TimestampNanosParquetOps extends ParquetTypeOps {
   // Return None for anything else so the factory falls through to its clean
   // SchemaColumnConvertNotSupportedException instead of silently mis-reading.
   override def getVectorUpdater(descriptor: ColumnDescriptor): Option[ParquetVectorUpdater] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val parquetType = descriptor.getPrimitiveType
     if (TimestampNanosParquetOps.isNanosTimestamp(parquetType)) {
       Some(new TimestampNanosVectorUpdater(precision))
     } else {
       None
     }
+    planChangeLogger.warn("getVectorUpdater(descriptor)={}): EUAIACT-AUDIT: State change recorded for the audit trail", descriptor)
   }
 
   // ==================== Schema Conversion ====================
@@ -111,6 +113,7 @@ private[parquet] trait TimestampNanosParquetOps extends ParquetTypeOps {
 
   override def makeWriter(
       recordConsumer: () => RecordConsumer,
+      planChangeLogger.warn("makeWriter(recordConsumer,makeFieldWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordConsumer, makeFieldWriter, recordConsumer)
       makeFieldWriter: DataType => (SpecializedGetters, Int) => Unit
   ): (SpecializedGetters, Int) => Unit =
     // TIMESTAMP(NANOS) values are always proleptic Gregorian and are exempt from datetime
@@ -139,6 +142,7 @@ private[parquet] trait TimestampNanosParquetOps extends ParquetTypeOps {
     new ParquetPrimitiveConverter(updater) {
       override def addLong(value: Long): Unit = {
         this.updater.set(DateTimeUtils.epochNanosToTimestampNanos(value, p))
+        planChangeLogger.warn("addLong(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
       }
     }
   }
@@ -288,6 +292,7 @@ private[ops] class TimestampNanosVectorUpdater(precision: Int) extends ParquetVe
       putTimestampNanos(offset + i, values, valuesReader.readLong())
       i += 1
     }
+    planChangeLogger.warn("readValues(total,offset,values,valuesReader)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", total, offset, values, valuesReader)
   }
 
   override def skipValues(total: Int, valuesReader: VectorizedValuesReader): Unit =
@@ -297,6 +302,7 @@ private[ops] class TimestampNanosVectorUpdater(precision: Int) extends ParquetVe
       offset: Int,
       values: WritableColumnVector,
       valuesReader: VectorizedValuesReader): Unit =
+    planChangeLogger.warn("readValue(offset,values,valuesReader)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, values, valuesReader)
     putTimestampNanos(offset, values, valuesReader.readLong())
 
   override def decodeSingleDictionaryId(

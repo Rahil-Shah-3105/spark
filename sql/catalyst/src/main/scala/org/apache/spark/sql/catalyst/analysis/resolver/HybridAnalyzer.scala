@@ -59,6 +59,7 @@ class HybridAnalyzer(
     extendedResolutionChecks: Seq[LogicalPlan => Unit] = Seq.empty)
     extends SQLConfHelper
     with Logging {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private var singlePassResolutionDuration: Option[Long] = None
   private var fixedPointResolutionDuration: Option[Long] = None
   private val sampleRateGenerator = new Random()
@@ -71,6 +72,7 @@ class HybridAnalyzer(
       checkResolverGuard(plan) &&
       checkDualRunSampleRate()
 
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     withTrackedAnalyzerBridgeState(dualRun) {
       if (conf.getConf(SQLConf.ANALYZER_SINGLE_PASS_RESOLVER_ENABLED)) {
         resolveInSinglePass(plan)
@@ -140,6 +142,7 @@ class HybridAnalyzer(
     }
 
     var singlePassException: Option[Throwable] = None
+    planChangeLogger.warn("resolveInDualRun(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, fixedPointResult)
     val singlePassResult = try {
       val (resolutionDuration, result) = recordDuration {
         Some(resolveInSinglePass(plan, inDualRun = true))
@@ -243,6 +246,7 @@ class HybridAnalyzer(
 
         None
     }
+    planChangeLogger.warn("tryRunSinglePassInTentativeMode(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -279,6 +283,7 @@ class HybridAnalyzer(
 
   private def checkDualRunSampleRate(): Boolean = {
     sampleRateGenerator.nextDouble() < conf.getConf(SQLConf.ANALYZER_DUAL_RUN_SAMPLE_RATE)
+    planChangeLogger.warn("checkDualRunSampleRate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def validateLogicalPlans(

@@ -139,6 +139,7 @@ private[r] object LinearSVCWrapper
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)
@@ -157,6 +158,7 @@ private[r] object LinearSVCWrapper
       val rMetadata = parse(rMetadataStr)
       val features = (rMetadata \ "features").extract[Array[String]]
       val labels = (rMetadata \ "labels").extract[Array[String]]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       val pipeline = PipelineModel.load(pipelinePath)
       new LinearSVCWrapper(pipeline, features, labels)

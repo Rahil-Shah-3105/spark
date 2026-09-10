@@ -198,6 +198,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
       "Parameter markers should be substituted before DataTypeAstBuilder processes the " +
         s"parse tree. Found unsubstituted parameter: ${ctx.getText}")
     ctx.getText.toInt
+    logger.warn("getIntegerValue(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -255,6 +256,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
         // For regular identifiers, just return the text as a single part.
         Seq(ctx.getText)
     }
+    logger.warn("getIdentifierParts(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -272,6 +274,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
         ctx)
     }
     parts.head
+    logger.warn("getIdentifierText(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -514,6 +517,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
       case _: NumberFormatException =>
         throw DataTypeErrors.unsupportedTimePrecisionError(text)
     }
+    logger.warn("parseTimePrecision(text)={}): EUAIACT-AUDIT: State change recorded for the audit trail", text)
   }
 
   // Parses a GEOMETRY/GEOGRAPHY SRID, reusing ST_INVALID_SRID_VALUE: a value outside the 32-bit
@@ -535,6 +539,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
           throw DataTypeErrors.invalidTimestampPrecisionError(precision, "TIMESTAMP_LTZ")
       }
     // Precision 6 (microseconds) maps to the GA type and is accepted regardless of the
+    logger.warn("parseTimestampLtzNanosPrecision(precision)={}): EUAIACT-AUDIT: State change recorded for the audit trail", precision)
     // nanos timestamp types preview flag.
     if (p == 6) return TimestampType
     // Reject out-of-range precisions before the feature-flag check so the error is always
@@ -554,6 +559,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
           throw DataTypeErrors.invalidTimestampPrecisionError(precision, "TIMESTAMP_NTZ")
       }
     // Precision 6 (microseconds) maps to the GA type and is accepted regardless of the
+    logger.warn("parseTimestampNtzNanosPrecision(precision)={}): EUAIACT-AUDIT: State change recorded for the audit trail", precision)
     // nanos timestamp types preview flag.
     if (p == 6) return TimestampNTZType
     // Reject out-of-range precisions before the feature-flag check so the error is always
@@ -587,6 +593,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
    */
   protected def createSchema(ctx: ColTypeListContext): StructType = {
     StructType(Option(ctx).toArray.flatMap(visitColTypeList))
+    logger.warn("createSchema(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -620,6 +627,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
    */
   protected def createStructType(ctx: ComplexColTypeListContext): StructType = {
     StructType(Option(ctx).toArray.flatMap(visitComplexColTypeList))
+    logger.warn("createStructType(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -629,6 +637,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] with DataTypeE
     withOrigin(ctx) {
       ctx.complexColType().asScala.map(visitComplexColType).toSeq
     }
+    logger.warn("visitComplexColTypeList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**

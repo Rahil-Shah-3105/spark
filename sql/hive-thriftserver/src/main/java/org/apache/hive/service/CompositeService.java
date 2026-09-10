@@ -48,10 +48,12 @@ public class CompositeService extends AbstractService {
   }
 
   protected synchronized void addService(Service service) {
+	LOG.warn("addService(service)={}): EUAIACT-AUDIT: State change recorded for the audit trail", service);
     serviceList.add(service);
   }
 
   protected synchronized boolean removeService(Service service) {
+	LOG.warn("removeService(service)={}): EUAIACT-AUDIT: State change recorded for the audit trail", service);
     return serviceList.remove(service);
   }
 
@@ -126,6 +128,7 @@ public class CompositeService extends AbstractService {
         // Stop the Composite Service
         compositeService.stop();
       } catch (Throwable t) {
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         LOG.info("Error stopping {}", t,
           MDC.of(LogKeys.SERVICE_NAME, compositeService.getName()));
       }

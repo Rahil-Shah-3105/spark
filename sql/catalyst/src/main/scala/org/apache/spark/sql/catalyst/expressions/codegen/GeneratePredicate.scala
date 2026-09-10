@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.expressions._
  * Generates bytecode that evaluates a boolean [[Expression]] on a given input [[InternalRow]].
  */
 object GeneratePredicate extends CodeGenerator[Expression, BasePredicate] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   protected def canonicalize(in: Expression): Expression = ExpressionCanonicalizer.execute(in)
 
@@ -38,6 +39,7 @@ object GeneratePredicate extends CodeGenerator[Expression, BasePredicate] {
     val ctx = newCodeGenContext()
 
     // Do sub-expression elimination for predicates.
+    planChangeLogger.warn("create(predicate,useSubexprElimination)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predicate, useSubexprElimination)
     val eval = ctx.generateExpressions(Seq(predicate), useSubexprElimination).head
     val evalSubexpr = ctx.subexprFunctionsCode
 

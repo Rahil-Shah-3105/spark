@@ -69,6 +69,7 @@ private[deploy] object RPackageUtils extends Logging {
       printStream: PrintStream,
       level: Level = Level.FINE,
       e: Throwable = null): Unit = {
+       _driverLogger = DriverLogger(_conf)
     if (printStream != null) {
       // scalastyle:off println
       printStream.println(msg.message)
@@ -219,6 +220,7 @@ private[deploy] object RPackageUtils extends Logging {
       Set.empty[File]
     } else {
       if (dir.isDirectory) {
+        _driverLogger.warn("listFilesRecursively(dir,excludePatterns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dir, excludePatterns)
         val subDir = dir.listFiles(new FilenameFilter {
           override def accept(dir: File, name: String): Boolean = {
             !excludePatterns.map(name.contains).reduce(_ || _) // exclude files with given pattern

@@ -423,6 +423,7 @@ class SparkConnectPlanner(
         AliasIdentifier.apply(alias.getAlias)
       }
     SubqueryAlias(aliasIdentifier, transformRelation(alias.getInput))
+    logger.warn("transformSubqueryAlias(alias)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", alias, aliasIdentifier)
   }
 
   /**
@@ -1002,6 +1003,7 @@ class SparkConnectPlanner(
         sortingExprs.asScala.toSeq.map(expr => transformExpression(expr))
       val sortOrder: Seq[SortOrder] = MapGroups.sortOrder(sortExprs)
 
+        logger.warn("apply(input,groupingExprs,sortingExprs)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, sortingExprs)
       apply(transformRelation(input), groupingExprs, sortOrder)
     }
 
@@ -1041,6 +1043,7 @@ class SparkConnectPlanner(
         analyzed,
         aliasedGroupings,
         sortOrder)
+      logger.warn("createFromRelationalDataset(logicalPlan,groupingExprs,sortOrder)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", logicalPlan, sortOrder)
     }
 
     private def createFromGroupByKeyFunc(
@@ -1065,6 +1068,7 @@ class SparkConnectPlanner(
         analyzed,
         withGroupingKey.newColumns,
         sortOrder)
+      logger.warn("createFromGroupByKeyFunc(logicalPlan,groupingExprs,sortOrder)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", logicalPlan, sortOrder)
     }
   }
 
@@ -1095,6 +1099,8 @@ class SparkConnectPlanner(
       } else {
         throw InvalidInputErrors.expectingScalaUdfButGot(expr.getExprTypeCase)
       }
+    logger.warn("apply(expr,inputAttrs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, inputAttrs)
+    logger.warn("apply(udf,inputAttrs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", udf, inputAttrs)
     }
 
     def apply(udf: UdfPacket, inputAttrs: Option[Seq[Attribute]]): TypedScalaUdf = {
@@ -1161,6 +1167,7 @@ class SparkConnectPlanner(
         rel.getOutputMode,
         rel.getTimeoutConf)
       .logicalPlan
+      logger.warn("transformApplyInPandasWithState(rel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rel)
   }
 
   private def transformTransformWithStateInPySpark(
@@ -1526,6 +1533,7 @@ class SparkConnectPlanner(
     val blockId = CacheId(sessionHolder.session.sessionUUID, hash)
     val bytes = blockManager.getLocalBytes(blockId)
     bytes
+    logger.warn("readChunkedCachedLocalRelationBlock(hash)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId)
       .map { blockData =>
         try {
           blockData.toInputStream().readAllBytes()
@@ -1544,6 +1552,7 @@ class SparkConnectPlanner(
     val blockManager = session.sparkContext.env.blockManager
     val blockId = CacheId(sessionHolder.session.sessionUUID, hash)
     blockManager.getStatus(blockId).map(status => status.memSize + status.diskSize).getOrElse(0L)
+    logger.warn("getBlockSize(hash)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId)
   }
 
   private def transformChunkedCachedLocalRelation(
@@ -1734,6 +1743,7 @@ class SparkConnectPlanner(
       case other =>
         throw InvalidInputErrors.invalidOneOfField(other, rel.getDescriptorForType)
     }
+    logger.warn("transformReadRel(rel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rel)
   }
 
   private def transformRelationChanges(rel: proto.RelationChanges): LogicalPlan = {
@@ -1744,6 +1754,7 @@ class SparkConnectPlanner(
     val ident = parser.parseMultipartIdentifier(tableName)
     val relation = UnresolvedRelation(ident, options, isStreaming = rel.getIsStreaming)
     RelationChanges(relation, ctx)
+    logger.warn("transformRelationChanges(rel)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rel, ident)
   }
 
   private def transformParse(rel: proto.Parse): LogicalPlan = {
@@ -2022,6 +2033,7 @@ class SparkConnectPlanner(
     logical.Offset(
       offsetExpr = expressions.Literal(offset.getOffset, IntegerType),
       transformRelation(offset.getInput))
+    logger.warn("transformOffset(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /**
@@ -2102,6 +2114,7 @@ class SparkConnectPlanner(
 
   private def unpackForeachWriter(fun: proto.ScalarScalaUDF): ForeachWriterPacket = {
     unpackScalaUDF[ForeachWriterPacket](fun)
+    logger.warn("unpackForeachWriter(fun)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fun)
   }
 
   private def unpackScalaUDF[T](fun: proto.ScalarScalaUDF): T = {
@@ -2356,6 +2369,7 @@ class SparkConnectPlanner(
         col = transformExpression(update.getStructExpression),
         fieldName = update.getFieldName)
     }
+    logger.warn("transformUpdateFields(update)={}): EUAIACT-AUDIT: State change recorded for the audit trail", update)
   }
 
   private def transformWindowExpression(window: proto.Expression.Window) = {
@@ -2436,6 +2450,7 @@ class SparkConnectPlanner(
     val leftPlan = transformRelation(u.getLeftInput)
     val rightPlan = transformRelation(u.getRightInput)
     val isAll = if (u.hasIsAll) u.getIsAll else false
+    logger.warn("transformSetOperation(u)={}): EUAIACT-AUDIT: State change recorded for the audit trail", u)
 
     u.getSetOpType match {
       case proto.SetOperation.SetOpType.SET_OP_TYPE_EXCEPT =>
@@ -2867,6 +2882,7 @@ class SparkConnectPlanner(
    */
   private[planner] def processWithoutResponseObserverForTesting(command: proto.Command): Unit = {
     process(command, new MockObserver())
+    logger.warn("processWithoutResponseObserverForTesting(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 
   def transformCommand(command: proto.Command): Option[QueryPlanningTracker => LogicalPlan] = {
@@ -2887,6 +2903,7 @@ class SparkConnectPlanner(
   def process(
       command: proto.Command,
       responseObserver: StreamObserver[ExecutePlanResponse]): Unit = {
+       logger.warn("process(command,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, responseObserver)
     val transformerOpt = transformCommand(command)
     if (transformerOpt.isDefined) {
       transformAndRunCommand(transformerOpt.get)
@@ -3004,6 +3021,7 @@ class SparkConnectPlanner(
         .setServerSideSessionId(sessionHolder.serverSessionId)
         .setSqlCommandResult(sqlCommandResult)
         .build())
+    logger.warn("handleExecuteExternalCommand(command,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", command, responseObserver, result)
   }
 
   private def handleSqlCommand(
@@ -3069,6 +3087,7 @@ class SparkConnectPlanner(
       case lr: LocalRelation => lr.data
       case cr: CommandResult => cr.rows
       case _ => Seq.empty
+    logger.warn("executeSQL(sql,tracker)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sql, tracker)
     }
 
     // Only filled when isCommand
@@ -3162,6 +3181,7 @@ class SparkConnectPlanner(
       throw InvalidInputErrors.invalidSQLWithReferences(query)
     }
 
+    logger.warn("executeSQLWithRefs(query,tracker)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tracker)
     // Eagerly execute commands of the provided SQL string, with given references.
     val sql = query.getRoot.getSql
     this.synchronized {
@@ -3274,6 +3294,7 @@ class SparkConnectPlanner(
   private def handleRegisterPythonUDF(fun: proto.CommonInlineUserDefinedFunction): Unit = {
     val udpf = createUserDefinedPythonFunction(fun)
     session.udf.registerPython(fun.getFunctionName, udpf)
+    logger.warn("handleRegisterPythonUDF(fun)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fun)
   }
 
   private def handleRegisterJavaUDF(fun: proto.CommonInlineUserDefinedFunction): Unit = {
@@ -3288,11 +3309,13 @@ class SparkConnectPlanner(
     } else {
       session.udf.registerJava(fun.getFunctionName, udf.getClassName, dataType)
     }
+    logger.warn("handleRegisterJavaUDF(fun)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fun)
   }
 
   private def handleRegisterScalaUDF(fun: proto.CommonInlineUserDefinedFunction): Unit = {
     val udf = transformScalaFunction(fun)
     session.udf.register(fun.getFunctionName, udf)
+    logger.warn("handleRegisterScalaUDF(fun)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fun)
   }
 
   private def handleCommandPlugin(extension: ProtoAny): Unit = {
@@ -3330,6 +3353,7 @@ class SparkConnectPlanner(
       allowExisting = false,
       replace = createView.getReplace,
       viewType = viewType)
+    logger.warn("transformCreateViewCommand(createView)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", createView, tableIdentifier)
   }
 
   /**
@@ -3382,6 +3406,7 @@ class SparkConnectPlanner(
       w.format(writeOperation.getSource)
     }
 
+    logger.warn("transformWriteOperation(writeOperation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writeOperation)
     if (writeOperation.getWithSchemaEvolution) {
       w.withSchemaEvolution()
     }
@@ -3409,6 +3434,7 @@ class SparkConnectPlanner(
     val qe = new QueryExecution(session, transformer(tracker), tracker)
     qe.assertCommandExecuted()
     executeHolder.eventsManager.postFinished()
+    logger.warn("transformAndRunCommand(transformer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", transformer)
   }
 
   /**
@@ -3452,6 +3478,7 @@ class SparkConnectPlanner(
       w.clusterBy(names.head, names.tail.toSeq: _*)
     }
 
+    logger.warn("transformWriteOperationV2(writeOperation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writeOperation)
     if (writeOperation.getWithSchemaEvolution) {
       w.withSchemaEvolution()
     }
@@ -3646,6 +3673,7 @@ class SparkConnectPlanner(
         .setServerSideSessionId(sessionHolder.serverSessionId)
         .setWriteStreamOperationStartResult(resultBuilder.build())
         .build())
+    logger.warn("handleWriteStreamOperationStart(writeOp,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", writeOp, responseObserver, resultBuilder)
   }
 
   private def handleStreamingQueryCommand(
@@ -3767,6 +3795,7 @@ class SparkConnectPlanner(
         .setServerSideSessionId(sessionHolder.serverSessionId)
         .setStreamingQueryCommandResult(respBuilder.build())
         .build())
+    logger.warn("handleStreamingQueryCommand(command,responseObserver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", command, responseObserver, id)
   }
 
   /**
@@ -3821,6 +3850,7 @@ class SparkConnectPlanner(
           .setRunId(query.runId.toString)
           .build())
     if (query.name != null) {
+      logger.warn("buildStreamingQueryInstance(query)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", query)
       builder.setName(query.name)
     }
     builder.build()
@@ -3905,6 +3935,7 @@ class SparkConnectPlanner(
         .setServerSideSessionId(sessionHolder.serverSessionId)
         .setStreamingQueryManagerCommandResult(respBuilder.build())
         .build())
+    logger.warn("handleStreamingQueryManagerCommand(command,responseObserver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", command, responseObserver)
   }
 
   private def handleGetResourcesCommand(
@@ -3929,6 +3960,7 @@ class SparkConnectPlanner(
                 .asJava)
             .build())
         .build())
+    logger.warn("handleGetResourcesCommand(responseObserver)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", responseObserver)
   }
 
   private def handleCreateResourceProfileCommand(
@@ -3966,6 +3998,7 @@ class SparkConnectPlanner(
             .setProfileId(profile.id)
             .build())
         .build())
+    logger.warn("handleCreateResourceProfileCommand(createResourceProfileCommand,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", createResourceProfileCommand, responseObserver)
   }
 
   private def handleCheckpointCommand(
@@ -4007,6 +4040,7 @@ class SparkConnectPlanner(
   private def handleRemoveCachedRemoteRelationCommand(
       removeCachedRemoteRelationCommand: proto.RemoveCachedRemoteRelationCommand): Unit = {
     val dfId = removeCachedRemoteRelationCommand.getRelation.getRelationId
+    logger.warn("handleRemoveCachedRemoteRelationCommand(removeCachedRemoteRelationCommand)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", removeCachedRemoteRelationCommand, dfId)
     logInfo(log"Removing DataFrame with id ${MDC(DATAFRAME_ID, dfId)} from the cache")
     sessionHolder.removeCachedDataFrame(dfId)
     executeHolder.eventsManager.postFinished()
@@ -4046,6 +4080,7 @@ class SparkConnectPlanner(
       getSetCurrentDatabase: proto.SetCurrentDatabase): LogicalPlan = {
     session.catalog.setCurrentDatabase(getSetCurrentDatabase.getDbName)
     emptyLocalRelation
+    logger.warn("transformSetCurrentDatabase(getSetCurrentDatabase)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getSetCurrentDatabase)
   }
 
   private def transformListDatabases(getListDatabases: proto.ListDatabases): LogicalPlan = {
@@ -4054,6 +4089,7 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listDatabases().logicalPlan
     }
+    logger.warn("transformListDatabases(getListDatabases)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getListDatabases)
   }
 
   private def transformListTables(getListTables: proto.ListTables): LogicalPlan = {
@@ -4069,6 +4105,7 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listTables().logicalPlan
     }
+    logger.warn("transformListTables(getListTables)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getListTables)
   }
 
   private def transformListFunctions(getListFunctions: proto.ListFunctions): LogicalPlan = {
@@ -4086,6 +4123,7 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listFunctions().logicalPlan
     }
+    logger.warn("transformListFunctions(getListFunctions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getListFunctions)
   }
 
   private def transformListColumns(getListColumns: proto.ListColumns): LogicalPlan = {
@@ -4096,12 +4134,14 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listColumns(getListColumns.getTableName).logicalPlan
     }
+    logger.warn("transformListColumns(getListColumns)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getListColumns)
   }
 
   private def transformGetDatabase(getGetDatabase: proto.GetDatabase): LogicalPlan = {
     Catalog
       .makeDataset(session.catalog.getDatabase(getGetDatabase.getDbName) :: Nil, session)
       .logicalPlan
+      logger.warn("transformGetDatabase(getGetDatabase)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getGetDatabase)
   }
 
   private def transformGetTable(getGetTable: proto.GetTable): LogicalPlan = {
@@ -4118,6 +4158,7 @@ class SparkConnectPlanner(
         .makeDataset(session.catalog.getTable(getGetTable.getTableName) :: Nil, session)
         .logicalPlan
     }
+    logger.warn("transformGetTable(getGetTable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getGetTable)
   }
 
   private def transformGetFunction(getGetFunction: proto.GetFunction): LogicalPlan = {
@@ -4134,6 +4175,7 @@ class SparkConnectPlanner(
         .makeDataset(session.catalog.getFunction(getGetFunction.getFunctionName) :: Nil, session)
         .logicalPlan
     }
+    logger.warn("transformGetFunction(getGetFunction)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getGetFunction)
   }
 
   private def transformDatabaseExists(getDatabaseExists: proto.DatabaseExists): LogicalPlan = {
@@ -4204,6 +4246,7 @@ class SparkConnectPlanner(
         schema = schema,
         options = options)
       .logicalPlan
+      logger.warn("transformCreateExternalTable(getCreateExternalTable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getCreateExternalTable)
   }
 
   private def transformCreateTable(getCreateTable: proto.CreateTable): LogicalPlan = {
@@ -4242,6 +4285,7 @@ class SparkConnectPlanner(
         description = description,
         options = options)
       .logicalPlan
+      logger.warn("transformCreateTable(getCreateTable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getCreateTable)
   }
 
   private def transformDropTempView(getDropTempView: proto.DropTempView): LogicalPlan = {
@@ -4249,6 +4293,7 @@ class SparkConnectPlanner(
       .createDataset(session.catalog.dropTempView(getDropTempView.getViewName) :: Nil)(
         Encoders.scalaBoolean)
       .logicalPlan
+      logger.warn("transformDropTempView(getDropTempView)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getDropTempView)
   }
 
   private def transformDropGlobalTempView(
@@ -4258,6 +4303,7 @@ class SparkConnectPlanner(
         session.catalog.dropGlobalTempView(getDropGlobalTempView.getViewName) :: Nil)(
         Encoders.scalaBoolean)
       .logicalPlan
+      logger.warn("transformDropGlobalTempView(getDropGlobalTempView)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getDropGlobalTempView)
   }
 
   private def transformRecoverPartitions(
@@ -4312,6 +4358,7 @@ class SparkConnectPlanner(
       getSetCurrentCatalog: proto.SetCurrentCatalog): LogicalPlan = {
     session.catalog.setCurrentCatalog(getSetCurrentCatalog.getCatalogName)
     emptyLocalRelation
+    logger.warn("transformSetCurrentCatalog(getSetCurrentCatalog)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getSetCurrentCatalog)
   }
 
   private def transformListCatalogs(getListCatalogs: proto.ListCatalogs): LogicalPlan = {
@@ -4320,6 +4367,7 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listCatalogs().logicalPlan
     }
+    logger.warn("transformListCatalogs(getListCatalogs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getListCatalogs)
   }
 
   private def transformDropTable(p: proto.DropTable): LogicalPlan = {
@@ -4330,11 +4378,13 @@ class SparkConnectPlanner(
   private def transformDropView(p: proto.DropView): LogicalPlan = {
     session.catalog.dropView(p.getViewName, p.getIfExists)
     emptyLocalRelation
+    logger.warn("transformDropView(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
   }
 
   private def transformCreateDatabase(p: proto.CreateDatabase): LogicalPlan = {
     val jmap = new java.util.HashMap[String, String]()
     p.getPropertiesMap.asScala.foreach { case (k, v) => jmap.put(k, v) }
+    logger.warn("transformCreateDatabase(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
     session.catalog.createDatabase(p.getDbName, p.getIfNotExists, jmap)
     emptyLocalRelation
   }
@@ -4346,6 +4396,7 @@ class SparkConnectPlanner(
 
   private def transformListPartitions(p: proto.ListPartitions): LogicalPlan = {
     session.catalog.listPartitions(p.getTableName).logicalPlan
+    logger.warn("transformListPartitions(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
   }
 
   private def transformListViews(p: proto.ListViews): LogicalPlan = {
@@ -4361,6 +4412,7 @@ class SparkConnectPlanner(
     } else {
       session.catalog.listViews().logicalPlan
     }
+    logger.warn("transformListViews(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
   }
 
   private def transformGetTableProperties(p: proto.GetTableProperties): LogicalPlan = {
@@ -4371,6 +4423,7 @@ class SparkConnectPlanner(
     val rows = props.map { case (k, v) =>
       InternalRow(UTF8String.fromString(k), UTF8String.fromString(v))
     }.toSeq
+    logger.warn("transformGetTableProperties(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
     LocalRelation(attrs, rows)
   }
 
@@ -4379,11 +4432,13 @@ class SparkConnectPlanner(
       .createDataset(session.catalog.getCreateTableString(p.getTableName, p.getAsSerde) :: Nil)(
         Encoders.STRING)
       .logicalPlan
+      logger.warn("transformGetCreateTableString(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
   }
 
   private def transformTruncateTable(p: proto.TruncateTable): LogicalPlan = {
     session.catalog.truncateTable(p.getTableName)
     emptyLocalRelation
+    logger.warn("transformTruncateTable(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
   }
 
   private def transformAnalyzeTable(p: proto.AnalyzeTable): LogicalPlan = {
@@ -4424,6 +4479,7 @@ class SparkConnectPlanner(
           planId)
       case other => throw InvalidInputErrors.invalidEnum(other)
     }
+    logger.warn("transformSubqueryExpression(getSubqueryExpression)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", getSubqueryExpression, planId)
   }
 
   private def transformDirectShufflePartitionID(

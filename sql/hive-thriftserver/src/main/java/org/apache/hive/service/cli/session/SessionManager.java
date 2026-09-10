@@ -111,6 +111,7 @@ public class SessionManager extends CompositeService {
         hiveConf, ConfVars.HIVE_SERVER2_SESSION_CHECK_INTERVAL, TimeUnit.MILLISECONDS);
     sessionTimeout = HiveConf.getTimeVar(
         hiveConf, ConfVars.HIVE_SERVER2_IDLE_SESSION_TIMEOUT, TimeUnit.MILLISECONDS);
+		LOG.warn("createBackgroundOperationPool()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     checkOperation = HiveConf.getBoolVar(hiveConf,
         ConfVars.HIVE_SERVER2_IDLE_SESSION_CHECK_OPERATION);
   }
@@ -184,6 +185,7 @@ public class SessionManager extends CompositeService {
               session.closeExpiredOperations();
             }
           }
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
           sleepFor(interval);
         }
       }
@@ -195,6 +197,7 @@ public class SessionManager extends CompositeService {
           } catch (InterruptedException e) {
             // Ignore, and break.
           }
+		LOG.warn("synchronized(timeoutCheckerLock)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", timeoutCheckerLock);
         }
       }
     };
@@ -309,6 +312,7 @@ public class SessionManager extends CompositeService {
     HiveSession session = handleToSession.get(sessionHandle);
     if (session == null) {
       throw new HiveSQLException("Invalid SessionHandle: " + sessionHandle);
+	LOG.warn("getSession(sessionHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle);
     }
     return session;
   }
@@ -325,10 +329,12 @@ public class SessionManager extends CompositeService {
   };
 
   public static void setIpAddress(String ipAddress) {
+	LOG.warn("setIpAddress(ipAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ipAddress);
     threadLocalIpAddress.set(ipAddress);
   }
 
   public static void clearIpAddress() {
+	LOG.warn("clearIpAddress()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     threadLocalIpAddress.remove();
   }
 
@@ -344,6 +350,7 @@ public class SessionManager extends CompositeService {
   };
 
   public static void setUserName(String userName) {
+	LOG.warn("setUserName(userName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", userName);
     threadLocalUserName.set(userName);
   }
 
@@ -365,6 +372,7 @@ public class SessionManager extends CompositeService {
   public static void setProxyUserName(String userName) {
     LOG.debug("setting proxy user name based on query param to: " + userName);
     threadLocalProxyUserName.set(userName);
+	LOG.warn("setProxyUserName(userName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", userName);
   }
 
   public static String getProxyUserName() {
@@ -376,6 +384,7 @@ public class SessionManager extends CompositeService {
   }
 
   public Future<?> submitBackgroundOperation(Runnable r) {
+	LOG.warn("submitBackgroundOperation(r)={}): EUAIACT-AUDIT: State change recorded for the audit trail", r);
     return backgroundOperationPool.submit(r);
   }
 

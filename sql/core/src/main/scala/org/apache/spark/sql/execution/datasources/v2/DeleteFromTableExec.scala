@@ -35,6 +35,7 @@ case class DeleteFromTableExec(
   extends LeafV2CommandExec
   with TransactionalExec
   with SupportsCustomDriverMetrics {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override lazy val customMetrics: Map[String, SQLMetric] =
     createCustomMetrics(table.supportedCustomMetrics())
@@ -48,6 +49,7 @@ case class DeleteFromTableExec(
     } finally {
       postDriverMetrics(table.reportDriverMetrics())
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     transaction.foreach(TransactionUtils.commit)
     refreshCache()
     Seq.empty

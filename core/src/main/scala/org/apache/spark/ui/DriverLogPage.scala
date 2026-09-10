@@ -44,6 +44,7 @@ private[ui] class DriverLogPage(
   private val logDir = conf.get(DRIVER_LOG_LOCAL_DIR).get
 
   def render(request: HttpServletRequest): Seq[Node] = {
+    _driverLogger = DriverLogger(_conf)
     val logType = Option(request.getParameter("logType")).getOrElse(DRIVER_LOG_FILE)
     val offset = Option(request.getParameter("offset")).map(_.toLong)
     val byteLength = Option(request.getParameter("byteLength")).map(_.toInt)
@@ -110,6 +111,7 @@ private[ui] class DriverLogPage(
       byteLength: Int
     ): (String, Long, Long, Long) = {
 
+     _driverLogger.warn("getLog(logDirectory,logType,offsetOption,byteLength)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", logDirectory, logType, offsetOption, byteLength)
     if (!supportedLogTypes.contains(logType)) {
       return ("Error: Log type must be one of " + supportedLogTypes.mkString(", "), 0, 0, 0)
     }

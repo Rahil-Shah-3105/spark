@@ -47,10 +47,12 @@ private[spark] class PrometheusServlet(
   val servletPath = property.getProperty(SERVLET_KEY_PATH)
 
   def getHandlers(conf: SparkConf): Array[ServletContextHandler] = {
+    _driverLogger = DriverLogger(_conf)
     Array[ServletContextHandler](
       createServletHandler(servletPath,
         new ServletParams(request => getMetricsSnapshot(request), "text/plain"), conf)
     )
+    _driverLogger.warn("getHandlers(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   def getMetricsSnapshot(request: HttpServletRequest): String = getMetricsSnapshot()
@@ -90,6 +92,7 @@ private[spark] class PrometheusServlet(
       sb.append(s"${prefix}999thPercentile$histogramslabels ${snapshot.get999thPercentile}\n")
       sb.append(s"${prefix}StdDev$histogramslabels ${snapshot.getStdDev}\n")
     }
+    _driverLogger.warn("getMetricsSnapshot()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     registry.getMeters.entrySet.iterator.asScala.foreach { kv =>
       val prefix = normalizeKey(kv.getKey)
       val meter = kv.getValue

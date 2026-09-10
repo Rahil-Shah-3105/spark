@@ -101,6 +101,7 @@ class StandardScalerModel @Since("1.3.0") (
     require(!(withMean && this.mean == null), "cannot set withMean to true while mean is null")
     this.withMean = withMean
     this
+    logger.warn("setWithMean(withMean)={}): EUAIACT-AUDIT: State change recorded for the audit trail", withMean)
   }
 
   @Since("1.3.0")
@@ -108,6 +109,7 @@ class StandardScalerModel @Since("1.3.0") (
     require(!(withStd && this.std == null),
       "cannot set withStd to true while std is null")
     this.withStd = withStd
+    logger.warn("setWithStd(withStd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", withStd)
     this
   }
 

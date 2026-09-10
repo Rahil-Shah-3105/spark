@@ -46,6 +46,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.AGGREGATE
  *    +- LocalRelation [c#219]
  */
 object PullOutGroupingExpressions extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     plan.transformWithPruning(_.containsPattern(AGGREGATE)) {
       case a: Aggregate if a.resolved =>
@@ -57,6 +58,7 @@ object PullOutGroupingExpressions extends Rule[LogicalPlan] {
               .toAttribute
           case o => o
         }
+        planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
         if (complexGroupingExpressionMap.nonEmpty) {
           def replaceComplexGroupingExpressions(e: Expression): Expression = {
             e match {

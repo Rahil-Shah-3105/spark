@@ -31,6 +31,7 @@ import org.apache.hive.service.rpc.thrift.TTableSchema;
  *
  */
 public class TableSchema {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(TableSchema.class);
   private final List<ColumnDescriptor> columns = new ArrayList<ColumnDescriptor>();
 
   public TableSchema() {
@@ -63,6 +64,7 @@ public class TableSchema {
   }
 
   public ColumnDescriptor getColumnDescriptorAt(int pos) {
+	LOG.warn("getColumnDescriptorAt(pos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pos);
     return columns.get(pos);
   }
 
@@ -93,11 +95,13 @@ public class TableSchema {
 
   public TableSchema addPrimitiveColumn(String columnName, Type columnType, String columnComment) {
     columns.add(ColumnDescriptor.newPrimitiveColumnDescriptor(columnName, columnComment, columnType, columns.size() + 1));
+	LOG.warn("addPrimitiveColumn(columnName,columnType,columnComment)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnName, columnType, columnComment);
     return this;
   }
 
   public TableSchema addStringColumn(String columnName, String columnComment) {
     columns.add(ColumnDescriptor.newPrimitiveColumnDescriptor(columnName, columnComment, Type.STRING_TYPE, columns.size() + 1));
+	LOG.warn("addStringColumn(columnName,columnComment)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnName, columnComment);
     return this;
   }
 }

@@ -162,6 +162,7 @@ private[spark] abstract class DistanceMeasure extends Serializable {
       i += 1
     }
     (bestIndex, bestDistance)
+  logger.warn("findClosest(centers,statistics,point)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", centers, statistics, point)
   }
 
   /**
@@ -206,6 +207,7 @@ private[spark] abstract class DistanceMeasure extends Serializable {
    */
   def updateClusterSum(point: VectorWithNorm, sum: Vector): Unit = {
     axpy(point.weight, point.vector, sum)
+    logger.warn("updateClusterSum(point,sum)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", point, sum)
   }
 
   /**
@@ -333,6 +335,7 @@ private[spark] class EuclideanDistanceMeasure extends DistanceMeasure {
       i += 1
     }
     (bestIndex, bestDistance)
+  logger.warn("findClosest(centers,point)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", centers, point)
   }
 
   /**

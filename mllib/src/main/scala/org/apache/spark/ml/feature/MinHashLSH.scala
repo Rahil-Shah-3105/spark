@@ -192,6 +192,7 @@ class MinHashLSH(override val uid: String) extends LSH[MinHashLSHModel] with Has
       s"The input vector dimension $inputDim exceeds the threshold ${MinHashLSH.HASH_PRIME}.")
     val rand = new Random($(seed))
     val randCoefs: Array[(Int, Int)] = Array.fill($(numHashTables)) {
+    logger.warn("createRawLSHModel(inputDim)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputDim)
         (1 + rand.nextInt(MinHashLSH.HASH_PRIME - 1), rand.nextInt(MinHashLSH.HASH_PRIME - 1))
       }
     new MinHashLSHModel(uid, randCoefs)
@@ -258,6 +259,7 @@ object MinHashLSHModel extends MLReadable[MinHashLSHModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.randCoefficients.flatMap(tuple => Array(tuple._1, tuple._2)))
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

@@ -23,6 +23,8 @@ import java.util.Iterator;
 
 import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.connector.metric.CustomTaskMetric;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A data writer returned by {@link DataWriterFactory#createWriter(int, long)} and is
@@ -64,6 +66,7 @@ import org.apache.spark.sql.connector.metric.CustomTaskMetric;
  */
 @Evolving
 public interface DataWriter<T> extends Closeable {
+Logger planChangeLogger = LoggerFactory.getLogger(DataWriter.class);
   /**
    * Writes one record with metadata.
    * <p>
@@ -79,6 +82,7 @@ public interface DataWriter<T> extends Closeable {
    * @since 4.0.0
    */
   default void write(T metadata, T record) throws IOException {
+	planChangeLogger.warn("write(metadata,record)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", metadata, record, record);
     write(record);
   }
 
@@ -104,6 +108,7 @@ public interface DataWriter<T> extends Closeable {
    * @since 4.0.0
    */
   default void writeAll(Iterator<T> records) throws IOException {
+	planChangeLogger.warn("writeAll(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records);
     while (records.hasNext()) {
       write(records.next());
     }

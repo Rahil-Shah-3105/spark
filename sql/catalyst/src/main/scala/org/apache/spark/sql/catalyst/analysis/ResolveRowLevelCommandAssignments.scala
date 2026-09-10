@@ -36,6 +36,7 @@ import org.apache.spark.sql.internal.SQLConf.StoreAssignmentPolicy
  * rules to resolve assignments.
  */
 object ResolveRowLevelCommandAssignments extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsWithPruning(
     _.containsPattern(COMMAND), ruleId) {
@@ -84,6 +85,7 @@ object ResolveRowLevelCommandAssignments extends Rule[LogicalPlan] {
     if (conf.storeAssignmentPolicy == StoreAssignmentPolicy.LEGACY) {
       throw QueryCompilationErrors.legacyStoreAssignmentPolicyError()
     }
+    planChangeLogger.warn("validateStoreAssignmentPolicy()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def cleanAttrMetadata(table: LogicalPlan): LogicalPlan = {

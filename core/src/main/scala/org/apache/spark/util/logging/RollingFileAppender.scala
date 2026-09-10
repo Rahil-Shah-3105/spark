@@ -67,6 +67,7 @@ private[spark] class RollingFileAppender(
 
   /** Rollover the file, by closing the output stream and moving it over */
   private def rollover(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     try {
       closeFile()
       moveFile()
@@ -143,6 +144,7 @@ private[spark] class RollingFileAppender(
   /** Retain only last few files */
   private[util] def deleteOldFiles(): Unit = {
     try {
+      _driverLogger.warn("deleteOldFiles()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val rolledoverFiles = activeFile.getParentFile.listFiles(new FileFilter {
         def accept(f: File): Boolean = {
           f.getName.startsWith(activeFile.getName) && f != activeFile
@@ -189,5 +191,6 @@ private[spark] object RollingFileAppender {
     }
     (rolledOverFiles.sortBy(_.getName.stripSuffix(GZIP_LOG_SUFFIX)) ++ activeFile)
       .toImmutableArraySeq
+      _driverLogger.warn("getSortedRolledOverFiles(directory,activeFileName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", directory, activeFileName)
   }
 }

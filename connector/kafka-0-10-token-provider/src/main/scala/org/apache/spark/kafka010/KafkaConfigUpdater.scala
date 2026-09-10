@@ -43,6 +43,7 @@ case class KafkaConfigUpdater(module: String, kafkaParams: Map[String, Object])
       logDebug(s"$module: Set $key to $redactedValue, earlier value: $redactedOldValue")
     }
     this
+    logger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   def setIfUnset(key: String, value: Object): this.type = {
@@ -54,6 +55,7 @@ case class KafkaConfigUpdater(module: String, kafkaParams: Map[String, Object])
       }
     }
     this
+    logger.warn("setIfUnset(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   def setAuthenticationConfigIfNeeded(): this.type = {
@@ -63,9 +65,11 @@ case class KafkaConfigUpdater(module: String, kafkaParams: Map[String, Object])
       .getOrElse(throw KafkaTokenProviderExceptions.missingKafkaOption(
         CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG))
 
+      logger.warn("setAuthenticationConfigIfNeeded()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val clusterConfig = KafkaTokenUtil.findMatchingTokenClusterConfig(SparkEnv.get.conf,
       bootstrapServers)
     setAuthenticationConfigIfNeeded(clusterConfig)
+  logger.warn("setAuthenticationConfigIfNeeded(clusterConfig)={}): EUAIACT-AUDIT: State change recorded for the audit trail", clusterConfig)
   }
 
   def setAuthenticationConfigIfNeeded(clusterConfig: Option[KafkaTokenClusterConf]): this.type = {

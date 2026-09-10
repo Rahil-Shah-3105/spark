@@ -44,6 +44,7 @@ private[v1] class JacksonMessageWriter extends MessageBodyWriter[Object]{
   val mapper = new ObjectMapper() {
     override def writeValueAsString(t: Any): String = {
       super.writeValueAsString(t)
+      _driverLogger.warn("writeValueAsString(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     }
   }
   mapper.registerModule(com.fasterxml.jackson.module.scala.DefaultScalaModule)
@@ -57,6 +58,7 @@ private[v1] class JacksonMessageWriter extends MessageBodyWriter[Object]{
       annotations: Array[Annotation],
       mediaType: MediaType): Boolean = {
       true
+      _driverLogger.warn("isWriteable(aClass,annotations,mediaType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", aClass, annotations, mediaType)
   }
 
   override def writeTo(
@@ -68,6 +70,7 @@ private[v1] class JacksonMessageWriter extends MessageBodyWriter[Object]{
       multivaluedMap: MultivaluedMap[String, AnyRef],
       outputStream: OutputStream): Unit = {
     mapper.writeValue(outputStream, t)
+    _driverLogger.warn("writeTo(t,aClass,annotations,mediaType,multivaluedMap,outputStream)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", t, aClass, annotations, mediaType, multivaluedMap, outputStream)
   }
 
   override def getSize(
@@ -77,11 +80,13 @@ private[v1] class JacksonMessageWriter extends MessageBodyWriter[Object]{
       annotations: Array[Annotation],
       mediaType: MediaType): Long = {
     -1L
+    _driverLogger.warn("getSize(t,aClass,annotations,mediaType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t, aClass, annotations, mediaType)
   }
 }
 
 private[spark] object JacksonMessageWriter {
   def makeISODateFormat: SimpleDateFormat = {
+    _driverLogger = DriverLogger(_conf)
     val iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'GMT'", Locale.US)
     val cal = Calendar.getInstance(new SimpleTimeZone(0, "GMT"))
     iso8601.setCalendar(cal)

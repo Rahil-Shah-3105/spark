@@ -265,6 +265,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
       count++;
 
       // Next element is part of the iteration, return it.
+	LOG.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return nextEntry.getValue();
     }
   }
@@ -285,6 +286,7 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
   }
 
   private boolean isEndMarker(byte[] key) {
+	LOG.warn("isEndMarker(key)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", key);
     return (key.length > 2 &&
         key[key.length - 2] == LevelDBTypeInfo.KEY_SEPARATOR &&
         key[key.length - 1] == LevelDBTypeInfo.END_MARKER[0]);
@@ -316,12 +318,14 @@ class LevelDBIterator<T> implements KVStoreIterator<T> {
         try {
           levelDB.closeIterator(dbIterator);
         } catch (IOException e) {
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
           LOG.warn("Failed to close iterator", e);
         }
       }
     }
 
     void setStartedToFalse() {
+	LOG.warn("setStartedToFalse()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       started.set(false);
     }
 

@@ -18,6 +18,7 @@
 import threading
 from typing import Optional
 from collections import deque
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ZeroCopyByteStream:
@@ -62,6 +63,7 @@ class ZeroCopyByteStream:
             )
         with self._condition:
             if self._eof:
+                logger.warning("add_next_chunk(self,chunk)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, chunk)
                 raise ValueError("Cannot add chunk after ZeroCopyByteStream has been finished")
             self._chunks.append(chunk)
             self._condition.notify()

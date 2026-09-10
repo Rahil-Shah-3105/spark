@@ -31,6 +31,7 @@ import org.apache.spark.sql.execution.datasources.CodecStreams
 import org.apache.spark.sql.functions._
 
 object CSVUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Filter ignorable rows for CSV dataset (lines empty and starting with `comment`).
    * This is currently being used in CSV schema inference.
@@ -155,6 +156,7 @@ object CSVUtils {
             val bytesRead = in.readLine(text)
             finished = bytesRead == 0
             hasValue = !finished
+            planChangeLogger.warn("readHeaderLine(filePath,options,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filePath, options, conf)
           }
           !finished
         }

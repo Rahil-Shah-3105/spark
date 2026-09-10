@@ -57,6 +57,7 @@ class BlockManagerMasterEndpoint(
     mapOutputTracker: MapOutputTrackerMaster,
     isDriver: Boolean)
   extends IsolatedThreadSafeRpcEndpoint with Logging {
+   _driverLogger = DriverLogger(_conf)
 
 
   // Mapping from executor id to the block manager's local disk directories.
@@ -291,6 +292,7 @@ class BlockManagerMasterEndpoint(
     //  operation computing the rdd. Besides evicting the blocks here, when a rdd block is reported
     //  we may also need to check the data with existing replicas somehow.
     //  This will be tracked with jira: https://issues.apache.org/jira/browse/SPARK-42582
+    _driverLogger.warn("updateRDDBlockVisibility(taskId,visible)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, visible, taskId)
     if (visible) {
       tidToRddBlockIds.get(taskId).foreach { blockIds =>
         blockIds.foreach { blockId =>
@@ -314,6 +316,7 @@ class BlockManagerMasterEndpoint(
     }
     tidToRddBlockIds.getOrElseUpdate(taskId, new mutable.HashSet[RDDBlockId])
       .add(blockId)
+      _driverLogger.warn("updateRDDBlockTaskInfo(blockId,taskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, taskId, blockId)
   }
 
   /**
@@ -417,6 +420,7 @@ class BlockManagerMasterEndpoint(
       }
     }.toSeq
 
+    _driverLogger.warn("removeRdd(rddId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rddId, rddId)
     val removeRddBlockViaExtShuffleServiceFutures = if (externalShuffleServiceRddFetchEnabled) {
       externalBlockStoreClient.map { shuffleClient =>
         blocksToDeleteByShuffleService.map { case (bmId, blockIds) =>
@@ -502,6 +506,7 @@ class BlockManagerMasterEndpoint(
         handleBlockRemovalFailure("shuffle", shuffleId.toString, bm.blockManagerId, false)
       }
     }.toSeq
+    _driverLogger.warn("removeShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
     Future.sequence(removeShuffleFromExecutorsFutures ++
       removeShuffleFromShuffleServicesFutures ++
       removeShuffleMergeFromShuffleServicesFutures)
@@ -517,6 +522,7 @@ class BlockManagerMasterEndpoint(
     val requiredBlockManagers = blockManagerInfo.values.filter { info =>
       removeFromDriver || !info.blockManagerId.isDriver
     }
+    _driverLogger.warn("removeBroadcast(broadcastId,removeFromDriver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", broadcastId, removeFromDriver, broadcastId)
     val futures = requiredBlockManagers.map { bm =>
       bm.storageEndpoint.ask[Int](removeMsg).recover {
         // use 0 as default value means no blocks were removed
@@ -574,6 +580,7 @@ class BlockManagerMasterEndpoint(
       }
     }
 
+    _driverLogger.warn("removeBlockManager(blockManagerId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockManagerId, blockManagerId)
     listenerBus.post(SparkListenerBlockManagerRemoved(System.currentTimeMillis(), blockManagerId))
     logInfo(log"Removing block manager ${MDC(BLOCK_MANAGER_ID, blockManagerId)}")
 
@@ -588,12 +595,14 @@ class BlockManagerMasterEndpoint(
       }
       shuffleMergerLocations(shuffleServerId.host) = shuffleServerId
     }
+    _driverLogger.warn("addMergerLocation(blockManagerId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockManagerId, blockManagerId)
   }
 
   private def removeExecutor(execId: String): Unit = {
     logInfo(log"Trying to remove executor ${MDC(EXECUTOR_ID, execId)} from BlockManagerMaster.")
     blockManagerIdByExecutor.get(execId).foreach(removeBlockManager)
     logInfo(log"Removed ${MDC(EXECUTOR_ID, execId)} successfully in removeExecutor")
+    _driverLogger.warn("removeExecutor(execId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, execId)
   }
 
   /**
@@ -618,6 +627,7 @@ class BlockManagerMasterEndpoint(
       case _: java.util.NoSuchElementException =>
         Seq.empty[ReplicateBlock]
     }
+    _driverLogger.warn("getReplicateInfoForRDDBlocks(blockManagerId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockManagerId, blockManagerId)
   }
 
   // Remove a block from the workers that have it. This can only be used to remove
@@ -638,6 +648,7 @@ class BlockManagerMasterEndpoint(
         }
       }
     }
+    _driverLogger.warn("removeBlockFromWorkers(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   // Return a map from the block manager id to max memory and remaining memory.
@@ -698,6 +709,7 @@ class BlockManagerMasterEndpoint(
       blockManagerInfo.values.map { info =>
         val future =
           if (askStorageEndpoints) {
+    _driverLogger.warn("getMatchingBlockIds(filter,askStorageEndpoints)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", filter, askStorageEndpoints, getMatchingBlockIds)
             info.storageEndpoint.ask[Seq[BlockId]](getMatchingBlockIds)
           } else {
             Future { info.blocks.asScala.keys.filter(filter).toSeq }
@@ -739,6 +751,7 @@ class BlockManagerMasterEndpoint(
     lazy val isExecutorAlive =
       driverEndpoint.askSync[Boolean](CoarseGrainedClusterMessages.IsExecutorAlive(id.executorId))
     if (!blockManagerInfo.contains(id) && (!isReRegister || isExecutorAlive)) {
+      _driverLogger.warn("register(idWithoutTopologyInfo,localDirs,maxOnHeapMemSize,maxOffHeapMemSize,storageEndpoint,isReRegister)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", idWithoutTopologyInfo, localDirs, maxOnHeapMemSize, maxOffHeapMemSize, storageEndpoint, isReRegister, idWithoutTopologyInfo)
       blockManagerIdByExecutor.get(id.executorId) match {
         case Some(oldId) =>
           // A block manager of the same executor already exists, so remove it (assumed dead)
@@ -823,6 +836,7 @@ class BlockManagerMasterEndpoint(
          s"as ${blockId.getClass().getSimpleName()}")
        Future.successful(false)
    }
+       _driverLogger.warn("updateShuffleBlockInfo(blockId,blockManagerId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockManagerId, blockId)
  }
 
   private def updateBlockInfo(
@@ -912,6 +926,7 @@ class BlockManagerMasterEndpoint(
       }
     }
 
+    _driverLogger.warn("updateBlockInfo(blockManagerId,blockId,storageLevel,memSize,diskSize,checksum)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockManagerId, blockId, storageLevel, memSize, diskSize, checksum, blockManagerId)
     // Remove the block from master tracking if it has been removed on all endpoints.
     if (locations.isEmpty) {
       blockLocations.remove(blockId)
@@ -919,6 +934,7 @@ class BlockManagerMasterEndpoint(
       // `sealedChecksums` deliberately kept (tombstone; see its def).
     }
     true
+  _driverLogger.warn("updateBlockInfo(blockId,storageLevel,memSize,diskSize)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, storageLevel, memSize, diskSize, blockId)
   }
 
   /**
@@ -1013,6 +1029,7 @@ class BlockManagerMasterEndpoint(
 
   private def getLocations(blockId: BlockId): Seq[BlockManagerId] = {
     if (blockLocations.containsKey(blockId)) blockLocations.get(blockId).toSeq else Seq.empty
+    _driverLogger.warn("getLocations(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   private def getLocationsAndStatus(
@@ -1051,6 +1068,7 @@ class BlockManagerMasterEndpoint(
       }
     logDebug(s"Identified block: $blockStatusWithBlockManagerId")
     blockStatusWithBlockManagerId
+    _driverLogger.warn("getLocationsAndStatus(blockId,requesterHost)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, requesterHost, blockId)
       .map { case (blockStatus: BlockStatus, bmId: BlockManagerId) =>
         if (bmId.host == requesterHost && blockStatus.storageLevel.useDisk) {
           BlockLocationsAndStatus(
@@ -1067,6 +1085,7 @@ class BlockManagerMasterEndpoint(
   private def getLocationsMultipleBlockIds(
       blockIds: Array[BlockId]): IndexedSeq[Seq[BlockManagerId]] = {
     blockIds.map(blockId => getLocations(blockId)).toImmutableArraySeq
+    _driverLogger.warn("getLocationsMultipleBlockIds(blockIds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockIds, blockIds)
   }
 
   /** Get the list of the peers of the given block manager */
@@ -1081,6 +1100,7 @@ class BlockManagerMasterEndpoint(
     } else {
       Seq.empty
     }
+    _driverLogger.warn("getPeers(blockManagerId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockManagerId, blockManagerId)
   }
 
   private def getShufflePushMergerLocations(
@@ -1092,6 +1112,7 @@ class BlockManagerMasterEndpoint(
     val filteredMergersWithExecutors = filteredBlockManagerHosts.map(
       BlockManagerId(BlockManagerId.SHUFFLE_MERGER_IDENTIFIER, _, externalShuffleServicePort))
     // Enough mergers are available as part of active executors list
+    _driverLogger.warn("getShufflePushMergerLocations(numMergersNeeded,hostsToFilter)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numMergersNeeded, hostsToFilter)
     if (filteredMergersWithExecutors.size >= numMergersNeeded) {
       filteredMergersWithExecutors.toSeq
     } else {
@@ -1116,6 +1137,7 @@ class BlockManagerMasterEndpoint(
     if (shuffleMergerLocations.contains(host)) {
       shuffleMergerLocations.remove(host)
     }
+    _driverLogger.warn("removeShufflePushMergerLocation(host)={}): EUAIACT-AUDIT: State change recorded for the audit trail", host)
   }
 
   /**
@@ -1128,6 +1150,7 @@ class BlockManagerMasterEndpoint(
     ) yield {
       info.storageEndpoint
     }
+    _driverLogger.warn("getExecutorEndpointRef(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
   }
 
   override def onStop(): Unit = {
@@ -1170,6 +1193,7 @@ private[spark] class BlockStatusPerBlockId {
         blocks = null
       }
     }
+    _driverLogger.warn("remove(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
 }
@@ -1195,6 +1219,7 @@ private[spark] class BlockManagerInfo(
 
   def updateLastSeenMs(): Unit = {
     _lastSeenMs = System.currentTimeMillis()
+    _driverLogger.warn("updateLastSeenMs()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def updateBlockInfo(
@@ -1294,6 +1319,7 @@ private[spark] class BlockManagerInfo(
         blockStatus.remove(blockId)
       }
     }
+    _driverLogger.warn("removeBlock(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   def remainingMem: Long = _remainingMem

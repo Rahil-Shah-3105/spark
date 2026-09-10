@@ -48,6 +48,7 @@ from pyspark.worker_util import (
     setup_broadcasts,
     Conf,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class RunnerConf(Conf):
@@ -106,6 +107,7 @@ def worker_run(main: Callable, infile: IO, outfile: IO) -> None:
     if read_int(infile) == SpecialLengths.END_OF_STREAM:
         write_int(SpecialLengths.END_OF_STREAM, outfile)
     else:
+        logger.warning("worker_run(main,infile,outfile)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", main, infile, outfile)
         # write a different value to tell JVM to not reuse this worker
         write_int(SpecialLengths.END_OF_DATA_SECTION, outfile)
         sys.exit(-1)

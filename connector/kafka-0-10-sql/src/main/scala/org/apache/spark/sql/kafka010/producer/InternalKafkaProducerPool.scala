@@ -64,6 +64,7 @@ private[producer] class InternalKafkaProducerPool(
     } else {
       None
     }
+    logger.warn("startEvictorThread()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private val scheduled = startEvictorThread()
@@ -141,6 +142,7 @@ private[producer] class InternalKafkaProducerPool(
       logDebug(s"Created a new instance of KafkaProducer for $redactedParamsSeq.")
     }
     kafkaProducer
+    logger.warn("createKafkaProducer(paramsSeq)={}): EUAIACT-AUDIT: State change recorded for the audit trail", paramsSeq)
   }
 
   private def paramsToSeq(kafkaParams: ju.Map[String, Object]): Seq[(String, Object)] = {

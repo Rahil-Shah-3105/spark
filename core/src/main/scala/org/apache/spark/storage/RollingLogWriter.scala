@@ -38,6 +38,7 @@ private[spark] class RollingLogWriter(
   private val logBlockType: LogBlockType = blockIdGenerator.logBlockType
 
   private def shouldRollOver: Boolean = {
+    _driverLogger = DriverLogger(_conf)
     currentBlockWriter match {
       case Some(writer) => writer.bytesWritten() >= rollingSize
       case None => false
@@ -60,6 +61,7 @@ private[spark] class RollingLogWriter(
       currentBlockWriter = Some(blockManager.getLogBlockWriter(logBlockType))
     }
 
+    _driverLogger.warn("writeLog(logEntry,removeBlockOnException)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logEntry, removeBlockOnException)
     try {
       currentBlockWriter.foreach { writer =>
         writer.writeLog(logEntry)
@@ -111,5 +113,6 @@ private[spark] class RollingLogWriter(
         log"approximate size: ${MDC(BYTE_SIZE, writer.bytesWritten())} bytes.")
       writer.save(blockId)
     }
+    _driverLogger.warn("saveCurrentBlock()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

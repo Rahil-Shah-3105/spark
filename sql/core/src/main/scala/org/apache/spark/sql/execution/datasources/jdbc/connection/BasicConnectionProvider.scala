@@ -35,6 +35,7 @@ private[jdbc] class BasicConnectionProvider extends JdbcConnectionProvider with 
   override val name: String = "basic"
 
   override def canHandle(driver: Driver, options: Map[String, String]): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val jdbcOptions = new JDBCOptions(options)
     jdbcOptions.keytab == null || jdbcOptions.principal == null
   }
@@ -45,6 +46,7 @@ private[jdbc] class BasicConnectionProvider extends JdbcConnectionProvider with 
     jdbcOptions.asConnectionProperties.asScala.foreach { case(k, v) =>
       properties.put(k, v)
     }
+    planChangeLogger.warn("getConnection(driver,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", driver, options)
     logDebug(s"JDBC connection initiated with URL: ${jdbcOptions.getRedactUrl()} " +
       s"and properties: $properties")
     driver.connect(jdbcOptions.url, properties)

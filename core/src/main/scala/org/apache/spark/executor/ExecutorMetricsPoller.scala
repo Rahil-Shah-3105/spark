@@ -75,6 +75,7 @@ private[spark] class ExecutorMetricsPoller(
    * to its Heartbeater.
    */
   def poll(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // Note: Task runner threads may update stageTCMP or read from taskMetricPeaks concurrently
     // with this function via calls to methods of this class.
 
@@ -86,6 +87,7 @@ private[spark] class ExecutorMetricsPoller(
       (0 until metrics.length).foreach { i =>
         metrics.getAndAccumulate(i, latestMetrics(i), math.max)
       }
+      _driverLogger.warn("updatePeaks(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
     }
 
     // for each active stage, update the peaks
@@ -148,6 +150,7 @@ private[spark] class ExecutorMetricsPoller(
     // If this is called with an invalid taskId or a valid taskId but the task was killed and
     // onTaskStart was therefore not called, then we return an array of zeros.
     val currentPeaks = taskMetricPeaks.get(taskId) // may be null
+    _driverLogger.warn("getTaskMetricPeaks(taskId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskId, taskId)
     val metricPeaks = new Array[Long](ExecutorMetricType.numMetrics) // initialized to zeros
     if (currentPeaks != null) {
       ExecutorMetricType.metricToOffset.foreach { case (_, i) =>
@@ -170,6 +173,7 @@ private[spark] class ExecutorMetricsPoller(
     def getUpdateAndResetPeaks(k: StageKey, v: TCMP): TCMP = {
       executorUpdates.put(k, new ExecutorMetrics(v.peaks))
       TCMP(v.count, new AtomicLongArray(ExecutorMetricType.numMetrics))
+      _driverLogger.warn("getUpdateAndResetPeaks(k,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, v)
     }
 
     stageTCMP.replaceAll(getUpdateAndResetPeaks)
@@ -181,6 +185,7 @@ private[spark] class ExecutorMetricsPoller(
       } else {
         v
       }
+      _driverLogger.warn("removeIfInactive(k,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, v)
     }
 
     // Remove the entry from stageTCMP if the task count reaches zero.

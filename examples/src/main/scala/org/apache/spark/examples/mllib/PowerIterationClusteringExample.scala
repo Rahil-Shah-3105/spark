@@ -112,6 +112,7 @@ object PowerIterationClusteringExample {
     }.sorted.mkString("(", ",", ")")
     println(s"Cluster assignments: $assignmentsStr\ncluster sizes: $sizesStr")
     // $example off$
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
 
     sc.stop()
   }

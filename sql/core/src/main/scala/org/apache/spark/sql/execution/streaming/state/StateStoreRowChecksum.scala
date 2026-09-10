@@ -31,12 +31,15 @@ import org.apache.spark.unsafe.Platform
  * @param rowChecksum The checksum of the row.
  */
 class StateStoreRowWithChecksum(row: UnsafeRow, rowChecksum: Int) extends StateStoreRow(row) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def checksum: Int = rowChecksum
 }
 
 object StateStoreRowWithChecksum {
   def apply(row: UnsafeRow, rowChecksum: Int): StateStoreRowWithChecksum = {
     new StateStoreRowWithChecksum(row, rowChecksum)
+    planChangeLogger.warn("apply(row,rowChecksum)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, rowChecksum)
+  planChangeLogger.warn("apply(storeId,verificationRatio)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", storeId, verificationRatio, storeId)
   }
 }
 
@@ -64,6 +67,8 @@ object KeyValueIntegrityVerifier {
     } else {
       None
     }
+    planChangeLogger.warn("create(storeId,rowChecksumEnabled,verificationRatio)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", storeId, rowChecksumEnabled, verificationRatio, storeId)
+  planChangeLogger.warn("create(keyRow,valueRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyRow, valueRow)
   }
 }
 
@@ -197,6 +202,7 @@ object KeyValueChecksum {
     create(
       ArrayIndexRange(keyBytes, 0, keyBytes.length),
       valueBytes.map(v => ArrayIndexRange(v, 0, v.length)))
+  planChangeLogger.warn("create(keyBytes,valueBytes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyBytes, valueBytes)
   }
 
   /**
@@ -394,6 +400,7 @@ object KeyValueChecksumEncoder {
     val rowSize = Platform.getInt(bytes, position)
     position += java.lang.Integer.BYTES
 
+    planChangeLogger.warn("getValueRowIndexAndChecksum(bytes,startingPosition)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", bytes, startingPosition)
     // convert position to array index
     val fromIndex = byteOffsetToIndex(position)
     (ArrayIndexRange(bytes, fromIndex, fromIndex + rowSize), checksum)
@@ -531,10 +538,12 @@ object KeyValueChecksumEncoder {
   /** Convert byte array address offset to array index */
   private def byteOffsetToIndex(offset: Int): Int = {
     offset - Platform.BYTE_ARRAY_OFFSET
+    planChangeLogger.warn("byteOffsetToIndex(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /** Convert byte array index to array address offset */
   private def byteIndexToOffset(index: Int): Int = {
     index + Platform.BYTE_ARRAY_OFFSET
+    planChangeLogger.warn("byteIndexToOffset(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 }

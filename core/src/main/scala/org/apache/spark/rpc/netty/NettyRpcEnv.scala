@@ -69,12 +69,14 @@ private[netty] class NettyRpcEnv(
     new NettyRpcHandler(dispatcher, this, streamManager))
 
   private def createClientBootstraps(): java.util.List[TransportClientBootstrap] = {
+    _driverLogger = DriverLogger(_conf)
     if (securityManager.isAuthenticationEnabled()) {
       java.util.Arrays.asList(new AuthClientBootstrap(transportConf,
         securityManager.getSaslUser(), securityManager))
     } else {
       java.util.Collections.emptyList[TransportClientBootstrap]
     }
+    _driverLogger.warn("createClientBootstraps()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private val clientFactory = transportContext.createClientFactory(createClientBootstraps())
@@ -116,6 +118,7 @@ private[netty] class NettyRpcEnv(
     if (outbox != null) {
       outbox.stop()
     }
+    _driverLogger.warn("removeOutbox(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   def startServer(bindAddress: String, port: Int): Unit = {
@@ -137,6 +140,7 @@ private[netty] class NettyRpcEnv(
 
   override def setupEndpoint(name: String, endpoint: RpcEndpoint): RpcEndpointRef = {
     dispatcher.registerRpcEndpoint(name, endpoint)
+    _driverLogger.warn("setupEndpoint(name,endpoint)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, endpoint)
   }
 
   def asyncSetupEndpointRefByURI(uri: String): Future[RpcEndpointRef] = {
@@ -146,6 +150,7 @@ private[netty] class NettyRpcEnv(
       conf, RpcEndpointAddress(addr.rpcAddress, RpcEndpointVerifier.NAME), this)
     verifier.ask[Boolean](RpcEndpointVerifier.CheckExistence(endpointRef.name)).flatMap { find =>
       if (find) {
+    _driverLogger.warn("asyncSetupEndpointRefByURI(uri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", uri)
         Future.successful(endpointRef)
       } else {
         Future.failed(new RpcEndpointNotFoundException(uri))
@@ -201,10 +206,12 @@ private[netty] class NettyRpcEnv(
       // Message to a remote RPC endpoint.
       postToOutbox(message.receiver, OneWayOutboxMessage(message.serialize(this)))
     }
+    _driverLogger.warn("send(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   private[netty] def createClient(address: RpcAddress): TransportClient = {
     clientFactory.createClient(address.host, address.port)
+    _driverLogger.warn("createClient(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   private[netty] def askAbortable[T: ClassTag](
@@ -266,6 +273,7 @@ private[netty] class NettyRpcEnv(
           }
           onFailure(new TimeoutException(s"Cannot receive any reply from ${remoteRecAddr} " +
             s"in ${timeout.duration}"))
+          _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }, timeout.duration.toNanos, TimeUnit.NANOSECONDS)
       promise.future.onComplete { v =>
@@ -404,6 +412,7 @@ private[netty] class NettyRpcEnv(
       }
     }
     fileDownloadFactory.createClient(host, port)
+    _driverLogger.warn("downloadClient(host,port)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", host, port)
   }
 
   private class FileDownloadChannel(source: Pipe.SourceChannel) extends ReadableByteChannel {
@@ -418,6 +427,7 @@ private[netty] class NettyRpcEnv(
       // sink will cause `source.read()` operations to return EOF, unblocking the application-level
       // reading thread. Thus there is no need to actually call `source.close()` here in the
       // onError() callback and, in fact, calling it here would be dangerous because the close()
+      _driverLogger.warn("setError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
       // would be asynchronous with respect to the read() call and could trigger race-conditions
       // that lead to data corruption. See the PR for SPARK-22982 for more details on this topic.
       error = e
@@ -434,6 +444,7 @@ private[netty] class NettyRpcEnv(
         case Success(bytesRead) => bytesRead
         case Failure(readErr) => throw readErr
       }
+      _driverLogger.warn("read(dst)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dst)
     }
 
     override def close(): Unit = source.close()
@@ -498,6 +509,7 @@ private[rpc] class NettyRpcEnvFactory extends RpcEnvFactory with Logging {
       new NettyRpcEnv(sparkConf, javaSerializerInstance, config.advertiseAddress,
         config.securityManager, config.numUsableCores)
     if (!config.clientMode) {
+      _driverLogger.warn("create(config)={}): EUAIACT-AUDIT: State change recorded for the audit trail", config)
       val startNettyRpcEnv: Int => (NettyRpcEnv, Int) = { actualPort =>
         nettyEnv.startServer(config.bindAddress, actualPort)
         (nettyEnv, nettyEnv.address.port)
@@ -548,10 +560,12 @@ private[netty] class NettyRpcEndpointRef(
     in.defaultReadObject()
     nettyEnv = NettyRpcEnv.currentEnv.value
     client = NettyRpcEnv.currentClient.value
+    _driverLogger.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   private def writeObject(out: ObjectOutputStream): Unit = {
     out.defaultWriteObject()
+    _driverLogger.warn("writeObject(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
   }
 
   override def name: String = endpointAddress.name
@@ -622,6 +636,7 @@ private[netty] class RequestMessage(
       out.writeUTF(rpcAddress.host)
       out.writeInt(rpcAddress.port)
     }
+    _driverLogger.warn("writeRpcAddress(out,rpcAddress)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, rpcAddress)
   }
 
   override def toString: String = s"RequestMessage($senderAddress, $receiver, $content)"
@@ -636,6 +651,7 @@ private[netty] object RequestMessage {
     } else {
       null
     }
+    _driverLogger.warn("readRpcAddress(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def apply(nettyEnv: NettyRpcEnv, client: TransportClient, bytes: ByteBuffer): RequestMessage = {
@@ -654,6 +670,7 @@ private[netty] object RequestMessage {
     } finally {
       in.close()
     }
+    _driverLogger.warn("apply(nettyEnv,client,bytes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nettyEnv, client, bytes)
   }
 }
 

@@ -64,6 +64,7 @@ private class ShuffleStatus(
     numPartitions: Int,
     numReducers: Int = -1,
     bufferRacingMigrations: Boolean = false) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   private val (readLock, writeLock) = {
     val lock = new ReentrantReadWriteLock()
@@ -78,6 +79,7 @@ private class ShuffleStatus(
     } finally {
       readLock.unlock()
     }
+    _driverLogger.warn("withReadLock(fn)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fn)
   }
 
   private def withWriteLock[B](fn: => B): B = {
@@ -87,6 +89,7 @@ private class ShuffleStatus(
     } finally {
       writeLock.unlock()
     }
+    _driverLogger.warn("withWriteLock(fn)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fn)
   }
 
   /**
@@ -315,6 +318,7 @@ private class ShuffleStatus(
         logWarning(log"Unable to update map output for ${MDC(MAP_ID, mapId)}, " +
           log"status removed in-flight")
     }
+  _driverLogger.warn("updateMapOutput(shuffleId,mapId,bmAddress)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapId, bmAddress, shuffleId)
   }
 
   /**
@@ -441,6 +445,7 @@ private class ShuffleStatus(
     assert(missing.size == numPartitions - _numAvailableMapOutputs,
       s"${missing.size} missing, expected ${numPartitions - _numAvailableMapOutputs}")
     missing
+  _driverLogger.warn("findMissingPartitions(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /**
@@ -672,12 +677,14 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
       throw new SparkException(
         "Error reply received from MapOutputTracker. Expecting true, got " + response.toString)
     }
+    _driverLogger.warn("sendTracker(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   // For testing
   def getMapSizesByExecutorId(shuffleId: Int, reduceId: Int)
       : Iterator[(BlockManagerId, collection.Seq[(BlockId, Long, Int)])] = {
     getMapSizesByExecutorId(shuffleId, 0, Int.MaxValue, reduceId, reduceId + 1)
+  _driverLogger.warn("getMapSizesByExecutorId(shuffleId,startMapIndex,endMapIndex,startPartition,endPartition)={},<redacted>,<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, startPartition, endPartition, shuffleId)
   }
 
   // For testing
@@ -738,6 +745,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
    * @return A sequence of 2-item tuples, where the first item in the tuple is a BlockManagerId,
    *         and the second item is a sequence of (shuffle block ID, shuffle block size, map index)
    *         tuples describing the shuffle blocks that are stored at that block manager.
+   _driverLogger.warn("getPushBasedShuffleMapSizesByExecutorId(shuffleId,startMapIndex,endMapIndex,startPartition,endPartition)={},<redacted>,<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, startPartition, endPartition, shuffleId)
    */
   def getMapSizesForMergeResult(
       shuffleId: Int,
@@ -769,12 +777,14 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
    * if there is not enough shuffle mergers available for this stage then an empty sequence would
    * be returned indicating the task to avoid shuffle push.
    * @param shuffleId
+   _driverLogger.warn("getMapSizesForMergeResult(shuffleId,partitionId,chunkBitmap)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, partitionId, chunkBitmap, shuffleId)
    */
   def getShufflePushMergerLocations(shuffleId: Int): Seq[BlockManagerId]
 
   /**
    * Get all stale pushed partition indexes for a given shuffle.
    * Called from PushBasedFetchHelper on the reduce side for chunk-level detection.
+   _driverLogger.warn("getShufflePushMergerLocations(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
    */
   def getStaleMapIndexes(shuffleId: Int): Set[Int]
 
@@ -918,6 +928,7 @@ private[spark] class MapOutputTrackerMaster(
       } catch {
         case ie: InterruptedException => // exit
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -941,6 +952,7 @@ private[spark] class MapOutputTrackerMaster(
         throw new IllegalArgumentException("Shuffle ID " + shuffleId + " registered twice")
       }
     }
+    _driverLogger.warn("registerShuffle(shuffleId,numMaps,numReduces)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, numMaps, numReduces, shuffleId)
   }
 
   // ShuffleOutputTrackerMaster: a regular shuffle has no per-job registration, so jobId is ignored.
@@ -964,16 +976,19 @@ private[spark] class MapOutputTrackerMaster(
       case Some(shuffleStatus) => shuffleStatus
       case None => throw new ShuffleStatusNotFoundException(shuffleId, caller)
     }
+    _driverLogger.warn("getShuffleStatusOrError(shuffleId,caller)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, caller, shuffleId)
   }
 
   def registerMapOutput(shuffleId: Int, mapIndex: Int, status: MapStatus): Boolean = {
     getShuffleStatusOrError(shuffleId, "registerMapOutput").addMapOutput(mapIndex, status)
+    _driverLogger.warn("registerMapOutput(shuffleId,mapIndex,status)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, status, shuffleId)
   }
 
   /** Unregister map output information of the given shuffle, mapper and block manager */
   def unregisterMapOutput(shuffleId: Int, mapIndex: Int, bmAddress: BlockManagerId): Unit = {
     getShuffleStatusOrError(shuffleId, "unregisterMapOutput").removeMapOutput(mapIndex, bmAddress)
     incrementEpoch()
+    _driverLogger.warn("unregisterMapOutput(shuffleId,mapIndex,bmAddress)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, bmAddress, shuffleId)
   }
 
   /** Unregister all map and merge output information of the given shuffle. */
@@ -983,16 +998,19 @@ private[spark] class MapOutputTrackerMaster(
     shuffleStatus.removeMergeResultsByFilter(x => true)
     shuffleStatus.removeShuffleMergerLocations()
     incrementEpoch()
+    _driverLogger.warn("unregisterAllMapAndMergeOutput(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   def registerMergeResult(shuffleId: Int, reduceId: Int, status: MergeStatus): Unit = {
     getShuffleStatusOrError(shuffleId, "registerMergeResult").addMergeResult(reduceId, status)
+    _driverLogger.warn("registerMergeResult(shuffleId,reduceId,status)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, reduceId, status, shuffleId)
   }
 
   def registerMergeResults(shuffleId: Int, statuses: Seq[(Int, MergeStatus)]): Unit = {
     statuses.foreach {
       case (reduceId, status) => registerMergeResult(shuffleId, reduceId, status)
     }
+    _driverLogger.warn("registerMergeResults(shuffleId,statuses)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, statuses, shuffleId)
   }
 
   def registerShufflePushMergerLocations(
@@ -1000,6 +1018,7 @@ private[spark] class MapOutputTrackerMaster(
       shuffleMergers: Seq[BlockManagerId]): Unit = {
     getShuffleStatusOrError(shuffleId, "registerShufflePushMergerLocations")
       .registerShuffleMergerLocations(shuffleMergers)
+      _driverLogger.warn("registerShufflePushMergerLocations(shuffleId,shuffleMergers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleMergers, shuffleId)
   }
 
   /**
@@ -1021,6 +1040,7 @@ private[spark] class MapOutputTrackerMaster(
     val shuffleStatus = getShuffleStatusOrError(shuffleId, "unregisterMergeResult")
     val mergeStatus = shuffleStatus.mergeStatuses(reduceId)
     if (mergeStatus != null &&
+    _driverLogger.warn("unregisterMergeResult(shuffleId,reduceId,bmAddress,mapIndex)={},{},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, reduceId, bmAddress, shuffleId)
       (mapIndex.isEmpty || mergeStatus.tracker.contains(mapIndex.get))) {
       shuffleStatus.removeMergeResult(reduceId, bmAddress)
       incrementEpoch()
@@ -1028,6 +1048,7 @@ private[spark] class MapOutputTrackerMaster(
   }
 
   def unregisterAllMergeResult(shuffleId: Int): Unit = {
+    _driverLogger.warn("unregisterAllMergeResult(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
     getShuffleStatusOrError(shuffleId, "unregisterAllMergeResult")
       .removeMergeResultsByFilter(x => true)
     incrementEpoch()
@@ -1039,6 +1060,7 @@ private[spark] class MapOutputTrackerMaster(
       shuffleStatus.invalidateSerializedMapOutputStatusCache()
       shuffleStatus.invalidateSerializedMergeOutputStatusCache()
     }
+    _driverLogger.warn("unregisterShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /**
@@ -1085,11 +1107,13 @@ private[spark] class MapOutputTrackerMaster(
 
   def getNumAvailableOutputs(shuffleId: Int): Int = {
     shuffleStatuses.get(shuffleId).map(_.numAvailableMapOutputs).getOrElse(0)
+    _driverLogger.warn("getNumAvailableOutputs(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /** VisibleForTest. Invoked in test only. */
   private[spark] def getNumAvailableMergeResults(shuffleId: Int): Int = {
     shuffleStatuses.get(shuffleId).map(_.numAvailableMergeResults).getOrElse(0)
+    _driverLogger.warn("getNumAvailableMergeResults(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /**
@@ -1214,6 +1238,7 @@ private[spark] class MapOutputTrackerMaster(
       }
     } else {
       Nil
+      _driverLogger.warn("getPreferredLocationsForShuffle(dep,partitionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", dep, partitionId, partitionId)
     }
   }
 
@@ -1236,6 +1261,7 @@ private[spark] class MapOutputTrackerMaster(
 
     val shuffleStatus = shuffleStatuses.get(shuffleId).orNull
     if (shuffleStatus != null) {
+      _driverLogger.warn("getLocationsWithLargestOutputs(shuffleId,reducerId,numReducers,fractionThreshold)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, reducerId, numReducers, fractionThreshold, shuffleId)
       shuffleStatus.withMapStatuses { statuses =>
         if (statuses.nonEmpty) {
           // HashMap to add up sizes of all blocks at the same location
@@ -1299,6 +1325,7 @@ private[spark] class MapOutputTrackerMaster(
       }
     } else {
       Nil
+      _driverLogger.warn("getMapLocation(dep,startMapIndex,endMapIndex)={},<redacted>,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", dep)
     }
   }
 
@@ -1309,6 +1336,7 @@ private[spark] class MapOutputTrackerMaster(
     shuffleStatuses.get(shuffleId).flatMap { shuffleStatus =>
       shuffleStatus.getMapStatus(mapId).map(_.location)
     }
+    _driverLogger.warn("getMapOutputLocation(shuffleId,mapId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, shuffleId)
   }
 
   def incrementEpoch(): Unit = {
@@ -1375,6 +1403,7 @@ private[spark] class MapOutputTrackerMaster(
       partitionId: Int,
       chunkTracker: RoaringBitmap): Iterator[(BlockManagerId, Seq[(BlockId, Long, Int)])] = {
     Seq.empty.iterator
+  _driverLogger.warn("getMapSizesForMergeResult(shuffleId,partitionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, partitionId, shuffleId)
   }
 
   // This method is only called in local-mode.
@@ -1384,6 +1413,7 @@ private[spark] class MapOutputTrackerMaster(
 
   override def getStaleMapIndexes(shuffleId: Int): Set[Int] = {
     shuffleStatuses.get(shuffleId).map(_.getStaleMapIndexes).getOrElse(Set.empty)
+  _driverLogger.warn("getStaleMapIndexes(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   override def stop(): Unit = {
@@ -1497,6 +1527,7 @@ private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTr
       // mergeStatus won't be fetched, thus mergedOutputStatuses won't be
       // passed to convertMapStatuses. See details in [SPARK-37023].
       if (useMergeResult) fetchMergeResult else false)
+    _driverLogger.warn("getMapSizesByExecutorIdImpl(shuffleId,startMapIndex,endMapIndex,startPartition,endPartition,useMergeResult)={},<redacted>,<redacted>,{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, startPartition, endPartition, useMergeResult, shuffleId)
     try {
       val actualEndMapIndex =
         if (endMapIndex == Int.MaxValue) mapOutputStatuses.length else endMapIndex
@@ -1538,6 +1569,7 @@ private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTr
         staleMapIndexes.clear()
         throw e
     }
+  _driverLogger.warn("getMapSizesForMergeResult(shuffleId,partitionId,chunkTracker)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, partitionId, chunkTracker, shuffleId)
   }
 
   override def getMapSizesForMergeResult(
@@ -1580,6 +1612,7 @@ private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTr
       }
       fetchedMergers
     }
+    _driverLogger.warn("getMergerLocations(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /**
@@ -1670,6 +1703,7 @@ private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTr
         (statuses, null)
       }
     }
+    _driverLogger.warn("getStatuses(shuffleId,conf,canFetchMergeResult)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, conf, canFetchMergeResult, shuffleId)
   }
 
   /** Unregister shuffle data. */
@@ -1696,6 +1730,7 @@ private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTr
         staleMapIndexes.clear()
       }
     }
+    _driverLogger.warn("updateEpoch(newEpoch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newEpoch)
   }
 }
 

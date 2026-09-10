@@ -27,6 +27,7 @@ import org.apache.spark.sql.types._
 
 
 object FlatMapGroupsWithStateExecHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   val supportedVersions = Seq(1, 2)
   val legacyVersion = 1
@@ -61,6 +62,7 @@ object FlatMapGroupsWithStateExecHelper {
     def putState(store: StateStore, keyRow: UnsafeRow, state: Any, timeoutTimestamp: Long): Unit
     def removeState(store: StateStore, keyRow: UnsafeRow): Unit
     def getAllState(store: StateStore): Iterator[StateData]
+    planChangeLogger.warn("getAllState(store)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", store)
   }
 
   def createStateManager(
@@ -72,6 +74,7 @@ object FlatMapGroupsWithStateExecHelper {
       case 2 => new StateManagerImplV2(stateEncoder, shouldStoreTimestamp)
       case _ => throw new IllegalArgumentException(s"Version $stateFormatVersion is invalid")
     }
+    planChangeLogger.warn("createStateManager(stateEncoder,shouldStoreTimestamp,stateFormatVersion)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateEncoder, shouldStoreTimestamp, stateFormatVersion)
   }
 
   // ===============================================================================================
@@ -90,6 +93,7 @@ object FlatMapGroupsWithStateExecHelper {
     override def getState(store: StateStore, keyRow: UnsafeRow): StateData = {
       val stateRow = store.get(keyRow)
       stateDataForGets.withNew(keyRow, stateRow, getStateObject(stateRow), getTimestamp(stateRow))
+      planChangeLogger.warn("getState(store,keyRow)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", store, keyRow)
     }
 
     /** Put state and timeout timestamp for a key */
@@ -101,6 +105,7 @@ object FlatMapGroupsWithStateExecHelper {
 
     override def removeState(store: StateStore, keyRow: UnsafeRow): Unit = {
       store.remove(keyRow)
+      planChangeLogger.warn("removeState(store,keyRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, keyRow)
     }
 
     override def getAllState(store: StateStore): Iterator[StateData] = {
@@ -118,10 +123,12 @@ object FlatMapGroupsWithStateExecHelper {
 
     protected def getStateObject(row: UnsafeRow): Any = {
       if (row != null) stateDeserializerFunc(row) else null
+      planChangeLogger.warn("getStateObject(row)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", row)
     }
 
     protected def getStateRow(obj: Any): UnsafeRow = {
       stateSerializerFunc(obj)
+      planChangeLogger.warn("getStateRow(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
     }
 
     /** Returns the timeout timestamp of a state row is set */
@@ -129,11 +136,13 @@ object FlatMapGroupsWithStateExecHelper {
       if (shouldStoreTimestamp && stateRow != null) {
         stateRow.getLong(timeoutTimestampOrdinalInRow)
       } else NO_TIMESTAMP
+      planChangeLogger.warn("getTimestamp(stateRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", stateRow)
     }
 
     /** Set the timestamp in a state row */
     private def setTimestamp(stateRow: UnsafeRow, timeoutTimestamps: Long): Unit = {
       if (shouldStoreTimestamp) stateRow.setLong(timeoutTimestampOrdinalInRow, timeoutTimestamps)
+      planChangeLogger.warn("setTimestamp(stateRow,timeoutTimestamps)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateRow, timeoutTimestamps)
     }
   }
 

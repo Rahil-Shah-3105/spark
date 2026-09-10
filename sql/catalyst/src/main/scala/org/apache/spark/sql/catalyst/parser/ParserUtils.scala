@@ -39,6 +39,7 @@ import org.apache.spark.sql.errors.{QueryParsingErrors, SqlScriptingErrors}
  * A collection of utility methods for use during the parsing process.
  */
 object ParserUtils extends SparkParserUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def operationNotAllowed(message: String, ctx: ParserRuleContext): Nothing = {
     throw QueryParsingErrors.operationNotAllowedError(message, ctx)
   }
@@ -319,6 +320,7 @@ class SqlScriptingLabelContext {
    * Get label text from label context, handling IDENTIFIER() syntax.
    */
   private def getLabelText(ctx: ParserRuleContext): String = {
+    planChangeLogger.warn("getLabelText(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     val astBuilder = new DataTypeAstBuilder {
       override protected def parseMultipartIdentifier(identifier: String): Seq[String] = {
         CatalystSqlParser.parseMultipartIdentifier(identifier)

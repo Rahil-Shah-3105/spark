@@ -42,12 +42,14 @@ public enum FetchOrientation {
       if (tFetchOrientation.equals(fetchOrientation.toTFetchOrientation())) {
         return fetchOrientation;
       }
+	LOG.warn("getFetchOrientation(tFetchOrientation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tFetchOrientation);
     }
     // TODO: Should this really default to FETCH_NEXT?
     return FETCH_NEXT;
   }
 
   public TFetchOrientation toTFetchOrientation() {
+	LOG.warn("toTFetchOrientation()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return tFetchOrientation;
   }
 }

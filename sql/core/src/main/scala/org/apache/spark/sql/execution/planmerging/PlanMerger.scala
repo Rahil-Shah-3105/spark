@@ -56,6 +56,7 @@ case class MergeResult(
 case class MergedPlan(plan: LogicalPlan, merged: Boolean)
 
 object PlanMerger {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // Marker tag placed on Filter nodes that were produced by filter propagation. Its presence
   // signals that the Filter's condition is already an OR of propagated filter attributes and
   // its child Project already contains the corresponding aliases, so a subsequent merge only
@@ -672,6 +673,7 @@ class PlanMerger(
     def readsSubsetOfRelation(scan: DataSourceV2ScanRelation): Boolean = {
       val relTypes = AttributeMap(scan.relation.output.map(a => a -> a.dataType))
       scan.output.forall(a => relTypes.get(a).contains(a.dataType))
+      planChangeLogger.warn("readsSubsetOfRelation(scan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", scan)
     }
 
     val mergeable =
@@ -880,6 +882,7 @@ class PlanMerger(
         l.isSameFunction(r) && sameReportedExpressions(l.children, r.children)
       case (l, r) => l semanticEquals r
     }
+    planChangeLogger.warn("sameReportedExpressions(a,b)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", a, b)
   }
 
   // [[SortOrder.orderingSatisfies]] with the sort keys compared by `sameReportedExpressions` (see
@@ -890,6 +893,7 @@ class PlanMerger(
       provided.direction == required.direction && provided.nullOrdering == required.nullOrdering &&
         sameReportedExpressions(Seq(provided.child), Seq(required.child))
     }
+    planChangeLogger.warn("reportedOrderingSatisfies(o1,o2)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", o1, o2)
   }
 
   // The key-grouped partitioning the merged scan must reproduce to keep both inputs not-worse: the
@@ -941,6 +945,7 @@ class PlanMerger(
       requiredOrdering.nonEmpty &&
       !reportedOrderingSatisfies(merged.ordering.getOrElse(Nil), requiredOrdering)
     kgpDegraded || orderingDegraded
+      planChangeLogger.warn("mergeDegradesReporting(merged,requiredKeyGroupedPartitioning,requiredOrdering)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", merged, requiredKeyGroupedPartitioning, requiredOrdering)
   }
 
   // Returns true when a filter attribute originating from `fromLeft` child of a join with
@@ -1068,6 +1073,7 @@ class PlanMerger(
         newAE.copyTagsFrom(ae)
         newAE
     }.asInstanceOf[NamedExpression])
+    planChangeLogger.warn("applyFilterToAggregateExpressions(exprs,filter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, filter)
   }
 
   // Only allow aggregates of the same implementation because merging different implementations

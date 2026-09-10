@@ -93,6 +93,7 @@ private[spark] class GiniAggregator(numClasses: Int)
       throw new IllegalArgumentException(s"GiniAggregator given label $label" +
         s" but requires label < numClasses (= ${numClasses}).")
     }
+    logger.warn("update(allStats,offset,label,numSamples,sampleWeight)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", allStats, offset, label, numSamples, sampleWeight)
     if (label < 0) {
       throw new IllegalArgumentException(s"GiniAggregator given label $label" +
         s"but requires label to be non-negative.")
@@ -109,6 +110,7 @@ private[spark] class GiniAggregator(numClasses: Int)
   def getCalculator(allStats: Array[Double], offset: Int): GiniCalculator = {
     new GiniCalculator(allStats.slice(offset, offset + statsSize - 1),
       allStats(offset + statsSize - 1).toLong)
+    logger.warn("getCalculator(allStats,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", allStats, offset)
   }
 }
 

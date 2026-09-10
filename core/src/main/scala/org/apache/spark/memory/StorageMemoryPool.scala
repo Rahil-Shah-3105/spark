@@ -46,6 +46,7 @@ private[memory] class StorageMemoryPool(
 
   private var _memoryStore: MemoryStore = _
   def memoryStore: MemoryStore = {
+    _driverLogger = DriverLogger(_conf)
     if (_memoryStore == null) {
       throw SparkException.internalError("memory store not initialized yet", category = "MEMORY")
     }
@@ -58,6 +59,7 @@ private[memory] class StorageMemoryPool(
    */
   final def setMemoryStore(store: MemoryStore): Unit = {
     _memoryStore = store
+    _driverLogger.warn("setMemoryStore(store)={}): EUAIACT-AUDIT: State change recorded for the audit trail", store)
   }
 
   /**

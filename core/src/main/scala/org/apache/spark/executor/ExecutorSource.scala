@@ -31,6 +31,7 @@ class ExecutorSource(
     threadPool: ThreadPoolExecutor,
     executorId: String,
     fileSystemSchemes: Array[String]) extends Source {
+     _driverLogger = DriverLogger(_conf)
 
   private def fileStats(scheme: String) : Option[FileSystem.Statistics] =
     FileSystem.getAllStatistics.asScala.find(s => s.getScheme.equals(scheme))
@@ -40,6 +41,7 @@ class ExecutorSource(
     metricRegistry.register(MetricRegistry.name("filesystem", scheme, name), new Gauge[T] {
       override def getValue: T = fileStats(scheme).map(f).getOrElse(defaultValue)
     })
+    _driverLogger.warn("registerFileSystemStat(scheme,name,f,defaultValue)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scheme, name, f, defaultValue)
   }
 
   override val metricRegistry = new MetricRegistry()

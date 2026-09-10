@@ -20,6 +20,7 @@ package org.apache.spark.network.shuffledb;
 import java.io.IOException;
 
 public class LevelDB implements DB {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(LevelDB.class);
     private final org.iq80.leveldb.DB db;
 
     public LevelDB(org.iq80.leveldb.DB db) {
@@ -38,6 +39,7 @@ public class LevelDB implements DB {
 
     @Override
     public void delete(byte[] key) {
+		logger.warn("delete(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
         db.delete(key);
     }
 

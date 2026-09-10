@@ -107,6 +107,7 @@ object PolynomialExpansion extends DefaultParamsReadable[PolynomialExpansion] {
     val n = CombinatoricsUtils.binomialCoefficient(numFeatures + degree, degree)
     require(n <= Integer.MAX_VALUE)
     n.toInt
+    logger.warn("getPolySize(numFeatures,degree)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numFeatures, degree)
   }
 
   private def expandDense(

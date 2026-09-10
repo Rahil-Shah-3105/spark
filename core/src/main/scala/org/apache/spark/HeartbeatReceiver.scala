@@ -69,6 +69,7 @@ private[spark] class HeartbeatReceiver(sc: SparkContext, clock: Clock)
   extends SparkListener with IsolatedThreadSafeRpcEndpoint with Logging {
 
   def this(sc: SparkContext) = {
+    _driverLogger = DriverLogger(_conf)
     this(sc, new SystemClock)
   }
 
@@ -174,6 +175,7 @@ private[spark] class HeartbeatReceiver(sc: SparkContext, clock: Clock)
    */
   def addExecutor(executorId: String): Option[Future[Boolean]] = {
     Option(self).map(_.ask[Boolean](ExecutorRegistered(executorId)))
+    _driverLogger.warn("addExecutor(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
   }
 
   /**
@@ -181,6 +183,7 @@ private[spark] class HeartbeatReceiver(sc: SparkContext, clock: Clock)
    */
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     addExecutor(executorAdded.executorId)
+    _driverLogger.warn("onExecutorAdded(executorAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorAdded)
   }
 
   /**
@@ -191,6 +194,7 @@ private[spark] class HeartbeatReceiver(sc: SparkContext, clock: Clock)
    */
   def removeExecutor(executorId: String): Option[Future[Boolean]] = {
     Option(self).map(_.ask[Boolean](ExecutorRemoved(executorId)))
+    _driverLogger.warn("removeExecutor(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
   }
 
   /**
@@ -205,6 +209,7 @@ private[spark] class HeartbeatReceiver(sc: SparkContext, clock: Clock)
    */
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     removeExecutor(executorRemoved.executorId)
+    _driverLogger.warn("onExecutorRemoved(executorRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorRemoved)
   }
 
   private def expireDeadHosts(): Unit = {

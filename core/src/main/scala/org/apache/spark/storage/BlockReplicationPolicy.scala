@@ -55,6 +55,7 @@ trait BlockReplicationPolicy {
 }
 
 object BlockReplicationUtils {
+  _driverLogger = DriverLogger(_conf)
   /**
    * Uses sampling algorithm by Robert Floyd. Finds a random sample in O(n) while
    * minimizing space usage. Please see <a href="https://math.stackexchange.com/q/178690">
@@ -71,6 +72,7 @@ object BlockReplicationUtils {
       if (set.contains(t)) set.union(Set(i)) else set.union(Set(t))
     }
     indices.map(_ - 1).toList
+    _driverLogger.warn("getSampleIds(n,m,r)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", n, m, r)
   }
 
   /**
@@ -89,6 +91,7 @@ object BlockReplicationUtils {
     } else {
       r.shuffle(elems).toList
     }
+    _driverLogger.warn("getRandomSample(elems,m,r)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", elems, m, r)
   }
 }
 

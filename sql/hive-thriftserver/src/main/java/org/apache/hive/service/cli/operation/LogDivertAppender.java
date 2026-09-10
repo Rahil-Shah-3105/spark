@@ -89,6 +89,7 @@ public class LogDivertAppender extends AbstractWriterAppender<WriterManager> {
         this.namePattern = verboseExcludeNamePattern;
       } else if (mode == OperationLog.LoggingLevel.EXECUTION) {
         this.namePattern = executionIncludeNamePattern;
+		LOG.warn("setCurrentNamePattern(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode);
       } else if (mode == OperationLog.LoggingLevel.PERFORMANCE) {
         this.namePattern = performanceIncludeNamePattern;
       }
@@ -250,6 +251,7 @@ public class LogDivertAppender extends AbstractWriterAppender<WriterManager> {
         LOG.info("Cannot find a Layout from a ConsoleAppender. Using default Layout pattern.");
       }
     } else {
+	LOG.warn("getLayout(isVerbose,lo)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", isVerbose, lo);
       lo = CLIServiceUtils.nonVerboseLayout;
     }
     return lo;
@@ -278,6 +280,7 @@ public class LogDivertAppender extends AbstractWriterAppender<WriterManager> {
   public static LogDivertAppender create(OperationManager operationManager,
     OperationLog.LoggingLevel loggingMode) {
     CharArrayWriter writer = new CharArrayWriter();
+	LOG.warn("create(operationManager,loggingMode)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operationManager, loggingMode);
     return new LogDivertAppender(operationManager, loggingMode, writer);
   }
 

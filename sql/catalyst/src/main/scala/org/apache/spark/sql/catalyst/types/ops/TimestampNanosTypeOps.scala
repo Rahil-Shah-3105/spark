@@ -67,6 +67,7 @@ trait TimestampNanosTypeOps extends TypeOps {
     val tn = v.asInstanceOf[TimestampNanosVal]
     "org.apache.spark.unsafe.types.TimestampNanosVal.fromParts(" +
       s"${tn.epochMicros}L, (short) ${tn.nanosWithinMicro})"
+      planChangeLogger.warn("getJavaLiteral(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
 
   // ==================== External Type Conversion ====================
@@ -91,6 +92,7 @@ trait TimestampNanosTypeOps extends TypeOps {
  */
 case class TimestampNTZNanosTypeOps(override val t: TimestampNTZNanosType)
   extends TimestampNTZNanosTypeApiOps(t) with TimestampNanosTypeOps {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def getPhysicalType: PhysicalDataType = PhysicalTimestampNTZNanosType
 

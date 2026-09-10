@@ -237,6 +237,7 @@ abstract class ProbabilisticClassificationModel[
    * otherwise it generates new columns for them and sets them as columns on a new copy of
    * the current model
    */
+  logger.warn("findSummaryModel()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   override private[classification] def findSummaryModel():
   (ProbabilisticClassificationModel[FeaturesType, M], String, String) = {
     val model = if ($(probabilityCol).isEmpty && $(predictionCol).isEmpty) {

@@ -73,6 +73,7 @@ private[spark] class SparkKubernetesDiagnosticsSetter(clientProvider: Kubernetes
             .build());
       }
     }
+    logger.warn("setDiagnostics(throwable,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", throwable, conf)
   }
 
   override def supports(clusterManagerUrl: String): Boolean = {

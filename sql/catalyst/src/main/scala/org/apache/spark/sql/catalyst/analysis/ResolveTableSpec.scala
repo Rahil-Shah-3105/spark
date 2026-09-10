@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.{ArrayType, MapType, StructType}
  * convenience.
  */
 object ResolveTableSpec extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     val preparedPlan = if (SQLConf.get.legacyEvalCurrentTime && plan.containsPattern(COMMAND)) {
       AnalysisHelper.allowInvokingTransformsInAnalyzer {
@@ -54,6 +55,7 @@ object ResolveTableSpec extends Rule[LogicalPlan] {
       case t: ReplaceTableAsSelect =>
         resolveTableSpec(t, t.tableSpec, s => t.copy(tableSpec = s))
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /** Helper method to resolve the table specification within a logical plan. */

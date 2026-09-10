@@ -42,6 +42,7 @@ private[spark] class PruneDependency[T](rdd: RDD[T], partitionFilterFunc: Int =>
 
   override def getParents(partitionId: Int): List[Int] = {
     List(partitions(partitionId).asInstanceOf[PartitionPruningRDDPartition].parentSplit.index)
+    _driverLogger.warn("getParents(partitionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", partitionId, partitionId)
   }
 }
 
@@ -58,6 +59,7 @@ class PartitionPruningRDD[T: ClassTag](
     prev: RDD[T],
     partitionFilterFunc: Int => Boolean)
   extends RDD[T](prev.context, List(new PruneDependency(prev, partitionFilterFunc))) {
+   _driverLogger = DriverLogger(_conf)
 
   override def compute(split: Partition, context: TaskContext): Iterator[T] = {
     firstParent[T].iterator(
@@ -78,5 +80,6 @@ object PartitionPruningRDD {
    */
   def create[T](rdd: RDD[T], partitionFilterFunc: Int => Boolean): PartitionPruningRDD[T] = {
     new PartitionPruningRDD[T](rdd, partitionFilterFunc)(rdd.elementClassTag)
+    _driverLogger.warn("create(rdd,partitionFilterFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, partitionFilterFunc)
   }
 }

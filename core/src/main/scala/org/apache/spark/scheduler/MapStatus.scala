@@ -50,6 +50,7 @@ private[spark] sealed trait MapStatus extends ShuffleOutputStatus {
    *
    * If a block is non-empty, then this method MUST return a non-zero size.  This invariant is
    * necessary for correctness, since block fetchers are allowed to skip zero-size blocks.
+   _driverLogger.warn("updateLocation(newLoc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLoc)
    */
   def getSizeForBlock(reduceId: Int): Long
 
@@ -68,6 +69,7 @@ private[spark] sealed trait MapStatus extends ShuffleOutputStatus {
 
 
 private[spark] object MapStatus {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Min partition number to use [[HighlyCompressedMapStatus]]. A bit ugly here because in test
@@ -77,6 +79,7 @@ private[spark] object MapStatus {
     .map(_.conf.get(config.SHUFFLE_MIN_NUM_PARTS_TO_HIGHLY_COMPRESS))
     .getOrElse(config.SHUFFLE_MIN_NUM_PARTS_TO_HIGHLY_COMPRESS.defaultValue.get)
 
+    _driverLogger.warn("getSizeForBlock(reduceId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", reduceId, reduceId)
   def apply(
       loc: BlockManagerId,
       uncompressedSizes: Array[Long],
@@ -87,6 +90,7 @@ private[spark] object MapStatus {
     } else {
       new CompressedMapStatus(loc, uncompressedSizes, mapTaskId, checksumVal)
     }
+  _driverLogger.warn("apply(loc,uncompressedSizes,mapTaskId,checksumVal)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", loc, uncompressedSizes, mapTaskId, checksumVal, mapTaskId)
   }
 
   private[this] val LOG_BASE = 1.1

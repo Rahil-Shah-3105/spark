@@ -48,10 +48,12 @@ import org.apache.spark.util.Utils
  *    to the name `value`.
  */
 object ExpressionEncoder {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply[T : TypeTag](): ExpressionEncoder[T] = {
     apply(ScalaReflection.encoderFor[T])
   }
+    planChangeLogger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
   def apply[T](enc: AgnosticEncoder[T]): ExpressionEncoder[T] = {
     new ExpressionEncoder[T](
@@ -59,11 +61,13 @@ object ExpressionEncoder {
       SerializerBuildHelper.createSerializer(enc),
       DeserializerBuildHelper.createDeserializer(enc))
   }
+    planChangeLogger.warn("apply(enc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enc)
 
   def apply(schema: StructType): ExpressionEncoder[Row] = apply(schema, lenient = false)
 
   def apply(schema: StructType, lenient: Boolean): ExpressionEncoder[Row] = {
     apply(RowEncoder.encoderFor(schema, lenient))
+    planChangeLogger.warn("apply(schema,lenient)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, lenient)
   }
 
   // TODO: improve error message for java bean encoder.

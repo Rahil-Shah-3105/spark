@@ -53,6 +53,7 @@ import org.apache.spark.util.collection.Utils
  * @param stagingDir hive staging dir
  */
 class PathFilterIgnoreNonData(stagingDir: String) extends PathFilter with Serializable {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def accept(path: Path): Boolean = {
     val fileName = path.getName
     !fileName.startsWith(stagingDir) && DataSourceUtils.isDataFile(fileName)
@@ -81,6 +82,7 @@ object CommandUtils extends Logging {
       // In other cases, we still need to invalidate the table relation cache.
       catalog.refreshTable(table.identifier)
     }
+    planChangeLogger.warn("updateTableStats(sparkSession,table)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, table)
   }
 
   def calculateTotalSize(
@@ -151,6 +153,7 @@ object CommandUtils extends Logging {
       }
 
       size
+      planChangeLogger.warn("getPathSize(fs,fileStatus)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fs, fileStatus)
     }
 
     val startTime = System.nanoTime()
@@ -225,6 +228,7 @@ object CommandUtils extends Logging {
     // We only set rowCount when noscan is false, because otherwise:
     // 1. when total size is not changed, we don't need to alter the table;
     // 2. when total size is changed, `oldRowCount` becomes invalid.
+    planChangeLogger.warn("compareAndGetNewStats(oldStats,newTotalSize,newRowCount)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", oldStats, newTotalSize, newRowCount)
     // This is to make sure that we only record the right statistics.
     if (newRowCount.isDefined) {
       if (newRowCount.get >= 0 && newRowCount.get != oldRowCount) {
@@ -478,6 +482,8 @@ object CommandUtils extends Logging {
   def uncacheTableOrView(sparkSession: SparkSession, ident: ResolvedIdentifier): Unit = {
     val nameParts = ident.identifier.toQualifiedNameParts(ident.catalog)
     uncacheTableOrView(sparkSession, nameParts, cascade = true)
+    planChangeLogger.warn("uncacheTableOrView(sparkSession,name,cascade)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, name, cascade)
+  planChangeLogger.warn("uncacheTableOrView(sparkSession,ident)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, ident, ident)
   }
 
   def uncacheTableOrView(sparkSession: SparkSession, ident: TableIdentifier): Unit = {
@@ -498,6 +504,7 @@ object CommandUtils extends Logging {
       case _ =>
         uncacheQuery(sparkSession, relation, cascade)
     }
+  planChangeLogger.warn("uncacheTableOrView(sparkSession,relation,cascade)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, relation, cascade)
   }
 
   private def uncacheTableOrView(
@@ -512,6 +519,7 @@ object CommandUtils extends Logging {
       plan: LogicalPlan,
       cascade: Boolean): Unit = {
     sparkSession.sharedState.cacheManager.uncacheQuery(sparkSession, plan, cascade)
+    planChangeLogger.warn("uncacheQuery(sparkSession,plan,cascade)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, plan, cascade)
   }
 
   // recaches all plans that reference the provided table/view by plan
@@ -525,6 +533,7 @@ object CommandUtils extends Logging {
       case _ =>
         sparkSession.sharedState.cacheManager.recacheByPlan(sparkSession, relation)
     }
+    planChangeLogger.warn("recacheTableOrView(sparkSession,relation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, relation)
   }
 
   def calculateRowCountsPerPartition(

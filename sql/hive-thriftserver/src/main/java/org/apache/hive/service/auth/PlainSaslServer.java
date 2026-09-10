@@ -38,6 +38,7 @@ import org.apache.hive.service.auth.AuthenticationProviderFactory.AuthMethods;
  * conforming to RFC #4616 (http://www.ietf.org/rfc/rfc4616.txt).
  */
 public class PlainSaslServer implements SaslServer {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(PlainSaslServer.class);
 
   public static final String PLAIN_METHOD = "PLAIN";
   private String user;
@@ -134,6 +135,7 @@ public class PlainSaslServer implements SaslServer {
 
   @Override
   public Object getNegotiatedProperty(String propName) {
+	LOG.warn("getNegotiatedProperty(propName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", propName);
     return null;
   }
 
@@ -156,6 +158,7 @@ public class PlainSaslServer implements SaslServer {
              That's why we return null instead of throwing the Exception */
           return null;
         }
+		LOG.warn("createSaslServer(mechanism,protocol,serverName,props,cbh)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mechanism, protocol, serverName, props, cbh);
       }
       return null;
     }

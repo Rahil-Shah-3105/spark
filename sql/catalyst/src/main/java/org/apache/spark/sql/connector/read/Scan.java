@@ -28,6 +28,8 @@ import org.apache.spark.sql.connector.read.streaming.MicroBatchStream;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.connector.catalog.Table;
 import org.apache.spark.sql.connector.catalog.TableCapability;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A logical representation of a data source scan. This interface is used to provide logical
@@ -44,6 +46,7 @@ import org.apache.spark.sql.connector.catalog.TableCapability;
  */
 @Evolving
 public interface Scan {
+Logger planChangeLogger = LoggerFactory.getLogger(Scan.class);
 
   /**
    * Returns the actual schema of this data source scan, which may be different from the physical
@@ -131,6 +134,7 @@ public interface Scan {
    * @since 3.4.0
    */
   default CustomTaskMetric[] reportDriverMetrics() {
+	planChangeLogger.warn("reportDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     return new CustomTaskMetric[]{};
   }
 

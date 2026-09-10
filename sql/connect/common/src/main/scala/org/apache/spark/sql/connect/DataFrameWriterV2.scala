@@ -87,6 +87,7 @@ final class DataFrameWriterV2[T] private[sql] (table: String, ds: Dataset[T])
   /** @inheritdoc */
   override def create(): Unit = {
     executeWriteOperation(proto.WriteOperationV2.Mode.MODE_CREATE)
+    logger.warn("create()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
@@ -97,6 +98,7 @@ final class DataFrameWriterV2[T] private[sql] (table: String, ds: Dataset[T])
   /** @inheritdoc */
   override def createOrReplace(): Unit = {
     executeWriteOperation(proto.WriteOperationV2.Mode.MODE_CREATE_OR_REPLACE)
+    logger.warn("createOrReplace()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
@@ -108,11 +110,13 @@ final class DataFrameWriterV2[T] private[sql] (table: String, ds: Dataset[T])
   def overwrite(condition: Column): Unit = {
     builder.setOverwriteCondition(toExpr(condition))
     executeWriteOperation(proto.WriteOperationV2.Mode.MODE_OVERWRITE)
+    logger.warn("overwrite(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   /** @inheritdoc */
   def overwritePartitions(): Unit = {
     executeWriteOperation(proto.WriteOperationV2.Mode.MODE_OVERWRITE_PARTITIONS)
+    logger.warn("overwritePartitions()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def executeWriteOperation(mode: proto.WriteOperationV2.Mode): Unit = {
@@ -122,5 +126,6 @@ final class DataFrameWriterV2[T] private[sql] (table: String, ds: Dataset[T])
       .setWriteOperationV2(builder.setMode(mode))
       .build()
     ds.sparkSession.execute(command)
+      logger.warn("executeWriteOperation(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode)
   }
 }

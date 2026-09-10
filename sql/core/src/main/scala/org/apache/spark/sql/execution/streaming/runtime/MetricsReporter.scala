@@ -34,6 +34,7 @@ import org.apache.spark.sql.streaming.StreamingQueryProgress
 class MetricsReporter(
     stream: StreamExecution,
     override val sourceName: String) extends CodahaleSource with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override val metricRegistry: MetricRegistry = new MetricRegistry
 
@@ -49,6 +50,7 @@ class MetricsReporter(
       .withZone(DateTimeUtils.getZoneId("UTC"))
 
   registerGauge("eventTime-watermark",
+  planChangeLogger.warn("registerGauge(name,f,default)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, f, default)
     progress => convertStringDateToMillis(progress.eventTime.get("watermark")), 0L)
 
   registerGauge("states-rowsTotal", _.stateOperators.map(_.numRowsTotal).sum, 0L)

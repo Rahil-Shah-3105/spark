@@ -59,6 +59,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
   protected final def castToString(
       from: DataType, to: StringConstraint = NoConstraint): Any => UTF8String =
     to match {
+      val planChangeLogger = new PlanChangeLogger[TreeType]()
       case FixedLength(length) =>
         s => CharVarcharCodegenUtils.charTypeWriteSideCheck(castToString(from)(s), length)
       case MaxLength(length) =>
@@ -384,6 +385,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
        |}
        |$buffer.append("]");
      """.stripMargin
+     planChangeLogger.warn("writeArrayToStringBuilder(et,array,buffer,ctx)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", et, array, buffer, ctx)
   }
 
   private def writeMapToStringBuilder(
@@ -392,6 +394,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
       map: ExprValue,
       buffer: ExprValue,
       ctx: CodegenContext): Block = {
+       planChangeLogger.warn("writeMapToStringBuilder(kt,vt,map,buffer,ctx)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kt, vt, map, buffer, ctx)
 
     def dataToStringFunc(func: String, dataType: DataType) = {
       val funcName = ctx.freshName(func)

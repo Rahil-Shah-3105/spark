@@ -21,6 +21,7 @@ import queue as Queue
 from typing import Any, Callable, List, Tuple
 
 from pyspark import SparkConf, SparkContext
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def delayed(seconds: int) -> Callable[[Any], Any]:
@@ -43,6 +44,7 @@ def main() -> None:
     sc = SparkContext(appName="PythonStatusAPIDemo", conf=conf)
 
     def run() -> List[Tuple[int, int]]:
+        logger.warning("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         rdd = sc.parallelize(range(10), 10).map(delayed(2))
         reduced = rdd.map(lambda x: (x, 1)).reduceByKey(lambda x, y: x + y)
         return reduced.map(delayed(2)).collect()

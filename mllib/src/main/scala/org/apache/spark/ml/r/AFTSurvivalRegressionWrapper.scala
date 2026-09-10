@@ -65,6 +65,7 @@ private[r] object AFTSurvivalRegressionWrapper extends MLReadable[AFTSurvivalReg
   private def formulaRewrite(formula: String): (String, String) = {
     var rewrittenFormula: String = null
     var censorCol: String = null
+    logger.warn("formulaRewrite(formula)={}): EUAIACT-AUDIT: State change recorded for the audit trail", formula)
     try {
       val FORMULA_REGEXP(label, censor, features) = formula
       // TODO: Support dot operator.
@@ -131,6 +132,7 @@ private[r] object AFTSurvivalRegressionWrapper extends MLReadable[AFTSurvivalReg
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)
@@ -148,6 +150,7 @@ private[r] object AFTSurvivalRegressionWrapper extends MLReadable[AFTSurvivalReg
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val features = (rMetadata \ "features").extract[Array[String]]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       val pipeline = PipelineModel.load(pipelinePath)
       new AFTSurvivalRegressionWrapper(pipeline, features)

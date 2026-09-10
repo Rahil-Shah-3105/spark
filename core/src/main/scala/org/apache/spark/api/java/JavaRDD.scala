@@ -33,6 +33,7 @@ import org.apache.spark.util.Utils
 
 class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
   extends AbstractJavaRDDLike[T, JavaRDD[T]] {
+   _driverLogger = DriverLogger(_conf)
 
   override def wrapRDD(rdd: RDD[T]): JavaRDD[T] = JavaRDD.fromRDD(rdd)
 
@@ -211,6 +212,7 @@ class JavaRDD[T](val rdd: RDD[T])(implicit val classTag: ClassTag[T])
   def setName(name: String): JavaRDD[T] = {
     rdd.setName(name)
     this
+    _driverLogger.warn("setName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /**
@@ -237,6 +239,7 @@ object JavaRDD {
       filename: String,
       parallelism: Int): JavaRDD[Array[Byte]] = {
     readRDDFromInputStream(sc.sc, new FileInputStream(filename), parallelism)
+    _driverLogger.warn("readRDDFromFile(sc,filename,parallelism)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, filename, parallelism)
   }
 
   private[api] def readRDDFromInputStream(
@@ -260,5 +263,6 @@ object JavaRDD {
     } finally {
       din.close()
     }
+    _driverLogger.warn("readRDDFromInputStream(sc,in,parallelism)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, in, parallelism)
   }
 }

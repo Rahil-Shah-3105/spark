@@ -172,6 +172,7 @@ object Attribute extends AttributeFactory {
     } else {
       throw new IllegalArgumentException(s"Cannot recognize type $attrType.")
     }
+    logger.warn("getFactory(attrType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attrType)
   }
 }
 

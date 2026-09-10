@@ -42,6 +42,7 @@ private[fpm] class LocalPrefixSpan(
     genFreqPatterns(ReversedPrefix.empty, postfixes).map { case (prefix, count) =>
       (prefix.toSequence, count)
     }
+    logger.warn("run(postfixes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", postfixes)
   }
 
   /**

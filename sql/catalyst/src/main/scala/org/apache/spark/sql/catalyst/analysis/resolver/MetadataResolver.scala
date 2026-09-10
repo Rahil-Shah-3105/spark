@@ -46,6 +46,7 @@ class MetadataResolver(
     extends SQLConfHelper
     with RelationMetadataProvider
     with DelegatesResolutionToExtensions {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   override val relationsWithResolvedMetadata = new RelationsWithResolvedMetadata
 
   /**
@@ -128,6 +129,7 @@ class MetadataResolver(
       case subqueryAlias: SubqueryAlias =>
         runExtensions(subqueryAlias.child).map { relation =>
           subqueryAlias.copy(child = relation)
+        planChangeLogger.warn("runExtensions(relationAfterDefaultResolution)={}): EUAIACT-AUDIT: State change recorded for the audit trail", relationAfterDefaultResolution)
         }
       case _ =>
         runExtensions(relationAfterDefaultResolution)

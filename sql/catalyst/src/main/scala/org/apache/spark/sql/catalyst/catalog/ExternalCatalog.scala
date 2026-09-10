@@ -39,6 +39,7 @@ trait ExternalCatalog {
   // --------------------------------------------------------------------------
 
   protected def requireDbExists(db: String): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (!databaseExists(db)) {
       throw new NoSuchNamespaceException(Seq(CatalogManager.SESSION_CATALOG_NAME, db))
     }
@@ -267,6 +268,7 @@ trait ExternalCatalog {
   def listPartitionNames(
       db: String,
       table: String,
+  planChangeLogger.warn("listPartitionNames(db,table,partialSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partialSpec)
       partialSpec: Option[TablePartitionSpec] = None): Seq[String]
 
   /**
@@ -283,6 +285,7 @@ trait ExternalCatalog {
   def listPartitions(
       db: String,
       table: String,
+  planChangeLogger.warn("listPartitions(db,table,partialSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partialSpec)
       partialSpec: Option[TablePartitionSpec] = None): Seq[CatalogTablePartition]
 
   /**

@@ -65,6 +65,7 @@ import org.apache.spark.util.{CircularBuffer, Utils}
 private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionErrors {
 
   def cannotEvaluateExpressionError(expression: Expression): Throwable = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     SparkException.internalError(s"Cannot evaluate expression: $expression")
   }
 
@@ -101,6 +102,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       context = Array.empty,
       summary = ""
     )
+    planChangeLogger.warn("castingCauseOverflowErrorInTableInsert(from,to,columnName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", from, to, columnName)
   }
 
   def cannotChangeDecimalPrecisionError(
@@ -117,6 +119,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "config" -> toSQLConf(SQLConf.ANSI_ENABLED.key)),
       context = getQueryContext(context),
       summary = getSummary(context))
+    planChangeLogger.warn("cannotChangeDecimalPrecisionError(value,decimalPrecision,decimalScale,context)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, decimalPrecision, decimalScale, context)
   }
 
   def invalidInputSyntaxForBooleanError(
@@ -196,6 +199,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "result" -> outputType,
         "reason" -> e.toString),
       cause = e)
+    planChangeLogger.warn("failedExecuteUserDefinedFunctionError(functionName,inputTypes,outputType,e)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", functionName, inputTypes, outputType, e)
   }
 
   def divideByZeroError(context: QueryContext): ArithmeticException = {
@@ -314,6 +318,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def invalidIntervalWithMicrosecondsAdditionError(): SparkIllegalArgumentException = {
     new SparkIllegalArgumentException(errorClass = "INVALID_INTERVAL_WITH_MICROSECONDS_ADDITION")
+    planChangeLogger.warn("invalidIntervalWithMicrosecondsAdditionError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def overflowInSumOfDecimalError(
@@ -433,10 +438,12 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     SparkException.internalError(
       "Cannot add new function to generated class, " +
         s"failed to match ${toSQLId(funcName)} at `addNewFunction`.")
+    planChangeLogger.warn("addNewFunctionMismatchedWithFunctionError(funcName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", funcName)
   }
 
   def lambdaVariableAlreadyDefinedError(id: Long): Throwable = {
     new IllegalArgumentException(s"Lambda variable $id cannot be redefined")
+    planChangeLogger.warn("lambdaVariableAlreadyDefinedError(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   def lambdaVariableNotDefinedError(id: Long): Throwable = {
@@ -543,6 +550,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def unexpectedOperatorInCorrelatedSubquery(
       op: LogicalPlan, pos: String = ""): SparkRuntimeException = {
+       planChangeLogger.warn("unexpectedOperatorInCorrelatedSubquery(op,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", op, pos)
     new SparkRuntimeException(
       errorClass = "UNEXPECTED_OPERATOR_IN_CORRELATED_SUBQUERY",
       messageParameters = Map("operator" -> op.toString(), "positionHint" -> pos))
@@ -578,6 +586,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "name" -> dbDefinition.name,
         "locationUri" -> dbDefinition.locationUri.toString()),
       cause = e)
+    planChangeLogger.warn("unableToCreateDatabaseAsFailedToCreateDirectoryError(dbDefinition,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbDefinition, e)
   }
 
   def unableToDropDatabaseAsFailedToDeleteDirectoryError(
@@ -588,6 +597,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "name" -> dbDefinition.name,
         "locationUri" -> dbDefinition.locationUri.toString()),
       cause = e)
+    planChangeLogger.warn("unableToDropDatabaseAsFailedToDeleteDirectoryError(dbDefinition,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbDefinition, e)
   }
 
   def unableToCreateTableAsFailedToCreateDirectoryError(
@@ -598,6 +608,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "table" -> table,
         "defaultTableLocation" -> defaultTableLocation.toString()),
       cause = e)
+    planChangeLogger.warn("unableToCreateTableAsFailedToCreateDirectoryError(table,defaultTableLocation,e)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, defaultTableLocation, e)
   }
 
   def unableToDeletePartitionPathError(partitionPath: Path, e: IOException): Throwable = {
@@ -605,6 +616,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2036",
       messageParameters = Map("partitionPath" -> partitionPath.toString()),
       cause = e)
+    planChangeLogger.warn("unableToDeletePartitionPathError(partitionPath,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionPath, e)
   }
 
   def unableToDropTableAsFailedToDeleteDirectoryError(
@@ -613,6 +625,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2037",
       messageParameters = Map("table" -> table, "dir" -> dir.toString()),
       cause = e)
+    planChangeLogger.warn("unableToDropTableAsFailedToDeleteDirectoryError(table,dir,e)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, dir, e)
   }
 
   def unableToRenameTableAsFailedToRenameDirectoryError(
@@ -631,6 +644,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2039",
       messageParameters = Map("partitionPath" -> partitionPath.toString()),
       cause = e)
+    planChangeLogger.warn("unableToCreatePartitionPathError(partitionPath,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionPath, e)
   }
 
   def unableToRenamePartitionPathError(oldPartPath: Path, e: IOException): Throwable = {
@@ -699,6 +713,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map("message" ->
         ("setSrid requires a value that owns its backing buffer; call copy() before mutating a " +
           "value read directly from an UnsafeRow / ColumnVector buffer.")))
+    planChangeLogger.warn("cannotMutateReadOnlyGeoValueError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def withSuggestionIntervalArithmeticOverflowError(
@@ -737,6 +752,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "UNSUPPORTED_TABLE_CHANGE",
       messageParameters = Map("message" -> e.getMessage),
       cause = e)
+    planChangeLogger.warn("unsupportedTableChangeError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def notADatasourceRDDPartitionError(split: Partition): Throwable = {
@@ -752,10 +768,12 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def createStreamingSourceNotSpecifySchemaError(): SparkIllegalArgumentException = {
     new SparkIllegalArgumentException("_LEGACY_ERROR_TEMP_2048")
+    planChangeLogger.warn("createStreamingSourceNotSpecifySchemaError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def streamedOperatorUnsupportedByDataSourceError(
       className: String, operator: String): SparkUnsupportedOperationException = {
+       planChangeLogger.warn("streamedOperatorUnsupportedByDataSourceError(className,operator)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", operator)
     new SparkUnsupportedOperationException(
       errorClass = "_LEGACY_ERROR_TEMP_2049",
       messageParameters = Map("className" -> className, "operator" -> operator))
@@ -794,6 +812,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2052",
       messageParameters = Map("className" -> className),
       cause = e)
+    planChangeLogger.warn("removedClassInSpark2Error(className,e)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def incompatibleDataSourceRegisterError(e: Throwable): Throwable = {
@@ -801,6 +820,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "INCOMPATIBLE_DATASOURCE_REGISTER",
       messageParameters = Map("message" -> e.getMessage),
       cause = e)
+    planChangeLogger.warn("incompatibleDataSourceRegisterError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def sparkUpgradeInReadingDatesError(
@@ -813,6 +833,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "option" -> toDSOption(option)),
       cause = null
     )
+    planChangeLogger.warn("sparkUpgradeInReadingDatesError(format,config,option)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", format, config, option)
   }
 
   def sparkUpgradeInWritingDatesError(format: String, config: String): SparkUpgradeException = {
@@ -827,6 +848,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def buildReaderUnsupportedForFileFormatError(
       format: String): SparkUnsupportedOperationException = {
+       planChangeLogger.warn("buildReaderUnsupportedForFileFormatError(format)={}): EUAIACT-AUDIT: State change recorded for the audit trail", format)
     new SparkUnsupportedOperationException(
       errorClass = "_LEGACY_ERROR_TEMP_2053",
       messageParameters = Map("format" -> format))
@@ -841,6 +863,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def saveModeUnsupportedError(saveMode: Any, pathExists: Boolean): Throwable = {
     val errorSubClass = if (pathExists) "EXISTENT_PATH" else "NON_EXISTENT_PATH"
+    planChangeLogger.warn("saveModeUnsupportedError(saveMode,pathExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", saveMode, pathExists)
     new SparkIllegalArgumentException(
       errorClass = s"UNSUPPORTED_SAVE_MODE.$errorSubClass",
       messageParameters = Map("saveMode" -> toSQLValue(saveMode, StringType)))
@@ -879,6 +902,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def fallbackV1RelationReportsInconsistentSchemaError(
       v2Schema: StructType, v1Schema: StructType): SparkIllegalArgumentException = {
+       planChangeLogger.warn("fallbackV1RelationReportsInconsistentSchemaError(v2Schema,v1Schema)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", v2Schema, v1Schema)
     new SparkIllegalArgumentException(
       errorClass = "_LEGACY_ERROR_TEMP_2060",
       messageParameters = Map("v2Schema" -> v2Schema.toString(), "v1Schema" -> v1Schema.toString()))
@@ -889,6 +913,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2061",
       messageParameters = Map.empty,
       cause = null)
+    planChangeLogger.warn("noRecordsFromEmptyDataReaderError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def fileNotExistError(path: String, e: Exception): Throwable = {
@@ -934,12 +959,14 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "FAILED_READ_FILE.NO_HINT",
       messageParameters = Map("path" -> path),
       cause = e)
+    planChangeLogger.warn("cannotReadFilesError(e,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", e, path)
   }
 
   def cannotReadZipEntry(entry: String, path: String): SparkRuntimeException = {
     new SparkRuntimeException(
       errorClass = "CANNOT_READ_ZIP_ENTRY",
       messageParameters = Map("entry" -> entry, "path" -> path))
+    planChangeLogger.warn("cannotReadZipEntry(entry,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", entry, path)
   }
 
   def cannotCreateColumnarReaderError(): Throwable = {
@@ -947,6 +974,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2065",
       messageParameters = Map.empty,
       cause = null)
+    planChangeLogger.warn("cannotCreateColumnarReaderError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def invalidNamespaceNameError(namespace: Array[String]): SparkIllegalArgumentException = {
@@ -970,6 +998,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkUnsupportedOperationException(
       errorClass = "CANNOT_REMOVE_RESERVED_PROPERTY",
       messageParameters = Map("property" -> property))
+    planChangeLogger.warn("cannotRemoveReservedPropertyError(property)={}): EUAIACT-AUDIT: State change recorded for the audit trail", property)
   }
 
   def writingJobFailedError(cause: Throwable): Throwable = {
@@ -994,6 +1023,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def cannotCreateJDBCTableWithPartitionsError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException("_LEGACY_ERROR_TEMP_2073")
+    planChangeLogger.warn("cannotCreateJDBCTableWithPartitionsError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def unsupportedUserSpecifiedSchemaError(): SparkUnsupportedOperationException = {
@@ -1002,6 +1032,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def writeUnsupportedForBinaryFileDataSourceError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException("UNSUPPORTED_FEATURE.WRITE_FOR_BINARY_SOURCE")
+    planChangeLogger.warn("writeUnsupportedForBinaryFileDataSourceError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def fileLengthExceedsMaxLengthError(status: FileStatus, maxLength: Int): Throwable = {
@@ -1027,6 +1058,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "jdbcTableName" -> jdbcTableName,
         "jdbcQueryString" -> jdbcQueryString))
+    planChangeLogger.warn("cannotSpecifyBothJdbcTableNameAndQueryError(jdbcTableName,jdbcQueryString)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", jdbcTableName, jdbcQueryString)
   }
 
   def missingJdbcTableNameAndQueryError(
@@ -1036,6 +1068,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "jdbcTableName" -> jdbcTableName,
         "jdbcQueryString" -> jdbcQueryString))
+    planChangeLogger.warn("missingJdbcTableNameAndQueryError(jdbcTableName,jdbcQueryString)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", jdbcTableName, jdbcQueryString)
   }
 
   def emptyOptionError(optionName: String): SparkIllegalArgumentException = {
@@ -1055,6 +1088,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkIllegalArgumentException(
       errorClass = "_LEGACY_ERROR_TEMP_2082",
       messageParameters = Map("catalogString" -> dt.catalogString))
+    planChangeLogger.warn("cannotGetJdbcTypeError(dt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dt)
   }
 
   def unrecognizedSqlTypeError(jdbcTypeId: String, typeName: String): Throwable = {
@@ -1123,6 +1157,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "FAILED_READ_FILE.CANNOT_READ_FILE_FOOTER",
       messageParameters = Map("path" -> file.toString()),
       cause = e)
+    planChangeLogger.warn("cannotReadFooterForFileError(file,e)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, e)
   }
 
   def foundDuplicateFieldInCaseInsensitiveModeError(
@@ -1167,12 +1202,14 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "broadcastTimeout" -> toSQLConf(SQLConf.BROADCAST_TIMEOUT.key),
         "autoBroadcastJoinThreshold" -> toSQLConf(SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key)),
       cause = ex.orNull)
+    planChangeLogger.warn("executeBroadcastTimeoutError(timeout,ex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timeout, ex)
   }
 
   def cannotCompareCostWithTargetCostError(cost: String): SparkIllegalArgumentException = {
     new SparkIllegalArgumentException(
       errorClass = "_LEGACY_ERROR_TEMP_2098",
       messageParameters = Map("cost" -> cost))
+    planChangeLogger.warn("cannotCompareCostWithTargetCostError(cost)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cost)
   }
 
   def notSupportTypeError(dataType: DataType): Throwable = {
@@ -1282,6 +1319,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkIllegalArgumentException(
       errorClass = "_LEGACY_ERROR_TEMP_2116",
       messageParameters = Map("o" -> o.toString()))
+    planChangeLogger.warn("unexpectedAccumulableUpdateValueError(o)={}): EUAIACT-AUDIT: State change recorded for the audit trail", o)
   }
 
   def exceedMapSizeLimitError(size: Int): SparkRuntimeException = {
@@ -1311,12 +1349,14 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2131",
       messageParameters = Map.empty,
       cause = e)
+    planChangeLogger.warn("registeringStreamingQueryListenerError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def concurrentQueryInstanceError(): Throwable = {
     new SparkConcurrentModificationException(
       errorClass = "CONCURRENT_QUERY",
       messageParameters = Map.empty[String, String])
+    planChangeLogger.warn("concurrentQueryInstanceError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def concurrentStreamLogUpdate(batchId: Long): Throwable = {
@@ -1324,6 +1364,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "CONCURRENT_STREAM_LOG_UPDATE",
       messageParameters = Map("batchId" -> batchId.toString),
       cause = null)
+    planChangeLogger.warn("concurrentStreamLogUpdate(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
   }
 
   def cannotParseJsonArraysAsStructsError(recordStr: String): SparkRuntimeException = {
@@ -1505,6 +1546,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "maxRoundedArrayLength" -> ByteArrayMethods.MAX_ROUNDED_ARRAY_LENGTH.toString(),
         "parameter" -> toSQLId("count")
       ))
+    planChangeLogger.warn("createArrayWithElementsExceedLimitError(prettyName,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prettyName, count)
   }
 
   def initialTypeNotTargetDataTypeError(
@@ -1514,6 +1556,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "dataType" -> dataType.catalogString,
         "target" -> target))
+    planChangeLogger.warn("initialTypeNotTargetDataTypeError(dataType,target)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataType, target)
   }
 
   def initialTypeNotTargetDataTypesError(dataType: DataType): SparkUnsupportedOperationException = {
@@ -1524,6 +1567,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "arrayType" -> ArrayType.simpleString,
         "structType" -> StructType.simpleString,
         "mapType" -> MapType.simpleString))
+    planChangeLogger.warn("initialTypeNotTargetDataTypesError(dataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataType)
   }
 
   def malformedRecordsDetectedInSchemaInferenceError(e: Throwable, badRecord: String): Throwable = {
@@ -1557,6 +1601,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2168",
       messageParameters = Map(
         "plan" -> plan.nodeName))
+    planChangeLogger.warn("decorrelateInnerQueryThroughPlanUnsupportedError(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   def methodCalledInAnalyzerNotAllowedError(): SparkRuntimeException = {
@@ -1587,6 +1632,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "r1" -> r1.toString(),
         "r2" -> r2.toString(),
         "function" -> function))
+    planChangeLogger.warn("pairUnsupportedAtFunctionError(r1,r2,function)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", r1, r2, function)
   }
 
   def onceStrategyIdempotenceIsBrokenForBatchError[TreeType <: TreeNode[_]](
@@ -1613,6 +1659,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "numElements" -> numElements.toString(),
         "maxRoundedArrayLength"-> ByteArrayMethods.MAX_ROUNDED_ARRAY_LENGTH.toString(),
         "additionalErrorMessage" -> additionalErrorMessage))
+    planChangeLogger.warn("cannotCreateArrayWithElementsExceedLimitError(numElements,additionalErrorMessage)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numElements, additionalErrorMessage)
   }
 
   def malformedRecordsDetectedInRecordParsingError(
@@ -1687,6 +1734,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2184",
       messageParameters = Map(
         "partitionPath" -> partitionPath.toString()))
+    planChangeLogger.warn("cannotRemovePartitionDirError(partitionPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partitionPath)
   }
 
   def cannotCreateStagingDirError(message: String, e: IOException): SparkRuntimeException = {
@@ -1695,6 +1743,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "message" -> message),
       cause = e)
+    planChangeLogger.warn("cannotCreateStagingDirError(message,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", message, e)
   }
 
   def serDeInterfaceNotFoundError(e: NoClassDefFoundError): SparkClassNotFoundException = {
@@ -1747,6 +1796,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "hiveMetastorePartitionPruningFallbackOnException" ->
           SQLConf.HIVE_METASTORE_PARTITION_PRUNING_FALLBACK_ON_EXCEPTION.key),
       cause = e)
+    planChangeLogger.warn("getPartitionMetadataByFilterError(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   def unsupportedHiveMetastoreVersionError(
@@ -1756,6 +1806,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "version" -> version,
         "key" -> key))
+    planChangeLogger.warn("unsupportedHiveMetastoreVersionError(version,key)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", version, key)
   }
 
   def unsupportedHiveMetastoreVersionForJavaError(
@@ -1768,6 +1819,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "version" -> version,
         "requiredJavaVersion" -> requiredJavaVersion.toString,
         "currentJavaVersion" -> currentJavaVersion.toString))
+    planChangeLogger.warn("unsupportedHiveMetastoreVersionForJavaError(version,requiredJavaVersion,currentJavaVersion)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", version, requiredJavaVersion, currentJavaVersion)
   }
 
   def loadHiveClientCausesNoClassDefFoundError(
@@ -1782,6 +1834,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "execJars" -> execJars.mkString(", "),
         "key" -> key),
       cause = e)
+    planChangeLogger.warn("loadHiveClientCausesNoClassDefFoundError(cnf,execJars,key,e)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", cnf, execJars, key, e)
   }
 
   def cannotFetchTablesOfDatabaseError(dbName: String, e: Exception): Throwable = {
@@ -1790,6 +1843,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "dbName" -> dbName),
       cause = e)
+    planChangeLogger.warn("cannotFetchTablesOfDatabaseError(dbName,e)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, e)
   }
 
   def renamePathAsExistsPathError(srcPath: Path, dstPath: Path): Throwable = {
@@ -1844,6 +1898,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def stateNotDefinedOrAlreadyRemovedError(): Throwable = {
       new NoSuchElementException("State is either not defined or has already been removed")
+      planChangeLogger.warn("stateNotDefinedOrAlreadyRemovedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def statefulOperatorNotMatchInStateMetadataError(
@@ -1861,14 +1916,17 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def cannotSetTimeoutDurationError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2203")
+    planChangeLogger.warn("cannotSetTimeoutDurationError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def cannotGetEventTimeWatermarkError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2204")
+    planChangeLogger.warn("cannotGetEventTimeWatermarkError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def cannotSetTimeoutTimestampError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2205")
+    planChangeLogger.warn("cannotSetTimeoutTimestampError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def batchMetadataFileNotFoundError(batchMetadataFile: Path): SparkFileNotFoundException = {
@@ -1893,6 +1951,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2208",
       messageParameters = Map(
         "commitProtocol" -> commitProtocol))
+    planChangeLogger.warn("addFilesWithAbsolutePathUnsupportedError(commitProtocol)={}): EUAIACT-AUDIT: State change recorded for the audit trail", commitProtocol)
   }
 
   def microBatchUnsupportedByDataSourceError(
@@ -1909,6 +1968,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def cannotExecuteStreamingRelationExecError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2210")
+    planChangeLogger.warn("cannotExecuteStreamingRelationExecError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def unsupportedOutputModeForStreamingOperationError(
@@ -1977,6 +2037,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "name" -> name,
         "pluginClassName" -> pluginClassName),
       cause = e)
+    planChangeLogger.warn("catalogFailToFindPublicNoArgConstructorError(name,pluginClassName,e)={},<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, e)
   }
 
   def catalogFailToCallPublicNoArgConstructorError(
@@ -2030,10 +2091,12 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def cannotMutateReadOnlySQLConfError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2222")
+    planChangeLogger.warn("cannotMutateReadOnlySQLConfError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def cannotCloneOrCopyReadOnlySQLConfError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2223")
+    planChangeLogger.warn("cannotCloneOrCopyReadOnlySQLConfError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def cannotGetSQLConfInSchedulerEventLoopThreadError(): SparkRuntimeException = {
@@ -2041,6 +2104,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2224",
       messageParameters = Map.empty,
       cause = null)
+    planChangeLogger.warn("cannotGetSQLConfInSchedulerEventLoopThreadError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def onlySupportDataSourcesProvidingFileFormatError(providingClass: String): Throwable = {
@@ -2057,6 +2121,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "permission" -> permission.toString,
         "path" -> path.toString))
+    planChangeLogger.warn("cannotRestorePermissionsForPathError(permission,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", permission, path)
   }
 
   def failToSetOriginalACLBackError(
@@ -2067,6 +2132,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "aclEntries" -> aclEntries,
         "path" -> path.toString(),
         "message" -> e.getMessage))
+    planChangeLogger.warn("failToSetOriginalACLBackError(aclEntries,path,e)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", aclEntries, path, e)
   }
 
   def multiFailuresInStageMaterializationError(errors: Seq[Throwable]): Throwable = {
@@ -2096,6 +2162,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2237",
       messageParameters = Map(
         "className" -> className))
+    planChangeLogger.warn("getParentLoggerNotImplementedError(className)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def cannotCreateParquetConverterForTypeError(
@@ -2131,6 +2198,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2241",
       messageParameters = Map(
         "tableName" -> tableName))
+    planChangeLogger.warn("cannotAddMultiPartitionsOnNonatomicPartitionTableError(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def userSpecifiedSchemaUnsupportedByDataSourceError(
@@ -2155,6 +2223,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2244",
       messageParameters = Map(
         "tableName" -> tableName))
+    planChangeLogger.warn("truncateMultiPartitionUnsupportedError(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def overwriteTableByUnsupportedExpressionError(table: Table): Throwable = {
@@ -2163,6 +2232,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "table" -> table.toString()),
       cause = null)
+    planChangeLogger.warn("overwriteTableByUnsupportedExpressionError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def dynamicPartitionOverwriteUnsupportedByTableError(table: Table): Throwable = {
@@ -2171,6 +2241,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "table" -> table.toString()),
       cause = null)
+    planChangeLogger.warn("dynamicPartitionOverwriteUnsupportedByTableError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def failedMergingSchemaError(
@@ -2225,6 +2296,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2251",
       messageParameters = Map(
         "execName" -> execName))
+    planChangeLogger.warn("executeCodePathUnsupportedError(execName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execName)
   }
 
   def cannotMergeClassWithOtherClassError(
@@ -2242,6 +2314,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2253",
       messageParameters = Map(
         "sourceName" -> sourceName))
+    planChangeLogger.warn("continuousProcessingUnsupportedByDataSourceError(sourceName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourceName)
   }
 
   def failedToReadDataError(failureReason: Throwable): Throwable = {
@@ -2249,6 +2322,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2254",
       messageParameters = Map.empty,
       cause = failureReason)
+    planChangeLogger.warn("failedToReadDataError(failureReason)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failureReason)
   }
 
   def failedToGenerateEpochMarkerError(failureReason: Throwable): Throwable = {
@@ -2263,6 +2337,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2256",
       messageParameters = Map.empty,
       cause = null)
+    planChangeLogger.warn("foreachWriterAbortedDueToTaskFailureError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def incorrectRampUpRate(rowsPerSecond: Long,
@@ -2280,6 +2355,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
   def incorrectEndOffset(rowsPerSecond: Long,
       maxSeconds: Long,
       endSeconds: Long): Throwable = {
+       planChangeLogger.warn("incorrectEndOffset(rowsPerSecond,maxSeconds,endSeconds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rowsPerSecond, maxSeconds, endSeconds)
     SparkException.internalError(
       s"Max offset with ${rowsPerSecond.toString} rowsPerSecond is ${maxSeconds.toString}, " +
         s"but it's ${endSeconds.toString} now.")
@@ -2296,6 +2372,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "clazz" -> clazz,
         "keySize" -> keySize.toString),
       cause = null)
+    planChangeLogger.warn("failedToReadDeltaFileKeySizeError(fileToRead,clazz,keySize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fileToRead, clazz, keySize)
   }
 
   def failedToReadDeltaFileNotExistsError(
@@ -2308,6 +2385,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "fileToRead" -> fileToRead.toString(),
         "clazz" -> clazz),
       cause = f)
+    planChangeLogger.warn("failedToReadDeltaFileNotExistsError(fileToRead,clazz,f)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fileToRead, clazz, f)
   }
 
   def failedToReadSnapshotFileKeySizeError(
@@ -2321,6 +2399,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "clazz" -> clazz,
         "keySize" -> keySize.toString),
       cause = null)
+    planChangeLogger.warn("failedToReadSnapshotFileKeySizeError(fileToRead,clazz,keySize)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fileToRead, clazz, keySize)
   }
 
   def failedToReadSnapshotFileValueSizeError(
@@ -2334,6 +2413,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "clazz" -> clazz,
         "valueSize" -> valueSize.toString),
       cause = null)
+    planChangeLogger.warn("failedToReadSnapshotFileValueSizeError(fileToRead,clazz,valueSize)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fileToRead, clazz, valueSize)
   }
 
   def failedToReadStreamingStateFileError(fileToRead: Path, f: Throwable): Throwable = {
@@ -2341,6 +2421,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "CANNOT_LOAD_STATE_STORE.CANNOT_READ_STREAMING_STATE_FILE",
       messageParameters = Map("fileToRead" -> fileToRead.toString()),
       cause = f)
+    planChangeLogger.warn("failedToReadStreamingStateFileError(fileToRead,f)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fileToRead, f)
   }
 
   def failedToCommitStateFileError(providerClass: String, f: Throwable): Throwable = {
@@ -2369,6 +2450,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def latestOffsetNotCalledError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException(errorClass = "_LEGACY_ERROR_TEMP_2262")
+    planChangeLogger.warn("latestOffsetNotCalledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def legacyCheckpointDirectoryExistsError(
@@ -2391,6 +2473,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "exitCode" -> exitCode.toString(),
         "stderrBuffer" -> stderrBuffer.toString()),
       cause = cause)
+    planChangeLogger.warn("subprocessExitedError(exitCode,stderrBuffer,cause)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exitCode, stderrBuffer, cause)
   }
 
   def outputDataTypeUnsupportedByNodeWithoutSerdeError(
@@ -2427,6 +2510,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "_LEGACY_ERROR_TEMP_2268",
       messageParameters = Map(
         "nodeName" -> nodeName))
+    planChangeLogger.warn("doExecuteBroadcastNotImplementedError(nodeName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nodeName)
   }
 
   def defaultDatabaseNotExistsError(defaultDatabase: String): Throwable = {
@@ -2456,6 +2540,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkSQLFeatureNotSupportedException(
       errorClass = "UNSUPPORTED_FEATURE.UPDATE_COLUMN_NULLABILITY",
       messageParameters = Map.empty)
+    planChangeLogger.warn("unsupportedUpdateColumnNullabilityError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def renameColumnUnsupportedForOlderMySQLError(): SparkSQLFeatureNotSupportedException = {
@@ -2472,6 +2557,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "message" -> message),
       cause = e)
+    planChangeLogger.warn("failedToExecuteQueryError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def nestedFieldUnsupportedError(colName: String): SparkUnsupportedOperationException = {
@@ -2623,6 +2709,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "maxDynamicPartitionsKey" -> maxDynamicPartitionsKey,
         "maxDynamicPartitions" -> maxDynamicPartitions.toString),
       cause = null)
+    planChangeLogger.warn("writePartitionExceedConfigSizeWhenDynamicPartitionError(numWrittenParts,maxDynamicPartitions,maxDynamicPartitionsKey)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numWrittenParts, maxDynamicPartitions, maxDynamicPartitionsKey)
   }
 
   def invalidNumberFormatError(
@@ -2649,6 +2736,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def unsupportedRemoveNamespaceCommentError(
       namespace: String): SparkSQLFeatureNotSupportedException = {
+       planChangeLogger.warn("unsupportedRemoveNamespaceCommentError(namespace)={}): EUAIACT-AUDIT: State change recorded for the audit trail", namespace)
     new SparkSQLFeatureNotSupportedException(
       errorClass = "UNSUPPORTED_FEATURE.REMOVE_NAMESPACE_COMMENT",
       messageParameters = Map("namespace" -> toSQLId(namespace)))
@@ -2676,6 +2764,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
           s"${toSQLValue(DateTimeUtils.microsToInstant(micros), TimestampType)}")),
       context = Array.empty,
       summary = "")
+    planChangeLogger.warn("timestampAddOverflowError(micros,amount,unit)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", micros, amount, unit)
   }
 
   def calendarIntervalArrowNanosOverflowError(
@@ -2743,6 +2832,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map("operation" -> s"add $i to the time value $t"),
       context = Array.empty,
       summary = "")
+    planChangeLogger.warn("timeAddIntervalOverflowError(time,timePrecision,interval,intervalEndField)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", time, timePrecision, interval, intervalEndField)
   }
 
   def invalidBucketFile(path: String): Throwable = {
@@ -2759,12 +2849,14 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       cause = null,
       context = getQueryContext(context),
       summary = getSummary(context))
+    planChangeLogger.warn("multipleRowScalarSubqueryError(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 
   def scalarSubqueryReturnsMultipleRows(): SparkRuntimeException = {
     new SparkRuntimeException(
       errorClass = "SCALAR_SUBQUERY_TOO_MANY_ROWS",
       messageParameters = Map.empty)
+    planChangeLogger.warn("scalarSubqueryReturnsMultipleRows()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def comparatorReturnsNull(firstValue: String, secondValue: String): Throwable = {
@@ -2818,6 +2910,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "location" -> toSQLValue(location.toString, StringType),
         "identifier" -> toSQLId(tableId.nameParts)))
+    planChangeLogger.warn("locationAlreadyExists(tableId,location)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableId, location, tableId)
   }
 
   def cannotConvertCatalystValueToProtobufEnumTypeError(
@@ -2851,6 +2944,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "timeWaitedMs" -> timeWaitedMs.toString,
         "stackTraceOutput" -> stackTraceOutput),
       cause = null)
+    planChangeLogger.warn("unreleasedThreadError(loggingId,opType,newAcquiredThreadInfo,acquiredThreadInfo,timeWaitedMs,stackTraceOutput)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", loggingId, opType, newAcquiredThreadInfo, acquiredThreadInfo, timeWaitedMs, stackTraceOutput, loggingId)
   }
 
   def checkpointFileChecksumVerificationFailed(
@@ -2877,6 +2971,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "expectedVersion" -> expectedVersion,
         "actualVersion" -> actualVersion),
       cause = null)
+    planChangeLogger.warn("cannotReadCheckpoint(expectedVersion,actualVersion)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expectedVersion, actualVersion)
   }
 
   def cannotFindBaseSnapshotCheckpoint(lineage: String): Throwable = {
@@ -2885,6 +2980,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "CANNOT_LOAD_STATE_STORE.CANNOT_FIND_BASE_SNAPSHOT_CHECKPOINT",
       messageParameters = Map("lineage" -> lineage),
       cause = null)
+    planChangeLogger.warn("cannotFindBaseSnapshotCheckpoint(lineage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", lineage)
   }
 
   def unexpectedFileSize(
@@ -2907,6 +3003,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "CANNOT_LOAD_STATE_STORE.UNEXPECTED_VERSION",
       messageParameters = Map("version" -> version.toString),
       cause = null)
+    planChangeLogger.warn("unexpectedStateStoreVersion(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   def malformedLogFile(text: String): Throwable = {
@@ -2943,6 +3040,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map("version" -> version.toString),
       cause = null
     )
+    planChangeLogger.warn("invalidChangeLogReaderVersion(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   def invalidChangeLogWriterVersion(version: Long): Throwable = {
@@ -2951,6 +3049,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map("version" -> version.toString),
       cause = null
     )
+    planChangeLogger.warn("invalidChangeLogWriterVersion(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   def invalidCheckpointLineage(lineage: String, message: String): Throwable = {
@@ -2973,6 +3072,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map("stateStoreId" -> stateStoreId),
       cause = e
     )
+    planChangeLogger.warn("notEnoughMemoryToLoadStore(stateStoreId,stateStoreProviderName,e)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stateStoreId, stateStoreProviderName, e, stateStoreId)
   }
 
   def cannotLoadStore(e: Throwable): Throwable = {
@@ -2980,6 +3080,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       errorClass = "CANNOT_LOAD_STATE_STORE.UNCATEGORIZED",
       messageParameters = Map.empty,
       cause = e)
+    planChangeLogger.warn("cannotLoadStore(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def hllInvalidLgK(function: String, min: Int, max: Int, value: Int): Throwable = {
@@ -3079,6 +3180,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
 
   def unsupportedPurgeTableError(): SparkUnsupportedOperationException = {
     new SparkUnsupportedOperationException("UNSUPPORTED_FEATURE.PURGE_TABLE")
+    planChangeLogger.warn("unsupportedPurgeTableError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def raiseError(
@@ -3155,6 +3257,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkRuntimeException(
       errorClass = "INVALID_VARIANT_GET_PATH",
       messageParameters = Map("path" -> path, "functionName" -> toSQLId(functionName)))
+    planChangeLogger.warn("invalidVariantGetPath(path,functionName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, functionName)
   }
 
   def invalidVariantPath(path: String, functionName: String): Throwable = {
@@ -3193,6 +3296,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "parameter" -> toSQLId("charset"),
         "charset" -> charset,
         "charsets" -> CharsetProvider.VALID_CHARSETS.mkString(", ")))
+    planChangeLogger.warn("invalidCharsetError(functionName,charset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", functionName, charset)
   }
 
   def malformedCharacterCoding(functionName: String, charset: String): RuntimeException = {
@@ -3207,6 +3311,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkRuntimeException(
       errorClass = "INVALID_WRITER_COMMIT_MESSAGE",
       messageParameters = Map("details" -> details))
+    planChangeLogger.warn("invalidWriterCommitMessageError(details)={}): EUAIACT-AUDIT: State change recorded for the audit trail", details)
   }
 
   def codecNotAvailableError(codecName: String, availableCodecs: String): Throwable = {

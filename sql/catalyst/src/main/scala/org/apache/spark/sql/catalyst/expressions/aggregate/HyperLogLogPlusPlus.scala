@@ -71,6 +71,7 @@ case class HyperLogLogPlusPlus(
   extends ImperativeAggregate with UnaryLike[Expression] {
 
   def this(child: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child = child, relativeSD = 0.05, mutableAggBufferOffset = 0, inputAggBufferOffset = 0)
   }
 
@@ -129,6 +130,7 @@ case class HyperLogLogPlusPlus(
     if (v != null) {
       hllppHelper.update(buffer, mutableAggBufferOffset, v, child.dataType)
     }
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   /**

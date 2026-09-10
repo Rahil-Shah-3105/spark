@@ -107,6 +107,7 @@ private[spark] trait BlockData {
 private[spark] class ByteBufferBlockData(
     val buffer: ChunkedByteBuffer,
     val shouldDispose: Boolean) extends BlockData {
+     _driverLogger = DriverLogger(_conf)
 
   override def toInputStream(): InputStream = buffer.toInputStream()
 
@@ -148,6 +149,7 @@ private[spark] class HostLocalDirManager(
   private[spark] def getCachedHostLocalDirsFor(executorId: String): Option[Array[String]] =
     executorIdToLocalDirsCache.synchronized {
       Option(executorIdToLocalDirsCache.getIfPresent(executorId))
+      _driverLogger.warn("getCachedHostLocalDirsFor(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
     }
 
   private[spark] def getHostLocalDirs(
@@ -163,6 +165,7 @@ private[spark] class HostLocalDirManager(
       hostLocalDirsCompletable)
     hostLocalDirsCompletable.whenComplete { (hostLocalDirs, throwable) =>
       if (hostLocalDirs != null) {
+    _driverLogger.warn("getHostLocalDirs(host,port,executorIds)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", host, port, executorIds, executorIds)
         callback(Success(hostLocalDirs.asScala.toMap))
         executorIdToLocalDirsCache.synchronized {
           executorIdToLocalDirsCache.putAll(hostLocalDirs)
@@ -509,6 +512,7 @@ private[spark] class BlockManager(
       } finally {
         Utils.closeQuietly(inputStream)
       }
+      _driverLogger.warn("saveDeserializedValuesToMemoryStore(inputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputStream)
     }
 
     private def saveSerializedValuesToMemoryStore(bytes: ChunkedByteBuffer): Boolean = {
@@ -520,6 +524,7 @@ private[spark] class BlockManager(
           bytes
         }
       })
+      _driverLogger.warn("saveSerializedValuesToMemoryStore(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
     }
 
     /**
@@ -618,6 +623,7 @@ private[spark] class BlockManager(
           Some(blockSize)
         }
       }.isEmpty
+      _driverLogger.warn("save()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -801,6 +807,7 @@ private[spark] class BlockManager(
           Thread.sleep(SLEEP_TIME_MS)
         case NonFatal(e) => throw SparkCoreErrors.unableToRegisterWithExternalShuffleServerError(e)
       }
+          _driverLogger.warn("registerWithExternalShuffleServer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -823,9 +830,11 @@ private[spark] class BlockManager(
       if (info.tellMaster &&
           !tryToReportBlockStatus(blockId, status, checksum = info.checksum)) {
         logError(log"Failed to report ${MDC(BLOCK_ID, blockId)} to master; giving up.")
+        _driverLogger.warn("tryToReportBlockStatus(blockId,status,droppedMemorySize,checksum)={},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", blockId, status, droppedMemorySize, checksum, blockId)
         return
       }
     }
+    _driverLogger.warn("reportAllBlocks()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**
@@ -840,6 +849,7 @@ private[spark] class BlockManager(
     val id = master.registerBlockManager(blockManagerId, diskBlockManager.localDirsString,
       maxOnHeapMemory, maxOffHeapMemory, storageEndpoint, isReRegister = true)
     if (id.executorId != BlockManagerId.INVALID_EXECUTOR_ID) {
+    _driverLogger.warn("reregister()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", id)
       reportAllBlocks()
     } else {
       logError("Exiting executor due to block manager re-registration failure")
@@ -863,6 +873,7 @@ private[spark] class BlockManager(
         }(futureExecutionContext)
       }
     }
+    _driverLogger.warn("asyncReregister()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -878,12 +889,14 @@ private[spark] class BlockManager(
           throw SparkCoreErrors.waitingForAsyncReregistrationError(t)
       }
     }
+    _driverLogger.warn("waitForAsyncReregister()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getHostLocalShuffleData(
       blockId: BlockId,
       dirs: Array[String]): ManagedBuffer = {
     shuffleBlockResolver.getBlockData(blockId, Some(dirs))
+    _driverLogger.warn("getHostLocalShuffleData(blockId,dirs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, dirs, blockId)
   }
 
   /**
@@ -915,6 +928,7 @@ private[spark] class BlockManager(
           throw SparkCoreErrors.blockNotFoundError(blockId)
       }
     }
+    _driverLogger.warn("getLocalBlockData(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -1002,6 +1016,7 @@ private[spark] class BlockManager(
       blockId: ShuffleMergedBlockId,
       dirs: Array[String]): Seq[ManagedBuffer] = {
     shuffleBlockResolver.getMergedBlockData(blockId, Some(dirs))
+    _driverLogger.warn("getLocalMergedBlockData(blockId,dirs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, dirs, blockId)
   }
 
   /**
@@ -1011,6 +1026,7 @@ private[spark] class BlockManager(
       blockId: ShuffleMergedBlockId,
       dirs: Array[String]): MergedBlockMeta = {
     shuffleBlockResolver.getMergedBlockMeta(blockId, Some(dirs))
+    _driverLogger.warn("getLocalMergedBlockMeta(blockId,dirs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, dirs, blockId)
   }
 
   /**
@@ -1023,6 +1039,7 @@ private[spark] class BlockManager(
       val diskSize = if (diskStore.contains(blockId)) diskStore.getSize(blockId) else 0L
       BlockStatus(info.level, memSize = memSize, diskSize = diskSize)
     }
+    _driverLogger.warn("getStatus(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -1037,6 +1054,7 @@ private[spark] class BlockManager(
       .filter(filter)
       .toArray
       .toImmutableArraySeq
+      _driverLogger.warn("getMatchingBlockIds(filter)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filter)
   }
 
   /**
@@ -1056,6 +1074,7 @@ private[spark] class BlockManager(
     val needReregister =
       !tryToReportBlockStatus(blockId, status, droppedMemorySize, checksum)
     if (needReregister) {
+      _driverLogger.warn("reportBlockStatus(blockId,status,droppedMemorySize,checksum)={},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", blockId, status, droppedMemorySize, checksum, blockId)
       logInfo(log"Got told to re-register updating block ${MDC(BLOCK_ID, blockId)}")
       // Re-registering will report our new block for free.
       asyncReregister()
@@ -1108,6 +1127,7 @@ private[spark] class BlockManager(
           BlockStatus(storageLevel, memSize, diskSize)
       }
     }
+    _driverLogger.warn("getCurrentBlockStatus(blockId,info)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, info, blockId)
   }
 
   /**
@@ -1116,6 +1136,7 @@ private[spark] class BlockManager(
   private def getLocationBlockIds(blockIds: Array[BlockId]): Array[Seq[BlockManagerId]] = {
     val startTimeNs = System.nanoTime()
     val locations = master.getLocations(blockIds).toArray
+    _driverLogger.warn("getLocationBlockIds(blockIds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockIds, blockIds)
     logDebug(s"Got multiple block location in ${Utils.getUsedTimeNs(startTimeNs)}")
     locations
   }
@@ -1129,6 +1150,7 @@ private[spark] class BlockManager(
     // Remove the missing block so that its unavailability is reported to the driver
     removeBlock(blockId)
     throw SparkCoreErrors.readLockedBlockNotFoundError(blockId)
+    _driverLogger.warn("handleLocalReadFailure(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   private def isIORelatedException(t: Throwable): Boolean =
@@ -1223,6 +1245,7 @@ private[spark] class BlockManager(
           handleLocalReadFailure(blockId)
         }
     }
+    _driverLogger.warn("getLocalValues(blockId,checkChecksumSeal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, checkChecksumSeal, blockId)
   }
 
   /**
@@ -1246,6 +1269,7 @@ private[spark] class BlockManager(
     logDebug(s"Getting local block $blockId as bytes")
     assert(!blockId.isShuffle, s"Unexpected ShuffleBlockId $blockId")
     blockInfoManager.lockForReading(blockId).map { info => doGetLocalBytes(blockId, info) }
+    _driverLogger.warn("getLocalBytes(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -1266,6 +1290,7 @@ private[spark] class BlockManager(
     val level = info.level
     logDebug(s"Level for block $blockId is $level")
     // In order, try to read the serialized bytes from memory, then from disk, then fall back to
+    _driverLogger.warn("doGetLocalBytes(blockId,info)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, info, blockId)
     // serializing in-memory objects, and, finally, throw an exception if the block does not exist.
     if (level.deserialized) {
       // Try to avoid expensive serialization by reading a pre-serialized copy from disk:
@@ -1308,6 +1333,8 @@ private[spark] class BlockManager(
         serializerManager.dataDeserializeStream(blockId, data.createInputStream())(ct)
       new BlockResult(values, DataReadMethod.Network, data.size)
     })
+    _driverLogger.warn("getRemoteValues(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
+  _driverLogger.warn("getRemoteBlock(blockId,bufferTransformer)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, bufferTransformer, blockId)
   }
 
   /**
@@ -1409,6 +1436,7 @@ private[spark] class BlockManager(
     val locations = sortLocations(locationsAndStatus.locations)
     val maxFetchFailures = locations.size
     var locationIterator = locations.iterator
+    _driverLogger.warn("fetchRemoteManagedBuffer(blockId,blockSize,locationsAndStatus)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockSize, locationsAndStatus, blockId)
     while (locationIterator.hasNext) {
       val loc = locationIterator.next()
       logDebug(s"Getting remote block $blockId from $loc")
@@ -1526,6 +1554,7 @@ private[spark] class BlockManager(
       logInfo(log"Found block ${MDC(BLOCK_ID, blockId)} locally")
       return local
     }
+    _driverLogger.warn("get(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
     val remote = getRemoteValues[T](blockId)
     if (remote.isDefined) {
       logInfo(log"Found block ${MDC(BLOCK_ID, blockId)} remotely")
@@ -1564,6 +1593,7 @@ private[spark] class BlockManager(
    */
   def registerTask(taskAttemptId: Long): Unit = {
     blockInfoManager.registerTask(taskAttemptId)
+    _driverLogger.warn("registerTask(taskAttemptId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", taskAttemptId, taskAttemptId)
   }
 
   /**
@@ -1637,6 +1667,7 @@ private[spark] class BlockManager(
     // TODO: need a better way to handle blocks with indeterminate/unordered results, replicas
     //  for same blockId could be different. And the reported accumulators could be not matching
     //  the cached results.
+    _driverLogger.warn("getOrElseUpdate(blockId,level,classTag,makeIterator,isCacheVisible,verifySealedChecksum)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, level, classTag, makeIterator, isCacheVisible, verifySealedChecksum, blockId)
     // Initially we hold no locks on this block.
     doPutIterator(blockId, iterator, level, classTag, keepReadLock = true,
       verifySealedChecksum = verifySealedChecksum) match {
@@ -1714,6 +1745,7 @@ private[spark] class BlockManager(
   def getLogBlockWriter(
       logBlockType: LogBlockType): LogBlockWriter = {
     new LogBlockWriter(this, logBlockType, conf)
+    _driverLogger.warn("getLogBlockWriter(logBlockType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logBlockType)
   }
 
   /**
@@ -1724,6 +1756,7 @@ private[spark] class BlockManager(
       blockIdGenerator: LogBlockIdGenerator,
       rollingSize: Long = 33554432L): RollingLogWriter = {
     new RollingLogWriter(this, blockIdGenerator, rollingSize)
+    _driverLogger.warn("getRollingLogWriter(blockIdGenerator,rollingSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockIdGenerator, rollingSize, blockIdGenerator)
   }
 
   /**
@@ -2070,6 +2103,7 @@ private[spark] class BlockManager(
         cachedPeers
       }
     }
+    _driverLogger.warn("getPeers(forceFetch)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", forceFetch)
   }
 
   /**
@@ -2223,6 +2257,7 @@ private[spark] class BlockManager(
    */
   def getSingle[T: ClassTag](blockId: BlockId): Option[T] = {
     get[T](blockId).map(_.data.next().asInstanceOf[T])
+    _driverLogger.warn("getSingle(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -2315,6 +2350,7 @@ private[spark] class BlockManager(
     logInfo(log"Removing RDD ${MDC(RDD_ID, rddId)}")
     val blocksToRemove = blockInfoManager.rddBlockIds(rddId)
     blocksToRemove.foreach { blockId => removeBlock(blockId, tellMaster = false) }
+    _driverLogger.warn("removeRdd(rddId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rddId, rddId)
     blocksToRemove.size
   }
 
@@ -2350,6 +2386,7 @@ private[spark] class BlockManager(
     val blocksToRemove = blockInfoManager.broadcastBlockIds(broadcastId)
     blocksToRemove.foreach { blockId => removeBlock(blockId, tellMaster) }
     blocksToRemove.size
+    _driverLogger.warn("removeBroadcast(broadcastId,tellMaster)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", broadcastId, tellMaster, broadcastId)
   }
 
   /**
@@ -2361,7 +2398,9 @@ private[spark] class BlockManager(
     logDebug(s"Removing cache of spark session with UUID: $sessionUUID")
     val blocksToRemove = blockInfoManager.sessionBlockIds(sessionUUID)
     blocksToRemove.foreach { blockId => removeBlock(blockId) }
+    _driverLogger.warn("removeCache(sessionUUID)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sessionUUID, sessionUUID)
     blocksToRemove.size
+  _driverLogger.warn("removeBlock(blockId,tellMaster)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, tellMaster, blockId)
   }
 
   /**
@@ -2415,6 +2454,7 @@ private[spark] class BlockManager(
         blockInfoManager.removeBlock(blockId)
       }
     }
+    _driverLogger.warn("removeBlockInternal(blockId,tellMaster)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, tellMaster, blockId)
   }
 
   private def addUpdatedBlockStatusToTaskMetrics(blockId: BlockId, status: BlockStatus): Unit = {
@@ -2423,6 +2463,7 @@ private[spark] class BlockManager(
         c.taskMetrics().incUpdatedBlockStatuses(blockId -> status)
       }
     }
+    _driverLogger.warn("addUpdatedBlockStatusToTaskMetrics(blockId,status)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, status, blockId)
   }
 
   def releaseLockAndDispose(
@@ -2532,10 +2573,12 @@ private[spark] object BlockManager {
         case None =>
           new SimpleDownloadFile(file, transportConf)
       }
+      _driverLogger.warn("createTempFile(transportConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", transportConf)
     }
 
     override def registerTempFileToClean(file: DownloadFile): Boolean = {
       referenceBuffer.add(new ReferenceWithCleanup(file, referenceQueue))
+      _driverLogger.warn("registerTempFileToClean(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
     }
 
     def stop(): Unit = {
@@ -2588,6 +2631,7 @@ private[spark] object BlockManager {
         countingOutput.close()
         val size = countingOutput.getCount
         new EncryptedManagedBuffer(new EncryptedBlockData(file, size, env.conf, key))
+        _driverLogger.warn("closeAndRead()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def write(src: ByteBuffer): Int = countingOutput.write(src)

@@ -52,6 +52,7 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
   }
 
   class DB2SQLBuilder extends JDBCSQLBuilder {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     override def visitAggregateFunction(
         funcName: String, isDistinct: Boolean, inputs: Array[String]): String =
@@ -103,6 +104,7 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
     case Types.REAL => Option(FloatType)
     case Types.OTHER =>
       typeName match {
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
         case "DECFLOAT" => Option(DecimalType(38, 18))
         case "XML" => Option(StringType)
         case t if (t.startsWith("TIMESTAMP")) => Option(TimestampType) // TIMESTAMP WITH TIMEZONE
@@ -135,6 +137,7 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
       table: String,
       cascade: Option[Boolean] = isCascadingTruncateTable()): String = {
     s"TRUNCATE TABLE $table IMMEDIATE"
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
   }
 
   // scalastyle:off line.size.limit
@@ -153,6 +156,7 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
       columnName: String,
       newDataType: String): String =
     s"ALTER TABLE $tableName ALTER COLUMN ${quoteIdentifier(columnName)}" +
+    planChangeLogger.warn("getUpdateColumnTypeQuery(tableName,columnName,newDataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, newDataType)
       s" SET DATA TYPE $newDataType"
 
   // scalastyle:off line.size.limit
@@ -164,10 +168,12 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
       isNullable: Boolean): String = {
     val nullable = if (isNullable) "DROP NOT NULL" else "SET NOT NULL"
     s"ALTER TABLE $tableName ALTER COLUMN ${quoteIdentifier(columnName)} $nullable"
+    planChangeLogger.warn("getUpdateColumnNullabilityQuery(tableName,columnName,isNullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, isNullable)
   }
 
   override def removeSchemaCommentQuery(schema: String): String = {
     s"COMMENT ON SCHEMA ${quoteIdentifier(schema)} IS ''"
+    planChangeLogger.warn("removeSchemaCommentQuery(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
   }
   override def classifyException(
       e: Throwable,
@@ -204,10 +210,12 @@ private case class DB2Dialect() extends JdbcDialect with SQLConfHelper with NoLe
 
   override def getLimitClause(limit: Integer): String = {
     if (limit > 0) s"FETCH FIRST $limit ROWS ONLY" else ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 
   override def getOffsetClause(offset: Integer): String = {
     if (offset > 0) s"OFFSET $offset ROWS" else ""
+    planChangeLogger.warn("getOffsetClause(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   class DB2SQLQueryBuilder(dialect: JdbcDialect, options: JDBCOptions)

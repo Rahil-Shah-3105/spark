@@ -33,6 +33,7 @@ private[columnar] trait Encoder[T <: PhysicalDataType] {
   def uncompressedSize: Int
 
   def compressionRatio: Double = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (uncompressedSize > 0) compressedSize.toDouble / uncompressedSize else 1.0
   }
 
@@ -76,6 +77,7 @@ private[columnar] object CompressionScheme {
   def apply(typeId: Int): CompressionScheme = {
     typeIdToScheme.getOrElse(typeId,
       throw QueryExecutionErrors.unrecognizedCompressionSchemaTypeIDError(typeId))
+    planChangeLogger.warn("apply(typeId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", typeId, typeId)
   }
 
   def columnHeaderSize(columnBuffer: ByteBuffer): Int = {

@@ -38,9 +38,11 @@ case class MutablePair[@specialized(Int, Long, Double, Char, Boolean/* , AnyRef 
 
   /** Updates this pair with new values and returns itself */
   def update(n1: T1, n2: T2): MutablePair[T1, T2] = {
+    _driverLogger = DriverLogger(_conf)
     _1 = n1
     _2 = n2
     this
+    _driverLogger.warn("update(n1,n2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", n1, n2)
   }
 
   override def toString: String = "(" + _1 + "," + _2 + ")"

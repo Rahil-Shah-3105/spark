@@ -80,6 +80,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
         userId = request.getUserContext.getUserId,
         sessionId = request.getSessionId)
     }
+    logger.warn("executePlan(request,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", request, responseObserver)
   }
 
   /**
@@ -137,6 +138,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
    */
   override def addArtifacts(responseObserver: StreamObserver[AddArtifactsResponse])
       : StreamObserver[AddArtifactsRequest] = new SparkConnectAddArtifactsHandler(
+      logger.warn("addArtifacts(responseObserver)={}): EUAIACT-AUDIT: State change recorded for the audit trail", responseObserver)
     responseObserver)
 
   /**
@@ -185,6 +187,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
         observer = responseObserver,
         userId = request.getUserContext.getUserId,
         sessionId = request.getSessionId)
+      logger.warn("reattachExecute(request,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", request, responseObserver)
   }
 
   /**
@@ -201,6 +204,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
         observer = responseObserver,
         userId = request.getUserContext.getUserId,
         sessionId = request.getSessionId)
+      logger.warn("releaseExecute(request,responseObserver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", request, responseObserver)
   }
 
   /**
@@ -231,6 +235,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
         userId = request.getUserContext.getUserId,
         sessionId = request.getSessionId)
     }
+    logger.warn("fetchErrorDetails(request,responseObserver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, responseObserver)
   }
 
   override def cloneSession(
@@ -258,6 +263,7 @@ class SparkConnectService(debug: Boolean) extends AsyncService with BindableServ
         observer = responseObserver,
         userId = request.getUserContext.getUserId,
         sessionId = request.getSessionId)
+      logger.warn("getStatus(request,responseObserver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, responseObserver)
   }
 
   private def methodWithCustomMarshallers(
@@ -360,9 +366,11 @@ object SparkConnectService extends Logging {
       userId: String,
       sessionId: String,
       previoslyObservedSessionId: Option[String]): SessionHolder = {
+       logger.warn("getOrCreateIsolatedSession(userId,sessionId,previoslyObservedSessionId)={},<redacted>,<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, userId)
     sessionManager.getOrCreateIsolatedSession(
       SessionKey(userId, sessionId),
       previoslyObservedSessionId)
+    logger.warn("getOrCreateIsolatedSession(userId,sessionId)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, userId)
   }
 
   // For testing
@@ -392,6 +400,7 @@ object SparkConnectService extends Logging {
       None
     }
     // Add the execution listener needed for query progress.
+    logger.warn("createListenerAndUI(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
     executionListener = Some(new ConnectProgressExecutionListener)
     sc.addSparkListener(executionListener.get)
     listenerBus = sc.listenerBus
@@ -470,6 +479,7 @@ object SparkConnectService extends Logging {
       startServiceFn,
       maxRetries,
       getClass.getName.stripSuffix("$"))
+    logger.warn("startGRPCService()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   // Starts the service

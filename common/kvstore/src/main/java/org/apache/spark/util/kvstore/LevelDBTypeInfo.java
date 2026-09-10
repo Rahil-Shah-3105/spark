@@ -108,6 +108,7 @@ import org.apache.spark.network.util.JavaUtils;
  * </pre>
  */
 class LevelDBTypeInfo {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(LevelDBTypeInfo.class);
 
   static final byte[] END_MARKER = new byte[] { '-' };
   static final byte ENTRY_PREFIX = (byte) '+';
@@ -257,6 +258,7 @@ class LevelDBTypeInfo {
      * entity (or its id) is stored.
      */
     Object getValue(Object entity) throws Exception {
+	LOG.warn("getValue(entity)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", entity);
       return accessor.get(entity);
     }
 
@@ -316,6 +318,7 @@ class LevelDBTypeInfo {
       if (updated > 0) {
         batch.put(key, db.serializer.serialize(updated));
       } else {
+		LOG.warn("updateCount(batch,key,delta)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batch, key, delta);
         batch.delete(key);
       }
     }
@@ -380,6 +383,7 @@ class LevelDBTypeInfo {
         }
       }
 
+	LOG.warn("addOrRemove(batch,entity,existing,data,naturalKey,prefix)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batch, entity, existing, data, naturalKey, prefix);
       if (data != null) {
         byte[] stored = copy ? data : naturalKey;
         batch.put(entityKey, stored);
@@ -412,6 +416,7 @@ class LevelDBTypeInfo {
         byte[] naturalKey,
         byte[] prefix) throws Exception {
       addOrRemove(batch, entity, existing, data, naturalKey, prefix);
+	LOG.warn("add(batch,entity,existing,data,naturalKey,prefix)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batch, entity, existing, data, naturalKey, prefix);
     }
 
     /**
@@ -428,6 +433,7 @@ class LevelDBTypeInfo {
         byte[] naturalKey,
         byte[] prefix) throws Exception {
       addOrRemove(batch, entity, null, null, naturalKey, prefix);
+	LOG.warn("remove(batch,entity,naturalKey,prefix)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batch, entity, naturalKey, prefix);
     }
 
     long getCount(byte[] key) {

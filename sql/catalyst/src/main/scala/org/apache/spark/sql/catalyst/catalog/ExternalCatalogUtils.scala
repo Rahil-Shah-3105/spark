@@ -33,6 +33,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.StructType
 
 object ExternalCatalogUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // This duplicates default value of Hive `ConfVars.DEFAULTPARTITIONNAME`, since catalyst doesn't
   // depend on Hive.
   val DEFAULT_PARTITION_NAME = "__HIVE_DEFAULT_PARTITION__"
@@ -143,6 +144,7 @@ object ExternalCatalogUtils {
     }
     partitionPathStrings.foldLeft(tablePath) { (totalPath, nextPartPath) =>
       new Path(totalPath, nextPartPath)
+    planChangeLogger.warn("getPartitionPathString(col,value)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", col, value)
     }
   }
 
@@ -152,6 +154,7 @@ object ExternalCatalogUtils {
     } else {
       escapePathName(value)
     }
+    planChangeLogger.warn("getPartitionValueString(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
   }
 
   def getPartitionPathString(col: String, value: String): String = {
@@ -170,6 +173,7 @@ object ExternalCatalogUtils {
       ExternalCatalogUtils.prunePartitionsByFilter(table, catalog.listPartitions(table.identifier),
         partitionFilters, conf.sessionLocalTimeZone)
     }
+    planChangeLogger.warn("listPartitionsByFilter(conf,catalog,table,partitionFilters)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, catalog, table, partitionFilters)
   }
 
   def prunePartitionsByFilter(
@@ -189,6 +193,7 @@ object ExternalCatalogUtils {
         boundPredicate.eval(p.toRow(partitionSchema, defaultTimeZoneId))
       }
     }
+    planChangeLogger.warn("prunePartitionsByFilter(catalogTable,inputPartitions,predicates,defaultTimeZoneId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalogTable, inputPartitions, predicates, defaultTimeZoneId, defaultTimeZoneId)
   }
 
   def generatePartitionPredicateByFilter(

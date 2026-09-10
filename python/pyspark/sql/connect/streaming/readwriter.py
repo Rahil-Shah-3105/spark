@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect._typing import OptionalPrimitiveType
     from pyspark.sql.connect.dataframe import DataFrame
     from pyspark.sql._typing import SupportsProcess
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class DataStreamReader(OptionUtils):
@@ -457,6 +458,7 @@ class DataStreamReader(OptionUtils):
     table.__doc__ = PySparkDataStreamReader.table.__doc__
 
     def changes(self, tableName: str) -> "DataFrame":
+        logger.warning("changes(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         if self._schema:
             raise AnalysisException(
                 "User specified schema not supported with `changes`.",
@@ -540,6 +542,7 @@ class DataStreamWriter:
 
     def queryName(self, queryName: str) -> "DataStreamWriter":
         if not queryName or not isinstance(queryName, str) or len(queryName.strip()) == 0:
+            logger.warning("queryName(self,queryName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, queryName)
             raise PySparkValueError(
                 errorClass="VALUE_NOT_NON_EMPTY_STR",
                 messageParameters={"arg_name": "queryName", "arg_value": str(queryName)},

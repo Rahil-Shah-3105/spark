@@ -51,9 +51,11 @@ case class CreateMetricViewCommand(
       case _ => throw SparkException.internalError(
         s"Failed to resolve identifier for creating metric view")
     }
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   private def validateUserColumns(name: TableIdentifier, analyzed: LogicalPlan): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (userSpecifiedColumns.nonEmpty) {
       if (userSpecifiedColumns.length > analyzed.output.length) {
         throw QueryCompilationErrors.cannotCreateViewNotEnoughColumnsError(
@@ -84,6 +86,7 @@ case class CreateMetricViewCommand(
         None, isMetricView = true),
       ignoreIfExists = allowExisting)
     Seq.empty
+    planChangeLogger.warn("createMetricViewInSessionCatalog(sparkSession,resolved)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, resolved)
   }
 
   override protected def withNewChildInternal(newChild: LogicalPlan): LogicalPlan = {
@@ -197,5 +200,6 @@ object MetricViewHelper {
     ViewHelper.verifyTemporaryObjectsNotExists(
       isTemporary = false, nameParts, analyzed, Seq.empty)
     (analyzed, metricView)
+    planChangeLogger.warn("analyzeMetricViewText(session,nameParts,viewText)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, nameParts, viewText, syntheticIdent)
   }
 }

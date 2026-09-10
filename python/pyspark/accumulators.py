@@ -30,6 +30,7 @@ from pyspark.errors import PySparkRuntimeError
 if TYPE_CHECKING:
     from pyspark._typing import SupportsIAdd
     from socketserver import BaseRequestHandler
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["Accumulator", "AccumulatorParam"]
@@ -172,6 +173,7 @@ class Accumulator(Generic[T]):
 
     def add(self, term: T) -> None:
         """Adds a term to this accumulator's value"""
+        logger.warning("add(self,term)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, term)
         self._value = self.accum_param.addInPlace(self._value, term)
 
     def __iadd__(self, term: T) -> "Accumulator[T]":
@@ -196,6 +198,7 @@ class AccumulatorParam(Generic[T]):
     >>> class VectorAccumulatorParam(AccumulatorParam):
     ...     def zero(self, value):
     ...         return [0.0] * len(value)
+        logger.warning("addInPlace(self,value1,value2)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value1, value2)
     ...     def addInPlace(self, val1, val2):
     ...         for i in range(len(val1)):
     ...              val1[i] += val2[i]
@@ -302,6 +305,7 @@ class UpdateRequestHandler(socketserver.StreamRequestHandler):
                 aid, update = pickleSer._read_with_length(self.rfile)
                 if aid in _accumulatorRegistry:
                     _accumulatorRegistry[aid] += update
+                    logger.warning("accum_updates()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             # Write a byte in acknowledgement
             self.wfile.write(struct.pack("!b", 1))
             return False
@@ -314,6 +318,7 @@ class UpdateRequestHandler(socketserver.StreamRequestHandler):
             if hmac.compare_digest(received_token, auth_token):
                 accum_updates()
                 # we've authenticated, we can break out of the first loop now
+                logger.warning("authenticate_and_accum_updates()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
                 return True
             else:
                 raise ValueError(

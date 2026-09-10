@@ -178,6 +178,8 @@ private[connect] class ExecuteHolder(
       responseSender: ExecuteGrpcResponseSender[proto.ExecutePlanResponse]): Unit = {
     addGrpcResponseSender(responseSender)
     responseSender.run(0)
+    logger.warn("runGrpcResponseSender(responseSender)={}): EUAIACT-AUDIT: State change recorded for the audit trail", responseSender)
+  logger.warn("runGrpcResponseSender(responseSender,lastConsumedResponseId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", responseSender, lastConsumedResponseId, lastConsumedResponseId)
   }
 
   /**
@@ -210,6 +212,7 @@ private[connect] class ExecuteHolder(
       // execution is closing... interrupt it already.
       sender.interrupt()
     }
+    logger.warn("addGrpcResponseSender(sender)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sender)
   }
 
   def removeGrpcResponseSender(sender: ExecuteGrpcResponseSender[_]): Unit = synchronized {
@@ -384,10 +387,14 @@ object ExecuteJobTag {
       s"User_${userId}_" +
       s"Session_${sessionId}_" +
       s"Operation_${operationId}"
+      logger.warn("apply(userId,sessionId,operationId)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, operationId, userId)
+  logger.warn("apply(userId,sessionId,tag)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, tag, userId)
   }
 
   def unapply(jobTag: String): Option[String] = {
     if (jobTag.startsWith(prefix)) Some(jobTag) else None
+    logger.warn("unapply(jobTag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jobTag)
+  logger.warn("unapply(sessionTag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sessionTag)
   }
 }
 

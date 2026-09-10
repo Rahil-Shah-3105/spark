@@ -36,6 +36,7 @@ object ShortestPaths extends Serializable {
 
   private def addMaps(spmap1: SPMap, spmap2: SPMap): SPMap = {
     // Mimics the optimization of breakOut, not present in Scala 2.13, while working in 2.12
+    logger.warn("addMaps(spmap1,spmap2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spmap1, spmap2)
     val map = mutable.Map[VertexId, Int]()
     (spmap1.keySet ++ spmap2.keySet).foreach { k =>
       map.put(k, math.min(spmap1.getOrElse(k, Int.MaxValue), spmap2.getOrElse(k, Int.MaxValue)))
@@ -59,6 +60,7 @@ object ShortestPaths extends Serializable {
     val spGraph = graph.mapVertices { (vid, attr) =>
       if (landmarks.contains(vid)) makeMap(vid -> 0) else makeMap()
     }
+    logger.warn("run(graph,landmarks)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", graph, landmarks)
 
     val initialMessage = makeMap()
 
@@ -70,6 +72,7 @@ object ShortestPaths extends Serializable {
       val newAttr = incrementMap(edge.dstAttr)
       if (edge.srcAttr != addMaps(newAttr, edge.srcAttr)) Iterator((edge.srcId, newAttr))
       else Iterator.empty
+      logger.warn("sendMessage(edge)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", edge)
     }
 
     Pregel(spGraph, initialMessage)(vertexProgram, sendMessage, addMaps)

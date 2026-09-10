@@ -31,6 +31,7 @@ from pyspark.ml.param.shared import HasPredictionCol, Param, TypeConverters, Par
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["FPGrowth", "FPGrowthModel", "PrefixSpan"]
 
@@ -80,24 +81,28 @@ class _FPGrowthParams(HasPredictionCol):
         """
         Gets the value of itemsCol or its default value.
         """
+        logger.warning("getItemsCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.itemsCol)
 
     def getMinSupport(self) -> float:
         """
         Gets the value of minSupport or its default value.
         """
+        logger.warning("getMinSupport(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.minSupport)
 
     def getNumPartitions(self) -> int:
         """
         Gets the value of :py:attr:`numPartitions` or its default value.
         """
+        logger.warning("getNumPartitions(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numPartitions)
 
     def getMinConfidence(self) -> float:
         """
         Gets the value of minConfidence or its default value.
         """
+        logger.warning("getMinConfidence(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.minConfidence)
 
 
@@ -113,6 +118,7 @@ class FPGrowthModel(JavaModel, _FPGrowthParams, JavaMLWritable, JavaMLReadable["
         """
         Sets the value of :py:attr:`itemsCol`.
         """
+        logger.warning("setItemsCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(itemsCol=value)
 
     @since("3.0.0")
@@ -120,6 +126,7 @@ class FPGrowthModel(JavaModel, _FPGrowthParams, JavaMLWritable, JavaMLReadable["
         """
         Sets the value of :py:attr:`minConfidence`.
         """
+        logger.warning("setMinConfidence(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(minConfidence=value)
 
     @since("3.0.0")
@@ -127,6 +134,7 @@ class FPGrowthModel(JavaModel, _FPGrowthParams, JavaMLWritable, JavaMLReadable["
         """
         Sets the value of :py:attr:`predictionCol`.
         """
+        logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(predictionCol=value)
 
     @property
@@ -138,6 +146,7 @@ class FPGrowthModel(JavaModel, _FPGrowthParams, JavaMLWritable, JavaMLReadable["
         * `items` - Itemset of the same type as the input column.
         * `freq`  - Frequency of the itemset (`LongType`).
         """
+        logger.warning("freqItemsets(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._call_java("freqItemsets")
 
     @property

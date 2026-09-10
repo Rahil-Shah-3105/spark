@@ -46,6 +46,7 @@ import org.apache.spark.sql.internal.SQLConf
 case class OptimizeMetadataOnlyQuery(catalog: SessionCatalog) extends Rule[LogicalPlan] {
 
   def apply(plan: LogicalPlan): LogicalPlan = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (!conf.optimizerMetadataOnly) {
       return plan
     }
@@ -86,6 +87,7 @@ case class OptimizeMetadataOnlyQuery(catalog: SessionCatalog) extends Rule[Logic
           a
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -100,6 +102,7 @@ case class OptimizeMetadataOnlyQuery(catalog: SessionCatalog) extends Rule[Logic
         throw QueryCompilationErrors.cannotFindColumnInRelationOutputError(colName, relation)
       )
     }
+    planChangeLogger.warn("getPartitionAttrs(partitionColumnNames,relation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionColumnNames, relation)
   }
 
   /**
@@ -177,6 +180,7 @@ case class OptimizeMetadataOnlyQuery(catalog: SessionCatalog) extends Rule[Logic
 
         case _ => None
       }
+      planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     }
   }
 }

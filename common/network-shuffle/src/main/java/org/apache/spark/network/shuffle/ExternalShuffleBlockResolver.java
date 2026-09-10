@@ -62,6 +62,7 @@ import org.apache.spark.util.Pair;
  * from Spark's IndexShuffleBlockResolver.
  */
 public class ExternalShuffleBlockResolver {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ExternalShuffleBlockResolver.class);
 
@@ -118,6 +119,7 @@ public class ExternalShuffleBlockResolver {
         new CacheLoader<String, ShuffleIndexInformation>() {
           @Override
           public ShuffleIndexInformation load(String filePath) throws IOException {
+			logger.warn("load(filePath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filePath);
             return new ShuffleIndexInformation(filePath);
           }
         };
@@ -154,6 +156,7 @@ public class ExternalShuffleBlockResolver {
     logger.info("Registered executor {} with {}",
       MDC.of(LogKeys.APP_EXECUTOR_ID, fullId),
       MDC.of(LogKeys.EXECUTOR_SHUFFLE_INFO, executorInfo));
+	logger.warn("registerExecutor(appId,execId,executorInfo)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, execId, executorInfo, appId);
     try {
       if (db != null && AppsWithRecoveryDisabled.isRecoveryEnabledForApp(appId)) {
         byte[] key = dbAppExecKey(fullId);
@@ -175,6 +178,7 @@ public class ExternalShuffleBlockResolver {
       int shuffleId,
       long mapId,
       int reduceId) {
+	logger.warn("getBlockData(appId,execId,shuffleId,mapId,reduceId)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, execId, shuffleId, mapId, reduceId, appId);
     return getContinuousBlocksData(appId, execId, shuffleId, mapId, reduceId, reduceId + 1);
   }
 
@@ -189,6 +193,7 @@ public class ExternalShuffleBlockResolver {
       long mapId,
       int startReduceId,
       int endReduceId) {
+	logger.warn("getContinuousBlocksData(appId,execId,shuffleId,mapId,startReduceId,endReduceId)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, execId, shuffleId, mapId, startReduceId, endReduceId, appId);
     ExecutorShuffleInfo executor = executors.get(new AppExecId(appId, execId));
     if (executor == null) {
       throw new RuntimeException(
@@ -202,6 +207,7 @@ public class ExternalShuffleBlockResolver {
       String execId,
       int rddId,
       int splitIndex) {
+	logger.warn("getRddBlockData(appId,execId,rddId,splitIndex)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, execId, rddId, splitIndex, appId);
     ExecutorShuffleInfo executor = executors.get(new AppExecId(appId, execId));
     if (executor == null) {
       throw new RuntimeException(
@@ -221,6 +227,7 @@ public class ExternalShuffleBlockResolver {
     logger.info("Application {} removed, cleanupLocalDirs = {}",
       MDC.of(LogKeys.APP_ID, appId),
       MDC.of(LogKeys.CLEANUP_LOCAL_DIRS, cleanupLocalDirs));
+	logger.warn("applicationRemoved(appId,cleanupLocalDirs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, cleanupLocalDirs, appId);
     Iterator<Map.Entry<AppExecId, ExecutorShuffleInfo>> it = executors.entrySet().iterator();
     while (it.hasNext()) {
       Map.Entry<AppExecId, ExecutorShuffleInfo> entry = it.next();
@@ -258,6 +265,7 @@ public class ExternalShuffleBlockResolver {
   public void executorRemoved(String executorId, String appId) {
     logger.info("Clean up non-shuffle and non-RDD files associated with the finished executor {}",
       MDC.of(LogKeys.EXECUTOR_ID, executorId));
+	logger.warn("executorRemoved(executorId,appId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, appId, executorId);
     AppExecId fullId = new AppExecId(appId, executorId);
     final ExecutorShuffleInfo executor = executors.get(fullId);
     if (executor == null) {
@@ -287,6 +295,7 @@ public class ExternalShuffleBlockResolver {
       } catch (Exception e) {
         logger.error("Failed to delete directory: {}", e,
           MDC.of(LogKeys.PATH, localDir));
+		logger.warn("deleteExecutorDirs(dirs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dirs);
       }
     }
   }
@@ -311,6 +320,7 @@ public class ExternalShuffleBlockResolver {
         logger.error("Failed to delete files not served by shuffle service in directory: {}", e,
           MDC.of(LogKeys.PATH, localDir));
       }
+	logger.warn("deleteNonShuffleServiceServedFiles(dirs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dirs);
     }
   }
 
@@ -374,6 +384,7 @@ public class ExternalShuffleBlockResolver {
       throw new RuntimeException(
         String.format("Executor is not registered (appId=%s, execId=%s)", appId, execId));
     }
+	logger.warn("removeBlocks(appId,execId,blockIds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, execId, blockIds, appId);
     int numRemovedBlocks = 0;
     for (String blockId : blockIds) {
       try {
@@ -396,6 +407,7 @@ public class ExternalShuffleBlockResolver {
   }
 
   public Map<String, String[]> getLocalDirs(String appId, Set<String> execIds) {
+	logger.warn("getLocalDirs(appId,execIds)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, execIds, appId);
     return execIds.stream()
       .map(exec -> {
         ExecutorShuffleInfo info = executors.get(new AppExecId(appId, exec));

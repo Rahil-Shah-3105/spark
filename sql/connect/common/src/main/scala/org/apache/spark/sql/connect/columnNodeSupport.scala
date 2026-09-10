@@ -56,6 +56,7 @@ object ColumnNodeToProtoConverter extends (ColumnNode => proto.Expression) {
       encoder: Option[Encoder[_]],
       additionalTransformation: ColumnNode => ColumnNode): proto.Expression = {
     apply(node, encoder, Some(additionalTransformation))
+  logger.warn("apply(node,e,additionalTransformation)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", node, e, additionalTransformation)
   }
 
   private def apply(

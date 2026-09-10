@@ -46,6 +46,7 @@ private[sql] object SQLUtils extends Logging {
       jsc: JavaSparkContext,
       sparkConfigMap: JMap[Object, Object],
       enableHiveSupport: Boolean): SparkSession = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val spark =
       if (enableHiveSupport &&
           jsc.sc.conf.get(CATALOG_IMPLEMENTATION.key, "hive") == "hive" &&
@@ -57,6 +58,7 @@ private[sql] object SQLUtils extends Logging {
           // So, we intentionally check if Hive classes are loadable or not only when
           // Hive support is explicitly enabled by short-circuiting. See also SPARK-26422.
           SparkSession.hiveClassesArePresent) {
+           planChangeLogger.warn("getOrCreateSparkSession(jsc,sparkConfigMap,enableHiveSupport)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jsc, sparkConfigMap, enableHiveSupport)
         SparkSession.builder().enableHiveSupport().sparkContext(jsc.sc).getOrCreate()
       } else {
         if (enableHiveSupport) {
@@ -79,18 +81,22 @@ private[sql] object SQLUtils extends Logging {
     for ((name, value) <- sparkConfigMap.asScala) {
       spark.sparkContext.conf.set(name.toString, value.toString)
     }
+    planChangeLogger.warn("setSparkContextSessionConf(spark,sparkConfigMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spark, sparkConfigMap)
   }
 
   def getSessionConf(spark: SparkSession): JMap[String, String] = {
     spark.conf.getAll.asJava
+    planChangeLogger.warn("getSessionConf(spark)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", spark)
   }
 
   def getJavaSparkContext(spark: SparkSession): JavaSparkContext = {
     new JavaSparkContext(spark.sparkContext)
+    planChangeLogger.warn("getJavaSparkContext(spark)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", spark)
   }
 
   def createStructType(fields: Seq[StructField]): StructType = {
     StructType(fields)
+    planChangeLogger.warn("createStructType(fields)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fields)
   }
 
   // Support using regex in string interpolation
@@ -101,12 +107,14 @@ private[sql] object SQLUtils extends Logging {
   def createStructField(name: String, dataType: String, nullable: Boolean): StructField = {
     val dtObj = CatalystSqlParser.parseDataType(dataType)
     StructField(name, dtObj, nullable)
+    planChangeLogger.warn("createStructField(name,dataType,nullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable)
   }
 
   def createDF(rdd: RDD[Array[Byte]], schema: StructType, sparkSession: SparkSession): DataFrame = {
     val num = schema.fields.length
     val rowRDD = rdd.map(bytesToRow(_, schema))
     sparkSession.createDataFrame(rowRDD, schema)
+    planChangeLogger.warn("createDF(rdd,schema,sparkSession)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, schema, sparkSession)
   }
 
   def dfToRowRDD(df: DataFrame): JavaRDD[Array[Byte]] = {
@@ -154,6 +162,7 @@ private[sql] object SQLUtils extends Logging {
       packageNames: Array[Byte],
       broadcastVars: Array[Object],
       schema: StructType): DataFrame = {
+       planChangeLogger.warn("dapply(df,func,packageNames,broadcastVars,schema)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", df, func, packageNames, broadcastVars, schema)
     val bv = broadcastVars.map(_.asInstanceOf[Broadcast[Object]])
     val realSchema = if (schema == null) SERIALIZED_R_DATA_SCHEMA else schema
     df.mapPartitionsInR(func, packageNames, bv, realSchema)
@@ -168,6 +177,7 @@ private[sql] object SQLUtils extends Logging {
       packageNames: Array[Byte],
       broadcastVars: Array[Object],
       schema: StructType): DataFrame = {
+       planChangeLogger.warn("gapply(gd,func,packageNames,broadcastVars,schema)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", gd, func, packageNames, broadcastVars, schema)
     val bv = broadcastVars.map(_.asInstanceOf[Broadcast[Object]])
     val realSchema = if (schema == null) SERIALIZED_R_DATA_SCHEMA else schema
     gd.flatMapGroupsInR(func, packageNames, bv, realSchema)
@@ -197,6 +207,7 @@ private[sql] object SQLUtils extends Logging {
         Row.fromSeq(fields.toImmutableArraySeq)
       case _ => null
     }
+    planChangeLogger.warn("readSqlObject(dis,dataType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dis, dataType)
   }
 
   def writeSqlObject(dos: DataOutputStream, obj: Object): Boolean = {
@@ -210,6 +221,7 @@ private[sql] object SQLUtils extends Logging {
       case _ =>
         false
     }
+    planChangeLogger.warn("writeSqlObject(dos,obj)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dos, obj)
   }
 
   def getTableNames(sparkSession: SparkSession, databaseName: String): Array[String] = {
@@ -220,10 +232,12 @@ private[sql] object SQLUtils extends Logging {
         sparkSession.catalog.currentDatabase
     }
     sparkSession.catalog.listTables(db).collect().map(_.name)
+    planChangeLogger.warn("getTableNames(sparkSession,databaseName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, databaseName)
   }
 
   def createArrayType(elementType: String): ArrayType = {
     ArrayType(ExprUtils.evalTypeExpr(Literal(elementType)), true)
+    planChangeLogger.warn("createArrayType(elementType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", elementType)
   }
 
   /**
@@ -233,6 +247,7 @@ private[sql] object SQLUtils extends Logging {
   def readArrowStreamFromFile(
       sparkSession: SparkSession,
       filename: String): JavaRDD[Array[Byte]] = {
+       planChangeLogger.warn("readArrowStreamFromFile(sparkSession,filename)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, filename)
     // Parallelize the record batches to create an RDD
     val batches = ArrowConverters.readArrowStreamFromFile(filename).toImmutableArraySeq
     JavaRDD.fromRDD(sparkSession.sparkContext.parallelize(batches, batches.length))

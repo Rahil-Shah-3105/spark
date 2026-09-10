@@ -45,6 +45,7 @@ import org.apache.spark.util.ThreadUtils
  * materialized output can be used to optimize the rest of the query plan.
  */
 abstract class QueryStageExec extends LeafExecNode {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * An id of this query stage which is unique in the entire query plan.
@@ -319,6 +320,7 @@ case class ResultQueryStageExec(
 
   override def resetMetrics(): Unit = {
     plan.resetMetrics()
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def doMaterialize(): Future[Any] = {

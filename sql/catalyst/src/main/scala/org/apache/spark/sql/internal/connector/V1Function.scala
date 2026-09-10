@@ -39,6 +39,7 @@ import org.apache.spark.sql.types.StructType
 class V1Function private (
     val info: ExpressionInfo,
     builderFactory: () => FunctionBuilder) extends UnboundFunction {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Lazy function builder - only computed on first invoke().
@@ -76,6 +77,8 @@ object V1Function {
    */
   def apply(info: ExpressionInfo, builderFactory: () => FunctionBuilder): V1Function = {
     new V1Function(info, builderFactory)
+    planChangeLogger.warn("apply(info,builderFactory)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", info, builderFactory)
+  planChangeLogger.warn("apply(info,builder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", info, builder)
   }
 
   /**

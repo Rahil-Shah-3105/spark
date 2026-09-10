@@ -31,9 +31,11 @@ import org.apache.spark.sql.types.Metadata
 trait AliasHelper {
 
   protected def getAliasMap(plan: Project): AttributeMap[Alias] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     // Create a map of Aliases to their values from the child projection.
     // e.g., 'SELECT a + b AS c, d ...' produces Map(c -> Alias(a + b, c)).
     getAliasMap(plan.projectList)
+  planChangeLogger.warn("getAliasMap(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   protected def getAliasMap(plan: Aggregate): AttributeMap[Alias] = {
@@ -44,6 +46,7 @@ trait AliasHelper {
         (a.toAttribute, a)
     }
     AttributeMap(aliasMap)
+  planChangeLogger.warn("getAliasMap(exprs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", exprs)
   }
 
   protected def getAliasMap(exprs: Iterable[NamedExpression]): AttributeMap[Alias] = {

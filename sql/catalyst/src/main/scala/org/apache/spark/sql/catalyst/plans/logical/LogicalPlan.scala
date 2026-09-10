@@ -42,6 +42,7 @@ abstract class LogicalPlan
   with LogicalPlanDistinctKeys
   with QueryPlanConstraints
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Metadata fields that can be projected from this node.
@@ -60,6 +61,7 @@ abstract class LogicalPlan
       case MetadataAttributeWithLogicalName(attr, logicalName)
           if conf.resolver(name, logicalName) => attr
     }
+    planChangeLogger.warn("getMetadataAttributeByNameOpt(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -317,6 +319,7 @@ trait UnaryNode extends LogicalPlan with UnaryLike[LogicalPlan] {
    */
   protected def getAllValidConstraints(projectList: Seq[NamedExpression]): ExpressionSet = {
     var allConstraints = child.constraints
+    planChangeLogger.warn("getAllValidConstraints(projectList)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", projectList)
     projectList.foreach {
       case a @ Alias(l: Literal, _) =>
         allConstraints += EqualNullSafe(a.toAttribute, l)
@@ -358,6 +361,7 @@ object LogicalPlanIntegrity {
         case _ => false
       }
     }
+    planChangeLogger.warn("canGetOutputAttrs(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
   }
 
   /**

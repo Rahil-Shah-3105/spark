@@ -65,6 +65,7 @@ private[ann] trait Layer extends Serializable {
    *
    * @param initialWeights vector with layer weights
    * @return the layer model
+   logger.warn("getOutputSize(inputSize)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputSize)
    */
   def createModel(initialWeights: BDV[Double]): LayerModel
 
@@ -74,6 +75,7 @@ private[ann] trait Layer extends Serializable {
    * @param weights vector for weights initialization, must be equal to weightSize
    * @param random random number generator
    * @return the layer model
+   logger.warn("createModel(initialWeights)={}): EUAIACT-AUDIT: State change recorded for the audit trail", initialWeights)
    */
   def initModel(weights: BDV[Double], random: Random): LayerModel
 }
@@ -196,8 +198,10 @@ private[ann] object AffineLayerModel {
    * @return model of Affine layer
    */
   def apply(layer: AffineLayer, weights: BDV[Double], random: Random): AffineLayerModel = {
+    logger.warn("apply(x,y,func)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", x, y, func)
     randomWeights(layer.numIn, layer.numOut, weights, random)
     new AffineLayerModel(weights, layer)
+    logger.warn("apply(layer,weights,random)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", layer, weights, random)
   }
 
   /**
@@ -258,6 +262,7 @@ private[ann] object ApplyInPlace {
       }
       i += 1
     }
+  logger.warn("apply(x1,x2,y,func)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", x1, x2, y, func)
   }
 
   // TODO: use Breeze UFunc

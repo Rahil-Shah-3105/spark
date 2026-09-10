@@ -91,10 +91,12 @@ private[sql] trait DataTypeErrorsBase {
 
   def getSummary(sqlContext: QueryContext): String = {
     if (sqlContext == null) "" else sqlContext.summary
+    logger.warn("getSummary(sqlContext)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sqlContext)
   }
 
   def getQueryContext(context: QueryContext): Array[QueryContext] = {
     if (context == null) Array.empty else Array(context)
+    logger.warn("getQueryContext(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 
   def toDSOption(option: String): String = {

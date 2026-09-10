@@ -39,6 +39,7 @@ import org.apache.spark.unsafe.types.UTF8String
  * package in order to make the methods accessible to single-pass [[Resolver]].
  */
 object ApplyCharTypePaddingHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   object AttrOrOuterRef {
     def unapply(e: Expression): Option[Attribute] = e match {
@@ -63,6 +64,7 @@ object ApplyCharTypePaddingHelper {
       val newPlan = Project(projectList, cleanedRelation())
       newPlan -> relation.output.zip(newPlan.output)
     }
+    planChangeLogger.warn("readSidePadding(relation,cleanedRelation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, cleanedRelation)
   }
 
   private[sql] def paddingForStringComparison(
@@ -76,6 +78,7 @@ object ApplyCharTypePaddingHelper {
             singleNodePaddingForStringComparison(withChildrenResolved, padCharCol)
         }
     }
+    planChangeLogger.warn("paddingForStringComparison(plan,padCharCol)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, padCharCol)
   }
 
   private[sql] def singleNodePaddingForStringComparison(
@@ -130,6 +133,7 @@ object ApplyCharTypePaddingHelper {
           case (_: OuterReference, _) => Seq(left)
           case (_, _: OuterReference) => Seq(right)
           case _ => Nil
+        planChangeLogger.warn("addPadding(expr,charLength,targetLength,alwaysPad)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, charLength, targetLength, alwaysPad)
         }
         val newChildren =
           CharVarcharUtils.addPaddingInStringComparison(Seq(left, right), padCharCol)
@@ -147,6 +151,7 @@ object ApplyCharTypePaddingHelper {
           padCharCol
         )
         if (e.isInstanceOf[OuterReference]) {
+        planChangeLogger.warn("singleNodePaddingForStringComparison(expression,padCharCol)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, padCharCol)
           i.copy(value = newChildren.head.transform {
             case a: Attribute if a.semanticEquals(attr) => OuterReference(a)
           }, list = newChildren.tail)

@@ -55,6 +55,7 @@ private case class MySQLDialect() extends JdbcDialect with SQLConfHelper with No
   }
 
   class MySQLSQLBuilder extends JDBCSQLBuilder {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     override def visitExtract(extract: Extract): String = {
       val field = extract.field
@@ -196,6 +197,7 @@ private case class MySQLDialect() extends JdbcDialect with SQLConfHelper with No
       case Types.TIMESTAMP if !conf.legacyMySqlTimestampNTZMappingEnabled => Some(TimestampType)
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def quoteIdentifier(colName: String): String = {

@@ -31,6 +31,7 @@ import org.apache.spark.util.kvstore.{KVIndex, KVStore}
  * no state kept in this class, so it's ok to have multiple instances of it in an application.
  */
 class HiveThriftServer2AppStatusStore(store: KVStore) {
+  private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
 
   def getSessionList: Seq[SessionInfo] = {
     KVUtils.viewToSeq(store.view(classOf[SessionInfo]))
@@ -50,6 +51,7 @@ class HiveThriftServer2AppStatusStore(store: KVStore) {
     } catch {
       case _: NoSuchElementException => None
     }
+    logInfo.warn("getSession(sessionId)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail {}", sessionId)
   }
 
   def getExecution(executionId: String): Option[ExecutionInfo] = {
@@ -58,6 +60,7 @@ class HiveThriftServer2AppStatusStore(store: KVStore) {
     } catch {
       case _: NoSuchElementException => None
     }
+    logInfo.warn("getExecution(executionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executionId, executionId)
   }
 
   /**

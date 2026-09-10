@@ -39,6 +39,7 @@ import org.apache.spark.sql.internal.SQLConf.StoreAssignmentPolicy
 import org.apache.spark.sql.types.{ArrayType, DataType, DecimalType, IntegralType, MapType, StructType, UserDefinedType}
 
 object TableOutputResolver extends SQLConfHelper with Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Modes for filling in default or null values for missing columns.
@@ -233,6 +234,7 @@ object TableOutputResolver extends SQLConfHelper with Logging {
       tableName, value.dataType, attrTypeWithoutCharVarchar,
       byName = true, conf, addError, colPath)
 
+    planChangeLogger.warn("checkUpdate(tableName,value,attr,conf,addError,colPath)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, value, attr, conf, addError, colPath)
     if (canWriteValue) {
       val nullCheckedValue = checkNullability(value, attr, conf, colPath)
       val casted = cast(nullCheckedValue, attrTypeWithoutCharVarchar, conf, colPath.quoted)
@@ -299,6 +301,7 @@ object TableOutputResolver extends SQLConfHelper with Logging {
     //         exprId=2,
     //         explicitMetadata=None) -- metadata.nonEmpty !!
     //
+    planChangeLogger.warn("applyColumnMetadata(expr,column)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, column)
     // So we always add an Alias(expr, name, explicitMetadata = Some(requiredMetadata))
     // to prevent expr from leaking the source query metadata into the Write.
     expr match {
@@ -332,6 +335,7 @@ object TableOutputResolver extends SQLConfHelper with Logging {
       defaultExpr: Expression,
       expectedCol: Attribute,
       conf: SQLConf): NamedExpression = {
+       planChangeLogger.warn("applyDefaultWithLengthCheck(defaultExpr,expectedCol,conf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", defaultExpr, expectedCol, conf)
     val rawType = CharVarcharUtils.getRawType(expectedCol.metadata).getOrElse(expectedCol.dataType)
     val checked = if (!conf.charVarcharAsString && CharVarcharUtils.hasCharVarchar(rawType)) {
       val value = defaultExpr match {
@@ -361,6 +365,7 @@ object TableOutputResolver extends SQLConfHelper with Logging {
       case _ =>
         true
     }
+    planChangeLogger.warn("canWrite(tableName,valueType,expectedType,byName,conf,addError,colPath)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, valueType, expectedType, byName, conf, addError, colPath)
   }
 
   private def reorderColumnsByName(
@@ -794,6 +799,7 @@ object TableOutputResolver extends SQLConfHelper with Logging {
     } else {
       cast
     }
+    planChangeLogger.warn("checkCastOverflowInTableInsert(cast,columnName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cast, columnName)
   }
 
   def suitableForByNameCheck(

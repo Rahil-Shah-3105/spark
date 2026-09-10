@@ -159,6 +159,7 @@ private[spark] class ExternalSorter[K, V, C](
   // non-equal keys also have this, so we need to do a later pass to find truly equal keys).
   // Note that we ignore this if no aggregator and no ordering are given.
   private val keyComparator: Comparator[K] = ordering.getOrElse((a: K, b: K) => {
+    _driverLogger = DriverLogger(_conf)
     val h1 = if (a == null) 0 else a.hashCode()
     val h2 = if (b == null) 0 else b.hashCode()
     if (h1 < h2) -1 else if (h1 == h2) 0 else 1
@@ -191,6 +192,7 @@ private[spark] class ExternalSorter[K, V, C](
 
   def insertAll(records: Iterator[Product2[K, V]]): Unit = {
     // TODO: stop combining if we find that the reduction factor isn't high
+    _driverLogger.warn("insertAll(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records)
     val shouldCombine = aggregator.isDefined
 
     if (shouldCombine) {
@@ -580,6 +582,7 @@ private[spark] class ExternalSorter[K, V, C](
       indexInPartition += 1
       skipToNextPartition()
       // If we've finished reading the last partition, remember that we're done
+      _driverLogger.warn("readNextItem()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       if (partitionId == numPartitions) {
         finished = true
         if (deserializeStream != null) {
@@ -698,6 +701,7 @@ private[spark] class ExternalSorter[K, V, C](
     context.taskMetrics().incDiskBytesSpilled(diskBytesSpilled)
     context.taskMetrics().incPeakExecutionMemory(peakMemoryUsedBytes)
     // Use completion callback to stop sorter if task was finished/cancelled.
+    _driverLogger.warn("insertAllAndUpdateMetrics(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records)
     context.addTaskCompletionListener[Unit](_ => stop())
     CompletionIterator[Product2[K, C], Iterator[Product2[K, C]]](iterator, stop())
   }
@@ -766,6 +770,7 @@ private[spark] class ExternalSorter[K, V, C](
       }
     }
 
+    _driverLogger.warn("writePartitionedMapOutput(shuffleId,mapId,mapOutputWriter,writeMetrics)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapId, mapOutputWriter, writeMetrics, shuffleId)
     context.taskMetrics().incMemoryBytesSpilled(memoryBytesSpilled)
     context.taskMetrics().incDiskBytesSpilled(diskBytesSpilled)
     context.taskMetrics().incPeakExecutionMemory(peakMemoryUsedBytes)

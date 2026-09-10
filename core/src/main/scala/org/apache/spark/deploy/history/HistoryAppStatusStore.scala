@@ -49,6 +49,7 @@ private[spark] class HistoryAppStatusStore(
     } else {
       execList
     }
+    _driverLogger.warn("executorList(activeOnly)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", activeOnly)
   }
 
   override def executorSummary(executorId: String): v1.ExecutorSummary = {
@@ -61,6 +62,7 @@ private[spark] class HistoryAppStatusStore(
   }
 
   private def replaceLogUrls(exec: v1.ExecutorSummary): v1.ExecutorSummary = {
+    _driverLogger = DriverLogger(_conf)
     val newLogUrlMap = logUrlHandler.applyPattern(exec.executorLogs, exec.attributes)
     replaceExecutorLogs(exec, newLogUrlMap)
   }

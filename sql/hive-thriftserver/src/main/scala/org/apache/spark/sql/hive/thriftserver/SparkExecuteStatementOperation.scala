@@ -89,6 +89,7 @@ private[hive] class SparkExecuteStatementOperation(
   }
 
   def getNextRowSet(order: FetchOrientation, maxRowsL: Long): TRowSet = withLocalProperties {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     try {
       sparkContext.setJobGroup(statementId, redactedStatement, forceCancel)
       getNextRowSetInternal(order, maxRowsL)
@@ -116,6 +117,7 @@ private[hive] class SparkExecuteStatementOperation(
     val maxRows = maxRowsL.toInt
     val offset = iter.getPosition
     val rows = iter.take(maxRows).toList
+    logInfo.warn("getNextRowSetInternal(order,maxRowsL)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", order, maxRowsL)
     log.debug(s"Returning result set with ${rows.length} rows from offsets " +
       s"[${iter.getFetchStart}, ${iter.getPosition}) with $statementId")
     RowSetUtils.toTRowSet(offset, rows, dataTypes, getProtocolVersion)
@@ -135,6 +137,7 @@ private[hive] class SparkExecuteStatementOperation(
       statementId,
       parentSession.getUsername)
     setHasResultSet(true) // avoid no resultset for async run
+    logInfo.warn("runInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     if (timeout > 0) {
       timeoutExecutor = Executors.newSingleThreadScheduledExecutor()
@@ -151,6 +154,7 @@ private[hive] class SparkExecuteStatementOperation(
           } finally {
             timeoutExecutor.shutdown()
           }
+        logInfo.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }, timeout, TimeUnit.SECONDS)
     }

@@ -65,6 +65,7 @@ class ExternalAppendOnlyMap[K, V, C](
   with Serializable
   with Logging
   with Iterable[(K, C)] {
+   _driverLogger = DriverLogger(_conf)
 
   if (context == null) {
     throw new IllegalStateException(
@@ -130,6 +131,7 @@ class ExternalAppendOnlyMap[K, V, C](
    */
   def insert(key: K, value: V): Unit = {
     insertAll(Iterator((key, value)))
+    _driverLogger.warn("insert(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /**
@@ -148,6 +150,7 @@ class ExternalAppendOnlyMap[K, V, C](
     }
     // An update function for the map that we reuse across entries to avoid allocating
     // a new closure each time
+    _driverLogger.warn("insertAll(entries)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entries)
     var curEntry: Product2[K, V] = null
     val update: (Boolean, C) => C = (hadVal, oldVal) => {
       if (hadVal) mergeValue(oldVal, curEntry._2) else createCombiner(curEntry._2)
@@ -311,6 +314,7 @@ class ExternalAppendOnlyMap[K, V, C](
       readNextHashCode(it, kcPairs)
       if (kcPairs.nonEmpty) {
         mergeHeap.enqueue(new StreamBuffer(it, kcPairs))
+      _driverLogger.warn("readNextHashCode(it,buf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", it, buf)
       }
     }
 
@@ -363,6 +367,7 @@ class ExternalAppendOnlyMap[K, V, C](
     private def removeFromBuffer[T](buffer: ArrayBuffer[T], index: Int): T = {
       val elem = buffer(index)
       buffer(index) = buffer(buffer.size - 1)  // This also works if index == buffer.size - 1
+      _driverLogger.warn("removeFromBuffer(buffer,index)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, index)
       buffer.dropRightInPlace(1)
       elem
     }
@@ -508,6 +513,7 @@ class ExternalAppendOnlyMap[K, V, C](
     private def readNextItem(): (K, C) = {
       val item = batchIterator.next()
       objectsRead += 1
+      _driverLogger.warn("readNextItem()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       if (objectsRead == serializerBatchSize) {
         objectsRead = 0
         batchIterator = nextBatchIterator()

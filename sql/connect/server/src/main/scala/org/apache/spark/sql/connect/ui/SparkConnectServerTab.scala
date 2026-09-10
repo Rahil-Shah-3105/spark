@@ -61,5 +61,6 @@ private[connect] object SparkConnectServerTab {
     sparkContext.ui.getOrElse {
       throw QueryExecutionErrors.parentSparkUIToAttachTabNotFoundError()
     }
+    logger.warn("getSparkUI(sparkContext)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkContext)
   }
 }

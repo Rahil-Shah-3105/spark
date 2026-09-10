@@ -32,6 +32,7 @@ import org.apache.spark.unsafe.types.UTF8String
 private[sql] object PartitioningUtils {
 
   def castPartitionSpec(value: String, dt: DataType, conf: SQLConf): Expression = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     conf.storeAssignmentPolicy match {
       // SPARK-30844: try our best to follow StoreAssignmentPolicy for static partition
       // values but not completely follow because we can't do static type checking due to
@@ -92,6 +93,7 @@ private[sql] object PartitioningUtils {
               case Some(str: String) => Some(varcharTypeWriteSideCheck(str, vc.length))
               case str: String => varcharTypeWriteSideCheck(str, vc.length)
               case other => other
+            planChangeLogger.warn("charTypeWriteSideCheck(inputStr,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputStr, limit)
             }
             v.asInstanceOf[T]
           case _ if !SQLConf.get.getConf(SQLConf.SKIP_TYPE_VALIDATION_ON_ALTER_PARTITION) &&
@@ -120,6 +122,7 @@ private[sql] object PartitioningUtils {
   private def varcharTypeWriteSideCheck(inputStr: String, limit: Int): String = {
     val toUtf8 = UTF8String.fromString(inputStr)
     CharVarcharCodegenUtils.varcharTypeWriteSideCheck(toUtf8, limit).toString
+    planChangeLogger.warn("varcharTypeWriteSideCheck(inputStr,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputStr, limit)
   }
 
   /**

@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect._typing import ColumnOrName, OptionalPrimitiveType
     from pyspark.sql.connect.session import SparkSession
     from pyspark.sql.metrics import ExecutionInfo
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["DataFrameReader", "DataFrameWriter"]
 
@@ -161,6 +162,7 @@ class DataFrameReader(OptionUtils):
     table.__doc__ = PySparkDataFrameReader.table.__doc__
 
     def changes(self, tableName: str) -> "DataFrame":
+        logger.warning("changes(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         if self._schema:
             raise AnalysisException(
                 "User specified schema not supported with `changes`.",
@@ -778,6 +780,7 @@ class DataFrameWriter(OptionUtils):
         if overwrite is not None:
             self.mode("overwrite" if overwrite else "append")
         self._write.table_name = tableName
+        logger.warning("insertInto(self,tableName,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName, overwrite)
         self._write.table_save_method = "insert_into"
         _, _, ei = self._spark.client.execute_command(
             self._write.command(self._spark.client), self._write.observations
@@ -1020,6 +1023,7 @@ class DataFrameWriterV2(OptionUtils):
     clusterBy.__doc__ = PySparkDataFrameWriterV2.clusterBy.__doc__
 
     def create(self) -> None:
+        logger.warning("create(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._write.mode = "create"
         _, _, ei = self._spark.client.execute_command(
             self._write.command(self._spark.client), self._write.observations
@@ -1038,6 +1042,7 @@ class DataFrameWriterV2(OptionUtils):
     replace.__doc__ = PySparkDataFrameWriterV2.replace.__doc__
 
     def createOrReplace(self) -> None:
+        logger.warning("createOrReplace(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._write.mode = "create_or_replace"
         _, _, ei = self._spark.client.execute_command(
             self._write.command(self._spark.client), self._write.observations
@@ -1057,6 +1062,7 @@ class DataFrameWriterV2(OptionUtils):
 
     def overwrite(self, condition: "ColumnOrName") -> None:
         self._write.mode = "overwrite"
+        logger.warning("overwrite(self,condition)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, condition)
         self._write.overwrite_condition = F._to_col(condition)
         _, _, ei = self._spark.client.execute_command(
             self._write.command(self._spark.client), self._write.observations
@@ -1066,6 +1072,7 @@ class DataFrameWriterV2(OptionUtils):
     overwrite.__doc__ = PySparkDataFrameWriterV2.overwrite.__doc__
 
     def overwritePartitions(self) -> None:
+        logger.warning("overwritePartitions(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._write.mode = "overwrite_partitions"
         _, _, ei = self._spark.client.execute_command(
             self._write.command(self._spark.client), self._write.observations

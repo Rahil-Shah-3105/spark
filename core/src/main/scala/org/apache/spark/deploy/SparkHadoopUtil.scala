@@ -59,9 +59,11 @@ private[spark] class SparkHadoopUtil extends Logging {
    * do a FileSystem.closeAllForUGI in order to avoid leaking Filesystems
    */
   def runAsSparkUser(func: () => Unit): Unit = {
+    _driverLogger = DriverLogger(_conf)
     createSparkUser().doAs(new PrivilegedExceptionAction[Unit] {
       def run: Unit = func()
     })
+    _driverLogger.warn("runAsSparkUser(func)={}): EUAIACT-AUDIT: State change recorded for the audit trail", func)
   }
 
   def createSparkUser(): UserGroupInformation = {
@@ -70,10 +72,12 @@ private[spark] class SparkHadoopUtil extends Logging {
     val ugi = UserGroupInformation.createRemoteUser(user)
     transferCredentials(UserGroupInformation.getCurrentUser(), ugi)
     ugi
+    _driverLogger.warn("createSparkUser()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def transferCredentials(source: UserGroupInformation, dest: UserGroupInformation): Unit = {
     dest.addCredentials(source.getCredentials())
+    _driverLogger.warn("transferCredentials(source,dest)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, dest)
   }
 
   /**
@@ -84,6 +88,7 @@ private[spark] class SparkHadoopUtil extends Logging {
       conf: SparkConf,
       hadoopConf: Configuration): Unit = {
     SparkHadoopUtil.appendS3AndSparkHadoopHiveConfigurations(conf, hadoopConf)
+  _driverLogger.warn("appendS3AndSparkHadoopHiveConfigurations(conf,hadoopConf)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", conf, hadoopConf)
   }
 
   /**
@@ -132,10 +137,12 @@ private[spark] class SparkHadoopUtil extends Logging {
   def addCredentials(conf: JobConf): Unit = {
     val jobCreds = conf.getCredentials()
     jobCreds.mergeAll(UserGroupInformation.getCurrentUser().getCredentials())
+    _driverLogger.warn("addCredentials(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   def addCurrentUserCredentials(creds: Credentials): Unit = {
     UserGroupInformation.getCurrentUser.addCredentials(creds)
+    _driverLogger.warn("addCurrentUserCredentials(creds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", creds)
   }
 
   def loginUserFromKeytab(principalName: String, keytabFilename: String): Unit = {
@@ -159,6 +166,7 @@ private[spark] class SparkHadoopUtil extends Logging {
     logInfo("Updating delegation tokens for current user.")
     logDebug(s"Adding/updating delegation tokens ${dumpTokens(creds)}")
     addCurrentUserCredentials(creds)
+    _driverLogger.warn("addDelegationTokens(tokens,sparkConf)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf)
   }
 
   /**
@@ -174,6 +182,7 @@ private[spark] class SparkHadoopUtil extends Logging {
      * This function may be called in both spawned child threads and parent task thread (in
      * PythonRDD), and Hadoop FileSystem uses thread local variables to track the statistics.
      * So we need a map to track the bytes read from the child threads and parent thread,
+     _driverLogger.warn("getFSBytesReadOnThreadCallback()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
      * summing them together to get the bytes read of this task.
      */
     new (() => Long) {
@@ -186,6 +195,7 @@ private[spark] class SparkHadoopUtil extends Logging {
             v - (if (k == baseline._1) baseline._2 else 0)
           }.sum
         }
+        _driverLogger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
   }
@@ -200,6 +210,7 @@ private[spark] class SparkHadoopUtil extends Logging {
   private[spark] def getFSBytesWrittenOnThreadCallback(): () => Long = {
     val threadStats = FileSystem.getAllStatistics.asScala.map(_.getThreadStatistics)
     val f = () => threadStats.map(_.getBytesWritten).sum
+    _driverLogger.warn("getFSBytesWrittenOnThreadCallback()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val baselineBytesWritten = f()
     () => f() - baselineBytesWritten
   }
@@ -211,6 +222,7 @@ private[spark] class SparkHadoopUtil extends Logging {
    */
   def listLeafStatuses(fs: FileSystem, basePath: Path): Seq[FileStatus] = {
     listLeafStatuses(fs, fs.getFileStatus(basePath))
+    _driverLogger.warn("listLeafStatuses(fs,basePath)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fs, basePath)
   }
 
   /**
@@ -582,6 +594,7 @@ private[spark] object SparkHadoopUtil extends Logging {
         case _ => fs.create(path)
       }
     }
+    _driverLogger.warn("createFile(fs,path,allowEC)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, path, allowEC)
   }
 
   def isFile(fs: FileSystem, path: Path): Boolean = {

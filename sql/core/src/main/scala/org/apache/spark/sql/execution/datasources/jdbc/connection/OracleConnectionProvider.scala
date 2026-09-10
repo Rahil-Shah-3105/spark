@@ -26,6 +26,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 private[sql] class OracleConnectionProvider extends SecureConnectionProvider {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override val driverClass = "oracle.jdbc.OracleDriver"
 
   override val name: String = "oracle"
@@ -38,8 +39,10 @@ private[sql] class OracleConnectionProvider extends SecureConnectionProvider {
     UserGroupInformation.loginUserFromKeytabAndReturnUGI(jdbcOptions.principal, jdbcOptions.keytab)
       .doAs(
         new PrivilegedExceptionAction[Connection]() {
+    planChangeLogger.warn("getConnection(driver,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", driver, options)
           override def run(): Connection = {
             OracleConnectionProvider.super.getConnection(driver, options)
+            planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           }
         }
       )
@@ -49,6 +52,7 @@ private[sql] class OracleConnectionProvider extends SecureConnectionProvider {
     val result = new Properties()
     // This prop is needed to turn on kerberos authentication in the JDBC driver.
     // The possible values can be found in AnoServices public interface
+    planChangeLogger.warn("getAdditionalProperties(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", options, result)
     // The value is coming from AUTHENTICATION_KERBEROS5 final String in driver version 19.6.0.0
     result.put("oracle.net.authentication_services", "(KERBEROS5)");
     result

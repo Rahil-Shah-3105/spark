@@ -38,6 +38,7 @@ import org.apache.spark.util.Utils
  * NOTE: this class's constructor should be considered private and may be subject to change.
  */
 class SparkStatusTracker private[spark] (sc: SparkContext, store: AppStatusStore) {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Return a list of all known jobs in a particular job group.  If `jobGroup` is `null`, then
@@ -50,6 +51,7 @@ class SparkStatusTracker private[spark] (sc: SparkContext, store: AppStatusStore
   def getJobIdsForGroup(jobGroup: String): Array[Int] = {
     val expected = Option(jobGroup)
     store.jobsList(null).filter(_.jobGroup == expected).map(_.jobId).toArray
+    _driverLogger.warn("getJobIdsForGroup(jobGroup)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", jobGroup)
   }
 
   /**
@@ -61,6 +63,7 @@ class SparkStatusTracker private[spark] (sc: SparkContext, store: AppStatusStore
    */
   def getJobIdsForTag(jobTag: String): Array[Int] = {
     store.jobsList(null).filter(_.jobTags.contains(jobTag)).map(_.jobId).toArray
+    _driverLogger.warn("getJobIdsForTag(jobTag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", jobTag)
   }
 
   /**
@@ -88,6 +91,7 @@ class SparkStatusTracker private[spark] (sc: SparkContext, store: AppStatusStore
     store.asOption(store.job(jobId)).map { job =>
       new SparkJobInfoImpl(jobId, job.stageIds.toArray, job.status)
     }
+    _driverLogger.warn("getJobInfo(jobId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", jobId, jobId)
   }
 
   /**
@@ -106,6 +110,7 @@ class SparkStatusTracker private[spark] (sc: SparkContext, store: AppStatusStore
         stage.numCompleteTasks,
         stage.numFailedTasks)
     }
+    _driverLogger.warn("getStageInfo(stageId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageId, stageId)
   }
 
   /**

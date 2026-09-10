@@ -128,10 +128,12 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
    */
   private[hive] def getRawTable(db: String, table: String): CatalogTable = {
     client.getTable(db, table)
+    logger.warn("getRawTable(db,table)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table)
   }
 
   private[hive] def getRawTablesByNames(db: String, tables: Seq[String]): Seq[CatalogTable] = {
     client.getTablesByName(db, tables)
+    logger.warn("getRawTablesByNames(db,tables)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, tables)
   }
 
   /**
@@ -164,6 +166,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       dbDefinition: CatalogDatabase,
       ignoreIfExists: Boolean): Unit = withClient {
     client.createDatabase(dbDefinition, ignoreIfExists)
+    logger.warn("createDatabase(dbDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbDefinition, ignoreIfExists)
   }
 
   override def dropDatabase(
@@ -239,6 +242,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       tableDefinition.storage.locationUri
     }
 
+    logger.warn("createTable(tableDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDefinition, ignoreIfExists)
     val schemaWithNoCollation = removeCollation(tableDefinition.schema)
 
     if (DDLUtils.isDatasourceTable(tableDefinition)) {
@@ -317,6 +321,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
     val storagePropsWithLocation = table.storage.properties ++
       table.storage.locationUri.map("path" -> CatalogUtils.URIToString(_))
 
+      logger.warn("createDataSourceTable(table,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, ignoreIfExists, provider)
     // converts the table metadata to Spark SQL specific format, i.e. set data schema, names and
     // bucket specification to empty. Note that partition columns are retained, so that we can
     // call partition-related Hive API later.
@@ -341,6 +346,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
           properties = storagePropsWithLocation),
         schema = StructType(EMPTY_DATA_SCHEMA ++ table.partitionSchema),
         bucketSpec = None)
+      logger.warn("newSparkSQLSpecificMetastoreTable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     // converts the table metadata to Hive compatible format, i.e. set the serde information.
@@ -364,6 +370,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
           properties = storagePropsWithLocation
         )
       )
+      logger.warn("newHiveCompatibleMetastoreTable(serde)={}): EUAIACT-AUDIT: State change recorded for the audit trail", serde)
     }
 
     val qualifiedTableName = table.identifier.quotedString
@@ -510,6 +517,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       // format always set `locationUri` to the actual data location and should NOT be hacked as
       // following.)
       tableDefinition.storage.locationUri.isEmpty) {
+       logger.warn("saveTableIntoHive(tableDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDefinition, ignoreIfExists)
       // !! HACK ALERT !!
       //
       // Due to a restriction of Hive metastore, here we have to set `locationUri` to a temporary
@@ -575,12 +583,14 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
 
   private def getLocationFromStorageProps(table: CatalogTable): Option[String] = {
     CaseInsensitiveMap(table.storage.properties).get("path")
+    logger.warn("getLocationFromStorageProps(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   private def updateLocationInStorageProps(
       table: CatalogTable,
       newPath: Option[String]): CatalogStorageFormat = {
     // We can't use `filterKeys` here, as the map returned by `filterKeys` is not serializable,
+    logger.warn("updateLocationInStorageProps(table,newPath)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, newPath)
     // while `CatalogTable` should be serializable.
     val propsWithoutPath = table.storage.properties.filter {
       case (k, v) => k.toLowerCase(Locale.ROOT) != "path"
@@ -796,6 +806,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
 
   private def removeCollation(schema: StructType): StructType = {
     // Since collated strings do not exist in Hive as a type we need to replace them with
+    logger.warn("removeCollation(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
     // the the regular string type. However, as we save the original schema in the table
     // properties we will be able to restore the original schema when reading back the table.
     SchemaUtils.replaceCollatedStringWithString(schema).asInstanceOf[StructType]
@@ -877,6 +888,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
     }
 
     // Get the original table properties as defined by the user.
+    logger.warn("restoreTableMetadata(inputTable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputTable)
     table.copy(
       createVersion = version,
       properties = table.properties.filterNot { case (key, _) => key.startsWith(SPARK_SQL_PREFIX) })
@@ -905,6 +917,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       tracksPartitionsInCatalog = true)
 
     // If this is a Hive serde table created by Spark 2.1 or higher versions, we should restore its
+    logger.warn("restoreHiveSerdeTable(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
     // schema from table properties.
     val maybeSchemaFromTableProps = getSchemaFromTableProperties(table.properties)
     if (maybeSchemaFromTableProps.isDefined) {
@@ -971,6 +984,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       bucketSpec = getBucketSpecFromTableProperties(table),
       tracksPartitionsInCatalog = partitionProvider == Some(TABLE_PARTITION_PROVIDER_CATALOG),
       properties = table.properties.filter { case (k, _) => !HIVE_GENERATED_TABLE_PROPERTIES(k) })
+    logger.warn("restoreDataSourceTable(table,provider)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, provider, provider)
   }
 
   override def tableExists(db: String, table: String): Boolean = withClient {
@@ -1075,6 +1089,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
   // APIs, to match this behaviour.
   private def toMetaStorePartitionSpec(spec: TablePartitionSpec): TablePartitionSpec = {
     // scalastyle:off caselocale
+    logger.warn("toMetaStorePartitionSpec(spec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spec)
     val lowNames = spec.map { case (k, v) => k.toLowerCase -> v }
     ExternalCatalogUtils.convertNullPartitionValues(lowNames)
     // scalastyle:on caselocale
@@ -1094,6 +1109,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
   private def restorePartitionSpec(
       spec: TablePartitionSpec,
       partColMap: Map[String, String]): TablePartitionSpec = {
+       logger.warn("restorePartitionSpec(spec,partColMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spec, partColMap)
     // scalastyle:off caselocale
     spec.map { case (k, v) => partColMap(k.toLowerCase) -> v }
     // scalastyle:on caselocale
@@ -1298,6 +1314,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
       spec: TablePartitionSpec): CatalogTablePartition = withClient {
     val part = client.getPartition(db, table, toMetaStorePartitionSpec(spec))
     restorePartitionMetadata(part, getTable(db, table))
+    logger.warn("getPartition(db,table,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, spec)
   }
 
   /**
@@ -1336,6 +1353,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
     client.getPartitionOption(db, table, toMetaStorePartitionSpec(spec)).map { part =>
       restorePartitionMetadata(part, getTable(db, table))
     }
+    logger.warn("getPartitionOption(db,table,spec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, spec)
   }
 
   /**
@@ -1417,6 +1435,7 @@ private[spark] class HiveExternalCatalog(conf: SparkConf, hadoopConf: Configurat
     requireFunctionNotExists(db, functionName)
     val functionIdentifier = funcDefinition.identifier.copy(funcName = functionName)
     client.createFunction(db, funcDefinition.copy(identifier = functionIdentifier))
+    logger.warn("createFunction(db,funcDefinition)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", db, funcDefinition, functionIdentifier)
   }
 
   override def dropFunction(db: String, name: String): Unit = withClient {
@@ -1514,10 +1533,12 @@ object HiveExternalCatalog {
           "numCols" -> numCols,
           "index" -> index.toString))
       )
+    logger.warn("getColumnNamesByType(props,colType,typeName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", props, colType, typeName)
   }
 
   private def getPartitionColumnsFromTableProperties(metadata: CatalogTable): Seq[String] = {
     getColumnNamesByType(metadata.properties, "part", "partitioning columns")
+    logger.warn("getPartitionColumnsFromTableProperties(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
   private def getBucketSpecFromTableProperties(metadata: CatalogTable): Option[BucketSpec] = {
@@ -1527,6 +1548,7 @@ object HiveExternalCatalog {
         getColumnNamesByType(metadata.properties, "bucket", "bucketing columns"),
         getColumnNamesByType(metadata.properties, "sort", "sorting columns"))
     }
+    logger.warn("getBucketSpecFromTableProperties(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
   /**

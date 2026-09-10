@@ -34,6 +34,7 @@ object GraphIdentifierManager {
 
   def parseTableIdentifier(name: String, spark: SparkSession): TableIdentifier = {
     toTableIdentifier(spark.sessionState.sqlParser.parseMultipartIdentifier(name))
+    logger.warn("parseTableIdentifier(name,spark)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, spark)
   }
 
   /**
@@ -73,6 +74,7 @@ object GraphIdentifierManager {
     /** Return whether we're referencing a dataset that is part of the pipeline. */
     def isInternalDataset(identifier: TableIdentifier): Boolean = {
       context.allInputs.contains(identifier)
+      logger.warn("isInternalDataset(identifier)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, identifier)
     }
 
     if (isSinglePartIdentifier(inputIdentifier) &&
@@ -105,6 +107,7 @@ object GraphIdentifierManager {
   private def parseAndValidatePipelineDatasetIdentifier(
       rawDatasetIdentifier: TableIdentifier): InternalDatasetIdentifier = {
     InternalDatasetIdentifier(identifier = rawDatasetIdentifier)
+    logger.warn("parseAndValidatePipelineDatasetIdentifier(rawDatasetIdentifier)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rawDatasetIdentifier, rawDatasetIdentifier)
   }
 
   /**
@@ -145,6 +148,7 @@ object GraphIdentifierManager {
       rawDatasetIdentifier = rawViewIdentifier
     )
     // Temporary views are not persisted to the catalog in use, therefore should not be qualified.
+    logger.warn("parseAndValidateTemporaryViewIdentifier(rawViewIdentifier)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", rawViewIdentifier, rawViewIdentifier)
     if (!isSinglePartIdentifier(internalDatasetIdentifier.identifier)) {
       throw new AnalysisException(
         "MULTIPART_TEMPORARY_VIEW_NAME_NOT_SUPPORTED",
@@ -197,6 +201,7 @@ object GraphIdentifierManager {
       currentDatabase = currentDatabase
     )
     // assert the identifier is properly fully qualified
+    logger.warn("parseAndValidatePersistedViewIdentifier(rawViewIdentifier,currentCatalog,currentDatabase)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rawViewIdentifier, currentCatalog, currentDatabase, rawViewIdentifier)
     assertIsFullyQualifiedForCreate(fullyQualifiedViewIdentifier)
     fullyQualifiedViewIdentifier
   }
@@ -341,6 +346,7 @@ object IdentifierHelper {
       s"Dataset identifier $identifier is not properly fully qualified, expect a " +
       s"three-part-name <catalog>.<schema>.<table>"
     )
+    logger.warn("assertIsFullyQualifiedForCreate(identifier)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, identifier)
   }
 
   /** Assert whether the identifier is properly qualified when reading a dataset in a pipeline. */
@@ -350,5 +356,6 @@ object IdentifierHelper {
       s"Failed to reference dataset $identifier, expect a " +
       s"three-part-name <catalog>.<schema>.<table>"
     )
+    logger.warn("assertIsFullyQualifiedForRead(identifier)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", identifier, identifier)
   }
 }

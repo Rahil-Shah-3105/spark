@@ -59,6 +59,7 @@ trait LeafStatementExec extends CompoundStatementExec
  * Non-leaf node in the execution tree. It is an iterator over executable child nodes.
  */
 trait NonLeafStatementExec extends CompoundStatementExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /** Pointer to the current statement - i.e. the statement that should be iterated next. */
   protected[scripting] var curr: Option[CompoundStatementExec]
@@ -78,6 +79,7 @@ trait NonLeafStatementExec extends CompoundStatementExec {
    *    The value (`true` or `false`) of condition evaluation;
    *    or throw the error during the evaluation (eg: returning multiple rows of data
    *    or non-boolean statement).
+   planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    */
   protected def evaluateBooleanCondition(
       session: SparkSession,
@@ -231,10 +233,12 @@ class TriggerToExceptionHandlerMap(
 
   def getHandlerForCondition(condition: String): Option[ExceptionHandlerExec] = {
     conditionToExceptionHandlerMap.get(condition)
+    planChangeLogger.warn("getHandlerForCondition(condition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", condition)
   }
 
   def getHandlerForSqlState(sqlState: String): Option[ExceptionHandlerExec] = {
     sqlStateToExceptionHandlerMap.get(sqlState)
+    planChangeLogger.warn("getHandlerForSqlState(sqlState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sqlState)
   }
 
   def getSqlExceptionHandler: Option[ExceptionHandlerExec] = sqlExceptionHandler
@@ -1098,6 +1102,7 @@ class ForStatementExec(
       hasStartedQueryEvaluation = false
     }
     queryResult
+    planChangeLogger.warn("cachedQueryResult()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected[scripting] var curr: Option[CompoundStatementExec] = None
@@ -1265,6 +1270,7 @@ class ForStatementExec(
       replace = false
     )
     new SingleStatementExec(declareVariable, Origin(), Map.empty, isInternal = true, context)
+    planChangeLogger.warn("createDeclareVarExec(varName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", varName)
   }
 
   private def createSetVarExec(varName: String, variable: Expression): SingleStatementExec = {
@@ -1280,6 +1286,7 @@ class ForStatementExec(
       Map.empty,
       isInternal = true,
       context)
+    planChangeLogger.warn("createSetVarExec(varName,variable)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", varName, variable, setIdentifierToCurrentRow)
   }
 
   override def getTreeIterator: Iterator[CompoundStatementExec] = treeIterator

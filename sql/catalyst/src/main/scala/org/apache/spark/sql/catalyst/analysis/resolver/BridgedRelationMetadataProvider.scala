@@ -35,6 +35,7 @@ class BridgedRelationMetadataProvider(
     analyzerBridgeState: AnalyzerBridgeState,
     viewResolver: ViewResolver
 ) extends RelationMetadataProvider {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override val relationsWithResolvedMetadata = new RelationsWithResolvedMetadata
 
   /**
@@ -66,6 +67,7 @@ class BridgedRelationMetadataProvider(
         }
       }
     )
+            planChangeLogger.warn("updateRelationsWithResolvedMetadata()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def tryConvertUnresolvedCatalogRelation(relation: LogicalPlan): LogicalPlan = {
@@ -96,6 +98,7 @@ class BridgedRelationMetadataProvider(
       case _ =>
         visitor(operator)
     }
+    planChangeLogger.warn("visitUnderSubqueryAlias(operator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", operator)
   }
 
   private[sql] object TestOnly {

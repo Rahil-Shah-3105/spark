@@ -34,6 +34,7 @@ import org.apache.spark.sql.execution.UnaryExecNode
  * `org.apache.spark.sql.catalyst.plans.logical.MapPartitionsInRWithArrow`
  */
 trait MapInBatchExec extends UnaryExecNode with PythonSQLMetrics {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   protected val func: Expression
   protected val pythonEvalType: Int
 
@@ -72,6 +73,7 @@ trait MapInBatchExec extends UnaryExecNode with PythonSQLMetrics {
       jobArtifactUUID,
       sessionUUID)
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val rdd = if (isBarrier) {
       val rddBarrier = child.execute().barrier()
       if (conf.usePartitionEvaluator) {

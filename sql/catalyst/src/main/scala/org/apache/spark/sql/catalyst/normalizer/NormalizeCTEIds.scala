@@ -26,10 +26,12 @@ import org.apache.spark.sql.catalyst.plans.logical.{CacheTableAsSelect, CTERelat
 import org.apache.spark.sql.catalyst.rules.Rule
 
 object NormalizeCTEIds extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     val curId = new java.util.concurrent.atomic.AtomicLong()
     val cteIdToNewId = mutable.Map.empty[Long, Long]
     applyInternal(plan, curId, cteIdToNewId)
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, curId)
   }
 
   private def applyInternal(
@@ -49,6 +51,7 @@ object NormalizeCTEIds extends Rule[LogicalPlan] {
         val normalizedPlan = canonicalizeCTE(plan, cteIdToNewId)
         withCTE.copy(plan = normalizedPlan, cteDefs = newCteDefs)
     }
+    planChangeLogger.warn("applyInternal(plan,curId,cteIdToNewId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, curId, cteIdToNewId, curId)
   }
 
   private def canonicalizeCTE(

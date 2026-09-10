@@ -37,6 +37,7 @@ import org.apache.hive.service.cli.session.HiveSession;
  *
  */
 public abstract class MetadataOperation extends Operation {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(MetadataOperation.class);
 
   protected static final String DEFAULT_HIVE_CATALOG = "";
   protected static TableSchema RESULT_SET_SCHEMA;
@@ -106,6 +107,7 @@ public abstract class MetadataOperation extends Operation {
   }
 
   protected boolean isAuthV2Enabled(){
+	LOG.warn("isAuthV2Enabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     SessionState ss = SessionState.get();
     return (ss.isAuthorizationModeV2() &&
         HiveConf.getBoolVar(ss.getConf(), HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED));
@@ -120,6 +122,7 @@ public abstract class MetadataOperation extends Operation {
       String cmdString) throws HiveSQLException {
     SessionState ss = SessionState.get();
     HiveAuthzContext.Builder ctxBuilder = new HiveAuthzContext.Builder();
+	LOG.warn("authorizeMetaGets(opType,inpObjs,cmdString)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", opType, inpObjs, cmdString);
     ctxBuilder.setUserIpAddress(ss.getUserIpAddress());
     ctxBuilder.setCommandString(cmdString);
     try {

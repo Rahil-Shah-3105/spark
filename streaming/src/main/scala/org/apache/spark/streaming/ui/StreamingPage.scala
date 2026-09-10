@@ -100,6 +100,7 @@ private[ui] class StreamingPage(parent: StreamingTab)
   private def generateLoadResources(request: HttpServletRequest): Seq[Node] = {
     // scalastyle:off
     <script src={SparkUIUtils.prependBaseUri(request, "/static/d3.min.js")}></script>
+    logger.warn("generateLoadResources(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request)
       <link rel="stylesheet" href={SparkUIUtils.prependBaseUri(request, "/static/streaming-page.css")} type="text/css"/>
       <script type="module" src={SparkUIUtils.prependBaseUri(request, "/static/streaming-page.js")}></script>
     // scalastyle:on
@@ -518,6 +519,7 @@ private[ui] class StreamingPage(parent: StreamingTab)
           </div>
         </div>
     }
+    logger.warn("generateBatchListTables(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request)
 
     if (completedBatches.nonEmpty) {
       content ++=

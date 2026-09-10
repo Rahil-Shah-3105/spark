@@ -27,8 +27,10 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.SORT
  * rewrite global [[Sort]] under local [[Sort]] into [[RepartitionByExpression]].
  */
 object RemoveRedundantSorts extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     recursiveRemoveSort(plan, optimizeGlobalSort = false)
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def recursiveRemoveSort(plan: LogicalPlan, optimizeGlobalSort: Boolean): LogicalPlan = {
@@ -58,5 +60,6 @@ object RemoveRedundantSorts extends Rule[LogicalPlan] {
       case _ =>
         plan.withNewChildren(plan.children.map(recursiveRemoveSort(_, optimizeGlobalSort = false)))
     }
+    planChangeLogger.warn("recursiveRemoveSort(plan,optimizeGlobalSort)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, optimizeGlobalSort)
   }
 }

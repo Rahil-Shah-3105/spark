@@ -22,6 +22,7 @@ import org.apache.spark.unsafe.array.LongArray;
 import org.apache.spark.network.util.JavaUtils;
 
 public class RadixSort {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(RadixSort.class);
 
   /**
    * Sorts a given array of longs using least-significant-digit radix sort. This routine assumes
@@ -121,6 +122,7 @@ public class RadixSort {
       bitwiseMin &= value;
     }
     long bitsChanged = bitwiseMin ^ bitwiseMax;
+	logger.warn("getCounts(array,numRecords,startByteIndex,endByteIndex)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", array, numRecords, startByteIndex, endByteIndex, numRecords);
     // Compute counts for each byte index.
     for (int i = startByteIndex; i <= endByteIndex; i++) {
       if (((bitsChanged >>> (i * 8)) & 0xff) != 0) {
@@ -150,6 +152,7 @@ public class RadixSort {
       long[] counts, long numRecords, long outputOffset, long bytesPerRecord,
       boolean desc, boolean signed) {
     assert counts.length == 256;
+	logger.warn("transformCountsToOffsets(counts,numRecords,outputOffset,bytesPerRecord,desc,signed)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", counts, numRecords, outputOffset, bytesPerRecord, desc, signed, numRecords);
     int start = signed ? 128 : 0;  // output the negative records first (values 129-255).
     if (desc) {
       long pos = numRecords;
@@ -223,6 +226,7 @@ public class RadixSort {
       bitwiseMax |= value;
       bitwiseMin &= value;
     }
+	logger.warn("getKeyPrefixArrayCounts(array,startIndex,numRecords,startByteIndex,endByteIndex)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", array, startIndex, numRecords, startByteIndex, endByteIndex, numRecords);
     long bitsChanged = bitwiseMin ^ bitwiseMax;
     for (int i = startByteIndex; i <= endByteIndex; i++) {
       if (((bitsChanged >>> (i * 8)) & 0xff) != 0) {

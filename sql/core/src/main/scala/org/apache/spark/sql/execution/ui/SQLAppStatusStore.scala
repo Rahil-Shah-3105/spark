@@ -37,9 +37,12 @@ import org.apache.spark.util.kvstore.{KVIndex, KVStore}
 class SQLAppStatusStore(
     store: KVStore,
     val listener: Option[SQLAppStatusListener] = None) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def executionsList(): Seq[SQLExecutionUIData] = {
     KVUtils.viewToSeq(store.view(classOf[SQLExecutionUIData]))
+    planChangeLogger.warn("executionsList()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("executionsList(offset,length)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, length)
   }
 
   def executionsList(offset: Int, length: Int): Seq[SQLExecutionUIData] = {
@@ -66,6 +69,7 @@ class SQLAppStatusStore(
     def metricsFromStore(): Option[Map[Long, String]] = {
       val exec = store.read(classOf[SQLExecutionUIData], executionId)
       Option(exec.metricValues)
+      planChangeLogger.warn("metricsFromStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     metricsFromStore()

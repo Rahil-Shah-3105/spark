@@ -19,6 +19,8 @@ package org.apache.spark.sql.connector.write;
 
 import org.apache.spark.annotation.Experimental;
 import org.apache.spark.sql.connector.expressions.NamedReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A mix-in interface for {@link RowLevelOperation}. Data sources can implement this interface
@@ -28,6 +30,7 @@ import org.apache.spark.sql.connector.expressions.NamedReference;
  */
 @Experimental
 public interface SupportsDelta extends RowLevelOperation {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsDelta.class);
   @Override
   DeltaWriteBuilder newWriteBuilder(LogicalWriteInfo info);
 
@@ -43,6 +46,7 @@ public interface SupportsDelta extends RowLevelOperation {
    * and order the incoming delta of rows or to simplify the write process.
    */
   default boolean representUpdateAsDeleteAndInsert() {
+	planChangeLogger.warn("representUpdateAsDeleteAndInsert()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return false;
   }
 }

@@ -33,6 +33,7 @@ import org.apache.spark.sql.execution.datasources.v2.DataSourceV2ScanRelation
  *  expressions.
  */
 object CleanupDynamicPruningFilters extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def collectEqualityConditionExpressions(condition: Expression): Seq[Expression] = {
     splitConjunctivePredicates(condition).flatMap(_.collect {
@@ -61,6 +62,7 @@ object CleanupDynamicPruningFilters extends Rule[LogicalPlan] with PredicateHelp
         }
         f.copy(condition = newCondition)
     }
+    planChangeLogger.warn("removeUnnecessaryDynamicPruningSubquery(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
@@ -68,6 +70,7 @@ object CleanupDynamicPruningFilters extends Rule[LogicalPlan] with PredicateHelp
       return plan
     }
 
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     plan.transformWithPruning(
       // No-op for trees that do not contain dynamic pruning.
       _.containsAnyPattern(DYNAMIC_PRUNING_EXPRESSION, DYNAMIC_PRUNING_SUBQUERY)) {

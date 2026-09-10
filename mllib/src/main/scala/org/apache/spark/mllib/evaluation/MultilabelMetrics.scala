@@ -213,6 +213,7 @@ private[evaluation] class MultilabelSummarizer extends Serializable {
       fpPerClass.update(k, v + 1)
     }
 
+    logger.warn("add(predictions,labels)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predictions, labels)
     labels.diff(predictions).foreach { k =>
       val v = fnPerClass.getOrElse(k, 0L)
       fnPerClass.update(k, v + 1)

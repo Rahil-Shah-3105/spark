@@ -315,6 +315,7 @@ case class Elt(
     inputExprs.map(_.dataType).headOption.getOrElse(StringType)
 
   override def checkInputDataTypes(): TypeCheckResult = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (children.size < 2) {
       throw QueryCompilationErrors.wrongNumArgsError(
         toSQLId(prettyName), Seq("> 1"), children.length
@@ -642,6 +643,7 @@ case class BinaryPredicate(override val prettyName: String, left: Expression, ri
 object ContainsExpressionBuilder extends StringBinaryPredicateExpressionBuilderBase {
   override protected def createStringPredicate(left: Expression, right: Expression): Expression = {
     Contains(left, right)
+  planChangeLogger.warn("createStringPredicate(left,right)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
   }
 }
 
@@ -2195,6 +2197,7 @@ trait PadExpressionBuilderBase extends ExpressionBuilder {
 object LPadExpressionBuilder extends PadExpressionBuilderBase {
   override def createStringPad(str: Expression, len: Expression, pad: Expression): Expression = {
     StringLPad(str, len, pad)
+  planChangeLogger.warn("createStringPad(str,len,pad)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, len, pad)
   }
 }
 
@@ -3545,6 +3548,7 @@ object Decode {
         }
         CaseWhen(branches.toSeq, default)
     }
+    planChangeLogger.warn("createExpr(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
   }
 }
 

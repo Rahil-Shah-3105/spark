@@ -30,6 +30,7 @@ class StreamProgress(
     val baseMap: immutable.Map[SparkDataStream, OffsetV2] =
         new immutable.HashMap[SparkDataStream, OffsetV2])
   extends scala.collection.immutable.Map[SparkDataStream, OffsetV2] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Unified method to convert StreamProgress to appropriate OffsetSeq format.
@@ -47,12 +48,14 @@ class StreamProgress(
       case v =>
         throw QueryExecutionErrors.logVersionGreaterThanSupported(v, OffsetSeqLog.MAX_VERSION)
     }
+    planChangeLogger.warn("toOffsets(sources,sourceIdMap,metadata)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sources, sourceIdMap, metadata, sourceIdMap)
   }
 
   def toOffsetSeq(
       source: Seq[SparkDataStream],
       metadata: OffsetSeqMetadataBase): OffsetSeq = {
     OffsetSeq(source.map(get), Some(metadata.asInstanceOf[OffsetSeqMetadata]))
+    planChangeLogger.warn("toOffsetSeq(source,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, metadata)
   }
 
   private def toOffsetMap(
@@ -65,6 +68,7 @@ class StreamProgress(
         throw new IllegalArgumentException(s"Source $source not found in sourceToIdMap"))
       sourceId -> Some(offset)
     }
+    planChangeLogger.warn("toOffsetMap(sourceIdMap,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sourceIdMap, metadata, sourceIdMap)
     // OffsetMap requires OffsetSeqMetadataV2
     OffsetMap(offsetsMap, metadata.asInstanceOf[OffsetSeqMetadataV2])
   }

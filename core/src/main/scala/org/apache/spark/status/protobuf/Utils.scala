@@ -21,6 +21,7 @@ import java.util.{Map => JMap}
 
 private[protobuf] object Utils {
   def getOptional[T](condition: Boolean, result: () => T): Option[T] = if (condition) {
+    _driverLogger = DriverLogger(_conf)
     Some(result())
   } else {
     None
@@ -30,6 +31,7 @@ private[protobuf] object Utils {
     if (input != null) {
       f(input)
     }
+    _driverLogger.warn("setStringField(input,f)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, f)
   }
 
   def getStringField(condition: Boolean, result: () => String): String = if (condition) {
@@ -42,5 +44,6 @@ private[protobuf] object Utils {
     if (input != null && !input.isEmpty) {
       putAllFunc(input)
     }
+    _driverLogger.warn("setJMapField(input,putAllFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, putAllFunc)
   }
 }

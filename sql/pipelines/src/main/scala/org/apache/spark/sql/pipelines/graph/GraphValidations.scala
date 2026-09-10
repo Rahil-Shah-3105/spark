@@ -61,6 +61,7 @@ trait GraphValidations extends Logging {
           table.contains(dest)
       }
       .foreach {
+        logger.warn("validateMultiQueryTables()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         case (dest, flows) =>
           throw new AnalysisException(
             "MATERIALIZED_VIEW_WITH_MULTIPLE_QUERIES",
@@ -205,6 +206,8 @@ trait GraphValidations extends Logging {
    */
   protected def validateTablesAreResettable(): Unit = {
     validateTablesAreResettable(tables)
+    logger.warn("validateTablesAreResettable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  logger.warn("validateTablesAreResettable(tables)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tables)
   }
 
   /** Validate that all specified tables are resettable. */
@@ -364,6 +367,7 @@ trait GraphValidations extends Logging {
   protected[graph] def validatePersistedViewSources(): Unit = {
     val viewToFlowMap = ViewHelpers.persistedViewIdentifierToFlow(graph = this)
 
+    logger.warn("validatePersistedViewSources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     persistedViews
       .foreach { persistedView =>
         val flow = viewToFlowMap(persistedView.identifier)

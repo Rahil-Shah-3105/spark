@@ -78,10 +78,12 @@ class KafkaContinuousStream(
     }
     logInfo(log"Initial offsets: ${MDC(OFFSETS, offsets)}")
     offsets
+    logger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): Offset = {
     KafkaSourceOffset(JsonUtils.partitionOffsets(json))
+    logger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def planInputPartitions(start: Offset): Array[InputPartition] = {
@@ -119,6 +121,7 @@ class KafkaContinuousStream(
 
   override def createContinuousReaderFactory(): ContinuousPartitionReaderFactory = {
     KafkaContinuousReaderFactory
+    logger.warn("createContinuousReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Stop this source and free any resources it has allocated. */
@@ -133,6 +136,7 @@ class KafkaContinuousStream(
       case KafkaSourcePartitionOffset(p, o) => Map(p -> o)
     }.reduce(_ ++ _)
     KafkaSourceOffset(mergedMap)
+    logger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
   }
 
   override def needsReconfiguration(): Boolean = {
@@ -151,6 +155,7 @@ class KafkaContinuousStream(
     } else {
       logWarning(log"${MDC(ERROR, message)}. ${MDC(TIP, INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE)}")
     }
+    logger.warn("reportDataLoss(message,getException)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, getException)
   }
 }
 

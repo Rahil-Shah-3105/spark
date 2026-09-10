@@ -51,6 +51,7 @@ private[spark] abstract class SocketAuthServer[T](
   private val isUnixDomainSock: Boolean = authHelper.isUnixDomainSock
 
   private def startServer(): (Any, String) = {
+    _driverLogger = DriverLogger(_conf)
     logTrace("Creating listening socket")
     lazy val sockPath = new File(authHelper.sockDir, s".${UUID.randomUUID()}.sock")
 
@@ -95,6 +96,7 @@ private[spark] abstract class SocketAuthServer[T](
           JavaUtils.closeQuietly(sock)
           if (isUnixDomainSock) sockPath.delete()
         }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }.start()
     if (isUnixDomainSock) {
@@ -120,6 +122,7 @@ private[spark] abstract class SocketAuthServer[T](
    */
   def getResult(): T = {
     getResult(Duration.Inf)
+  _driverLogger.warn("getResult(wait)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", wait)
   }
 
   def getResult(wait: Duration): T = {

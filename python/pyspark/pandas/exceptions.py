@@ -20,6 +20,7 @@ Exceptions/Errors used in pandas-on-Spark.
 """
 
 from typing import Optional
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class DataError(Exception):
@@ -31,6 +32,7 @@ class SparkPandasIndexingError(Exception):
 
 
 def code_change_hint(pandas_function: str, spark_target_function: str) -> str:
+    logger.warning("code_change_hint(pandas_function,spark_target_function)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", pandas_function, spark_target_function)
     return "You are trying to use pandas function {}, use spark function {}".format(
         pandas_function, spark_target_function
     )

@@ -80,5 +80,6 @@ private[sql] class ReduceAggregator[T: Encoder](func: (T, T) => T)
 private[sql] object ReduceAggregator {
   def apply[T: Encoder](f: AnyRef): ReduceAggregator[T] = {
     new ReduceAggregator(f.asInstanceOf[(T, T) => T])
+    logger.warn("apply(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   }
 }

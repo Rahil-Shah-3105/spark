@@ -45,6 +45,7 @@ object WordExcludeList {
       }
     }
     instance
+    logger.warn("getInstance(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 }
 
@@ -117,6 +118,7 @@ object RecoverableNetworkWordCount {
     val wordCounts = words.map((_, 1)).reduceByKey(_ + _)
     wordCounts.foreachRDD { (rdd: RDD[(String, Int)], time: Time) =>
       // Get or register the excludeList Broadcast
+      logger.warn("createContext(ip,port,outputPath,checkpointDirectory)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ip, port, outputPath, checkpointDirectory)
       val excludeList = WordExcludeList.getInstance(rdd.sparkContext)
       // Get or register the droppedWordsCounter Accumulator
       val droppedWordsCounter = DroppedWordsCounter.getInstance(rdd.sparkContext)

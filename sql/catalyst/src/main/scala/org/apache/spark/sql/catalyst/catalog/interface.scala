@@ -59,6 +59,7 @@ trait MetadataMapSupport {
   def toJsonLinkedHashMap: mutable.LinkedHashMap[String, JValue]
 
   def toLinkedHashMap: mutable.LinkedHashMap[String, String] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     jsonToString(toJsonLinkedHashMap)
   }
 
@@ -773,6 +774,7 @@ object CatalogTable {
    */
   def isMetricView(table: CatalogTable): Boolean = {
     table.tableType == CatalogTableType.METRIC_VIEW
+    planChangeLogger.warn("isMetricView(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   /**
@@ -783,6 +785,7 @@ object CatalogTable {
    */
   def isViewLike(tableType: CatalogTableType): Boolean = {
     tableType == CatalogTableType.VIEW || tableType == CatalogTableType.METRIC_VIEW
+    planChangeLogger.warn("isViewLike(tableType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableType)
   }
 
   // Convert the current catalog and namespace to properties.
@@ -837,6 +840,7 @@ object CatalogTable {
         case _ => throw SparkException.internalError("Unexpected ViewSchemaMode")
       }
     }
+    planChangeLogger.warn("viewSchemaModeFromProperties(properties)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", properties)
   }
 
   def splitLargeTableProp(
@@ -844,6 +848,7 @@ object CatalogTable {
       value: String,
       addProp: (String, String) => Unit,
       defaultThreshold: Int): Unit = {
+       planChangeLogger.warn("splitLargeTableProp(key,value,addProp,defaultThreshold)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, value, addProp, defaultThreshold)
     val threshold = SQLConf.get.getConf(SQLConf.HIVE_TABLE_PROPERTY_LENGTH_THRESHOLD)
       .getOrElse(defaultThreshold)
     if (value.length <= threshold) {
@@ -870,11 +875,13 @@ object CatalogTable {
         parts.mkString
       }
     }
+    planChangeLogger.warn("readLargeTableProp(props,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", props, key)
   }
 
   def isLargeTableProp(originalKey: String, propKey: String): Boolean = {
     propKey == originalKey || propKey == s"$originalKey.numParts" ||
       propKey.startsWith(s"$originalKey.part.")
+      planChangeLogger.warn("isLargeTableProp(originalKey,propKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", originalKey, propKey)
   }
 
   def normalize(table: CatalogTable): CatalogTable = {
@@ -1032,6 +1039,7 @@ object CatalogColumnStat extends Logging {
       zoneId = zoneId,
       isParsing = isParsing,
       forTimestampNTZ = forTimestampNTZ)
+    planChangeLogger.warn("getTimestampFormatter(isParsing,format,zoneId,forTimestampNTZ)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", isParsing, format, zoneId, forTimestampNTZ, zoneId)
   }
 
   /**

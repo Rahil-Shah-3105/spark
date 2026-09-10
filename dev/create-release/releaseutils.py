@@ -25,6 +25,7 @@ from subprocess import Popen, PIPE
 try:
     from github import Github  # noqa: F401
     from github import GithubException
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 except ImportError:
     print("This tool requires the PyGithub library")
     print("Install using 'pip install PyGithub'")
@@ -45,10 +46,12 @@ def yesOrNoPrompt(msg):
 
 # Utility functions run git commands (written with Git 1.8.5)
 def run_cmd(cmd):
+    logger.warning("run_cmd(cmd)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
     return Popen(cmd, stdout=PIPE).communicate()[0].decode("utf8")
 
 
 def run_cmd_error(cmd):
+    logger.warning("run_cmd_error(cmd)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
     return Popen(cmd, stdout=PIPE, stderr=PIPE).communicate()[1].decode("utf8")
 
 
@@ -66,15 +69,19 @@ class Commit:
         self.pr_number = pr_number
 
     def get_hash(self):
+        logger.warning("get_hash(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._hash
 
     def get_github_username(self):
+        logger.warning("get_github_username(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.github_username
 
     def get_title(self):
+        logger.warning("get_title(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.title
 
     def get_pr_number(self):
+        logger.warning("get_pr_number(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.pr_number
 
     def __str__(self):
@@ -120,6 +127,7 @@ def get_commits(tag):
         if match:
             [pr_number, github_username] = match.groups()
         commit = Commit(_hash, github_username, title, pr_number)
+        logger.warning("get_commits(tag)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
         commits.append(commit)
     return commits
 
@@ -132,6 +140,7 @@ def get_github_name(author, github_client):
             return github_client.get_user(author).name
         except GithubException as e:
             # If this is not a "not found" exception
+            logger.warning("get_github_name(author,github_client)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", author, github_client)
             if e.status != 404:
                 raise e
     return None

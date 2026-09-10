@@ -24,6 +24,7 @@ from pyspark._globals import _NoValueType
 from pyspark.sql.conf import RuntimeConfig as PySparkRuntimeConfig
 from pyspark.sql.connect import proto
 from pyspark.sql.connect.client import SparkConnectClient
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class RuntimeConf:
@@ -40,6 +41,7 @@ class RuntimeConf:
             value = str(value)
         op_set = proto.ConfigRequest.Set(pairs=[proto.KeyValue(key=key, value=value)])
         operation = proto.ConfigRequest.Operation(set=op_set)
+        logger.warning("set(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         result = self._client.config(operation)
         for warn in result.warnings:
             warnings.warn(warn)
@@ -86,6 +88,7 @@ class RuntimeConf:
         result = self._client.config(operation)
         confs: Dict[str, str] = dict()
         for key, value in result.pairs:
+            logger.warning("getAll(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             assert value is not None
             confs[key] = value
         return confs
@@ -95,6 +98,7 @@ class RuntimeConf:
     def unset(self, key: str) -> None:
         op_unset = proto.ConfigRequest.Unset(keys=[key])
         operation = proto.ConfigRequest.Operation(unset=op_unset)
+        logger.warning("unset(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         result = self._client.config(operation)
         for warn in result.warnings:
             warnings.warn(warn)

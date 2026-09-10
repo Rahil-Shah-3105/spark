@@ -31,6 +31,7 @@ import org.apache.spark.util.{Distribution, Utils}
  */
 @DeveloperApi
 class StatsReportListener extends SparkListener with Logging {
+  _driverLogger = DriverLogger(_conf)
 
   import org.apache.spark.scheduler.StatsReportListener._
 
@@ -80,6 +81,7 @@ class StatsReportListener extends SparkListener with Logging {
       x => info.completionTime.getOrElse(System.currentTimeMillis()) - x
     ).getOrElse("-")
 
+    _driverLogger.warn("getStatusDetail(info)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", info)
     s"Stage(${info.stageId}, ${info.attemptNumber()}); Name: '${info.name}'; " +
       s"Status: ${info.getStatusString}$failureReason; numTasks: ${info.numTasks}; " +
       s"Took: $timeTaken msec"
@@ -183,6 +185,7 @@ private[spark] object StatsReportListener extends Logging {
         (ms.toDouble, "ms")
       }
     "%.1f %s".format(size, units)
+    _driverLogger.warn("millisToString(ms)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ms)
   }
 }
 
@@ -194,6 +197,7 @@ private object RuntimePercentage {
     val fetchTime = Some(metrics.shuffleReadMetrics.fetchWaitTime)
     val fetch = fetchTime.map(_ / denom)
     val exec = (metrics.executorRunTime - fetchTime.getOrElse(0L)) / denom
+    _driverLogger.warn("apply(totalTime,metrics)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", totalTime, metrics)
     val other = 1.0 - (exec + fetch.getOrElse(0d))
     RuntimePercentage(exec, fetch, other)
   }

@@ -22,6 +22,8 @@ import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.catalyst.analysis.NoSuchNamespaceException;
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 import org.apache.spark.sql.catalyst.analysis.NoSuchViewException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Catalog API for connectors that expose both tables and views in a single shared identifier
@@ -119,6 +121,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchViewException;
  */
 @Evolving
 public interface RelationCatalog extends TableCatalog, ViewCatalog {
+Logger planChangeLogger = LoggerFactory.getLogger(RelationCatalog.class);
 
   /**
    * Load the relation for an identifier that may resolve to either a table or a view.
@@ -173,6 +176,7 @@ public interface RelationCatalog extends TableCatalog, ViewCatalog {
   @Override
   default Table loadTable(Identifier ident) throws NoSuchTableException {
     if (loadRelation(ident) instanceof Table t) {
+	planChangeLogger.warn("loadTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
       return t;
     }
     throw new NoSuchTableException(ident);
@@ -192,6 +196,7 @@ public interface RelationCatalog extends TableCatalog, ViewCatalog {
         return v;
       }
     } catch (NoSuchTableException e) {
+	planChangeLogger.warn("loadView(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
       throw new NoSuchViewException(ident);
     }
     throw new NoSuchViewException(ident);
@@ -222,6 +227,7 @@ public interface RelationCatalog extends TableCatalog, ViewCatalog {
   default boolean viewExists(Identifier ident) {
     try {
       return loadRelation(ident) instanceof View;
+	planChangeLogger.warn("viewExists(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
     } catch (NoSuchTableException e) {
       return false;
     }

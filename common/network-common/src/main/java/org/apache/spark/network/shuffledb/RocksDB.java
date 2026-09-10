@@ -25,6 +25,7 @@ import org.rocksdb.RocksDBException;
  * RocksDB implementation of the local KV storage used to persist the shuffle state.
  */
 public class RocksDB implements DB {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(RocksDB.class);
     private final org.rocksdb.RocksDB db;
 
     public RocksDB(org.rocksdb.RocksDB db) {
@@ -53,6 +54,7 @@ public class RocksDB implements DB {
     public void delete(byte[] key) {
       try {
         db.delete(key);
+		logger.warn("delete(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
       } catch (RocksDBException e) {
         throw new RuntimeException(e);
       }

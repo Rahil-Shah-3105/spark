@@ -26,6 +26,8 @@ import org.apache.spark.sql.connector.catalog.TableCapability;
 import org.apache.spark.sql.connector.metric.CustomMetric;
 import org.apache.spark.sql.connector.metric.CustomTaskMetric;
 import org.apache.spark.sql.connector.write.streaming.StreamingWrite;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A logical representation of a data source write.
@@ -40,6 +42,7 @@ import org.apache.spark.sql.connector.write.streaming.StreamingWrite;
  */
 @Evolving
 public interface Write {
+Logger planChangeLogger = LoggerFactory.getLogger(Write.class);
 
   /**
    * Returns the description associated with this write.
@@ -84,6 +87,7 @@ public interface Write {
    * `supportedCustomMetrics`.
    */
   default CustomTaskMetric[] reportDriverMetrics() {
+	planChangeLogger.warn("reportDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     return new CustomTaskMetric[]{};
   }
 

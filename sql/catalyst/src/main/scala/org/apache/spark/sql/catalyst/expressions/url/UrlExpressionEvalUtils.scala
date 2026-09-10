@@ -40,12 +40,14 @@ case class ParseUrlEvaluator(
     if (pattern != null) getPattern(pattern) else null
 
   private def extractValueFromQuery(query: UTF8String, pattern: Pattern): UTF8String = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val m = pattern.matcher(query.toString)
     if (m.find()) {
       UTF8String.fromString(m.group(2))
     } else {
       null
     }
+    planChangeLogger.warn("extractValueFromQuery(query,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   private def extractFromUrl(url: URI, partToExtract: UTF8String): UTF8String = {
@@ -101,6 +103,7 @@ object ParseUrlEvaluator {
 
   private def getPattern(key: UTF8String): Pattern = {
     Pattern.compile(REGEXPREFIX + key.toString + REGEXSUBFIX)
+    planChangeLogger.warn("getPattern(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   private def getUrl(url: UTF8String, failOnError: Boolean): URI = {
@@ -111,10 +114,12 @@ object ParseUrlEvaluator {
         throw QueryExecutionErrors.invalidUrlError(url, e)
       case _: URISyntaxException => null
     }
+    planChangeLogger.warn("getUrl(url,failOnError)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", url, failOnError)
   }
 
   private def getExtractPartFunc(partToExtract: UTF8String): URI => String = {
 
+    planChangeLogger.warn("getExtractPartFunc(partToExtract)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partToExtract)
     // partToExtract match {
     //   case HOST => _.toURL().getHost
     //   case PATH => _.toURL().getPath

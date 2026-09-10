@@ -47,6 +47,7 @@ case class TextFileFormat()
   override def toString: String = "Text"
 
   private def verifySchema(schema: StructType): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (schema.size != 1) {
       throw QueryCompilationErrors.textDataSourceWithMultiColumnsError(schema)
     }
@@ -56,6 +57,7 @@ case class TextFileFormat()
     if (schema.size > 1) {
       throw QueryCompilationErrors.textDataSourceWithMultiColumnsError(schema)
     }
+    planChangeLogger.warn("verifyReadSchema(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   override def isSplitable(
@@ -84,6 +86,7 @@ case class TextFileFormat()
 
     val textOptions = new TextOptions(options)
     val conf = job.getConfiguration
+    planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
 
     textOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(conf, codec)
@@ -99,6 +102,7 @@ case class TextFileFormat()
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".txt" + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }
@@ -118,6 +122,7 @@ case class TextFileFormat()
     val perFileReader = readToUnsafeMem(broadcastedHadoopConf, requiredSchema, textOptions)
     val archiveReader = readArchive(broadcastedHadoopConf, requiredSchema, textOptions)
     // A tar archive (always a single split, see `isSplitable`) is streamed entry by entry when
+    planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     // archive reads are enabled; otherwise the file is read directly. Archive scanning is wired
     // into the V1 file source only, so this dispatch lives here rather than in a shared reader.
     (file: PartitionedFile) => {

@@ -55,6 +55,7 @@ trait InvokeLike extends Expression with NonSQLExpression with ImplicitCastInput
   protected def argumentTypes: Seq[AbstractDataType] = inputTypes
 
   override def checkInputDataTypes(): TypeCheckResult = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (!argumentTypes.isEmpty && argumentTypes.length != arguments.length) {
       TypeCheckResult.DataTypeMismatch(
         errorSubClass = "WRONG_NUM_ARG_TYPES",
@@ -210,6 +211,7 @@ trait InvokeLike extends Expression with NonSQLExpression with ImplicitCastInput
     } else {
       method
     }
+    planChangeLogger.warn("findMethod(cls,functionName,argClasses)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, functionName, argClasses)
   }
 
   final def getFuncResult(
@@ -236,6 +238,7 @@ trait InvokeLike extends Expression with NonSQLExpression with ImplicitCastInput
     } else {
       s"$resultVal = $castFuncCall;"
     }
+    planChangeLogger.warn("getFuncResult(needTryCatch,resultVal,funcCall,returnType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", needTryCatch, resultVal, funcCall, returnType, resultVal)
   }
 }
 
@@ -269,6 +272,7 @@ trait SerializerSupport {
     }
     val newSerializerMethod = s"${classOf[SerializerSupport].getName}$$.MODULE$$.newSerializer"
     // Code to initialize the serializer
+    planChangeLogger.warn("addImmutableSerializerIfNeeded(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
     ctx.addImmutableStateIfNotExists(serializerInstanceClass, serializerInstance, v =>
       s"""
          |$v = ($serializerInstanceClass) $newSerializerMethod($kryo);
@@ -901,6 +905,8 @@ object MapObjects {
       "(See UnresolvedMapObjects)")
     val loopVar = LambdaVariable("MapObject", elementType, elementNullable)
     MapObjects(loopVar, function(loopVar), inputData, customCollectionCls)
+    planChangeLogger.warn("apply(function,inputData,elementType,elementNullable,customCollectionCls)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", function, inputData, elementType, elementNullable, customCollectionCls)
+  planChangeLogger.warn("apply(u)={}): EUAIACT-AUDIT: State change recorded for the audit trail", u)
   }
 }
 
@@ -952,6 +958,7 @@ case class MapObjects private(
       row.update(0, element)
       lambdaFunction.eval(row)
     }
+    planChangeLogger.warn("executeFuncOnCollection(inputCollection)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputCollection)
   }
 
   private lazy val convertToSeq: Any => scala.collection.Seq[_] = inputDataType match {

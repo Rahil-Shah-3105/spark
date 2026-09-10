@@ -59,6 +59,7 @@ trait SupportsArchiveFormat extends Logging {
   protected def lineIterator(
       in: InputStream,
       lineSeparatorInRead: Option[Array[Byte]]): Iterator[Text] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Strip a leading BOM (LineReader does not) so lines match the non-archive read path.
     val bomInputStream = BOMInputStream.builder()
       .setInputStream(in)
@@ -131,6 +132,7 @@ trait SupportsArchiveFormat extends Logging {
           Utils.deleteRecursively(tempDir)
           throw e
       }
+      planChangeLogger.warn("readLocalizedEntries(file,conf,tempPrefix,archivePathFilter)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, conf, tempPrefix, archivePathFilter)
 
     // Element type is `Object`, not `InternalRow`: a batch scan yields `ColumnarBatch`.
     val rows = new Iterator[Object] with Closeable {
@@ -330,6 +332,7 @@ object SupportsArchiveFormat {
         } finally {
           channel.close()
         }
+        planChangeLogger.warn("read(dst)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dst)
       })
     } catch {
       case NonFatal(e) =>
@@ -380,6 +383,7 @@ object SupportsArchiveFormat {
       parseEntry: (ArchiveEntry, InputStream) => Iterator[T]): Iterator[T] = {
     val archive = openArchiveStream(path, conf)
     var closed = false
+    planChangeLogger.warn("readArchiveEntries(path,conf,ignoredPathSegmentRegex,archivePathFilter)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, conf, ignoredPathSegmentRegex, archivePathFilter)
 
     def cleanup(): Unit = {
       if (!closed) {

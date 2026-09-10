@@ -46,6 +46,7 @@ from pyspark.pandas.utils import is_ansi_mode_enabled
 from pyspark.sql import functions as F, Column as PySparkColumn
 from pyspark.sql.types import BooleanType, StringType
 from pyspark.errors import PySparkValueError
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class BooleanOps(DataTypeOps):
@@ -73,6 +74,7 @@ class BooleanOps(DataTypeOps):
             assert isinstance(right, IndexOpsMixin)
             if isinstance(right, IndexOpsMixin) and isinstance(right.spark.data_type, BooleanType):
                 return left.__or__(right)
+                logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             else:
                 left = transform_boolean_operand_to_numeric(left, spark_type=right.spark.data_type)
                 return left + right
@@ -172,6 +174,7 @@ class BooleanOps(DataTypeOps):
             return left.__or__(right)
         elif isinstance(right, numbers.Number):
             left = transform_boolean_operand_to_numeric(left, spark_type=as_spark_type(type(right)))
+            logger.warning("radd(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             return right + left
         else:
             raise TypeError(
@@ -459,6 +462,7 @@ class BooleanExtensionOps(BooleanOps):
 
     def restore(self, col: pd.Series) -> pd.Series:
         """Restore column when to_pandas."""
+        logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
         return col.astype(self.dtype)
 
     def neg(self, operand: IndexOpsLike) -> IndexOpsLike:

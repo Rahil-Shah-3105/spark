@@ -69,6 +69,7 @@ private[spark] class Instrumentation private () extends Logging with MLEvents {
   def logDataset(dataset: RDD[_]): Unit = {
     logInfo(log"training: numPartitions=${MDC(NUM_PARTITIONS, dataset.partitions.length)}" +
       log" storageLevel=${MDC(STORAGE_LEVEL, dataset.getStorageLevel)}")
+    logger.warn("logDataset(dataset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataset)
   }
 
   /**
@@ -283,6 +284,8 @@ private[spark] object OptionalInstrumentation {
    */
   def create(instr: Instrumentation): OptionalInstrumentation = {
     new OptionalInstrumentation(Some(instr), instr.prefix)
+    logger.warn("create(instr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", instr)
+  logger.warn("create(clazz)={}): EUAIACT-AUDIT: State change recorded for the audit trail", clazz)
   }
 
   /**

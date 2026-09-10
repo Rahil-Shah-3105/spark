@@ -52,6 +52,7 @@ case class VariantMetadata(
   // The value contains key-value pairs for `path`, `failOnError`, `timeZoneId`, and -- for
   // companion fields only -- `castErrorFor`.
   def toMetadata: Metadata = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val inner = new MetadataBuilder()
       .putString(VariantMetadata.PATH_KEY, path)
       .putBoolean(VariantMetadata.FAIL_ON_ERROR_KEY, failOnError)
@@ -139,6 +140,7 @@ object RequestedVariantField {
     assert(v.path.foldable)
     RequestedVariantField(
       VariantMetadata(v.path.eval().toString, v.failOnError, v.timeZoneId.get), v.dataType)
+    planChangeLogger.warn("apply(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   def apply(c: Cast): RequestedVariantField =
@@ -215,6 +217,7 @@ class VariantInRelation {
         }
       case _ =>
     }
+    planChangeLogger.warn("addVariantFields(attrId,dataType,defaultValue,path)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", attrId, dataType, defaultValue, path, attrId)
   }
 
   def rewriteType(attrId: ExprId, dataType: DataType, path: Seq[Int]): DataType = {
@@ -264,6 +267,7 @@ class VariantInRelation {
         StructType(newFields)
       case _ => dataType
     }
+    planChangeLogger.warn("rewriteType(attrId,dataType,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", attrId, dataType, path, attrId)
   }
 
   // Add a requested field to a variant column.
@@ -272,6 +276,7 @@ class VariantInRelation {
       field: RequestedVariantField): Unit = {
     val idx = map.size
     map.getOrElseUpdate(field, idx)
+    planChangeLogger.warn("addField(map,field)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", map, field, idx)
   }
 
   // Update `mapping` with any access to a variant. Add the requested fields of each variant and
@@ -330,6 +335,7 @@ class VariantInRelation {
   def rewriteExpr(
       expr: Expression,
       attributeMap: Map[ExprId, AttributeReference]): Expression = {
+       planChangeLogger.warn("rewriteExpr(expr,attributeMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, attributeMap)
     def rewriteAttribute(expr: Expression): Expression = expr.transformDown {
       case a: Attribute => attributeMap.getOrElse(a.exprId, a)
     }
@@ -426,6 +432,7 @@ object PushVariantIntoScan extends Rule[LogicalPlan] {
       newRelation
     }
 
+    planChangeLogger.warn("rewritePlan(originalPlan,projectList,filters,relation,hadoopFsRelation)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", originalPlan, projectList, filters, relation, hadoopFsRelation)
     val newProjectList = projectList.map { e =>
       val rewritten = variants.rewriteExpr(e, attributeMap)
       rewritten match {

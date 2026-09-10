@@ -56,6 +56,7 @@ private[v1] class ApiRootResource extends ApiRequestContext {
 }
 
 private[spark] object ApiRootResource {
+  _driverLogger = DriverLogger(_conf)
 
   def getServletHandler(uiRoot: UIRoot): ServletContextHandler = {
     val jerseyContext = new ServletContextHandler(ServletContextHandler.NO_SESSIONS)
@@ -65,6 +66,7 @@ private[spark] object ApiRootResource {
     UIRootFromServletContext.setUiRoot(jerseyContext, uiRoot)
     jerseyContext.addServlet(holder, "/*")
     jerseyContext
+    _driverLogger.warn("getServletHandler(uiRoot)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", uiRoot)
   }
 }
 
@@ -97,6 +99,7 @@ private[spark] trait UIRoot {
       .entity("Event logs are only available through the history server.")
       .status(Response.Status.SERVICE_UNAVAILABLE)
       .build()
+      _driverLogger.warn("writeEventLogs(appId,attemptId,zipStream)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, zipStream, appId)
   }
   def securityManager: SecurityManager
 
@@ -106,13 +109,16 @@ private[spark] trait UIRoot {
 private[v1] object UIRootFromServletContext {
 
   private val attribute = getClass.getCanonicalName
+  _driverLogger.warn("checkUIViewPermissions(appId,attemptId,user)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, user, appId)
 
   def setUiRoot(contextHandler: ContextHandler, uiRoot: UIRoot): Unit = {
     contextHandler.setAttribute(attribute, uiRoot)
+    _driverLogger.warn("setUiRoot(contextHandler,uiRoot)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", contextHandler, uiRoot)
   }
 
   def getUiRoot(context: ServletContext): UIRoot = {
     context.getAttribute(attribute).asInstanceOf[UIRoot]
+    _driverLogger.warn("getUiRoot(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 }
 
@@ -163,6 +169,7 @@ private[v1] trait BaseAppResource extends ApiRequestContext {
         val appKey = Option(attemptId).map(appId + "/" + _).getOrElse(appId)
         throw new NotFoundException(s"no such app: $appKey")
     }
+    _driverLogger.warn("checkUIViewPermissions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 

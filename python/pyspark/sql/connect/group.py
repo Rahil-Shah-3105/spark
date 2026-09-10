@@ -51,6 +51,7 @@ if TYPE_CHECKING:
         PandasGroupedMapFunctionWithState,
     )
     from pyspark.sql.connect.dataframe import DataFrame
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class GroupedData:
@@ -282,6 +283,7 @@ class GroupedData:
                 messageParameters={"eval_type": "SQL_GROUPED_MAP_PANDAS_UDF"},
             )
 
+            logger.warning("apply(self,udf)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, udf)
         warnings.warn(
             "It is preferred to use 'applyInPandas' over this "
             "API. This API will be deprecated in the future releases. See SPARK-28264 for "

@@ -17,6 +17,7 @@
 import datetime
 
 from pyspark.sql.types import ArrayType, DoubleType, UserDefinedType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class UTCOffsetTimezone(datetime.tzinfo):
@@ -28,6 +29,7 @@ class UTCOffsetTimezone(datetime.tzinfo):
         self.ZERO = datetime.timedelta(hours=offset)
 
     def utcoffset(self, dt):
+        logger.warning("utcoffset(self,dt)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dt)
         return self.ZERO
 
     def dst(self, dt):

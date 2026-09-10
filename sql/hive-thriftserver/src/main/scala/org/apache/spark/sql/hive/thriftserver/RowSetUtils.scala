@@ -29,9 +29,11 @@ import org.apache.spark.sql.execution.HiveResult._
 import org.apache.spark.sql.types.{BinaryType, BooleanType, ByteType, DataType, DoubleType, FloatType, GeographyType, GeometryType, IntegerType, LongType, ShortType, StringType}
 
 object RowSetUtils {
+  private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
 
   implicit def bitSetToBuffer(bitSet: java.util.BitSet): ByteBuffer = {
     ByteBuffer.wrap(bitSet.toByteArray)
+    logInfo.warn("bitSetToBuffer(bitSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bitSet)
   }
 
   def toTRowSet(
@@ -44,6 +46,7 @@ object RowSetUtils {
     } else {
       toColumnBasedSet(startRowOffSet, rows, schema, getTimeFormatters, getBinaryFormatter)
     }
+    logInfo.warn("toTRowSet(startRowOffSet,rows,schema,protocolVersion)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startRowOffSet, rows, schema, protocolVersion)
   }
 
   private def toRowBasedSet(
@@ -64,6 +67,7 @@ object RowSetUtils {
       tRow
     }.asJava
     new TRowSet(startRowOffSet, tRows)
+    logInfo.warn("toRowBasedSet(startRowOffSet,rows,schema,timeFormatters,binaryFormatter)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startRowOffSet, rows, schema, timeFormatters, binaryFormatter)
   }
 
   private def toColumnBasedSet(
@@ -78,6 +82,7 @@ object RowSetUtils {
     val columnSize = schema.length
     val columns = new java.util.ArrayList[TColumn](columnSize)
     while (i < columnSize) {
+    logInfo.warn("toColumnBasedSet(startRowOffSet,rows,schema,timeFormatters,binaryFormatter)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startRowOffSet, rows, schema, timeFormatters, binaryFormatter)
       columns.add(i, toTColumn(rows, i, schema(i), timeFormatters, binaryFormatter))
       i += 1
     }

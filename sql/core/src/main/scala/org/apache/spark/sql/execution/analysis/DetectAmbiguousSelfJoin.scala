@@ -44,6 +44,7 @@ import org.apache.spark.sql.types.MetadataBuilder
  * that they don't exist after analyzer.
  */
 object DetectAmbiguousSelfJoin extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Dataset column reference is an `AttributeReference` with 2 special metadata.
   private def isColumnReference(a: AttributeReference): Boolean = {
@@ -62,6 +63,7 @@ object DetectAmbiguousSelfJoin extends Rule[LogicalPlan] {
   object LogicalPlanWithDatasetId {
     def unapply(p: LogicalPlan): Option[(LogicalPlan, mutable.HashSet[Long])] = {
       p.getTagValue(Dataset.DATASET_ID_TAG).map(ids => p -> ids)
+      planChangeLogger.warn("unapply(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
     }
   }
 
@@ -125,6 +127,7 @@ object DetectAmbiguousSelfJoin extends Rule[LogicalPlan] {
         case _ =>
       }
 
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       val ambiguousAttrs: Seq[AttributeReference] = plan match {
         case Join(
             LogicalPlanWithDatasetId(_, leftId),

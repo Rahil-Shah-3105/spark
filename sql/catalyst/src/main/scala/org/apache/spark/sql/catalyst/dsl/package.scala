@@ -96,6 +96,7 @@ package object dsl extends SQLConfHelper {
     def =!= (other: Expression): Predicate = Not(EqualTo(expr, other))
 
     def in(list: Expression*): Predicate = list match {
+      val planChangeLogger = new PlanChangeLogger[TreeType]()
       case Seq(l: ListQuery) => expr match {
           case c: CreateNamedStruct => InSubquery(c.valExprs, l)
           case other => InSubquery(Seq(other), l)
@@ -543,6 +544,7 @@ package object dsl extends SQLConfHelper {
           partition: Map[String, Option[String]] = Map.empty,
           overwrite: Boolean = false,
           ifPartitionNotExists: Boolean = false): LogicalPlan =
+        planChangeLogger.warn("insertInto(table,partition,overwrite,ifPartitionNotExists)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, partition, overwrite, ifPartitionNotExists)
         InsertIntoStatement(table, partition, Nil, logicalPlan, overwrite, ifPartitionNotExists)
 
       def coalesce(num: Integer): LogicalPlan =

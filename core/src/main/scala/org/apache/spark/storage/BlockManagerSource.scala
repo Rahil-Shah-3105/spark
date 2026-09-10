@@ -27,9 +27,11 @@ private[spark] class BlockManagerSource(val blockManager: BlockManager)
   override val sourceName = "BlockManager"
 
   private def registerGauge(name: String, func: BlockManagerMaster => Long): Unit = {
+    _driverLogger = DriverLogger(_conf)
     metricRegistry.register(name, new Gauge[Long] {
       override def getValue: Long = func(blockManager.master) / 1024 / 1024
     })
+    _driverLogger.warn("registerGauge(name,func)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, func)
   }
 
   registerGauge(MetricRegistry.name("memory", "maxMem_MB"),

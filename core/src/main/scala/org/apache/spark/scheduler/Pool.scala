@@ -66,11 +66,13 @@ private[spark] class Pool(
     schedulableQueue.add(schedulable)
     schedulableNameToSchedulable.put(schedulable.name, schedulable)
     schedulable.parent = this
+    _driverLogger.warn("addSchedulable(schedulable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schedulable)
   }
 
   override def removeSchedulable(schedulable: Schedulable): Unit = {
     schedulableQueue.remove(schedulable)
     schedulableNameToSchedulable.remove(schedulable.name)
+    _driverLogger.warn("removeSchedulable(schedulable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schedulable)
   }
 
   override def getSchedulableByName(schedulableName: String): Schedulable = {
@@ -84,6 +86,7 @@ private[spark] class Pool(
       }
     }
     null
+    _driverLogger.warn("getSchedulableByName(schedulableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schedulableName)
   }
 
   override def executorLost(executorId: String, host: String, reason: ExecutorLossReason): Unit = {
@@ -113,10 +116,12 @@ private[spark] class Pool(
   }
 
   def increaseRunningTasks(taskNum: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     runningTasks += taskNum
     if (parent != null) {
       parent.increaseRunningTasks(taskNum)
     }
+    _driverLogger.warn("increaseRunningTasks(taskNum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskNum)
   }
 
   def decreaseRunningTasks(taskNum: Int): Unit = {
@@ -124,5 +129,6 @@ private[spark] class Pool(
     if (parent != null) {
       parent.decreaseRunningTasks(taskNum)
     }
+    _driverLogger.warn("decreaseRunningTasks(taskNum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskNum)
   }
 }

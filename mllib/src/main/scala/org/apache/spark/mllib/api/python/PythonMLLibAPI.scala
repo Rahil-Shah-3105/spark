@@ -74,6 +74,7 @@ private[python] class PythonMLLibAPI extends Serializable {
       jsc: JavaSparkContext,
       path: String,
       minPartitions: Int): JavaRDD[LabeledPoint] =
+    logger.warn("loadLabeledPoints(jsc,path,minPartitions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", jsc, path, minPartitions)
     MLUtils.loadLabeledPoints(jsc.sc, path, minPartitions)
 
   /**
@@ -117,6 +118,7 @@ private[python] class PythonMLLibAPI extends Serializable {
       throw new IllegalArgumentException("Invalid value for 'regType' parameter."
         + " Can only be initialized using the following string values: ['l1', 'l2', None].")
     }
+    logger.warn("getUpdaterFromString(regType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", regType)
   }
 
   /**
@@ -557,6 +559,7 @@ private[python] class PythonMLLibAPI extends Serializable {
   def loadLDAModel(jsc: JavaSparkContext, path: String): LDAModelWrapper = {
     val model = DistributedLDAModel.load(jsc.sc, path)
     new LDAModelWrapper(model)
+    logger.warn("loadLDAModel(jsc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", jsc, path)
   }
 
 
@@ -876,11 +879,13 @@ private[python] class PythonMLLibAPI extends Serializable {
   // used by the corr methods to retrieve the name of the correlation method passed in via pyspark
   private def getCorrNameOrDefault(method: String) = {
     if (method == null) CorrelationNames.defaultCorrName else method
+    logger.warn("getCorrNameOrDefault(method)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", method)
   }
 
   // Used by the *RDD methods to get default seed if not passed in from pyspark
   private def getSeedOrDefault(seed: java.lang.Long): Long = {
     if (seed == null) Utils.random.nextLong else seed
+    logger.warn("getSeedOrDefault(seed)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", seed)
   }
 
   // Used by *RDD methods to get default numPartitions if not passed in from pyspark
@@ -891,6 +896,7 @@ private[python] class PythonMLLibAPI extends Serializable {
     } else {
       numPartitions
     }
+    logger.warn("getNumPartitionsOrDefault(numPartitions,jsc)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numPartitions, jsc)
   }
 
   // Note: for the following methods, numPartitions and seed are boxed to allow nulls to be passed
@@ -1091,6 +1097,7 @@ private[python] class PythonMLLibAPI extends Serializable {
       clusterCenters.asScala.toArray, clusterWeights.asScala.toArray)
         .update(data, decayFactor, timeUnit)
       List[AnyRef](model.clusterCenters, Vectors.dense(model.clusterWeights)).asJava
+        logger.warn("updateStreamingKMeansModel(clusterCenters,clusterWeights,data,decayFactor,timeUnit)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", clusterCenters, clusterWeights, data, decayFactor, timeUnit)
   }
 
   /**
@@ -1139,6 +1146,8 @@ private[python] class PythonMLLibAPI extends Serializable {
    */
   def createRowMatrix(rows: JavaRDD[Vector], numRows: Long, numCols: Int): RowMatrix = {
     new RowMatrix(rows.rdd, numRows, numCols)
+    logger.warn("createRowMatrix(rows,numRows,numCols)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, numRows, numCols)
+  logger.warn("createRowMatrix(df,numRows,numCols)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", df, numRows, numCols)
   }
 
   def createRowMatrix(df: DataFrame, numRows: Long, numCols: Int): RowMatrix = {
@@ -1157,6 +1166,7 @@ private[python] class PythonMLLibAPI extends Serializable {
       rows.schema(1).dataType.getClass == classOf[VectorUDT],
       "DataFrame must consist of a long type index column and a vector type column")
     val indexedRows = rows.rdd.map {
+    logger.warn("createIndexedRowMatrix(rows,numRows,numCols)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, numRows, numCols)
       case Row(index: Long, vector: Vector) => IndexedRow(index, vector)
     }
     new IndexedRowMatrix(indexedRows, numRows, numCols)
@@ -1167,6 +1177,7 @@ private[python] class PythonMLLibAPI extends Serializable {
    */
   def createCoordinateMatrix(rows: DataFrame, numRows: Long, numCols: Long): CoordinateMatrix = {
     // We use DataFrames for serialization of MatrixEntry entries from
+    logger.warn("createCoordinateMatrix(rows,numRows,numCols)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, numRows, numCols)
     // Python, so map each Row in the DataFrame back to a MatrixEntry.
     val entries = rows.rdd.map {
       case Row(i: Long, j: Long, value: Double) => MatrixEntry(i, j, value)
@@ -1181,6 +1192,7 @@ private[python] class PythonMLLibAPI extends Serializable {
                         numRows: Long, numCols: Long): BlockMatrix = {
     // We use DataFrames for serialization of sub-matrix blocks from
     // Python, so map each Row in the DataFrame back to a
+    logger.warn("createBlockMatrix(blocks,rowsPerBlock,colsPerBlock,numRows,numCols)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blocks, rowsPerBlock, colsPerBlock, numRows, numCols)
     // ((blockRowIndex, blockColIndex), sub-matrix) tuple.
     val blockTuples = blocks.rdd.map {
       case Row(Row(blockRowIndex: Long, blockColIndex: Long), subMatrix: Matrix) =>
@@ -1195,6 +1207,7 @@ private[python] class PythonMLLibAPI extends Serializable {
   def getIndexedRows(indexedRowMatrix: IndexedRowMatrix): DataFrame = {
     // We use DataFrames for serialization of IndexedRows to Python,
     // so return a DataFrame.
+    logger.warn("getIndexedRows(indexedRowMatrix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", indexedRowMatrix)
     val sc = indexedRowMatrix.rows.sparkContext
     val spark = SparkSession.builder().sparkContext(sc).getOrCreate()
     spark.createDataFrame(indexedRowMatrix.rows)
@@ -1206,6 +1219,7 @@ private[python] class PythonMLLibAPI extends Serializable {
   def getMatrixEntries(coordinateMatrix: CoordinateMatrix): DataFrame = {
     // We use DataFrames for serialization of MatrixEntry entries to
     // Python, so return a DataFrame.
+    logger.warn("getMatrixEntries(coordinateMatrix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", coordinateMatrix)
     val sc = coordinateMatrix.entries.sparkContext
     val spark = SparkSession.builder().sparkContext(sc).getOrCreate()
     spark.createDataFrame(coordinateMatrix.entries)
@@ -1217,6 +1231,7 @@ private[python] class PythonMLLibAPI extends Serializable {
   def getMatrixBlocks(blockMatrix: BlockMatrix): DataFrame = {
     // We use DataFrames for serialization of sub-matrix blocks to
     // Python, so return a DataFrame.
+    logger.warn("getMatrixBlocks(blockMatrix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", blockMatrix)
     val sc = blockMatrix.blocks.sparkContext
     val spark = SparkSession.builder().sparkContext(sc).getOrCreate()
     spark.createDataFrame(blockMatrix.blocks)
@@ -1274,6 +1289,7 @@ private[spark] abstract class SerDeBase {
       Pickler.registerCustomPickler(this.getClass, this)
       Pickler.registerCustomPickler(cls, this)
       Unpickler.registerConstructor(module, name, this)
+      logger.warn("register()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def pickle(obj: Object, out: OutputStream, pickler: Pickler): Unit = {
@@ -1291,6 +1307,7 @@ private[spark] abstract class SerDeBase {
       if (objects.length == 0 || objects.length > 3) {
         out.write(Opcodes.MARK)
       }
+      logger.warn("saveObjects(out,pickler,objects)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, pickler, objects)
       objects.foreach(pickler.save)
       val code = objects.length match {
         case 1 => Opcodes.TUPLE1
@@ -1308,6 +1325,7 @@ private[spark] abstract class SerDeBase {
         // This must be ISO 8859-1 / Latin 1, not UTF-8, to interoperate correctly
         obj.asInstanceOf[String].getBytes(StandardCharsets.ISO_8859_1)
       }
+      logger.warn("getBytes(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
     }
 
     private[python] def saveState(obj: Object, out: OutputStream, pickler: Pickler): Unit
@@ -1325,6 +1343,7 @@ private[spark] abstract class SerDeBase {
 
   def loads(bytes: Array[Byte]): AnyRef = {
     new Unpickler().loads(bytes)
+    logger.warn("loads(bytes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", bytes)
   }
 
   /* convert object into Tuple */
@@ -1430,6 +1449,7 @@ private[spark] object SerDe extends SerDeBase with Serializable {
       out.write(Opcodes.BININT)
       out.write(PickleUtils.integer_to_bytes(isTransposed))
       out.write(Opcodes.TUPLE)
+    logger.warn("saveState(obj,out,pickler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, out, pickler)
     }
 
     def construct(args: Array[Object]): Object = {

@@ -42,6 +42,7 @@ import org.apache.spark.sql.internal.SQLConf
  * for every batches whereas here it is planned "selectively".
  */
 object OptimizeOneRowPlan extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     val enableForStreaming = conf.getConf(SQLConf.STREAMING_OPTIMIZE_ONE_ROW_PLAN_ENABLED)
 
@@ -60,6 +61,7 @@ object OptimizeOneRowPlan extends Rule[LogicalPlan] {
             aggExpr.copy(isDistinct = false)
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def isChildEligible(child: LogicalPlan, enableForStreaming: Boolean): Boolean = {

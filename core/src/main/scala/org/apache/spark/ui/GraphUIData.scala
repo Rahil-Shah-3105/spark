@@ -57,6 +57,7 @@ private[spark] class GraphUIData(
   private var dataJavaScriptName: String = _
 
   def generateDataJs(jsCollector: JsCollector): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val jsForData = data.map { case (x, y) =>
       s"""{"x": $x, "y": $y}"""
     }.mkString("[", ",", "]")
@@ -151,14 +152,18 @@ private[spark] class JsCollector(req: HttpServletRequest) {
 
   def addPreparedStatement(js: String): Unit = {
     preparedStatements += js
+    _driverLogger.warn("addPreparedStatement(js)={}): EUAIACT-AUDIT: State change recorded for the audit trail", js)
   }
 
   def addStatement(js: String): Unit = {
     statements += js
+    _driverLogger.warn("addStatement(js)={}): EUAIACT-AUDIT: State change recorded for the audit trail", js)
   }
 
   def addImports(sourceFile: String, functions: String*): Unit = {
     imports.add(formatImportJavaScript(req, sourceFile, functions: _*))
+    _driverLogger.warn("addImports(sourceFile,functions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sourceFile, functions)
+  _driverLogger.warn("addImports(js)={}): EUAIACT-AUDIT: State change recorded for the audit trail", js)
   }
   def addImports(js: String): Unit = {
     imports.add(js)

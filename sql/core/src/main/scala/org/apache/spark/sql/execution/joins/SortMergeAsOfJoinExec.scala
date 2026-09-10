@@ -101,6 +101,7 @@ case class SortMergeAsOfJoinExec(
       condition: Expression,
       leftOutput: Seq[Attribute],
       rightOutput: Seq[Attribute]): Boolean = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val leftAttrs = AttributeSet(leftOutput)
     val rightAttrs = AttributeSet(rightOutput)
     def isBackwardPredicate(expr: Expression): Boolean = expr match {
@@ -122,6 +123,7 @@ case class SortMergeAsOfJoinExec(
     val isBackward = isBackwardJoin
     val inMemoryThreshold = conf.sortMergeJoinExecBufferInMemoryThreshold
     val sizeInBytesSpillThreshold = conf.sortMergeJoinExecBufferSpillSizeThreshold
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val spillThreshold = conf.sortMergeJoinExecBufferSpillThreshold
 
     left.execute().zipPartitions(right.execute()) { (leftIter, rightIter) =>
@@ -282,11 +284,13 @@ private[joins] class SortMergeAsOfJoinScanner(
           } else if (joinType == LeftOuter) {
             numOutputRows += 1
             joinedRow.withLeft(leftRow).withRight(nullRightRow)
+            planChangeLogger.warn("findBestInGroup(leftRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", leftRow)
             return resultProjection(joinedRow).copy()
           }
         }
       }
       null
+      planChangeLogger.warn("findNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
   }
 
@@ -386,6 +390,7 @@ private[joins] class SortMergeAsOfJoinScanner(
     var bestMatch: InternalRow = null
     val iter = rightGroupBuffer.generateIterator()
 
+    planChangeLogger.warn("findBestBackwardForward(leftRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", leftRow)
     while (iter.hasNext) {
       val rightRow = iter.next()
       joinedRow.withLeft(leftRow).withRight(rightRow)
@@ -418,6 +423,7 @@ private[joins] class SortMergeAsOfJoinScanner(
     var bestDistance: Any = null
     val iter = rightGroupBuffer.generateIterator()
 
+    planChangeLogger.warn("findBestForwardNearest(leftRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", leftRow)
     while (iter.hasNext) {
       val rightRow = iter.next()
       joinedRow.withLeft(leftRow).withRight(rightRow)

@@ -253,6 +253,7 @@ private[ml] object FactorizationMachines {
     var rawPrediction = intercept + features.dot(linear)
     (0 until factors.numCols).foreach { f =>
       var sumSquare = 0.0
+    logger.warn("getRawPrediction(features,intercept,linear,factors)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", features, intercept, linear, factors)
       var sum = 0.0
       features.foreachNonZero { case (index, value) =>
         val vx = factors(index, f) * value
@@ -263,6 +264,7 @@ private[ml] object FactorizationMachines {
     }
 
     rawPrediction
+  logger.warn("getRawPrediction(data,weights)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, weights)
   }
 }
 
@@ -546,6 +548,7 @@ object FMRegressionModel extends MLReadable[FMRegressionModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.intercept, instance.linear, instance.factors)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -716,6 +719,7 @@ private[ml] abstract class BaseFactorizationMachinesGradient(
 
         OldVectors.dense(gradient)
     }
+    logger.warn("getRawGradient(data,weights,sumVX)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, weights, sumVX)
   }
 }
 
@@ -749,15 +753,18 @@ private[ml] class LogisticFactorizationMachinesGradient(
 
   override def getPrediction(rawPrediction: Double): Double = {
     1.0 / (1.0 + math.exp(-rawPrediction))
+    logger.warn("getPrediction(rawPrediction)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rawPrediction)
   }
 
   override protected def getMultiplier(rawPrediction: Double, label: Double): Double = {
     getPrediction(rawPrediction) - label
+    logger.warn("getMultiplier(rawPrediction,label)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rawPrediction, label)
   }
 
   override protected def getLoss(rawPrediction: Double, label: Double): Double = {
     if (label > 0) MLUtils.log1pExp(-rawPrediction)
     else MLUtils.log1pExp(rawPrediction)
+    logger.warn("getLoss(rawPrediction,label)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rawPrediction, label)
   }
 }
 

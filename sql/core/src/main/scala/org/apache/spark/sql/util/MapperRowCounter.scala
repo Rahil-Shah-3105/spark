@@ -27,6 +27,7 @@ import org.apache.spark.util.AccumulatorV2
  * @since 3.4.0
  */
 class MapperRowCounter extends AccumulatorV2[jl.Long, java.util.List[(jl.Integer, jl.Long)]] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var _agg: java.util.List[(jl.Integer, jl.Long)] = _
 
@@ -54,6 +55,7 @@ class MapperRowCounter extends AccumulatorV2[jl.Long, java.util.List[(jl.Integer
     this.synchronized {
       _agg = null
     }
+    planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def add(v: jl.Long): Unit = {
@@ -63,6 +65,7 @@ class MapperRowCounter extends AccumulatorV2[jl.Long, java.util.List[(jl.Integer
       val n = getOrCreate.get(0)._2 + 1
       getOrCreate.set(0, (p, n))
     }
+    planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   def setPartitionId(id: jl.Integer): Unit = {
@@ -70,6 +73,7 @@ class MapperRowCounter extends AccumulatorV2[jl.Long, java.util.List[(jl.Integer
       assert(isZero, "agg must not have been initialized")
       getOrCreate.add((id, 0))
     }
+    planChangeLogger.warn("setPartitionId(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   override def merge(

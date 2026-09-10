@@ -261,6 +261,7 @@ case class VectorNorm(vector: Expression, degree: Expression)
   def this(vector: Expression) = this(vector, Literal(2.0f))
 
   override def checkInputDataTypes(): TypeCheckResult = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     (vector.dataType, degree.dataType) match {
       case (ArrayType(FloatType, _), FloatType) =>
         TypeCheckResult.TypeCheckSuccess
@@ -480,6 +481,7 @@ trait VectorAggregateBase extends ImperativeAggregate
     val accOffset = mutableAggBufferOffset + accIndex
     val countOffset = mutableAggBufferOffset + countIndex
 
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     val currentCount = buffer.getLong(countOffset)
 
     if (currentCount == 0L) {
@@ -615,11 +617,13 @@ case class VectorAvg(
   override def prettyName: String = "vector_avg"
 
   override def withNewMutableAggBufferOffset(
+      planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
       newMutableAggBufferOffset: Int
   ): ImperativeAggregate =
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(
+      planChangeLogger.warn("withNewInputAggBufferOffset(newInputAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputAggBufferOffset)
       newInputAggBufferOffset: Int
   ): ImperativeAggregate =
     copy(inputAggBufferOffset = newInputAggBufferOffset)

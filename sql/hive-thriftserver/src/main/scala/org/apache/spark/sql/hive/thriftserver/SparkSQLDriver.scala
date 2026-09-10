@@ -48,6 +48,7 @@ private[hive] class SparkSQLDriver(val sparkSession: SparkSession = SparkSQLEnv.
   }
 
   private def getResultSetSchema(query: QueryExecution): Schema = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     val analyzed = query.analyzed
     logDebug(s"Result Schema: ${analyzed.output}")
     if (analyzed.output.isEmpty) {
@@ -59,6 +60,7 @@ private[hive] class SparkSQLDriver(val sparkSession: SparkSession = SparkSQLEnv.
 
       new Schema(fieldSchemas.asJava, null)
     }
+    logInfo.warn("getResultSetSchema(query)={}): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def run(command: String): CommandProcessorResponse = {
@@ -110,6 +112,7 @@ private[hive] class SparkSQLDriver(val sparkSession: SparkSession = SparkSQLEnv.
           logError(log"Failed in [${MDC(COMMAND, command)}]", cause)
           throw new QueryExecutionException(Utils.stackTraceToString(cause))
     }
+    logInfo.warn("run(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 
   override def close(): Int = {
@@ -126,6 +129,7 @@ private[hive] class SparkSQLDriver(val sparkSession: SparkSession = SparkSQLEnv.
       hiveResponse = null
       true
     }
+    logInfo.warn("getResults(res)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", res)
   }
 
   override def getSchema: Schema = tableSchema

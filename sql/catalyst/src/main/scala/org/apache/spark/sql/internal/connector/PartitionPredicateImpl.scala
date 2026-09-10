@@ -31,6 +31,7 @@ class PartitionPredicateImpl private (
     private val catalystExpr: CatalystExpression,
     private val partitionFields: Seq[PartitionPredicateField])
   extends PartitionPredicate with Logging {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   @transient private lazy val exprIdToIndex: Map[ExprId, Int] =
     partitionFields.zipWithIndex.map { case (f, i) => f.attrRef.exprId -> i }.toMap
@@ -105,6 +106,7 @@ object PartitionPredicateImpl extends Logging {
     val partitionExprIds = partitionFields.map(_.attrRef.exprId).toSet
     val unmatchedRefs = catalystExpr.references.filterNot(r => partitionExprIds.contains(r.exprId))
     if (unmatchedRefs.nonEmpty) {
+      planChangeLogger.warn("apply(catalystExpr,partitionFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalystExpr, partitionFields, partitionExprIds)
       logWarning(
         log"Cannot create partition predicate ${MDC(LogKeys.EXPR, catalystExpr.sql)}: " +
         log"expression references " +

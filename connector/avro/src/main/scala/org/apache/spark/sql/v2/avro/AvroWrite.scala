@@ -36,5 +36,6 @@ case class AvroWrite(
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
     AvroUtils.prepareWrite(sqlConf, job, options, dataSchema)
+    logger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
   }
 }

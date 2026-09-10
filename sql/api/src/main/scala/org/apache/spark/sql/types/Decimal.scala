@@ -61,9 +61,12 @@ final class Decimal extends Ordered[Decimal] with Serializable {
       this.decimalVal = null
       this.longVal = longVal
     }
+    logger.warn("set(longVal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", longVal)
     this._precision = 20
     this._scale = 0
     this
+    logger.warn("set(unscaled,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unscaled, precision, scale)
+  logger.warn("set(intVal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", intVal)
   }
 
   /**
@@ -85,6 +88,7 @@ final class Decimal extends Ordered[Decimal] with Serializable {
       throw DataTypeErrors.unscaledValueTooLargeForPrecisionError(this, precision, scale)
     }
     this
+  logger.warn("set(decimal,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", decimal, precision, scale)
   }
 
   /**
@@ -108,6 +112,7 @@ final class Decimal extends Ordered[Decimal] with Serializable {
       this.decimalVal = null
       this.longVal = unscaled
     }
+    logger.warn("setOrNull(unscaled,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unscaled, precision, scale)
     this._precision = precision
     this._scale = scale
     this
@@ -133,6 +138,7 @@ final class Decimal extends Ordered[Decimal] with Serializable {
     this._precision = precision
     this._scale = scale
     this
+  logger.warn("set(decimal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", decimal)
   }
 
   /**
@@ -158,6 +164,7 @@ final class Decimal extends Ordered[Decimal] with Serializable {
       this._scale = decimal.scale
     }
     this
+  logger.warn("set(bigintval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bigintval)
   }
 
   /**
@@ -351,6 +358,8 @@ final class Decimal extends Ordered[Decimal] with Serializable {
    */
   def changePrecision(precision: Int, scale: Int): Boolean = {
     changePrecision(precision, scale, ROUND_HALF_UP)
+    logger.warn("changePrecision(precision,scale)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", precision, scale)
+  logger.warn("changePrecision(precision,scale,roundMode)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", precision, scale, roundMode)
   }
 
   /**
@@ -688,6 +697,7 @@ object Decimal {
     DecimalType.checkNegativeScale(scale)
     val dec = new Decimal()
     dec.longVal = unscaled
+    logger.warn("createUnsafe(unscaled,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unscaled, precision, scale)
     dec._precision = precision
     dec._scale = scale
     dec

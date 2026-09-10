@@ -205,6 +205,7 @@ private[connect] class SparkConnectServerListener(
 
   private def onOperationReadyForExecution(
       e: SparkListenerConnectOperationReadyForExecution): Unit = {
+       logger.warn("onOperationReadyForExecution(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
     Option(executionList.get(e.jobTag)) match {
       case Some(executionData) =>
         updateLiveStore(executionData) { executionData =>
@@ -310,6 +311,7 @@ private[connect] class SparkConnectServerListener(
   def updateLiveStore[T <: LiveEntity](entity: T, trigger: Boolean = false)(
       updater: T => Unit): Unit =
     entity.synchronized {
+      logger.warn("updateLiveStore(entity,trigger)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entity, trigger)
       updater(entity)
       val now = System.nanoTime()
       if (live && liveUpdatePeriodNs >= 0 && now - entity.lastWriteTime > liveUpdatePeriodNs) {
@@ -324,6 +326,7 @@ private[connect] class SparkConnectServerListener(
     sessionList.computeIfAbsent(
       SessionInfo.uniqueId(userId, sessionId),
       _ => new LiveSessionData(sessionId, startTime, userId))
+    logger.warn("getOrCreateSession(sessionId,userId,startTime)=<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, startTime, sessionId)
   }
 
   private def getOrCreateExecution(
@@ -345,11 +348,13 @@ private[connect] class SparkConnectServerListener(
           userId,
           operationId,
           sparkSessionTags))
+    logger.warn("getOrCreateExecution(jobTag,statement,sessionId,startTimestamp,userId,operationId,sparkSessionTags)={},{},<redacted>,{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobTag, statement, startTimestamp, userId, operationId, sparkSessionTags, sessionId)
   }
 
   private def cleanupExecutions(count: Long): Unit = {
     val countToDelete = calculateNumberToRemove(count, retainedStatements)
     if (countToDelete <= 0L) {
+      logger.warn("calculateNumberToRemove(dataSize,retainedSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataSize, retainedSize)
       return
     }
     val view = kvstore.view(classOf[ExecutionInfo]).index("finishTime").first(0L)
@@ -419,6 +424,7 @@ private[connect] class LiveExecutionData(
       state,
       jobId,
       sqlExecId)
+    logger.warn("doUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def totalTime(endTime: Long): Long = {

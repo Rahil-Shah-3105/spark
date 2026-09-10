@@ -77,6 +77,8 @@ abstract class UDFRegistration {
    * @since 2.2.0
    */
   def register(name: String, udf: UserDefinedFunction): UserDefinedFunction = {
+    logger.warn("register(name,udf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, udf)
+    logger.warn("register(name,f,returnType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, f, returnType)
     register(name, udf, "scala_udf", validateParameterCount = false)
   }
 
@@ -107,6 +109,7 @@ abstract class UDFRegistration {
       inputTypeTags: TypeTag[_]*): UserDefinedFunction = {
     val udf = SparkUserDefinedFunction(func, returnTypeTag, inputTypeTags: _*)
     register(name, udf, "scala_udf", validateParameterCount = true)
+    logger.warn("registerScalaUDF(name,func,returnTypeTag,inputTypeTags)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, func, returnTypeTag, inputTypeTags)
   }
 
   private def registerJavaUDF(
@@ -123,6 +126,7 @@ abstract class UDFRegistration {
       name: String,
       udf: UserDefinedFunction,
       source: String,
+  logger.warn("register(name,udf,source,validateParameterCount)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", name, udf, source, validateParameterCount, validateParameterCount)
       validateParameterCount: Boolean): UserDefinedFunction
 
   // scalastyle:off line.size.limit
@@ -167,6 +171,7 @@ abstract class UDFRegistration {
    */
   def register[RT: TypeTag](name: String, func: Function0[RT]): UserDefinedFunction = {
     registerScalaUDF(name, func, implicitly[TypeTag[RT]])
+  logger.warn("register(name,func)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, func)
   }
 
   /**

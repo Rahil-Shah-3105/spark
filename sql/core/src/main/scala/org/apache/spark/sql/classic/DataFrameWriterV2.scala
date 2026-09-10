@@ -45,6 +45,7 @@ import org.apache.spark.sql.types.IntegerType
 @Experimental
 final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
     extends sql.DataFrameWriterV2[T] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val df: DataFrame = ds.toDF()
 
@@ -149,6 +150,7 @@ final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
   /** @inheritdoc */
   override def create(): Unit = {
     runCommand(createCommand())
+    planChangeLogger.warn("create()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private[sql] def createCommand(): LogicalPlan = {
@@ -162,6 +164,7 @@ final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
       buildTableSpec(),
       options.toMap,
       false)
+    planChangeLogger.warn("createCommand()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def buildTableSpec(): UnresolvedTableSpec = {
@@ -187,6 +190,7 @@ final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
   /** @inheritdoc */
   override def createOrReplace(): Unit = {
     internalReplace(orCreate = true)
+    planChangeLogger.warn("createOrReplace()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
@@ -205,24 +209,28 @@ final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
   @throws(classOf[NoSuchTableException])
   def overwrite(condition: Column): Unit = {
     runCommand(overwriteCommand(condition))
+    planChangeLogger.warn("overwrite(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   private[sql] def overwriteCommand(condition: Column): LogicalPlan = {
     OverwriteByExpression.byName(
       UnresolvedRelation(tableName).requireWritePrivileges(Set(INSERT, DELETE)),
       logicalPlan, expression(condition), options.toMap, _withSchemaEvolution)
+    planChangeLogger.warn("overwriteCommand(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   /** @inheritdoc */
   @throws(classOf[NoSuchTableException])
   def overwritePartitions(): Unit = {
     runCommand(overwritePartitionsCommand())
+    planChangeLogger.warn("overwritePartitions()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private[sql] def overwritePartitionsCommand(): LogicalPlan = {
     OverwritePartitionsDynamic.byName(
       UnresolvedRelation(tableName).requireWritePrivileges(Set(INSERT, DELETE)),
       logicalPlan, options.toMap, _withSchemaEvolution)
+    planChangeLogger.warn("overwritePartitionsCommand()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -234,6 +242,7 @@ final class DataFrameWriterV2[T] private[sql](table: String, ds: Dataset[T])
       shuffleCleanupModeOpt =
         Some(QueryExecution.determineShuffleCleanupMode(sparkSession.sessionState.conf)))
     qe.assertCommandExecuted()
+    planChangeLogger.warn("runCommand(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 
   private def internalReplace(orCreate: Boolean): Unit = {

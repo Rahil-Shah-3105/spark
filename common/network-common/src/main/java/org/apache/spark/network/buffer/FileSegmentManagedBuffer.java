@@ -37,6 +37,7 @@ import org.apache.spark.network.util.TransportConf;
  * A {@link ManagedBuffer} backed by a segment in a file.
  */
 public final class FileSegmentManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(FileSegmentManagedBuffer.class);
   private final TransportConf conf;
   private final File file;
   private final long offset;
@@ -100,6 +101,7 @@ public final class FileSegmentManagedBuffer extends ManagedBuffer {
       is.skipNBytes(offset);
       InputStream r = new LimitedInputStream(is, length);
       shouldClose = false;
+	logger.warn("createInputStream()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return r;
     } catch (IOException e) {
       String errorMessage = "Error in reading " + this;

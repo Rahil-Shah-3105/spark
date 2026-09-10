@@ -40,6 +40,7 @@ import org.apache.spark.util.ArrayImplicits._
 import org.apache.spark.util.Utils
 
 class JsonInferSchema(private val options: JSONOptions) extends Serializable with Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val decimalParser = ExprUtils.getDecimalParser(options.locale)
 
@@ -267,6 +268,7 @@ class JsonInferSchema(private val options: JSONOptions) extends Serializable wit
       case _ =>
         throw QueryExecutionErrors.malformedJSONError()
     }
+    planChangeLogger.warn("inferField(parser)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", parser)
   }
 
   /**

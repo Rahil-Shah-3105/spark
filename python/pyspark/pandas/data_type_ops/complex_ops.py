@@ -32,6 +32,7 @@ from pyspark.pandas.data_type_ops.base import (
 from pyspark.pandas.typedef import pandas_on_spark_type
 from pyspark.sql import functions as F, Column
 from pyspark.sql.types import ArrayType, BooleanType, NumericType, StringType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ArrayOps(DataTypeOps):
@@ -58,6 +59,7 @@ class ArrayOps(DataTypeOps):
         if left_type != right_type and not (
             isinstance(left_type, NumericType) and isinstance(right_type, NumericType)
         ):
+            logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             raise TypeError(
                 "Concatenation can only be applied to %s of the same type" % self.pretty_name
             )

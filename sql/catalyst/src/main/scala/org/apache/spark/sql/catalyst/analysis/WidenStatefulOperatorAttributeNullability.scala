@@ -38,6 +38,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
  *         internal expressions and propagates upward to ancestor expressions.
  */
 object WidenStatefulOpNullability {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def isEnabled: Boolean =
     SQLConf.get.getConf(SQLConf.STATEFUL_OPERATOR_ALWAYS_NULLABLE_OUTPUT)
@@ -163,5 +164,6 @@ object WidenStatefulOperatorAttributeNullability extends Rule[LogicalPlan] {
           }
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

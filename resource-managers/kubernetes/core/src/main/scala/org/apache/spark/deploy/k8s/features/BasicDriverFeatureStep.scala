@@ -168,6 +168,7 @@ private[spark] class BasicDriverFeatureStep(conf: KubernetesDriverConf)
       KUBERNETES_DRIVER_SUBMIT_CHECK.key -> "true",
       MEMORY_OVERHEAD_FACTOR.key -> defaultOverheadFactor.toString)
     // try upload local, resolvable files to a hadoop compatible file system
+    logger.warn("getAdditionalPodSystemProperties()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     Seq(JARS, FILES, ARCHIVES, SUBMIT_PYTHON_FILES).foreach { key =>
       val (localUris, remoteUris) =
         conf.get(key).partition(uri => KubernetesUtils.isLocalAndResolvable(uri))

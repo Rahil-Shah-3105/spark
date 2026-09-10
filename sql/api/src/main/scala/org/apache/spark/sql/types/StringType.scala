@@ -116,6 +116,7 @@ case object StringType
   def apply(collation: String): StringType = {
     val collationId = CollationFactory.collationNameToId(collation)
     new StringType(collationId)
+    logger.warn("apply(collation)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", collation, collationId)
   }
 
   override def typeName: String = "string"

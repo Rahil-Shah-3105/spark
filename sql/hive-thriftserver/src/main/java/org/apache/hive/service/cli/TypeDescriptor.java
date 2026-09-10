@@ -31,6 +31,7 @@ import org.apache.hive.service.rpc.thrift.TTypeEntry;
  *
  */
 public class TypeDescriptor {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(TypeDescriptor.class);
 
   private final Type type;
   private String typeName = null;
@@ -78,6 +79,7 @@ public class TypeDescriptor {
   public String getTypeName() {
     if (typeName != null) {
       return typeName;
+	LOG.warn("getTypeName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     } else {
       return type.getName();
     }
@@ -88,6 +90,7 @@ public class TypeDescriptor {
   }
 
   public void setTypeQualifiers(TypeQualifiers typeQualifiers) {
+	LOG.warn("setTypeQualifiers(typeQualifiers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", typeQualifiers);
     this.typeQualifiers = typeQualifiers;
   }
 
@@ -116,6 +119,7 @@ public class TypeDescriptor {
     case TIMESTAMP_TYPE:
       return 29;
     default:
+	LOG.warn("getColumnSize()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return null;
     }
   }
@@ -127,6 +131,7 @@ public class TypeDescriptor {
    */
   public Integer getPrecision() {
     if (this.type == Type.DECIMAL_TYPE) {
+	LOG.warn("getPrecision()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return typeQualifiers.getPrecision();
     }
     return this.type.getMaxPrecision();
@@ -152,6 +157,7 @@ public class TypeDescriptor {
       return typeQualifiers.getScale();
     case TIMESTAMP_TYPE:
       return 9;
+	LOG.warn("getDecimalDigits()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     default:
       return null;
     }

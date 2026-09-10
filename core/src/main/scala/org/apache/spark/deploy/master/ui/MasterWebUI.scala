@@ -42,6 +42,7 @@ class MasterWebUI(
     requestedPort: Int)
   extends WebUI(master.securityMgr, master.securityMgr.getSSLOptions("standalone"),
     requestedPort, master.conf, name = "MasterUI") with Logging {
+     _driverLogger = DriverLogger(_conf)
 
   val masterEndpointRef = master.self
   val killEnabled = master.conf.get(UI_KILL_ENABLED)
@@ -99,6 +100,7 @@ class MasterWebUI(
   def addProxy(): Unit = {
     val handler = createProxyHandler(idToUiAddress)
     attachHandler(handler)
+    _driverLogger.warn("addProxy()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def idToUiAddress(id: String): Option[String] = {
@@ -106,6 +108,7 @@ class MasterWebUI(
     val maybeWorkerUiAddress = state.workers.find(_.id == id).map(_.webUiAddress)
     val maybeAppUiAddress = state.activeApps.find(_.id == id).map(_.desc.appUiUrl)
 
+    _driverLogger.warn("idToUiAddress(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
     maybeWorkerUiAddress.orElse(maybeAppUiAddress)
   }
 

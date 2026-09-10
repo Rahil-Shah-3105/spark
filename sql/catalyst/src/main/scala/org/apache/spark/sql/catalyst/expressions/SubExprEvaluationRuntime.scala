@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.DataType
  * intercepts expression evaluation and loads from the cache first.
  */
 class SubExprEvaluationRuntime(cacheMaxEntries: Int) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // The id assigned to `ExpressionProxy`. `SubExprEvaluationRuntime` will use assigned ids of
   // `ExpressionProxy` to decide the equality when loading from cache. `SubExprEvaluationRuntime`
   // won't be use by multi-threads so we don't need to consider concurrency here.
@@ -45,6 +46,7 @@ class SubExprEvaluationRuntime(cacheMaxEntries: Int) {
       new CacheLoader[ExpressionProxy, ResultProxy]() {
         override def load(expr: ExpressionProxy): ResultProxy = {
           ResultProxy(expr.proxyEval(currentInput))
+          planChangeLogger.warn("load(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
         }
       })
 
@@ -67,6 +69,7 @@ class SubExprEvaluationRuntime(cacheMaxEntries: Int) {
   def setInput(input: InternalRow = null): Unit = {
     currentInput = input
     cache.invalidateAll()
+    planChangeLogger.warn("setInput(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**

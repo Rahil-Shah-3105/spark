@@ -81,6 +81,7 @@ case class WindowGroupLimitExec(
         child.output,
         longMetric("numOutputRows"))
 
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (conf.usePartitionEvaluator) {
       child.execute().mapPartitionsWithEvaluator(evaluatorFactory)
     } else {
@@ -96,6 +97,7 @@ case class WindowGroupLimitExec(
 }
 
 abstract class BaseLimitIterator extends Iterator[InternalRow] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def numOutputRows: SQLMetric
 
   def input: Iterator[InternalRow]
@@ -215,6 +217,7 @@ class GroupedLimitIterator(
       nextRow = input.next().asInstanceOf[UnsafeRow]
       nextGroup = grouping(nextRow)
     }
+    planChangeLogger.warn("fetchNextRow()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
   fetchNextRow()
 

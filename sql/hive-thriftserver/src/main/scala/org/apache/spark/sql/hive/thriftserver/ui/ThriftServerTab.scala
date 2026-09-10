@@ -38,6 +38,7 @@ private[thriftserver] class ThriftServerTab(
   attachPage(new ThriftServerSessionPage(this))
   parent.attachTab(this)
   def detach(): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     sparkUI.detachTab(this)
   }
 
@@ -49,5 +50,6 @@ private[thriftserver] object ThriftServerTab {
     sparkContext.ui.getOrElse {
       throw QueryExecutionErrors.parentSparkUIToAttachTabNotFoundError()
     }
+    logInfo.warn("getSparkUI(sparkContext)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkContext)
   }
 }

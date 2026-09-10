@@ -88,6 +88,7 @@ private[spark] object CoarseGrainedClusterMessages {
     extends CoarseGrainedClusterMessage
 
   object StatusUpdate {
+    _driverLogger = DriverLogger(_conf)
     /** Alternate factory method that takes a ByteBuffer directly for the data field */
     def apply(
         executorId: String,
@@ -97,6 +98,7 @@ private[spark] object CoarseGrainedClusterMessages {
         taskCpus: BigDecimal,
         resources: Map[String, Map[String, Long]]): StatusUpdate = {
       StatusUpdate(executorId, taskId, state, new SerializableBuffer(data), taskCpus, resources)
+      _driverLogger.warn("apply(executorId,taskId,state,data,taskCpus,resources)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, taskId, state, data, taskCpus, resources, executorId)
     }
   }
 

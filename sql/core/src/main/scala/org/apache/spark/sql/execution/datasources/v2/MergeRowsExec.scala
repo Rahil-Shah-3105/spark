@@ -93,6 +93,7 @@ case class MergeRowsExec(
 
   protected override def doExecute(): RDD[InternalRow] = {
     child.execute().mapPartitions(processPartition)
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def inputRDDs(): Seq[RDD[InternalRow]] = {
@@ -141,6 +142,7 @@ case class MergeRowsExec(
       ctx: CodegenContext,
       rowIdOrdinal: Int,
       input: Seq[ExprCode]): ExprCode = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val bitmapClass = classOf[Roaring64Bitmap]
     val rowIdBitmap = ctx.addMutableState(bitmapClass.getName, "matchedRowIds",
       v => s"$v = new ${bitmapClass.getName}();")
@@ -309,6 +311,7 @@ case class MergeRowsExec(
       case _ =>
         throw new IllegalArgumentException(s"Unexpected context for KeepExec: $context")
     }
+    planChangeLogger.warn("generateMetricUpdateCode(ctx,context,sourcePresent)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, context, sourcePresent)
   }
 
   private def generateUpdateMetricUpdateCode(
@@ -330,6 +333,8 @@ case class MergeRowsExec(
          |$notMatchedBySourceUpdateMetric.add(1);
        """.stripMargin
     }
+    planChangeLogger.warn("generateUpdateMetricUpdateCode(ctx,sourcePresent)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, sourcePresent)
+  planChangeLogger.warn("generateDeleteMetricUpdateCode(ctx,sourcePresent)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, sourcePresent)
   }
 
   private def generateDeleteMetricUpdateCode(
@@ -423,16 +428,19 @@ case class MergeRowsExec(
       rowIterator, cardinalityValidator, isTargetRowPresentPred, isSourceRowPresentPred,
       matchedInstructionExecs, notMatchedInstructionExecs, notMatchedBySourceInstructionExecs)
 
+    planChangeLogger.warn("processPartition(rowIterator)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rowIterator, cardinalityValidator)
     // null indicates a record must be discarded
     mergeIterator.filter(_ != null)
   }
 
   private def createProjection(exprs: Seq[Expression]): UnsafeProjection = {
     UnsafeProjection.create(exprs, child.output)
+    planChangeLogger.warn("createProjection(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 
   private def createPredicate(expr: Expression): BasePredicate = {
     GeneratePredicate.generate(expr, child.output)
+    planChangeLogger.warn("createPredicate(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
   }
 
   private def planInstructions(instructions: Seq[Instruction]): Seq[InstructionExec] = {
@@ -564,6 +572,7 @@ case class MergeRowsExec(
         instructions: Seq[InstructionExec],
         sourcePresent: Boolean = false): InternalRow = {
 
+         planChangeLogger.warn("applyInstructions(row,instructions,sourcePresent)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, instructions, sourcePresent)
       for (instruction <- instructions) {
         if (instruction.condition.eval(row)) {
           instruction match {
@@ -604,6 +613,8 @@ case class MergeRowsExec(
       } else {
         numTargetRowsNotMatchedBySourceDeleted += 1
       }
+      planChangeLogger.warn("incrementDeleteMetric(sourcePresent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourcePresent)
+    planChangeLogger.warn("incrementUpdateMetric(sourcePresent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourcePresent)
     }
 
     private def incrementUpdateMetric(sourcePresent: Boolean): Unit = {

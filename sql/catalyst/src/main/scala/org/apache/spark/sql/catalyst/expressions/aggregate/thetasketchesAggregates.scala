@@ -36,6 +36,7 @@ sealed trait ThetaSketchState {
   def eval(): Array[Byte]
 }
 case class UpdatableSketchBuffer(sketch: UpdateSketch) extends ThetaSketchState {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def serialize(): Array[Byte] = sketch.rebuild.compact.toByteArrayCompressed
   override def eval(): Array[Byte] = sketch.rebuild.compact.toByteArrayCompressed
 }
@@ -168,6 +169,7 @@ case class ThetaSketchAgg(
     val builder = new UpdateSketchBuilder
     builder.setLogNominalEntries(lgNomEntries)
     UpdatableSketchBuffer(builder.build)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -197,6 +199,7 @@ case class ThetaSketchAgg(
     }
 
     // Handle the different data types for sketch updates.
+    planChangeLogger.warn("update(updateBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateBuffer, input)
     left.dataType match {
       case ArrayType(IntegerType, _) =>
         val arr = v.asInstanceOf[ArrayData].toIntArray()
@@ -228,6 +231,7 @@ case class ThetaSketchAgg(
     }
 
     updateBuffer
+  planChangeLogger.warn("update(unionBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unionBuffer, input)
   }
 
   /**
@@ -245,6 +249,7 @@ case class ThetaSketchAgg(
     // This is a helper function to create union only when needed.
     def createUnionWith(sketch1: Sketch, sketch2: Sketch): UnionAggregationBuffer = {
       val union = SetOperation.builder.setLogNominalEntries(lgNomEntries).buildUnion
+      planChangeLogger.warn("createUnionWith(sketch1,sketch2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sketch1, sketch2)
       union.union(sketch1)
       union.union(sketch2)
       UnionAggregationBuffer(union)
@@ -436,6 +441,7 @@ case class ThetaUnionAgg(
     }
     union.union(inputSketch)
     unionBuffer
+  planChangeLogger.warn("update(intersectionBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", intersectionBuffer, input)
   }
 
   /**
@@ -544,6 +550,7 @@ case class ThetaIntersectionAgg(
 
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): ThetaIntersectionAgg =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): ThetaIntersectionAgg =

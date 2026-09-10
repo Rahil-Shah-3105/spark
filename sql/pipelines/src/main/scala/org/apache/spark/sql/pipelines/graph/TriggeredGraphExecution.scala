@@ -88,6 +88,7 @@ class TriggeredGraphExecution(
         } finally {
           TriggeredGraphExecution.super.stop()
         }
+        logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
   }
@@ -448,6 +449,7 @@ object TriggeredGraphExecution {
       failures: Iterator[(TableIdentifier, TriggeredFailureInfo)]): Option[RunTerminationReason] = {
     failures
       .collect {
+        logger.warn("chooseRunTerminationReason(failures)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failures)
         case (id, TriggeredFailureInfo(ts, _, _, GraphExecution.StopFlowExecution(r))) =>
           (ts, id.unquotedString, r.runTerminationReason)
       }

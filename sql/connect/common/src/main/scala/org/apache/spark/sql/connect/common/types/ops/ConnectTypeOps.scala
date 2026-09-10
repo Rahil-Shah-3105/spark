@@ -136,6 +136,7 @@ object ConnectTypeOps {
   /** Reverse lookup: returns a Scala converter for a proto literal KindCase. */
   def getScalaConverterForKind(
       kindCase: proto.DataType.KindCase): Option[proto.Expression.Literal => Any] =
+    logger.warn("getScalaConverterForKind(kindCase)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", kindCase)
     opsForKindCase(kindCase).map(_.getScalaConverter)
 
   /** Reverse lookup: returns the proto DataType inferred from a proto literal. */
@@ -152,6 +153,7 @@ object ConnectTypeOps {
         proto.DataType.KindCase.TIMESTAMP_NTZ_NANOS
       case proto.Expression.Literal.LiteralTypeCase.TIMESTAMP_LTZ_NANOS =>
         proto.DataType.KindCase.TIMESTAMP_LTZ_NANOS
+        logger.warn("literalCaseToKindCase(litCase)={}): EUAIACT-AUDIT: State change recorded for the audit trail", litCase)
       // Add new framework literal-to-kind mappings here
       case _ => proto.DataType.KindCase.KIND_NOT_SET
     }

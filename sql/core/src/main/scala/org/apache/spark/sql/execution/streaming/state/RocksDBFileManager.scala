@@ -137,11 +137,13 @@ class RocksDBFileManager(
     fileChecksumEnabled: Boolean = false,
     fileChecksumThreadPoolSize: Option[Int] = None)
   extends Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import RocksDBImmutableFile._
 
   protected def getFileSystem(myDfsRootDir: String, myHadoopConf: Configuration) : FileSystem = {
     new Path(myDfsRootDir).getFileSystem(myHadoopConf)
+    planChangeLogger.warn("getFileSystem(myDfsRootDir,myHadoopConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", myDfsRootDir, myHadoopConf)
   }
 
   private lazy val fm = {
@@ -200,6 +202,7 @@ class RocksDBFileManager(
       case (false, true) => 3
       case _ => 4
     }
+    planChangeLogger.warn("getChangelogWriterVersion(useColumnFamilies,stateStoreCheckpointIdEnabled)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", useColumnFamilies, stateStoreCheckpointIdEnabled, stateStoreCheckpointIdEnabled)
   }
 
   private def createDfsRootDirIfNotExist(): Unit = {
@@ -208,6 +211,7 @@ class RocksDBFileManager(
       if (!fm.exists(rootDir)) fm.mkdirs(rootDir)
       rootDirChecked = true
     }
+    planChangeLogger.warn("createDfsRootDirIfNotExist()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getChangeLogWriter(
@@ -256,6 +260,7 @@ class RocksDBFileManager(
       case e: Throwable =>
         throw StateStoreErrors.failedToGetChangelogWriter(version, e)
     }
+    planChangeLogger.warn("getChangeLogWriter(version,useColumnFamilies,checkpointUniqueId,stateStoreCheckpointIdLineage)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, useColumnFamilies, checkpointUniqueId, stateStoreCheckpointIdLineage, checkpointUniqueId)
   }
 
   // Get the changelog file at version
@@ -266,6 +271,7 @@ class RocksDBFileManager(
     val reader = new StateStoreChangelogReaderFactory(fm, changelogFile, codec)
       .constructChangelogReader()
 
+      planChangeLogger.warn("getChangelogReader(version,checkpointUniqueId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, checkpointUniqueId, checkpointUniqueId)
     logInfo(log"Loaded change log reader version ${MDC(LogKeys.FILE_VERSION, reader.version)}")
 
     reader
@@ -351,6 +357,7 @@ class RocksDBFileManager(
         // Round up to 1ms to reassure that we've logged successfully and avoid flaky tests
         saveZipFilesTimeMs = Some(Math.max(zipFilesTimeMs, 1L))
       )
+      planChangeLogger.warn("saveCheckpointToDfs(checkpointDir,version,numKeys,numInternalKeys,fileMapping,columnFamilyMapping,maxColumnFamilyId,checkpointUniqueId,verifyNonEmptyFilesInZip)={},{},{},{},<redacted>,<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", checkpointDir, version, numKeys, numInternalKeys, maxColumnFamilyId, checkpointUniqueId, verifyNonEmptyFilesInZip, maxColumnFamilyId)
   }
 
   /**
@@ -400,6 +407,7 @@ class RocksDBFileManager(
       log"${MDC(LogKeys.VERSION_NUM, version)} from DFS:\n" +
       log"${MDC(LogKeys.ROCKS_DB_FILE_MAPPING, rocksDBFileMapping)}")
 
+    planChangeLogger.warn("loadCheckpointFromDfs(version,localDir,rocksDBFileMapping,checkpointUniqueId)={},{},<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", version, localDir, checkpointUniqueId, checkpointUniqueId)
     metadata
   }
 
@@ -425,6 +433,8 @@ class RocksDBFileManager(
         .foldLeft(0L)(math.max)
     } else {
       0
+      planChangeLogger.warn("getLatestSnapshotVersion()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+      planChangeLogger.warn("getLatestSnapshotVersion(version)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", version)
     }
   }
 
@@ -449,6 +459,7 @@ class RocksDBFileManager(
   def getEligibleSnapshotsForVersion(version: Long): Seq[Long] = {
     SnapshotLoaderHelper.getEligibleSnapshotsForVersion(
       version, fm, new Path(dfsRootDir), onlyZipFiles, fileSuffix = ".zip")
+    planChangeLogger.warn("getEligibleSnapshotsForVersion(version)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", version)
   }
 
   /**
@@ -476,6 +487,7 @@ class RocksDBFileManager(
     } else {
       Seq.empty
     }
+    planChangeLogger.warn("getSnapshotVersionsAndUniqueIdsFromLineage(lineage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", lineage)
   }
 
   /**
@@ -490,6 +502,7 @@ class RocksDBFileManager(
   def getLatestSnapshotVersionAndUniqueIdFromLineage(
       lineage: Array[LineageItem]): Option[(Long, String)] = {
     getSnapshotVersionsAndUniqueIdsFromLineage(lineage).headOption
+    planChangeLogger.warn("getLatestSnapshotVersionAndUniqueIdFromLineage(lineage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", lineage)
   }
 
   /** Get the latest version available in the DFS directory. If no data present, it returns 0. */
@@ -516,6 +529,7 @@ class RocksDBFileManager(
     } else {
       0
     }
+    planChangeLogger.warn("getLatestVersion()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -549,6 +563,7 @@ class RocksDBFileManager(
     } else {
       Seq.empty
     }
+    planChangeLogger.warn("findOrphanFiles(trackedFiles,allFiles)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", trackedFiles, allFiles)
   }
 
   private def deleteChangelogFiles(
@@ -565,6 +580,7 @@ class RocksDBFileManager(
               log"uniqueId: ${MDC(LogKeys.UUID, uniqueId.getOrElse(""))}", e)
       }
     }
+    planChangeLogger.warn("deleteChangelogFiles(versionsAndUniqueIdsToDelete)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", versionsAndUniqueIdsToDelete, versionsAndUniqueIdsToDelete)
   }
 
   /**
@@ -577,6 +593,7 @@ class RocksDBFileManager(
     } else {
       maxSeenVersion = Some(version)
     }
+    planChangeLogger.warn("setMaxSeenVersion(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   /**
@@ -821,6 +838,7 @@ class RocksDBFileManager(
       )
     }
 
+    planChangeLogger.warn("deleteOldVersions(numVersionsToRetain,maxVersionsToDeletePerMaintenance,minVersionsToDelete)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", numVersionsToRetain, maxVersionsToDeletePerMaintenance, minVersionsToDelete, sortedSnapshotVersionsAndUniqueIds)
     // Always set minSeenVersion for regular deletion frequency even if deletion fails.
     // This is safe because subsequent calls retry deleting old version files
     minSeenVersion = minVersionToRetain
@@ -877,6 +895,7 @@ class RocksDBFileManager(
       filesCopied = filesCopied,
       filesReused = filesReused)
 
+    planChangeLogger.warn("saveImmutableFilesToDfs(version,localFiles,fileMappings,checkpointUniqueId)={},{},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, localFiles, checkpointUniqueId, checkpointUniqueId)
     immutableFiles
   }
 
@@ -967,6 +986,7 @@ class RocksDBFileManager(
       bytesCopied = bytesCopied,
       filesCopied = filesCopied,
       filesReused = filesReused)
+    planChangeLogger.warn("loadImmutableFilesFromDfs(immutableFiles,localDir,rocksDBFileMapping,version)={},{},<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", immutableFiles, localDir, version)
   }
 
   /**
@@ -1020,6 +1040,7 @@ class RocksDBFileManager(
     } catch {
       case NonFatal(t) => s"<failed to list DFS files for diagnostics: ${t.getMessage}>"
     }
+    planChangeLogger.warn("listDfsFilesForDiagnostics()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** Get the SST files required for a version from the version zip file in DFS */
@@ -1031,6 +1052,7 @@ class RocksDBFileManager(
     val metadataFile = localMetadataFile(localTempDir)
     val metadata = RocksDBCheckpointMetadata.readFromFile(metadataFile)
     metadata.immutableFiles
+    planChangeLogger.warn("getImmutableFilesFromVersionZip(version,checkpointUniqueId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", version, checkpointUniqueId, checkpointUniqueId)
   }
 
   /**
@@ -1150,6 +1172,7 @@ class RocksDBFileManager(
     val (topLevelSstFiles, topLevelOtherFiles) = topLevelFiles.partition(f => isSstFile(f.getName))
     ((topLevelSstFiles ++ archivedLogFiles).toImmutableArraySeq,
       topLevelOtherFiles.toImmutableArraySeq)
+        planChangeLogger.warn("listRocksDBFiles(localDir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", localDir)
   }
 }
 
@@ -1215,6 +1238,7 @@ case class RocksDBCheckpointMetadata(
     } finally {
       writer.close()
     }
+    planChangeLogger.warn("writeToFile(metadataFile)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metadataFile)
   }
 
   def immutableFiles: Seq[RocksDBImmutableFile] = sstFiles ++ logFiles
@@ -1246,12 +1270,14 @@ object RocksDBCheckpointMetadata {
     } finally {
       reader.close()
     }
+    planChangeLogger.warn("readFromFile(metadataFile)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadataFile)
   }
 
   // Apply method for cases without column family information
   def apply(
       rocksDBFiles: Seq[RocksDBImmutableFile],
       numKeys: Long): RocksDBCheckpointMetadata = {
+       planChangeLogger.warn("apply(sstFiles,logFiles,numKeys)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sstFiles, logFiles, numKeys)
     val (sstFiles, logFiles) = rocksDBFiles.partition(_.isInstanceOf[RocksDBSstFile])
     new RocksDBCheckpointMetadata(
       sstFiles.map(_.asInstanceOf[RocksDBSstFile]),
@@ -1308,6 +1334,7 @@ object RocksDBCheckpointMetadata {
       Some(columnFamilyTypeMap),
       Some(maxColumnFamilyId)
     )
+  planChangeLogger.warn("apply(sstFiles,logFiles,numKeys,numInternalKeys,columnFamilyMapping,columnFamilyTypeMap,maxColumnFamilyId)={},{},{},{},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sstFiles, logFiles, numKeys, numInternalKeys, columnFamilyTypeMap, maxColumnFamilyId, maxColumnFamilyId)
   }
 
   // Apply method for cases with separate sstFiles and logFiles, and column family information

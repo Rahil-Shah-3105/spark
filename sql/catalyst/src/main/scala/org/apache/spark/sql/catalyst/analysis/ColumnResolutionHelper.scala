@@ -49,7 +49,9 @@ trait ColumnResolutionHelper extends Logging with DataTypeErrorsBase {
    */
   protected def resolveExprsAndAddMissingAttrs(
       exprs: Seq[Expression], plan: LogicalPlan): (Seq[Expression], LogicalPlan) = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     // Missing attributes can be unresolved attributes or resolved attributes which are not in
+    planChangeLogger.warn("resolveExprsAndAddMissingAttrs(exprs,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, plan)
     // the output attributes of the plan.
     if (exprs.forall(e => e.resolved && e.references.subsetOf(plan.outputSet))) {
       (exprs, plan)

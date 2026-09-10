@@ -25,6 +25,7 @@ import org.apache.spark.sql.execution.{CoalescedPartitionSpec, PartialReducerPar
 import org.apache.spark.sql.internal.SQLConf
 
 object ShufflePartitionsUtil extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   final val SMALL_PARTITION_FACTOR = 0.2
   final val MERGED_PARTITION_FACTOR = 1.2
 
@@ -232,6 +233,7 @@ object ShufflePartitionsUtil extends Logging {
     runtimeStats.map { stats =>
       s"shuffleId: ${stats.shuffleId} -> numOfPartitions: ${stats.bytesByPartitionId.length}"
     }.mkString(", ")
+    planChangeLogger.warn("getMapOutputStatisticsDetails(runtimeStats)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", runtimeStats)
   }
 
   /**
@@ -282,6 +284,7 @@ object ShufflePartitionsUtil extends Logging {
       if (coalescedSize > 0 || forceCreate) {
         partitionSpecs += CoalescedPartitionSpec(latestSplitPoint, i)
       }
+      planChangeLogger.warn("createPartitionSpec(forceCreate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", forceCreate)
     }
 
     def isWithinMaxReducerPartitions(rangeStart: Int, rangeEnd: Int): Boolean = {
@@ -422,6 +425,7 @@ object ShufflePartitionsUtil extends Logging {
     mapOutputTracker.shuffleStatuses(shuffleId).withMapStatuses(_.map { stat =>
       if (stat == null) -1 else stat.getSizeForBlock(partitionId)
     })
+    planChangeLogger.warn("getMapSizesForReduceId(shuffleId,partitionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, partitionId, shuffleId)
   }
 
   /**

@@ -31,6 +31,7 @@ case class ParquetWrite(
     formatName: String,
     supportsDataType: DataType => Boolean,
     info: LogicalWriteInfo) extends FileWrite with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def prepareWrite(
       sqlConf: SQLConf,
@@ -39,5 +40,6 @@ case class ParquetWrite(
       dataSchema: StructType): OutputWriterFactory = {
     val parquetOptions = new ParquetOptions(options, sqlConf)
     ParquetUtils.prepareWrite(sqlConf, job, dataSchema, parquetOptions)
+    planChangeLogger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
   }
 }

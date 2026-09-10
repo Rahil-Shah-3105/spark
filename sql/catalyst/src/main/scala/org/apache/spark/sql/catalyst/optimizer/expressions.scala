@@ -48,6 +48,7 @@ import org.apache.spark.util.ArrayImplicits._
  * equivalent [[Literal]] values.
  */
 object ConstantFolding extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // This tag is for avoid repeatedly evaluating expression inside conditional expression
   // which has already failed to evaluate before.
   private[sql] val FAILED_TO_EVALUATE = TreeNodeTag[Unit]("FAILED_TO_EVALUATE")
@@ -279,6 +280,7 @@ object ReorderAssociativeOperator extends Rule[LogicalPlan] {
     case expr @ Add(l, r, _) if !groupSet.contains(expr) =>
       flattenAdd(l, groupSet) ++ flattenAdd(r, groupSet)
     case other => other :: Nil
+      planChangeLogger.warn("flattenAdd(expression,groupSet)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, groupSet)
   }
 
   private def flattenMultiply(

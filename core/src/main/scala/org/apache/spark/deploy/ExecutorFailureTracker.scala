@@ -42,10 +42,12 @@ private[spark] class ExecutorFailureTracker(
   private val failedExecutorsTimeStamps = new mutable.Queue[Long]()
 
   private def updateAndCountFailures(failedExecutorsWithTimeStamps: mutable.Queue[Long]): Int = {
+    _driverLogger = DriverLogger(_conf)
     val endTime = clock.getTimeMillis()
     while (executorFailuresValidityInterval > 0 &&
       failedExecutorsWithTimeStamps.nonEmpty &&
       failedExecutorsWithTimeStamps.head < endTime - executorFailuresValidityInterval) {
+       _driverLogger.warn("updateAndCountFailures(failedExecutorsWithTimeStamps)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failedExecutorsWithTimeStamps)
       failedExecutorsWithTimeStamps.dequeue()
     }
     failedExecutorsWithTimeStamps.size

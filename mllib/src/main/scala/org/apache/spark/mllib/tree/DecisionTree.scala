@@ -65,6 +65,7 @@ class DecisionTree private[spark] (private val strategy: Strategy, private val s
     val rf = new RandomForest(strategy, numTrees = 1, featureSubsetStrategy = "all", seed = seed)
     val rfModel = rf.run(input)
     rfModel.trees(0)
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 }
 

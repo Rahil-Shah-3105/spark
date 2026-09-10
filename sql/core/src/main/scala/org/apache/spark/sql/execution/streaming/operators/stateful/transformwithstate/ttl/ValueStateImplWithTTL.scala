@@ -52,6 +52,7 @@ class ValueStateImplWithTTL[S](
   extends OneToOneTTLState(
     stateName, store, keyExprEnc.schema, ttlConfig, currentTimestampMs,
     prevBatchTimestampMs, metrics) with ValueState[S] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val stateTypesEncoder =
     StateTypesEncoder(keyExprEnc, valEncoder, stateName, hasTtl = true)
@@ -76,6 +77,7 @@ class ValueStateImplWithTTL[S](
     val encodedGroupingKey = stateTypesEncoder.encodeGroupingKey()
     val retRow = store.get(encodedGroupingKey, stateName)
 
+    planChangeLogger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     if (retRow != null) {
       // Getting the 0th ordinal of the struct using valEncoder
       val resState = stateTypesEncoder.decodeValue(retRow)
@@ -98,6 +100,7 @@ class ValueStateImplWithTTL[S](
       .calculateExpirationTimeForDuration(ttlConfig.ttlDuration, currentTimestampMs())
     val encodedValue = stateTypesEncoder.encodeValue(newState, ttlExpirationMs)
 
+      planChangeLogger.warn("update(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState)
     updatePrimaryAndSecondaryIndices(encodedKey, encodedValue, ttlExpirationMs)
   }
 
@@ -122,6 +125,7 @@ class ValueStateImplWithTTL[S](
     val encodedGroupingKey = stateTypesEncoder.encodeGroupingKey()
     val retRow = store.get(encodedGroupingKey, stateName)
 
+    planChangeLogger.warn("getWithoutEnforcingTTL()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     if (retRow != null) {
       val resState = stateTypesEncoder.decodeValue(retRow).asInstanceOf[S]
       Some(resState)
@@ -137,6 +141,7 @@ class ValueStateImplWithTTL[S](
     val encodedGroupingKey = stateTypesEncoder.encodeGroupingKey()
     val retRow = store.get(encodedGroupingKey, stateName)
 
+    planChangeLogger.warn("getTTLValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     // if the returned row is not null, we want to return the value associated with the
     // ttlExpiration
     if (retRow != null) {
@@ -156,6 +161,7 @@ class ValueStateImplWithTTL[S](
     val groupingKey = stateTypesEncoder.encodeGroupingKey()
     val ttlRowsForGroupingKey = getTTLRows().filter(_.elementKey == groupingKey).toSeq
 
+    planChangeLogger.warn("getValueInTTLState()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     assert(ttlRowsForGroupingKey.size <= 1, "Multiple TTLRows found for grouping key " +
       s"$groupingKey. Expected at most 1. Found: ${ttlRowsForGroupingKey.mkString(", ")}.")
     ttlRowsForGroupingKey.headOption.map(_.expirationMs)

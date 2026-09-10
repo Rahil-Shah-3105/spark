@@ -46,6 +46,7 @@ private[spark] class RBackend {
   private[r] val jvmObjectTracker = new JVMObjectTracker
 
   def init(): (Int, RAuthHelper) = {
+    _driverLogger = DriverLogger(_conf)
     val conf = Option(SparkEnv.get).map(_.conf).getOrElse(new SparkConf())
     val backendConnectionTimeout = conf.get(R_BACKEND_CONNECTION_TIMEOUT)
     bossGroup = NettyUtils.createEventLoop(IOMode.NIO, conf.get(R_NUM_BACKEND_THREADS), "RBackend")
@@ -85,6 +86,7 @@ private[spark] class RBackend {
 
   def run(): Unit = {
     channelFuture.channel.closeFuture().syncUninterruptibly()
+  _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def close(): Unit = {

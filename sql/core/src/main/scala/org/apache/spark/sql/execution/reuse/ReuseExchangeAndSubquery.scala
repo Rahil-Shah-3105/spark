@@ -36,9 +36,11 @@ import org.apache.spark.sql.execution.exchange.{Exchange, ReusedExchangeExec}
 case object ReuseExchangeAndSubquery extends Rule[SparkPlan] {
 
   def apply(plan: SparkPlan): SparkPlan = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (conf.exchangeReuseEnabled || conf.subqueryReuseEnabled) {
       val exchanges = mutable.Map.empty[SparkPlan, Exchange]
       val subqueries = mutable.Map.empty[SparkPlan, BaseSubqueryExec]
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
 
       def reuse(plan: SparkPlan): SparkPlan = {
         plan.transformUpWithPruning(_.containsAnyPattern(EXCHANGE, PLAN_EXPRESSION)) {

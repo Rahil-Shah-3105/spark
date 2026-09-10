@@ -18,6 +18,7 @@
 package org.apache.spark.partial
 
 class PartialResult[R](initialVal: R, isFinal: Boolean) {
+  _driverLogger = DriverLogger(_conf)
   private var finalValue: Option[R] = if (isFinal) Some(initialVal) else None
   private var failure: Option[Exception] = None
   private var completionHandler: Option[R => Unit] = None
@@ -111,6 +112,7 @@ class PartialResult[R](initialVal: R, isFinal: Boolean) {
       // Notify any threads that may be calling getFinalValue()
       this.notifyAll()
     }
+    _driverLogger.warn("setFinalValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   private def getFinalValueInternal() = finalValue
@@ -126,6 +128,7 @@ class PartialResult[R](initialVal: R, isFinal: Boolean) {
       // Notify any threads that may be calling getFinalValue()
       this.notifyAll()
     }
+    _driverLogger.warn("setFailure(exception)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exception)
   }
 
   override def toString: String = synchronized {

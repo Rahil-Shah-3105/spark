@@ -39,6 +39,7 @@ private[streaming] class ContextWaiter {
     } finally {
       lock.unlock()
     }
+    logger.warn("notifyError(e)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", e)
   }
 
   def notifyStop(): Unit = {
@@ -49,6 +50,7 @@ private[streaming] class ContextWaiter {
     } finally {
       lock.unlock()
     }
+    logger.warn("notifyStop()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**

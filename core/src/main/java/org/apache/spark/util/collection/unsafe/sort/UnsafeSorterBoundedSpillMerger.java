@@ -54,6 +54,7 @@ import org.apache.spark.storage.BlockManager;
  * above the original spill total.</p>
  */
 final class UnsafeSorterBoundedSpillMerger {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeSorterBoundedSpillMerger.class);
 
   private static final SparkLogger logger =
       SparkLoggerFactory.getLogger(UnsafeSorterBoundedSpillMerger.class);
@@ -180,6 +181,7 @@ final class UnsafeSorterBoundedSpillMerger {
     List<UnsafeSorterSpillWriter> currentGroup = new ArrayList<>();
     long currentGroupRecords = 0;
 
+	logger.warn("partitionWriters(writers)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", writers, currentGroupRecords);
     for (UnsafeSorterSpillWriter writer : writers) {
       long writerRecords = writer.recordsSpilled();
       if (!currentGroup.isEmpty()
@@ -250,6 +252,7 @@ final class UnsafeSorterBoundedSpillMerger {
         if (!file.delete()) {
           logger.warn("Failed to delete consumed spill file {}",
               MDC.of(LogKeys.PATH, file.getAbsolutePath()));
+			logger.warn("deleteConsumedFiles(writers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writers);
         }
       }
     }

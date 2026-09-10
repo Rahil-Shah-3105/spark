@@ -28,6 +28,7 @@ import io.netty.buffer.ByteBufInputStream;
  * A {@link ManagedBuffer} backed by a Netty {@link ByteBuf}.
  */
 public class NettyManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NettyManagedBuffer.class);
   private final ByteBuf buf;
 
   public NettyManagedBuffer(ByteBuf buf) {
@@ -46,6 +47,7 @@ public class NettyManagedBuffer extends ManagedBuffer {
 
   @Override
   public InputStream createInputStream() throws IOException {
+	logger.warn("createInputStream()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return new ByteBufInputStream(buf);
   }
 

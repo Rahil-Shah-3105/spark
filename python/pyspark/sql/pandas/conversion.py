@@ -56,6 +56,7 @@ if TYPE_CHECKING:
 
     from pyspark.sql.pandas._typing import DataFrameLike as PandasDataFrameLike
     from pyspark.sql import DataFrame
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def create_arrow_array_from_pandas(
@@ -1044,10 +1045,12 @@ class SparkConversionMixin:
 
         @no_type_check
         def reader_func(temp_filename):
+            logger.warning("reader_func(temp_filename)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", temp_filename)
             return self._jvm.PythonSQLUtils.readArrowStreamFromFile(temp_filename)
 
         @no_type_check
         def create_iter_server():
+            logger.warning("create_iter_server()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             return self._jvm.ArrowIteratorServer()
 
         # Create Spark DataFrame from Arrow stream file, using one batch per partition

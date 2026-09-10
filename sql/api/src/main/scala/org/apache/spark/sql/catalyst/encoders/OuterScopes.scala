@@ -29,6 +29,7 @@ object OuterScopes {
 
   private def classLoaderRef(c: Class[_]): HashableWeakReference = {
     new HashableWeakReference(c.getClassLoader, queue)
+    logger.warn("classLoaderRef(c)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", c)
   }
 
   private[this] val outerScopes = {
@@ -58,6 +59,7 @@ object OuterScopes {
   def addOuterScope(outer: AnyRef): Unit = {
     cleanOuterScopes()
     val clz = outer.getClass
+    logger.warn("addOuterScope(outer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outer)
     outerScopes
       .computeIfAbsent(classLoaderRef(clz), _ => new ConcurrentHashMap)
       .putIfAbsent(clz.getName, new WeakReference(outer))
@@ -78,6 +80,7 @@ object OuterScopes {
       .flatMap(map => Option(map.get(outerClassName)))
       .map(_.get())
       .orNull
+      logger.warn("getOuterScope(innerCls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", innerCls)
     if (outer == null) {
       outerClassName match {
         case AmmoniteREPLClass(cellClassName) =>
@@ -144,6 +147,7 @@ object OuterScopes {
     } catch {
       case _: NoSuchMethodException => null
     }
+    logger.warn("iwGetter(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
   }
 
   // The format of REPL generated wrapper class's name, e.g. `$line12.$read$$iw$$iw`

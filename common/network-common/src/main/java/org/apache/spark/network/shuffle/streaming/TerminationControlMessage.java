@@ -28,6 +28,7 @@ import io.netty.buffer.CompositeByteBuf;
  * that no further DataMessages will arrive from this writer.
  */
 public final class TerminationControlMessage extends StreamingShuffleMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TerminationControlMessage.class);
   public final int shuffleWriterId;
   public final int shuffleReaderId;
 
@@ -38,6 +39,7 @@ public final class TerminationControlMessage extends StreamingShuffleMessage {
 
   @Override
   public StreamingShuffleMessageType messageType() {
+	logger.warn("messageType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return StreamingShuffleMessageType.TERMINATION_CONTROL_MESSAGE;
   }
 

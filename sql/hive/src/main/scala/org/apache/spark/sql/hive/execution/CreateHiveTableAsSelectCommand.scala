@@ -56,6 +56,7 @@ case class CreateHiveTableAsSelectCommand(
       if (mode == SaveMode.ErrorIfExists) {
         throw QueryCompilationErrors.tableIdentifierExistsError(tableIdentifier)
       }
+      logger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
       if (mode == SaveMode.Ignore) {
         // Since the table already exists and the save mode is Ignore, we will just return.
         return Seq.empty
@@ -108,6 +109,7 @@ case class CreateHiveTableAsSelectCommand(
       outputColumnNames = outputColumnNames)
     insertHive.setTagValue(BY_CTAS, ())
     insertHive
+    logger.warn("getWritingCommand(tableDesc,tableExists)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tableDesc, tableExists)
   }
 
   override def argString(maxFields: Int): String = {

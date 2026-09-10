@@ -62,6 +62,7 @@ def getLogLevel() -> Optional[int]:
     .. versionadded:: 3.5.0
     """
 
+    logger.warning("getLogLevel()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     if not logger.disabled:
         return logger.level
     return None

@@ -81,6 +81,7 @@ object DatasetManager extends Logging {
    */
   def materializeDatasets(
       resolvedDataflowGraph: DataflowGraph,
+      logger.warn("materializeDatasets(resolvedDataflowGraph,context)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resolvedDataflowGraph, context)
       context: PipelineUpdateContext
   ): DataflowGraph = {
     val (_, refreshTableIdentsSet, fullRefreshTableIdentsSet) = {
@@ -212,6 +213,7 @@ object DatasetManager extends Logging {
         val inputs = flow.inputs.intersect(persistedViewIdentifiers)
         (v.identifier, inputs)
       }.toMap
+      logger.warn("materializeViews(virtualizedConnectedGraphWithTables,context)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", virtualizedConnectedGraphWithTables, context, persistedViewIdentifiers)
 
     // As long as all views are not materialized, we try to materialize them
     while (viewsToPublish.nonEmpty) {
@@ -275,6 +277,7 @@ object DatasetManager extends Logging {
     val queryContext = flow.queryContext
 
     val catalogManager = spark.sessionState.catalogManager
+    logger.warn("materializeView(view,flow,spark)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", view, flow, spark)
     val currentCatalogName = catalogManager.currentCatalog.name()
     val currentNamespace = catalogManager.currentNamespace
     try {
@@ -461,6 +464,7 @@ object DatasetManager extends Logging {
         )
       )
     }
+    logger.warn("requireAutoCdcTargetSupportsRowLevelOps(targetTable,targetTableCatalogEntity)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetTable, targetTableCatalogEntity)
   }
 
   /**
@@ -540,6 +544,7 @@ object DatasetManager extends Logging {
             schema = auxiliaryTableSpec.schema,
             properties = auxiliaryTableSpec.properties,
             transforms = Seq.empty
+          logger.warn("createTable(catalog,tableIdentifier,schema,properties,transforms)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, tableIdentifier, schema, properties, transforms, tableIdentifier)
           )
       }
     }
@@ -617,6 +622,7 @@ object DatasetManager extends Logging {
       identifier: Identifier): Option[V2Table] = {
     try Some(catalog.loadTable(identifier))
     catch { case _: NoSuchTableException => None }
+    logger.warn("loadTableIfExists(catalog,identifier)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, identifier, identifier)
   }
 
   /**

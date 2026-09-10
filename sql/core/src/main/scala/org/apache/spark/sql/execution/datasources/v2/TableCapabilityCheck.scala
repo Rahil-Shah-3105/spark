@@ -30,10 +30,12 @@ import org.apache.spark.sql.types.BooleanType
  * Checks the capabilities of Data Source V2 tables, and fail problematic queries earlier.
  */
 object TableCapabilityCheck extends (LogicalPlan => Unit) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import DataSourceV2Implicits._
 
   private def supportsBatchWrite(table: Table): Boolean = {
     table.supportsAny(BATCH_WRITE, V1_BATCH_WRITE)
+    planChangeLogger.warn("supportsBatchWrite(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   override def apply(plan: LogicalPlan): Unit = {
@@ -78,6 +80,7 @@ object TableCapabilityCheck extends (LogicalPlan => Unit) {
     val streamingSources = plan.collect {
       case r: StreamingRelationV2 => r.table
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val v1StreamingRelations = plan.collect {
       case r: StreamingRelation => r
     }

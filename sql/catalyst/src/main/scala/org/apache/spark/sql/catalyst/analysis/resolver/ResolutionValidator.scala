@@ -37,6 +37,7 @@ import org.apache.spark.sql.types.BooleanType
  * The validation approach is single-pass, post-order, complementary to the resolution process.
  */
 class ResolutionValidator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val attributeScopeStack = new AttributeScopeStack
 
   private val expressionResolutionValidator = new ExpressionResolutionValidator(this)
@@ -209,11 +210,13 @@ class ResolutionValidator {
     validate(subqueryAlias.child)
 
     handleOperatorOutput(subqueryAlias)
+    planChangeLogger.warn("validateSubqueryAlias(subqueryAlias)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", subqueryAlias)
   }
 
   private def validateView(view: View): Unit = {
     validate(view.child)
 
+    planChangeLogger.warn("validateView(view)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", view)
     view.child match {
       case project: Project =>
         assert(
@@ -240,6 +243,7 @@ class ResolutionValidator {
   private def validateOffset(offset: Offset): Unit = {
     validate(offset.child)
     expressionResolutionValidator.validate(offset.offsetExpr)
+    planChangeLogger.warn("validateOffset(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   private def validateTail(tail: Tail): Unit = {
@@ -273,6 +277,7 @@ class ResolutionValidator {
       s"${plan.nodeName} operator has to have at least 2 children"
     )
     val firstChildOutput = plan.children.head.output
+    planChangeLogger.warn("validateSetOperationLike(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     for (child <- plan.children.tail) {
       val childOutput = child.output
       assert(

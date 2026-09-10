@@ -85,6 +85,7 @@ abstract class RDD[T: ClassTag](
     @transient private var _sc: SparkContext,
     @transient private var deps: Seq[Dependency[_]]
   ) extends Serializable with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   if (classOf[RDD[_]].isAssignableFrom(elementClassTag.runtimeClass)) {
     // This is a warning instead of an exception in order to avoid breaking user programs that
@@ -155,6 +156,7 @@ abstract class RDD[T: ClassTag](
   def setName(_name: String): this.type = {
     name = _name
     this
+    _driverLogger.warn("setName(_name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", _name)
   }
 
   /**
@@ -170,12 +172,14 @@ abstract class RDD[T: ClassTag](
     }
     // If this is the first time this RDD is marked for persisting, register it
     // with the SparkContext for cleanups and accounting. Do this only once.
+    _driverLogger.warn("persist(newLevel,allowOverride)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", newLevel, allowOverride, allowOverride)
     if (storageLevel == StorageLevel.NONE) {
       sc.cleaner.foreach(_.registerRDDForCleanup(this))
       sc.persistRDD(this)
     }
     storageLevel = newLevel
     this
+  _driverLogger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
   }
 
   /**
@@ -219,6 +223,7 @@ abstract class RDD[T: ClassTag](
     logInfo(log"Removing RDD ${MDC(RDD_ID, id)} from persistence list")
     sc.unpersistRDD(id, blocking)
     storageLevel = StorageLevel.NONE
+    _driverLogger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
     this
   }
 
@@ -373,6 +378,7 @@ abstract class RDD[T: ClassTag](
     } else {
       compute(split, context)
     }
+      _driverLogger.warn("computeOrReadCheckpoint(split,context)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", split, context)
   }
 
   /**
@@ -433,6 +439,7 @@ abstract class RDD[T: ClassTag](
     // This method is called on executors, so we need call SparkEnv.get instead of sc.env.
     SparkEnv.get.blockManager.getOrElseUpdateRDDBlock(
       context.taskAttemptId(), blockId, storageLevel, elementClassTag, () => {
+        _driverLogger.warn("getOrCompute(partition,context)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", partition, context, blockId)
         readCachedBlock = false
         computeOrReadCheckpoint(partition, context)
       },
@@ -511,6 +518,7 @@ abstract class RDD[T: ClassTag](
         mergeCombiners = (a, b) => a)
       map.insertAll(partition.map(_ -> null))
       map.iterator.map(_._1)
+      _driverLogger.warn("removeDuplicatesInPartition(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
     }
     partitioner match {
       case Some(_) if numPartitions == partitions.length =>

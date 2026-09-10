@@ -68,6 +68,7 @@ import org.apache.spark.util.Utils
  *  - spark.sql.inMemoryColumnarStorage.enableVectorizedReader: Enable columnar output
  */
 class ArrowCachedBatchSerializer extends SimpleMetricsCachedBatchSerializer {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // supportsColumnarInput selects the columnar-vs-row input path; it does not gate which schemas
   // this serializer accepts. The cache framework has no per-type fallback to another serializer
@@ -324,6 +325,7 @@ private object ArrowCachedBatchSerializer {
     // restore the flag once draining is done.
     var wasInterrupted = Thread.interrupted()
     try {
+      planChangeLogger.warn("drainAndClosePrefetch(executor,future)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", executor, future)
       if (executor != null) {
         executor.shutdown()
         var terminated = false
@@ -396,6 +398,7 @@ private object ArrowCachedBatchSerializer {
       case udt: UserDefinedType[_] => createColumnStats(udt.sqlType)
       case _ => new ObjectColumnStats(dataType)
     }
+    planChangeLogger.warn("createColumnStats(dataType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataType)
   }
 
   def buildStatisticsFromCollectors(
@@ -1244,6 +1247,7 @@ private class ArrowCachedBatchToColumnarBatchIterator(
   private def submitPrefetch(): Unit = {
     if (prefetchEnabled && batchIter.hasNext) {
       val nextCachedBatch = batchIter.next().asInstanceOf[ArrowCachedBatch]
+      planChangeLogger.warn("submitPrefetch()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       prefetchFuture = prefetchExecutor.submit(new Callable[VectorSchemaRoot] {
         override def call(): VectorSchemaRoot = deserializeToRoot(nextCachedBatch)
       })
@@ -1262,6 +1266,7 @@ private abstract class ArrowColumnReader {
 }
 
 private object ArrowColumnReader {
+  planChangeLogger.warn("setVector(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   import org.apache.arrow.vector._
 
   def create(dataType: DataType): ArrowColumnReader = dataType match {
@@ -1569,6 +1574,7 @@ private class ArrowCachedBatchToInternalRowIterator(
 
     currentRowIndex = 0
     currentRowCount = root.getRowCount
+    planChangeLogger.warn("loadNextBatch()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     // Start prefetching the next batch while this one is being consumed
     submitPrefetch()

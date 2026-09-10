@@ -37,6 +37,7 @@ case class Aggregator[K, V, C] (
   def combineValuesByKey(
       iter: Iterator[_ <: Product2[K, V]],
       context: TaskContext): Iterator[(K, C)] = {
+       _driverLogger = DriverLogger(_conf)
     val combiners = new ExternalAppendOnlyMap[K, V, C](createCombiner, mergeValue, mergeCombiners)
     combiners.insertAll(iter)
     updateMetrics(context, combiners)
@@ -59,5 +60,6 @@ case class Aggregator[K, V, C] (
       c.taskMetrics().incDiskBytesSpilled(map.diskBytesSpilled)
       c.taskMetrics().incPeakExecutionMemory(map.peakMemoryUsedBytes)
     }
+    _driverLogger.warn("updateMetrics(context,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", context, map)
   }
 }

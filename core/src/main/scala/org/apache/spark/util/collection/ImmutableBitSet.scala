@@ -18,6 +18,7 @@
 package org.apache.spark.util.collection
 
 private object ErrorMessage {
+  _driverLogger = DriverLogger(_conf)
   final val msg: String = "mutable operation is not supported"
 }
 
@@ -38,18 +39,22 @@ class ImmutableBitSet(val numBits: Int, val bitsToSet: Int*) extends BitSet(numB
 
   override def clearUntil(bitIndex: Int): Unit = {
     throw new UnsupportedOperationException(ErrorMessage.msg)
+    _driverLogger.warn("clearUntil(bitIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bitIndex)
   }
 
   override def set(index: Int): Unit = {
     throw new UnsupportedOperationException(ErrorMessage.msg)
+    _driverLogger.warn("set(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 
   override def setUntil(bitIndex: Int): Unit = {
     throw new UnsupportedOperationException(ErrorMessage.msg)
+    _driverLogger.warn("setUntil(bitIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bitIndex)
   }
 
   override def unset(index: Int): Unit = {
     throw new UnsupportedOperationException(ErrorMessage.msg)
+    _driverLogger.warn("unset(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 
   override def union(other: BitSet): Unit = {

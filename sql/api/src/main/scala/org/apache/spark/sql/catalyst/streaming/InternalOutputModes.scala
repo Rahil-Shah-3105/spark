@@ -61,5 +61,6 @@ private[sql] object InternalOutputModes {
           errorClass = "STREAMING_OUTPUT_MODE.INVALID",
           messageParameters = Map("outputMode" -> outputMode))
     }
+    logger.warn("apply(outputMode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputMode)
   }
 }

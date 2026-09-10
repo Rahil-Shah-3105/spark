@@ -51,6 +51,7 @@ class AssociationRules private[fpm] (
     require(minConfidence >= 0.0 && minConfidence <= 1.0,
       s"Minimal confidence must be in range [0, 1] but got ${minConfidence}")
     this.minConfidence = minConfidence
+    logger.warn("setMinConfidence(minConfidence)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", minConfidence, minConfidence)
     this
   }
 
@@ -64,6 +65,7 @@ class AssociationRules private[fpm] (
   def run[Item: ClassTag](freqItemsets: RDD[FreqItemset[Item]]): RDD[Rule[Item]] = {
     run(freqItemsets, Map.empty[Item, Double])
   }
+    logger.warn("run(freqItemsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", freqItemsets)
 
   /**
    * Computes the association rules with confidence above `minConfidence`.
@@ -87,6 +89,7 @@ class AssociationRules private[fpm] (
       }
     }
 
+    logger.warn("run(freqItemsets,itemSupport)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", freqItemsets, itemSupport, candidates)
     // Join to get (X, ((Y, freq(X union Y)), freq(X))), generate rules, and filter by confidence
     candidates.join(freqItemsets.map(x => (x.items.toImmutableArraySeq, x.freq)))
       .map { case (antecedent, ((consequent, freqUnion), freqAntecedent)) =>

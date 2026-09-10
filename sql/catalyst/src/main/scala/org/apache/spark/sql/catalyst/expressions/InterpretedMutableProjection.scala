@@ -32,6 +32,7 @@ import org.apache.spark.sql.internal.SQLConf
  *                    output row.
  */
 class InterpretedMutableProjection(expressions: Seq[Expression]) extends MutableProjection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def this(expressions: Seq[Expression], inputSchema: Seq[Attribute]) =
     this(bindReferences(expressions, inputSchema))
 
@@ -59,6 +60,7 @@ class InterpretedMutableProjection(expressions: Seq[Expression]) extends Mutable
         validExprs.map(_._1.dataType).filterNot(UnsafeRow.isMutable)
           .map(_.catalogString).mkString(", "))
     mutableRow = row
+    planChangeLogger.warn("target(row)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", row)
     this
   }
 
@@ -89,6 +91,7 @@ class InterpretedMutableProjection(expressions: Seq[Expression]) extends Mutable
       buffer(ordinal) = exprs(ordinal).eval(input)
       i += 1
     }
+    planChangeLogger.warn("apply(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     i = 0
     while (i < validExprs.length) {
       val (_, ordinal) = validExprs(i)
@@ -109,5 +112,6 @@ object InterpretedMutableProjection {
    */
   def createProjection(exprs: Seq[Expression]): MutableProjection = {
     new InterpretedMutableProjection(exprs)
+    planChangeLogger.warn("createProjection(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 }

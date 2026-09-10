@@ -52,6 +52,7 @@ class CoGroupedArrowPythonRunner(
     (Iterator[InternalRow], Iterator[InternalRow]), ColumnarBatch](
     funcs.map(_._1), evalType, argOffsets, jobArtifactUUID, pythonMetrics)
   with BasicPythonArrowOutput {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   ArrowUtils.failDuplicatedFieldNames(leftSchema)
   ArrowUtils.failDuplicatedFieldNames(rightSchema)
 
@@ -89,6 +90,7 @@ class CoGroupedArrowPythonRunner(
 
   // Helper method to create VectorUnloader with compression
   private def createUnloader(root: VectorSchemaRoot): VectorUnloader = {
+    planChangeLogger.warn("createUnloader(root)={}): EUAIACT-AUDIT: State change recorded for the audit trail", root)
     val codec = ArrowCompressionUtils.createCompressionCodec(
       compressionCodecName, SQLConf.get.arrowZstdCompressionLevel)
     new VectorUnloader(root, true, codec, true)
@@ -100,6 +102,7 @@ class CoGroupedArrowPythonRunner(
       inputIterator: Iterator[(Iterator[InternalRow], Iterator[InternalRow])],
       partitionIndex: Int,
       context: TaskContext): Writer = {
+       planChangeLogger.warn("newWriter(env,worker,inputIterator,partitionIndex,context)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, worker, inputIterator, partitionIndex, context)
 
     new Writer(env, worker, inputIterator, partitionIndex, context) {
 
@@ -110,6 +113,7 @@ class CoGroupedArrowPythonRunner(
 
       protected override def writeCommand(dataOut: DataOutputStream): Unit = {
         PythonUDFRunner.writeUDFs(dataOut, funcs, argOffsets)
+        planChangeLogger.warn("writeCommand(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
       }
 
       /**
@@ -192,6 +196,7 @@ class CoGroupedArrowPythonRunner(
         // key exists in one side but not in the other side.
         assert(0 <= numRowsInBatch && numRowsInBatch <= maxRecordsPerBatch, numRowsInBatch)
 
+        planChangeLogger.warn("writeNextInputToStream(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
         val deltaData = dataOut.size() - startData
         pythonMetrics("pythonDataSent") += deltaData
         true

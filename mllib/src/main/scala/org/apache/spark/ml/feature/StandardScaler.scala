@@ -235,6 +235,7 @@ object StandardScalerModel extends MLReadable[StandardScalerModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.std, instance.mean)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -345,5 +346,6 @@ object StandardScalerModel extends MLReadable[StandardScalerModel] {
       case (false, false) =>
         vector: Vector => vector
     }
+    logger.warn("getTransformFunc(shift,scale,withShift,withScale)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", shift, scale, withShift, withScale)
   }
 }

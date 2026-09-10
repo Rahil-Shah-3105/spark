@@ -324,6 +324,7 @@ object RandomForestRegressionModel extends MLReadable[RandomForestRegressionMode
         "numFeatures" -> instance.numFeatures,
         "numTrees" -> instance.getNumTrees)
       EnsembleModelReadWrite.saveImpl(instance, path, sparkSession, extraMetadata)
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 
@@ -349,6 +350,7 @@ object RandomForestRegressionModel extends MLReadable[RandomForestRegressionMode
       require(numTrees == trees.length, s"RandomForestRegressionModel.load expected $numTrees" +
         s" trees based on metadata but found ${trees.length} trees.")
 
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = new RandomForestRegressionModel(metadata.uid, trees, numFeatures)
       metadata.getAndSetParams(model)
       model

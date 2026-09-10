@@ -44,6 +44,7 @@ import org.apache.spark.util.Utils
  */
 @DeveloperApi
 class ResourceID(val componentName: String, val resourceName: String) {
+  _driverLogger = DriverLogger(_conf)
   private[spark] def confPrefix: String = {
     s"$componentName.${ResourceUtils.RESOURCE_PREFIX}.$resourceName."
   }
@@ -158,6 +159,7 @@ private[spark] object ResourceUtils extends Logging {
       }
       key.substring(0, index)
     }.distinct.map(name => new ResourceID(componentName, name)).toImmutableArraySeq
+    _driverLogger.warn("listResourceIds(sparkConf,componentName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, componentName)
   }
 
   def parseAllResourceRequests(
@@ -201,6 +203,7 @@ private[spark] object ResourceUtils extends Logging {
     nonZeroTaskReqs.foreach { case (resourceName, amount) =>
       treqs.resource(resourceName, amount)
     }
+    _driverLogger.warn("addTaskResourceRequests(sparkConf,treqs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, treqs)
   }
 
   def parseResourceRequirements(sparkConf: SparkConf, componentName: String)
@@ -328,6 +331,7 @@ private[spark] object ResourceUtils extends Logging {
     val allocations = parseAllocatedOrDiscoverResources(sparkConf, componentName, resourcesFileOpt)
     assertAllResourceAllocationsMeetRequests(allocations, requests)
     val resourceInfoMap = allocations.map(a => (a.id.resourceName, a.toResourceInformation)).toMap
+    _driverLogger.warn("getOrDiscoverAllResources(sparkConf,componentName,resourcesFileOpt)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, componentName, resourcesFileOpt)
     resourceInfoMap
   }
 
@@ -371,6 +375,7 @@ private[spark] object ResourceUtils extends Logging {
       val addrs = discoverResource(sparkConf, resourceReq).addresses
       (rName, new ResourceInformation(rName, addrs))
     }
+    _driverLogger.warn("getOrDiscoverAllResourcesForResourceProfile(resourcesFileOpt,componentName,resourceProfile,sparkConf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", resourcesFileOpt, componentName, resourceProfile, sparkConf)
     val allAllocations = fileAllocResMap ++ rpAllocations
     assertAllResourceAllocationsMatchResourceProfile(allAllocations, execReq)
     allAllocations

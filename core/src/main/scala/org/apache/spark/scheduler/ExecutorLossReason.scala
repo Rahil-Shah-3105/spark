@@ -24,6 +24,7 @@ import org.apache.spark.executor.ExecutorExitCode
  */
 private[spark]
 class ExecutorLossReason(val message: String) extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   override def toString: String = message
 }
 
@@ -37,6 +38,7 @@ private[spark] object ExecutorExited {
       exitCode,
       exitCausedByApp,
       ExecutorExitCode.explainExitCode(exitCode))
+    _driverLogger.warn("apply(exitCode,exitCausedByApp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exitCode, exitCausedByApp)
   }
 }
 

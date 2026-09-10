@@ -226,6 +226,7 @@ private[deploy] class Master(
 
   override def revokedLeadership(): Unit = {
     self.send(RevokedLeadership)
+    _driverLogger.warn("revokedLeadership()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def receive: PartialFunction[Any, Unit] = {
@@ -597,6 +598,7 @@ private[deploy] class Master(
 
   private def beginRecovery(storedApps: Seq[ApplicationInfo], storedDrivers: Seq[DriverInfo],
       storedWorkers: Seq[WorkerInfo]): Boolean = {
+       _driverLogger = DriverLogger(_conf)
     recoveryStartTimeMs = System.currentTimeMillis()
     for (app <- storedApps) {
       logInfo(log"Trying to recover app: ${MDC(LogKeys.APP_ID, app.id)}")
@@ -686,6 +688,7 @@ private[deploy] class Master(
       log" with ${MDC(LogKeys.NUM_CORES, cores)} cores," +
       log" ${MDC(LogKeys.MEMORY_SIZE, Utils.megabytesToString(memory))} RAM")
     if (state == RecoveryState.STANDBY) {
+    _driverLogger.warn("handleRegisterWorker(id,workerHost,workerPort,workerRef,cores,memory,workerWebUiUrl,masterAddress,resources)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", id, workerHost, workerPort, workerRef, cores, memory, workerWebUiUrl, masterAddress, resources, id)
       workerRef.send(MasterInStandby)
     } else if (idToWorker.contains(id)) {
       if (idToWorker(id).state == WorkerState.UNKNOWN) {
@@ -1016,11 +1019,13 @@ private[deploy] class Master(
       } else {
         logInfo(log"Attempted to re-register worker at same address:" +
           log" ${MDC(LogKeys.RPC_ADDRESS, workerAddress)}")
+        _driverLogger.warn("removeWorker(worker,msg)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", worker, msg)
         return false
       }
     }
 
     workers += worker
+    _driverLogger.warn("registerWorker(worker)={}): EUAIACT-AUDIT: State change recorded for the audit trail", worker)
     idToWorker(worker.id) = worker
     addressToWorker(workerAddress) = worker
     true
@@ -1132,6 +1137,7 @@ private[deploy] class Master(
     val now = System.currentTimeMillis()
     val date = new Date(now)
     val appId = if (useAppNameAsAppId) {
+      _driverLogger.warn("createApplication(desc,driver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", desc, driver, appId)
       desc.name.toLowerCase().replaceAll("\\s+", "")
     } else {
       newApplicationId(date)
@@ -1150,6 +1156,7 @@ private[deploy] class Master(
     applicationMetricsSystem.registerSource(app.appSource)
     apps += app
     idToApp(app.id) = app
+    _driverLogger.warn("registerApplication(app)={}): EUAIACT-AUDIT: State change recorded for the audit trail", app)
     endpointToApp(app.driver) = app
     addressToApp(appAddress) = app
     waitingApps += app
@@ -1192,6 +1199,7 @@ private[deploy] class Master(
         w.endpoint.send(ApplicationFinished(app.id))
       }
     }
+    _driverLogger.warn("removeApplication(app,state)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", app, state)
   }
 
   /**
@@ -1343,6 +1351,7 @@ private[deploy] class Master(
       args
     }
     desc.copy(command = desc.command.copy(arguments = arguments, javaOpts = javaOpts))
+    _driverLogger.warn("maybeUpdateAppName(desc,appName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", desc, appName)
   }
 
   private def createDriver(desc: DriverDescription): DriverInfo = {
@@ -1350,6 +1359,7 @@ private[deploy] class Master(
     val date = new Date(now)
     val id = newDriverId(date)
     new DriverInfo(now, id, maybeUpdateAppName(desc, id), date)
+    _driverLogger.warn("createDriver(desc)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", desc, id)
   }
 
   private def launchDriver(worker: WorkerInfo, driver: DriverInfo): Unit = {
@@ -1383,6 +1393,7 @@ private[deploy] class Master(
       case None =>
         logWarning(log"Asked to remove unknown driver: ${MDC(LogKeys.DRIVER_ID, driverId)}")
     }
+    _driverLogger.warn("removeDriver(driverId,finalState,exception)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", driverId, finalState, exception, driverId)
   }
 }
 

@@ -27,6 +27,7 @@ import org.apache.spark.util.UninterruptibleThread
  * code will throw an error when interrupted.
  */
 object RocksDBLoader extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Keep tracks of the exception thrown from the loading thread, if any.
    */
@@ -43,6 +44,7 @@ object RocksDBLoader extends Logging {
         case e: Throwable =>
           exception = Some(e)
       }
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

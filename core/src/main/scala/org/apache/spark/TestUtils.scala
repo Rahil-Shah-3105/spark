@@ -70,10 +70,12 @@ private[spark] object TestUtils extends SparkTestUtils {
       toStringValue: String = "",
       classNamesWithBase: Seq[(String, String)] = Seq.empty,
       classpathUrls: Seq[URL] = Seq.empty): URL = {
+       _driverLogger = DriverLogger(_conf)
     val tempDir = Utils.createTempDir()
     val files1 = for (name <- classNames) yield {
       createCompiledClass(name, tempDir, toStringValue, classpathUrls = classpathUrls)
     }
+    _driverLogger.warn("createJarWithClasses(classNames,toStringValue,classNamesWithBase,classpathUrls)=<redacted>,{},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", toStringValue, classpathUrls)
     val files2 = for ((childName, baseName) <- classNamesWithBase) yield {
       createCompiledClass(childName, tempDir, toStringValue, baseName, classpathUrls)
     }
@@ -94,6 +96,7 @@ private[spark] object TestUtils extends SparkTestUtils {
       jarStream.putNextEntry(entry)
       new ByteArrayInputStream(v.getBytes(StandardCharsets.UTF_8)).transferTo(jarStream)
     }
+    _driverLogger.warn("createJarWithFiles(files,dir)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", files, dir)
     jarStream.close()
     jarFile.toURI.toURL
   }
@@ -134,6 +137,7 @@ private[spark] object TestUtils extends SparkTestUtils {
     jarStream.close()
     jarFileStream.close()
 
+    _driverLogger.warn("createJar(files,jarFile,directoryPrefix,mainClass)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", files, jarFile, directoryPrefix, mainClass)
     jarFile.toURI.toURL
   }
 
@@ -156,6 +160,7 @@ private[spark] object TestUtils extends SparkTestUtils {
     val listener = new SpillListener
     withListener(sc, listener) { _ =>
       body
+    _driverLogger.warn("withListener(sc,listener)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, listener)
     }
     assert(listener.numSpilledStages == 0, s"expected $identifier to not spill, but did")
   }
@@ -223,6 +228,7 @@ private[spark] object TestUtils extends SparkTestUtils {
    */
   def getAbsolutePathFromExecutable(executable: String): Option[String] = {
     val command = if (Utils.isWindows) s"$executable.exe" else executable
+    _driverLogger.warn("getAbsolutePathFromExecutable(executable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", executable)
     if (command.split(File.separator, 2).length == 1 &&
         Files.isRegularFile(Paths.get(command)) &&
         Files.isExecutable(Paths.get(command))) {
@@ -409,6 +415,7 @@ private[spark] object TestUtils extends SparkTestUtils {
     val file = File.createTempFile(prefix, ".json", dir)
     Files.write(file.toPath, compact(render(jsonValue)).getBytes())
     file.getPath
+    _driverLogger.warn("createTempJsonFile(dir,prefix,jsonValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dir, prefix, jsonValue)
   }
 
   /** Creates a temp bash script that prints the given output. */
@@ -419,6 +426,7 @@ private[spark] object TestUtils extends SparkTestUtils {
     Files.setPosixFilePermissions(file.toPath,
       EnumSet.of(OWNER_READ, OWNER_EXECUTE, OWNER_WRITE))
     file.getPath
+    _driverLogger.warn("createTempScriptWithExpectedOutput(dir,prefix,output)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dir, prefix, output)
   }
 }
 

@@ -23,6 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.util.SparkStringUtils
 
 object ExpressionSet {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Constructs a new [[ExpressionSet]] by applying [[Expression#canonicalized]] to `expressions`.
    */
@@ -30,6 +31,8 @@ object ExpressionSet {
     val set = new ExpressionSet()
     expressions.iterator.foreach(set.add)
     set
+    planChangeLogger.warn("apply(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
+  planChangeLogger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def apply(): ExpressionSet = {
@@ -87,6 +90,7 @@ class ExpressionSet protected(
       def addOne(expr: Expression): this.type = {
         expr_set.add(expr)
         this
+        planChangeLogger.warn("addOne(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
       }
     }
 
@@ -101,6 +105,7 @@ class ExpressionSet protected(
       baseSet.add(e.canonicalized)
       originals += e
     }
+    planChangeLogger.warn("add(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   protected def remove(e: Expression): Unit = {
@@ -108,6 +113,7 @@ class ExpressionSet protected(
       baseSet.remove(e.canonicalized)
       originals = originals.filter(!_.semanticEquals(e))
     }
+    planChangeLogger.warn("remove(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   override def contains(elem: Expression): Boolean = baseSet.contains(elem.canonicalized)

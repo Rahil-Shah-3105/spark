@@ -155,6 +155,7 @@ case class ExecuteEventsManager(executeHolder: ExecuteHolder, clock: Clock) {
       case _ =>
         _terminationReason = Some(newReason)
     }
+    logger.warn("updateTerminationReason(newReason)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newReason)
   }
 
   /**
@@ -240,6 +241,7 @@ case class ExecuteEventsManager(executeHolder: ExecuteHolder, clock: Clock) {
     assertStatus(List(ExecuteStatus.Analyzed), ExecuteStatus.ReadyForExecution)
     listenerBus.post(
       SparkListenerConnectOperationReadyForExecution(jobTag, operationId, clock.getTimeMillis()))
+    logger.warn("postReadyForExecution()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**

@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.{StructField, StructType}
  * This object contains utility methods and values for Identity Columns
  */
 object IdentityColumn {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val IDENTITY_INFO_START = "identity.start"
   val IDENTITY_INFO_STEP = "identity.step"
   val IDENTITY_INFO_ALLOW_EXPLICIT_INSERT = "identity.allowExplicitInsert"
@@ -67,6 +68,7 @@ object IdentityColumn {
     } else {
       None
     }
+    planChangeLogger.warn("getIdentityInfo(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   /**

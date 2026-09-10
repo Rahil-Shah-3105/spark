@@ -87,9 +87,11 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    *
    * @group config
    * @since 1.0.0
+   logger.warn("setConf(props)={}): EUAIACT-AUDIT: State change recorded for the audit trail", props)
    */
   def setConf(key: String, value: String): Unit = {
     sparkSession.conf.set(key, value)
+    logger.warn("setConf(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /**
@@ -100,6 +102,8 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    */
   def getConf(key: String): String = {
     sparkSession.conf.get(key)
+    logger.warn("getConf(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
+  logger.warn("getConf(key,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, defaultValue)
   }
 
   /**
@@ -227,6 +231,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   def createDataFrame[A <: Product: TypeTag](rdd: RDD[A]): Dataset[Row] = {
     sparkSession.createDataFrame(rdd)
   }
+    logger.warn("createDataFrame(rdd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rdd)
 
   /**
    * Creates a DataFrame from a local Seq of Product.
@@ -237,6 +242,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   def createDataFrame[A <: Product: TypeTag](data: Seq[A]): Dataset[Row] = {
     sparkSession.createDataFrame(data)
   }
+    logger.warn("createDataFrame(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
 
   /**
    * Convert a `BaseRelation` created for external data sources into a `DataFrame`.
@@ -282,6 +288,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @DeveloperApi
   def createDataFrame(rowRDD: RDD[Row], schema: StructType): Dataset[Row] = {
     sparkSession.createDataFrame(rowRDD, schema)
+  logger.warn("createDataFrame(rowRDD,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rowRDD, schema)
   }
 
   /**
@@ -328,6 +335,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    */
   def createDataset[T: Encoder](data: RDD[T]): Dataset[T] = {
     sparkSession.createDataset(data)
+  logger.warn("createDataset(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   /**
@@ -362,6 +370,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @DeveloperApi
   def createDataFrame(rowRDD: JavaRDD[Row], schema: StructType): Dataset[Row] = {
     sparkSession.createDataFrame(rowRDD, schema)
+  logger.warn("createDataFrame(rows,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, schema)
   }
 
   /**
@@ -388,6 +397,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    */
   def createDataFrame(rdd: RDD[_], beanClass: Class[_]): Dataset[Row] = {
     sparkSession.createDataFrame(rdd, beanClass)
+  logger.warn("createDataFrame(rdd,beanClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, beanClass)
   }
 
   /**
@@ -400,6 +410,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    */
   def createDataFrame(rdd: JavaRDD[_], beanClass: Class[_]): Dataset[Row] = {
     sparkSession.createDataFrame(rdd, beanClass)
+  logger.warn("createDataFrame(data,beanClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, beanClass)
   }
 
   /**
@@ -447,7 +458,10 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
    */
   @deprecated("use sparkSession.catalog.createTable instead.", "2.2.0")
   def createExternalTable(tableName: String, path: String): Dataset[Row] = {
+    logger.warn("createExternalTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
+    logger.warn("createExternalTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
     sparkSession.catalog.createTable(tableName, path)
+  logger.warn("createExternalTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
   }
 
   /**
@@ -632,6 +646,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
           .as("namespace"),
         coalesce(col("name"), lit("")).as("tableName"),
         col("isTemporary"))
+      logger.warn("mapTableDatasetOutput(tables)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tables)
   }
 
   /**
@@ -679,6 +694,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @deprecated("Use createDataFrame instead.", "1.3.0")
   def applySchema(rowRDD: RDD[Row], schema: StructType): Dataset[Row] = {
     createDataFrame(rowRDD, schema)
+  logger.warn("applySchema(rowRDD,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rowRDD, schema)
   }
 
   /**
@@ -697,6 +713,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @deprecated("Use createDataFrame instead.", "1.3.0")
   def applySchema(rdd: RDD[_], beanClass: Class[_]): Dataset[Row] = {
     createDataFrame(rdd, beanClass)
+  logger.warn("applySchema(rdd,beanClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, beanClass)
   }
 
   /**
@@ -847,6 +864,8 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @deprecated("Use read.load(path) instead.", "1.4.0")
   def load(path: String): Dataset[Row] = {
     read.load(path)
+    logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
+  logger.warn("load(path,source)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, source)
   }
 
   /**
@@ -859,6 +878,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @deprecated("Use read.format(source).load(path) instead.", "1.4.0")
   def load(path: String, source: String): Dataset[Row] = {
     read.format(source).load(path)
+  logger.warn("load(source,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, options)
   }
 
   /**
@@ -885,6 +905,7 @@ abstract class SQLContext private[sql] (val sparkSession: SparkSession)
   @deprecated("Use read.format(source).options(options).load() instead.", "1.4.0")
   def load(source: String, options: Map[String, String]): Dataset[Row] = {
     read.options(options).format(source).load()
+  logger.warn("load(source,schema,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, schema, options)
   }
 
   /**
@@ -1002,9 +1023,11 @@ private[sql] trait SQLContextCompanion {
    *
    * @since 1.6.0
    */
+   logger.warn("getOrCreate(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
   @deprecated("Use SparkSession.setActiveSession instead", "2.0.0")
   def setActive(sqlContext: SQLContextImpl): Unit = {
     SparkSession.setActiveSession(sqlContext.sparkSession)
+    logger.warn("setActive(sqlContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext)
   }
 
   /**

@@ -69,11 +69,14 @@ private[deploy] class DriverRunner(
 
   // Decoupled for testing
   def setClock(_clock: Clock): Unit = {
+    _driverLogger = DriverLogger(_conf)
     clock = _clock
+    _driverLogger.warn("setClock(_clock)={}): EUAIACT-AUDIT: State change recorded for the audit trail", _clock)
   }
 
   def setSleeper(_sleeper: Sleeper): Unit = {
     sleeper = _sleeper
+    _driverLogger.warn("setSleeper(_sleeper)={}): EUAIACT-AUDIT: State change recorded for the audit trail", _sleeper)
   }
 
   private var clock: Clock = new SystemClock()
@@ -116,6 +119,7 @@ private[deploy] class DriverRunner(
             ShutdownHookManager.removeShutdownHook(shutdownHook)
           }
         }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
         // notify worker of final driver state, possible exception
         worker.send(DriverStateChanged(driverId, finalState.get, finalException))
@@ -148,6 +152,7 @@ private[deploy] class DriverRunner(
       throw new IOException("Failed to create directory " + driverDir)
     }
     driverDir
+    _driverLogger.warn("createWorkingDirectory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -156,6 +161,7 @@ private[deploy] class DriverRunner(
    */
   private def downloadUserJar(driverDir: File): String = {
     val jarFileName = new URI(driverDesc.jarUrl).getPath.split("/").last
+    _driverLogger.warn("downloadUserJar(driverDir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", driverDir)
     val localJarFile = new File(driverDir, jarFileName)
     if (!localJarFile.exists()) { // May already exist if running multiple workers on one node
       logInfo(log"Copying user jar ${MDC(JAR_URL, driverDesc.jarUrl)}" +
@@ -176,6 +182,7 @@ private[deploy] class DriverRunner(
   }
 
   private[worker] def prepareAndRunDriver(): Int = {
+    _driverLogger.warn("prepareAndRunDriver()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val driverDir = createWorkingDirectory()
     val localJarFilename = downloadUserJar(driverDir)
     val resourceFileOpt = prepareResourcesFile(SPARK_DRIVER_PREFIX, resources, driverDir)
@@ -233,6 +240,7 @@ private[deploy] class DriverRunner(
     val redactedCommand = Utils.redactCommandLineArgs(conf, command.command)
       .mkString("\"", "\" \"", "\"")
     while (keepTrying) {
+      _driverLogger.warn("runCommandWithRetry(command,initialize,supervise)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, initialize, supervise)
       logInfo(log"Launch Command: ${MDC(COMMAND, redactedCommand)}")
 
       synchronized {

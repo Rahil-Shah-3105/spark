@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.{DataType, DecimalExpression, DecimalType, Dou
  * expression in order to type coerce children to common precision.
  */
 object DecimalPrecisionTypeCoercion extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   import scala.math.max
 
   /**
@@ -129,6 +130,7 @@ object DecimalPrecisionTypeCoercion extends SQLConfHelper {
       .orElse(integralAndDecimalLiteral)
       .orElse(nondecimalAndDecimal(conf.literalPickMinimumPrecision))
       .lift(expression).getOrElse(expression)
+      planChangeLogger.warn("apply(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 
   private def isFloat(t: DataType): Boolean = t == FloatType || t == DoubleType

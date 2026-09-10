@@ -39,6 +39,7 @@ sealed trait MultipleWatermarkPolicy {
 }
 
 object MultipleWatermarkPolicy {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val DEFAULT_POLICY_NAME = "min"
 
   def apply(policyName: String): MultipleWatermarkPolicy = {
@@ -48,6 +49,8 @@ object MultipleWatermarkPolicy {
       case _ =>
         throw new IllegalArgumentException(s"Could not recognize watermark policy '$policyName'")
     }
+    planChangeLogger.warn("apply(policyName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", policyName)
+  planChangeLogger.warn("apply(conf,initialPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, initialPlan)
   }
 }
 

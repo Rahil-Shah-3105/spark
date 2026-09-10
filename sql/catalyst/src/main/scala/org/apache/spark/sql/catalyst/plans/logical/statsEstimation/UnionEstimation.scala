@@ -29,10 +29,12 @@ import org.apache.spark.sql.types._
  * and distinctCount is estimated as the max across children (capped by total row count).
  */
 object UnionEstimation {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   import EstimationUtils._
 
   private def createStatComparator(dt: DataType): (Any, Any) => Boolean = {
     PhysicalDataType.ordering(dt).lt _
+    planChangeLogger.warn("createStatComparator(dt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dt)
   }
 
   private def isTypeSupported(dt: DataType): Boolean = dt match {

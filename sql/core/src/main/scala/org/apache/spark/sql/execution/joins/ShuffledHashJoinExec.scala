@@ -66,6 +66,7 @@ case class ShuffledHashJoinExec private (
   }
 
   private def validCondForIgnoreDupKey(cond: Expression): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // to ignore duplicate keys on the build side, the join condition must
     // have the following properties:
     // 1) a subtree that is a semantic match to a build-side key, and/or
@@ -135,6 +136,7 @@ case class ShuffledHashJoinExec private (
         case _ => join(streamIter, hashed, numOutputRows)
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def buildSideOrFullOuterJoin(
@@ -677,5 +679,6 @@ object ShuffledHashJoinExec {
       left,
       right,
       isSkewJoin)
+    planChangeLogger.warn("apply(leftKeys,rightKeys,joinType,buildSide,condition,left,right,isSkewJoin)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", leftKeys, rightKeys, joinType, buildSide, condition, left, right, isSkewJoin, buildSide)
   }
 }

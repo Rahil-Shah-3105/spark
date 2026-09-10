@@ -33,6 +33,7 @@ import org.apache.spark.sql.types.{DataType, MapType, StringType, StructType, Va
 import org.apache.spark.unsafe.types.UTF8String
 
 object ExprUtils extends EvalHelper with QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def evalTypeExpr(exp: Expression): DataType = {
     if (exp.foldable) {
@@ -110,6 +111,7 @@ object ExprUtils extends EvalHelper with QueryErrorsBase {
         }
       }
     }
+    planChangeLogger.warn("getDecimalParser(locale)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", locale)
   }
 
   /**

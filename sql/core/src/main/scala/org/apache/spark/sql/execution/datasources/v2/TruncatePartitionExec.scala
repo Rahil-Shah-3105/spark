@@ -30,6 +30,7 @@ case class TruncatePartitionExec(
     table: SupportsPartitionManagement,
     partSpec: ResolvedPartitionSpec,
     refreshCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def output: Seq[Attribute] = Seq.empty
 
@@ -48,5 +49,6 @@ case class TruncatePartitionExec(
     }
     if (isTableAltered) refreshCache()
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

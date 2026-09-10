@@ -27,6 +27,7 @@ from pyspark.streaming.listener import StreamingListener
 from pyspark.streaming.util import TransformFunction, TransformFunctionSerializer
 
 import warnings
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["StreamingContext"]
 
@@ -174,6 +175,7 @@ class StreamingContext:
             if activeJvmContextOption.isEmpty():
                 cls._activeContext = None
             elif activeJvmContextOption.get().hashCode() != activePythonContextJavaId:
+                logger.warning("getActive(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
                 cls._activeContext = None
                 raise RuntimeError(
                     "JVM's active JavaStreamingContext is not the JavaStreamingContext "
@@ -463,6 +465,7 @@ class StreamingContext:
         Add a [[org.apache.spark.streaming.scheduler.StreamingListener]] object for
         receiving system events related to streaming.
         """
+        logger.warning("addStreamingListener(self,streamingListener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, streamingListener)
         assert self._jvm is not None
         self._jssc.addStreamingListener(
             self._jvm.JavaStreamingListenerWrapper(

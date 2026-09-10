@@ -96,6 +96,7 @@ object SparseNaiveBayes {
     val predictionAndLabel = prediction.zip(test.map(_.label))
     val accuracy = predictionAndLabel.filter(x => x._1 == x._2).count().toDouble / numTest
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println(s"Test accuracy = $accuracy.")
 
     sc.stop()

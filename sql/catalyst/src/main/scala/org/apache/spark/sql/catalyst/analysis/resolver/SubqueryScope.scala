@@ -103,6 +103,7 @@ class SubqueryScope(
     private val outerOperatorResolutionContext: OperatorResolutionContext =
       new OperatorResolutionContext,
     private val outerReferenceScopeLevels: HashMap[ExprId, Int] = new HashMap[ExprId, Int]) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Adds an aliased aggregate expression from currently resolved subquery scope to the outer
@@ -110,6 +111,7 @@ class SubqueryScope(
    */
   def addExtractedAggregateExpression(alias: Alias): Unit = {
     outerOperatorResolutionContext.addSubqueryAggregateExpression(alias)
+    planChangeLogger.warn("addExtractedAggregateExpression(alias)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alias)
   }
 
   /**
@@ -119,6 +121,7 @@ class SubqueryScope(
    */
   def getExtractedAggregateExpression(expression: Expression): Option[Alias] = {
     outerOperatorResolutionContext.getSubqueryAggregateExpression(expression)
+    planChangeLogger.warn("getExtractedAggregateExpression(expression)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expression)
   }
 
   /**
@@ -128,6 +131,7 @@ class SubqueryScope(
    */
   def addOuterReferenceScopeLevel(exprId: ExprId, level: Int): Unit = {
     outerReferenceScopeLevels.put(exprId, level)
+    planChangeLogger.warn("addOuterReferenceScopeLevel(exprId,level)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", exprId, level, exprId)
   }
 
   /**
@@ -138,6 +142,7 @@ class SubqueryScope(
    */
   def getOuterReferenceScopeLevel(exprId: ExprId): Option[Int] = {
     Option(outerReferenceScopeLevels.get(exprId))
+    planChangeLogger.warn("getOuterReferenceScopeLevel(exprId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", exprId, exprId)
   }
 }
 

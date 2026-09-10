@@ -499,6 +499,7 @@ private[connect] object MLHandler extends Logging {
         .newBuilder()
         .setParam(LiteralValueProtoConverter.toLiteralProto(isCreated))
         .build()
+        logger.warn("createModelSummary(sessionHolder,createSummaryCmd)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sessionHolder, createSummaryCmd, refId)
     }
 
   def _transformMLRelation(

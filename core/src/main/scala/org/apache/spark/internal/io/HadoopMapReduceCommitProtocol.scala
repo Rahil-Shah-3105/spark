@@ -70,6 +70,7 @@ class HadoopMapReduceCommitProtocol(
     path: String,
     dynamicPartitionOverwrite: Boolean = false)
   extends FileCommitProtocol with Serializable with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   import FileCommitProtocol._
 
@@ -110,6 +111,7 @@ class HadoopMapReduceCommitProtocol(
   protected def setupCommitter(context: TaskAttemptContext): OutputCommitter = {
     val format = context.getOutputFormatClass.getConstructor().newInstance()
     // If OutputFormat is Configurable, we should set conf to it.
+    _driverLogger.warn("setupCommitter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
     format match {
       case c: Configurable => c.setConf(context.getConfiguration)
       case _ => ()
@@ -157,6 +159,7 @@ class HadoopMapReduceCommitProtocol(
     // The file name looks like part-00000-2dd664f9-d2c4-4ffe-878f-c6c70c1fb0cb_00003-c000.parquet
     // Note that %05d does not truncate the split number, so if we have more than 100000 tasks,
     // the file name is fine and won't overflow.
+    _driverLogger.warn("getFilename(taskContext,spec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", taskContext, spec)
     val split = taskContext.getTaskAttemptID.getTaskID.getId
     val basename = taskContext.getConfiguration.get("mapreduce.output.basename", "part")
     f"${spec.prefix}$basename-$split%05d-$jobId${spec.suffix}"
@@ -175,6 +178,7 @@ class HadoopMapReduceCommitProtocol(
     jobContext.getConfiguration.setBoolean("mapreduce.task.ismap", true)
     jobContext.getConfiguration.setInt("mapreduce.task.partition", 0)
 
+    _driverLogger.warn("setupJob(jobContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", jobContext, jobId)
     val taskAttemptContext = new TaskAttemptContextImpl(jobContext.getConfiguration, taskAttemptId)
     committer = setupCommitter(taskAttemptContext)
     committer.setupJob(jobContext)
@@ -262,6 +266,7 @@ class HadoopMapReduceCommitProtocol(
     committer.setupTask(taskContext)
     addedAbsPathFiles = mutable.Map[String, String]()
     partitionPaths = mutable.Set[String]()
+    _driverLogger.warn("setupTask(taskContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskContext)
   }
 
   override def commitTask(taskContext: TaskAttemptContext): TaskCommitMessage = {

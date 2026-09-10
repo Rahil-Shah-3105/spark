@@ -54,6 +54,7 @@ sealed trait Distribution {
  * Represents a distribution where no promises are made about co-location of data.
  */
 case object UnspecifiedDistribution extends Distribution {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def requiredNumPartitions: Option[Int] = None
 
   override def createPartitioning(numPartitions: Int): Partitioning = {
@@ -72,6 +73,7 @@ case object AllTuples extends Distribution {
   override def createPartitioning(numPartitions: Int): Partitioning = {
     assert(numPartitions == 1, "The default partitioning of AllTuples can only have 1 partition.")
     SinglePartition
+  planChangeLogger.warn("createPartitioning(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
   }
 }
 
@@ -1215,6 +1217,7 @@ case class NullAwareHashShuffleSpec(
   override def createPartitioning(clustering: Seq[Expression]): Partitioning = {
     val exprs = hashKeyPositions.map(v => clustering(v.head))
     NullAwareHashPartitioning(exprs, partitioning.numPartitions)
+  planChangeLogger.warn("createPartitioning(clustering)={}): EUAIACT-AUDIT: State change recorded for the audit trail", clustering)
   }
 
   override def numPartitions: Int = partitioning.numPartitions

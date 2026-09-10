@@ -28,10 +28,12 @@ import org.apache.spark.sql.execution.joins.{BroadcastHashJoinExec, BroadcastNes
  * necessary Exchange nodes are added.
  */
 object ValidateSparkPlan extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def apply(plan: SparkPlan): SparkPlan = {
     validate(plan)
     plan
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -64,5 +66,6 @@ object ValidateSparkPlan extends Rule[SparkPlan] {
 
   private def errorOnInvalidBroadcastQueryStage(plan: SparkPlan): Unit = {
     throw InvalidAQEPlanException("Invalid broadcast query stage", plan)
+    planChangeLogger.warn("errorOnInvalidBroadcastQueryStage(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 }

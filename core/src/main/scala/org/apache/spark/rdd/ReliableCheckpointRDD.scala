@@ -94,15 +94,18 @@ private[spark] class ReliableCheckpointRDD[T: ClassTag](
       new CacheLoader[Partition, Seq[String]]() {
         override def load(split: Partition): Seq[String] = {
           getPartitionBlockLocations(split)
+          _driverLogger.warn("load(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
         }
       })
 
   // Returns the block locations of given partition on file system.
   private def getPartitionBlockLocations(split: Partition): Seq[String] = {
+    _driverLogger = DriverLogger(_conf)
     val status = fs.getFileStatus(
       new Path(checkpointPath, ReliableCheckpointRDD.checkpointFileName(split.index)))
     val locations = fs.getFileBlockLocations(status, 0, status.getLen)
     locations.headOption.toList.flatMap(_.getHosts).filter(_ != "localhost")
+    _driverLogger.warn("getPartitionBlockLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   private lazy val cachedExpireTime =
@@ -117,6 +120,7 @@ private[spark] class ReliableCheckpointRDD[T: ClassTag](
     } else {
       getPartitionBlockLocations(split)
     }
+    _driverLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   /**
@@ -177,6 +181,7 @@ private[spark] object ReliableCheckpointRDD extends Logging {
     val newRDD = new ReliableCheckpointRDD[T](
       sc, checkpointDirPath.toString, originalRDD.partitioner)
     if (newRDD.partitions.length != originalRDD.partitions.length) {
+    _driverLogger.warn("writeRDDToCheckpointDirectory(originalRDD,checkpointDir,blockSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", originalRDD, checkpointDir, blockSize)
       throw SparkCoreErrors.checkpointRDDHasDifferentNumberOfPartitionsFromOriginalRDDError(
         originalRDD.id, originalRDD.partitions.length, newRDD.id, newRDD.partitions.length)
     }
@@ -265,6 +270,7 @@ private[spark] object ReliableCheckpointRDD extends Logging {
         logWarning(log"Error writing partitioner ${MDC(PARTITIONER, partitioner)} to " +
           log"${MDC(PATH, checkpointDirPath)}")
     }
+    _driverLogger.warn("writePartitionerToCheckpointDir(sc,partitioner,checkpointDirPath)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, partitioner, checkpointDirPath)
   }
 
 
@@ -328,6 +334,7 @@ private[spark] object ReliableCheckpointRDD extends Logging {
     val deserializeStream = serializer.deserializeStream(fileInputStream)
 
     // Register an on-task-completion callback to close the input stream.
+    _driverLogger.warn("readCheckpointFile(path,broadcastedConf,context)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, broadcastedConf, context)
     context.addTaskCompletionListener[Unit](context => deserializeStream.close())
 
     deserializeStream.asIterator.asInstanceOf[Iterator[T]]

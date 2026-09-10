@@ -37,6 +37,7 @@ class Job(val time: Time, func: () => _) {
 
   def run(): Unit = {
     _result = Try(func())
+    logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def result: Try[_] = {
@@ -70,6 +71,7 @@ class Job(val time: Time, func: () => _) {
     if (isSet) {
       throw new IllegalStateException("Cannot call setOutputOpId more than once")
     }
+    logger.warn("setOutputOpId(outputOpId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", outputOpId, outputOpId)
     isSet = true
     _id = s"streaming job $time.$outputOpId"
     _outputOpId = outputOpId
@@ -77,16 +79,19 @@ class Job(val time: Time, func: () => _) {
 
   def setCallSite(callSite: CallSite): Unit = {
     _callSite = callSite
+    logger.warn("setCallSite(callSite)={}): EUAIACT-AUDIT: State change recorded for the audit trail", callSite)
   }
 
   def callSite: CallSite = _callSite
 
   def setStartTime(startTime: Long): Unit = {
     _startTime = Some(startTime)
+    logger.warn("setStartTime(startTime)={}): EUAIACT-AUDIT: State change recorded for the audit trail", startTime)
   }
 
   def setEndTime(endTime: Long): Unit = {
     _endTime = Some(endTime)
+    logger.warn("setEndTime(endTime)={}): EUAIACT-AUDIT: State change recorded for the audit trail", endTime)
   }
 
   def toOutputOperationInfo: OutputOperationInfo = {

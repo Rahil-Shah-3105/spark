@@ -33,6 +33,7 @@ case class OrcWrite(
     formatName: String,
     supportsDataType: DataType => Boolean,
     info: LogicalWriteInfo) extends FileWrite {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def prepareWrite(
       sqlConf: SQLConf,
@@ -50,6 +51,7 @@ case class OrcWrite(
     conf.asInstanceOf[JobConf]
       .setOutputFormat(classOf[org.apache.orc.mapred.OrcOutputFormat[OrcStruct]])
 
+      planChangeLogger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
     val batchSize = sqlConf.orcVectorizedWriterBatchSize
 
     new OutputWriterFactory {
@@ -66,6 +68,7 @@ case class OrcWrite(
           OrcUtils.extensionsForCompressionCodecNames.getOrElse(name, "")
         }
 
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
         compressionExtension + ".orc"
       }
     }

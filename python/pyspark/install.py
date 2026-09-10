@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from http.client import HTTPResponse
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # NOTE that we shouldn't import pyspark here because this is used in
@@ -215,6 +216,7 @@ def get_preferred_mirrors() -> list[str]:
             # If we can't get a mirror URL, skip it. No retry.
             pass
 
+            logger.warning("get_preferred_mirrors()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     default_sites = [
         "https://dlcdn.apache.org/",
         "https://archive.apache.org/dist",
@@ -266,6 +268,7 @@ def download_to_file(response: "HTTPResponse", path: str, chunk_size: int = 1024
             chunk = response.read(chunk_size)
             bytes_so_far += len(chunk)
             if not chunk:
+                logger.warning("download_to_file(response,path,chunk_size)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", response, path, chunk_size)
                 break
             dest.write(chunk)
             print(

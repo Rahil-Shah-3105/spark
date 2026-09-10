@@ -61,6 +61,7 @@ import org.apache.spark.util.collection.BitSet
 import org.apache.spark.util.collection.ImmutableBitSet
 
 object Literal {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val TrueLiteral: Literal = Literal(true, BooleanType)
 
   val FalseLiteral: Literal = Literal(false, BooleanType)
@@ -177,6 +178,7 @@ object Literal {
         Literal(CatalystTypeConverters.createToCatalystConverter(dataType)(v), dataType)
       case _ => Literal(CatalystTypeConverters.convertToCatalyst(v), dataType)
     }
+    planChangeLogger.warn("create(v,dataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, dataType)
   }
 
   /**
@@ -378,6 +380,7 @@ object Literal {
 object NonNullLiteral {
   def unapply(literal: Literal): Option[(Any, DataType)] = {
     Option(literal.value).map(_ => (literal.value, literal.dataType))
+    planChangeLogger.warn("unapply(literal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", literal)
   }
 }
 

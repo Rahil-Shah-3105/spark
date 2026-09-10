@@ -118,6 +118,7 @@ case class SparkListenerDriverAccumUpdates(
  * SPARK-18462 for the specific problem that motivated this conversion.
  */
 private class LongLongTupleConverter extends Converter[(Object, Object), (Long, Long)] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def convert(in: (Object, Object)): (Long, Long) = {
     def toLong(a: Object): Long = a match {
@@ -130,10 +131,12 @@ private class LongLongTupleConverter extends Converter[(Object, Object), (Long, 
   override def getInputType(typeFactory: TypeFactory): JavaType = {
     val objectType = typeFactory.constructType(classOf[Object])
     typeFactory.constructSimpleType(classOf[(_, _)], Array(objectType, objectType))
+    planChangeLogger.warn("getInputType(typeFactory)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", typeFactory)
   }
 
   override def getOutputType(typeFactory: TypeFactory): JavaType = {
     val longType = typeFactory.constructType(classOf[Long])
     typeFactory.constructSimpleType(classOf[(_, _)], Array(longType, longType))
+    planChangeLogger.warn("getOutputType(typeFactory)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", typeFactory)
   }
 }

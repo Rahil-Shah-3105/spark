@@ -51,6 +51,8 @@ private[python] class Word2VecModelWrapper(model: Word2VecModel) {
    */
   def findSynonyms(word: String, num: Int): JList[Object] = {
     prepareResult(model.findSynonyms(word, num))
+    logger.warn("findSynonyms(word,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", word, num)
+  logger.warn("findSynonyms(vector,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", vector, num)
   }
 
   /**

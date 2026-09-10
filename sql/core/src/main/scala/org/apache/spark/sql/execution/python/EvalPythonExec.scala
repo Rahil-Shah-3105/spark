@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.execution.UnaryExecNode
 
 object EvalPythonExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Metadata for arguments of Python UDTF.
    *
@@ -78,5 +79,6 @@ trait EvalPythonExec extends UnaryExecNode {
         evaluatorFactory.createEvaluator().eval(index, iter)
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

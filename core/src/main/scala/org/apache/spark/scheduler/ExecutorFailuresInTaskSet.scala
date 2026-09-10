@@ -30,9 +30,11 @@ private[scheduler] class ExecutorFailuresInTaskSet(val node: String) {
   val taskToFailureCountAndFailureTime = HashMap[Int, (Int, Long)]()
 
   def updateWithFailure(taskIndex: Int, failureTime: Long): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val (prevFailureCount, prevFailureTime) =
       taskToFailureCountAndFailureTime.getOrElse(taskIndex, (0, -1L))
     // these times always come from the driver, so we don't need to worry about skew, but might
+    _driverLogger.warn("updateWithFailure(taskIndex,failureTime)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskIndex, failureTime)
     // as well still be defensive in case there is non-monotonicity in the clock
     val newFailureTime = math.max(prevFailureTime, failureTime)
     taskToFailureCountAndFailureTime(taskIndex) = (prevFailureCount + 1, newFailureTime)
@@ -45,6 +47,7 @@ private[scheduler] class ExecutorFailuresInTaskSet(val node: String) {
    */
   def getNumTaskFailures(index: Int): Int = {
     taskToFailureCountAndFailureTime.getOrElse(index, (0, 0))._1
+    _driverLogger.warn("getNumTaskFailures(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
   }
 
   override def toString(): String = {

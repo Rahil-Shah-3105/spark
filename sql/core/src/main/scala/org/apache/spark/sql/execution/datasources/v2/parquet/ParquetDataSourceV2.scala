@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 class ParquetDataSourceV2 extends FileDataSourceV2 {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def fallbackFileFormat: Class[_ <: FileFormat] = classOf[ParquetFileFormat]
 
@@ -34,6 +35,8 @@ class ParquetDataSourceV2 extends FileDataSourceV2 {
     val tableName = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
     ParquetTable(tableName, sparkSession, optionsWithoutPaths, paths, None, fallbackFileFormat)
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
+  planChangeLogger.warn("getTable(options,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, schema)
   }
 
   override def getTable(options: CaseInsensitiveStringMap, schema: StructType): Table = {

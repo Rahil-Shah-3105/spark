@@ -23,6 +23,7 @@ import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.util.SchemaUtils
 
 object BucketingUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // The file name of bucketed data should have 3 parts:
   //   1. some other information in the head of file name
   //   2. bucket id part, some numbers, starts with "_"
@@ -52,6 +53,7 @@ object BucketingUtils {
       HashPartitioning(Seq(bucketColumn), numBuckets).partitionIdExpression :: Nil,
       bucketColumn :: Nil)
     bucketIdGenerator(mutableInternalRow).getInt(0)
+    planChangeLogger.warn("getBucketIdFromValue(bucketColumn,numBuckets,value)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", bucketColumn, numBuckets, value, bucketIdGenerator)
   }
 
   def canBucketOn(dataType: DataType): Boolean = !SchemaUtils.hasNonUTF8BinaryCollation(dataType)

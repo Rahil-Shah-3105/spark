@@ -27,11 +27,13 @@ import org.apache.spark.sql.execution.datasources.OutputWriter
 // NOTE: This class is instantiated and used on executor side only, no need to be serializable.
 class ParquetOutputWriter(val path: String, context: TaskAttemptContext)
   extends OutputWriter {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val recordWriter: RecordWriter[Void, InternalRow] = {
     new ParquetOutputFormat[InternalRow]() {
       override def getDefaultWorkFile(context: TaskAttemptContext, extension: String): Path = {
         new Path(path)
+        planChangeLogger.warn("getDefaultWorkFile(context,extension)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", context, extension)
       }
     }.getRecordWriter(context)
   }

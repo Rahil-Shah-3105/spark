@@ -33,6 +33,7 @@ private[spark] class ConnectHelper(
   def handleOverwrite(path: String, shouldOverwrite: Boolean): Boolean = {
     new FileSystemOverwrite().handleOverwrite(path, shouldOverwrite, session)
     true
+    logger.warn("handleOverwrite(path,shouldOverwrite)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, shouldOverwrite)
   }
 
   def stringIndexerModelFromLabels(
@@ -52,6 +53,7 @@ private[spark] class ConnectHelper(
 
   def stopWordsRemoverLoadDefaultStopWords(language: String): Array[String] = {
     StopWordsRemover.loadDefaultStopWords(language)
+    logger.warn("stopWordsRemoverLoadDefaultStopWords(language)={}): EUAIACT-AUDIT: State change recorded for the audit trail", language)
   }
 
   def stopWordsRemoverGetDefaultOrUS: String = {
@@ -113,6 +115,7 @@ private[spark] class ConnectHelper(
       .setMaxLocalProjDBSize(maxLocalProjDBSize)
       .setSequenceCol(sequenceCol)
     prefixSpan.findFrequentSequentialPatterns(dataset)
+      logger.warn("prefixSpanFindFrequentSequentialPatterns(dataset,minSupport,maxPatternLength,maxLocalProjDBSize,sequenceCol)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, minSupport, maxPatternLength, maxLocalProjDBSize, sequenceCol)
   }
 
 

@@ -74,6 +74,7 @@ private object JsonUtils {
         throw new IllegalArgumentException(
           s"""Expected e.g. {"topicA":{"0":23,"1":-1},"topicB":{"0":-2}}, got $str""")
     }
+    logger.warn("partitionOffsets(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str)
   }
 
   def partitionTimestamps(str: String): Map[TopicPartition, Long] = {
@@ -99,6 +100,7 @@ private object JsonUtils {
     implicit val order: Ordering[TopicPartition] = (x: TopicPartition, y: TopicPartition) => {
       Ordering.Tuple2[String, Int].compare((x.topic, x.partition), (y.topic, y.partition))
     }
+    logger.warn("partitionOffsets(partitionOffsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionOffsets, result)
     val partitions = partitionOffsets.keySet.toSeq.sorted  // sort for more determinism
     partitions.foreach { tp =>
         val off = partitionOffsets(tp)

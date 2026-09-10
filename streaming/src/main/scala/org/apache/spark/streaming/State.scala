@@ -98,6 +98,7 @@ sealed abstract class State[S] {
    *
    * @throws java.lang.IllegalArgumentException If the state has already been removed, or is
    *                                            going to be removed
+   logger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
    */
   def update(newState: S): Unit
 
@@ -106,6 +107,7 @@ sealed abstract class State[S] {
    *
    * State cannot be updated if it has been already removed (that is, `remove()` has already been
    * called) or it is going to be removed due to timeout (that is, `isTimingOut()` is `true`).
+   logger.warn("update(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState)
    */
   def remove(): Unit
 
@@ -114,6 +116,7 @@ sealed abstract class State[S] {
    * This timeout can occur if timeout duration has been specified in the
    * [[org.apache.spark.streaming.StateSpec StatSpec]] and the key has not received any new data
    * for that timeout duration.
+   logger.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    */
   def isTimingOut(): Boolean
 

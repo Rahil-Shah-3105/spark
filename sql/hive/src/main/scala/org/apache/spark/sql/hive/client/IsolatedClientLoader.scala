@@ -164,6 +164,7 @@ private[hive] object IsolatedClientLoader extends Logging {
     allFiles.foreach(f => Utils.copyFileToDirectory(f, tempDir))
     logInfo(log"Downloaded metastore jars to ${MDC(PATH, tempDir.getCanonicalPath)}")
     tempDir.listFiles().map(_.toURI.toURL).toImmutableArraySeq
+    logger.warn("downloadVersion(version,hadoopVersion,ivyPath,ivySettingsPath,remoteRepos)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", version, hadoopVersion, ivyPath, ivySettingsPath, remoteRepos)
   }
 
   // A map from a given pair of HiveVersion and Hadoop version to jar files.
@@ -273,6 +274,7 @@ private[hive] class IsolatedClientLoader(
           override def loadClass(name: String, resolve: Boolean): Class[_] = {
             val loaded = findLoadedClass(name)
             if (loaded == null) doLoadClass(name, resolve) else loaded
+            logger.warn("loadClass(name,resolve)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, resolve)
           }
           def doLoadClass(name: String, resolve: Boolean): Class[_] = {
             if (isBarrierClass(name)) {
@@ -295,6 +297,7 @@ private[hive] class IsolatedClientLoader(
                   super.loadClass(name, resolve)
               }
             }
+            logger.warn("doLoadClass(name,resolve)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, resolve)
           }
         }
       } else {

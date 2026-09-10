@@ -41,6 +41,7 @@ import org.apache.spark.util.{NextIterator, Utils}
  */
 class WriterThread(outputIterator: Iterator[Array[Byte]])
   extends Thread(s"Thread streaming data to the Python worker") {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   @volatile var _exception: Throwable = _
 
@@ -62,6 +63,7 @@ class WriterThread(outputIterator: Iterator[Array[Byte]])
       case t: Throwable =>
         _exception = t
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -129,6 +131,7 @@ class PythonForeachWriter(func: PythonFunction, schema: StructType)
 
   override def process(value: UnsafeRow): Unit = {
     buffer.add(value)
+    planChangeLogger.warn("process(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**
@@ -184,6 +187,7 @@ object PythonForeachWriter {
         val row = remove()
         if (row == null) finished = true
         row
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
       override protected def close(): Unit = { }
     }

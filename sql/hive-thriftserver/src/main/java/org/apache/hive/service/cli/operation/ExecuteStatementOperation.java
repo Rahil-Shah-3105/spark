@@ -23,6 +23,7 @@ import org.apache.hive.service.cli.OperationType;
 import org.apache.hive.service.cli.session.HiveSession;
 
 public abstract class ExecuteStatementOperation extends Operation {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ExecuteStatementOperation.class);
   protected String statement = null;
 
   public ExecuteStatementOperation(HiveSession parentSession, String statement,
@@ -41,6 +42,7 @@ public abstract class ExecuteStatementOperation extends Operation {
         LOG.warn("Failed to get current OperationLog object of Operation: " +
           getHandle().getHandleIdentifier());
         isOperationLogEnabled = false;
+		LOG.warn("registerCurrentOperationLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         return;
       }
       OperationLog.setCurrentOperationLog(operationLog);

@@ -30,6 +30,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.{CTE, PLAN_EXPRESSION}
  * Updates CTE references with the resolve output attributes of corresponding CTE definitions.
  */
 object ResolveWithCTE extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     if (plan.containsAllPatterns(CTE)) {
       // A helper map definitionID->Definition. Used for non-recursive CTE definitions only, either
@@ -42,6 +43,7 @@ object ResolveWithCTE extends Rule[LogicalPlan] {
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def resolveWithCTE(
@@ -317,6 +319,7 @@ object ResolveWithCTE extends Rule[LogicalPlan] {
           UnionLoopRef(r.cteId, anchor.output.map(_.newInstance().withNullability(true)), false)
         columnNames.map(UnresolvedSubqueryColumnAliases(_, ref)).getOrElse(ref)
     }
+    planChangeLogger.warn("rewriteRecursiveCTERefs(recursion,anchor,cteDefId,columnNames)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recursion, anchor, cteDefId, columnNames, cteDefId)
   }
 
   /**

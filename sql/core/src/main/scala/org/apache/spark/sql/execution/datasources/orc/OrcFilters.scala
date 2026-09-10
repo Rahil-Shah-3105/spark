@@ -70,8 +70,10 @@ private[sql] object OrcFilters extends OrcFiltersBase {
    * Create ORC filter as a SearchArgument instance.
    */
   def createFilter(schema: StructType, filters: Seq[Filter]): Option[SearchArgument] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val dataTypeMap = OrcFilters.getSearchableTypeMap(schema, SQLConf.get.caseSensitiveAnalysis)
     // Combines all convertible filters using `And` to produce a single conjunction
+    planChangeLogger.warn("createFilter(schema,filters)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, filters)
     val conjunctionOptional = buildTree(convertibleFilters(dataTypeMap, filters))
     conjunctionOptional.map { conjunction =>
       // Then tries to build a single ORC `SearchArgument` for the conjunction predicate.
@@ -135,6 +137,7 @@ private[sql] object OrcFilters extends OrcFiltersBase {
     filters.flatMap { filter =>
       convertibleFiltersHelper(filter, true)
     }
+  planChangeLogger.warn("buildSearchArgument(dataTypeMap,expression,builder)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataTypeMap, expression, builder)
   }
 
   /**
@@ -217,6 +220,7 @@ private[sql] object OrcFilters extends OrcFiltersBase {
         buildLeafSearchArgument(dataTypeMap, other, builder).getOrElse {
           throw QueryExecutionErrors.inputFilterNotFullyConvertibleError(
             "OrcFilters.buildSearchArgument")
+        planChangeLogger.warn("buildLeafSearchArgument(dataTypeMap,expression,builder)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataTypeMap, expression, builder)
         }
     }
   }

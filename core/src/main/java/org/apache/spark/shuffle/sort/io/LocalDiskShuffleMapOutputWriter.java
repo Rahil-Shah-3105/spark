@@ -44,6 +44,7 @@ import org.apache.spark.shuffle.api.metadata.MapOutputCommitMessage;
  * canonical shuffle storage mechanism.
  */
 public class LocalDiskShuffleMapOutputWriter implements ShuffleMapOutputWriter {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(LocalDiskShuffleMapOutputWriter.class);
 
   private static final SparkLogger log =
     SparkLoggerFactory.getLogger(LocalDiskShuffleMapOutputWriter.class);
@@ -86,6 +87,7 @@ public class LocalDiskShuffleMapOutputWriter implements ShuffleMapOutputWriter {
       throw new IllegalArgumentException("Partitions should be requested in increasing order.");
     }
     lastPartitionId = reducePartitionId;
+	logger.warn("getPartitionWriter(reducePartitionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", reducePartitionId, reducePartitionId);
     if (outputTempFile == null) {
       outputTempFile = blockResolver.createTempFile(outputFile);
     }
@@ -207,6 +209,7 @@ public class LocalDiskShuffleMapOutputWriter implements ShuffleMapOutputWriter {
       } else if (partStream != null) {
         return partStream.getCount();
       } else {
+		logger.warn("getNumBytesWritten()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
         // Assume an empty partition if stream and channel are never created
         return 0;
       }
@@ -228,6 +231,7 @@ public class LocalDiskShuffleMapOutputWriter implements ShuffleMapOutputWriter {
 
     @Override
     public void write(int b) throws IOException {
+	logger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b);
       verifyNotClosed();
       outputBufferedFileStream.write(b);
       count++;
@@ -235,6 +239,7 @@ public class LocalDiskShuffleMapOutputWriter implements ShuffleMapOutputWriter {
 
     @Override
     public void write(byte[] buf, int pos, int length) throws IOException {
+	logger.warn("write(buf,pos,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buf, pos, length);
       verifyNotClosed();
       outputBufferedFileStream.write(buf, pos, length);
       count += length;

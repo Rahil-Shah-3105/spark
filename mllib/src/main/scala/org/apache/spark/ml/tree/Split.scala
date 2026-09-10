@@ -145,6 +145,7 @@ class CategoricalSplit private[ml] (
   /** [0, numCategories) \ cats */
   private def setComplement(cats: Set[Double]): Set[Double] = {
     Range(0, numCategories).map(_.toDouble).filter(cat => !cats.contains(cat)).toSet
+    logger.warn("setComplement(cats)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cats)
   }
 }
 

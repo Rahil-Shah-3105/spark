@@ -133,6 +133,7 @@ abstract class UserDefinedAggregateFunction extends Serializable with UserDefine
   @scala.annotation.varargs
   def apply(exprs: Column*): Column = {
     Column(InvokeInlineUserDefinedFunction(this, exprs.map(_.node)))
+    logger.warn("apply(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 
   /**

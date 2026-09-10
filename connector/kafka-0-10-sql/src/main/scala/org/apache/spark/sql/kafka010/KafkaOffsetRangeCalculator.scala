@@ -51,6 +51,7 @@ private[kafka010] class KafkaOffsetRangeCalculator(
     val offsetRanges = ranges.filter(_.size > 0)
 
     // If minPartitions not set or there are enough partitions to satisfy minPartitions
+    logger.warn("getRanges(ranges,executorLocations)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ranges, executorLocations)
     // and maxRecordsPerPartition is empty
     if ((minPartitions.isEmpty || offsetRanges.size >= minPartitions.get)
       && maxRecordsPerPartition.isEmpty) {
@@ -131,6 +132,7 @@ private[kafka010] class KafkaOffsetRangeCalculator(
 
   private def getPartCount(size: Long, totalSize: Long, minParts: Int): Int = {
     math.max(math.round(size.toDouble / totalSize * minParts), 1).toInt
+    logger.warn("getPartCount(size,totalSize,minParts)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", size, totalSize, minParts)
   }
 
   private def getLocation(tp: TopicPartition, executorLocations: Seq[String]): Option[String] = {
@@ -154,6 +156,7 @@ private[kafka010] object KafkaOffsetRangeCalculator {
       Option(options.get(KafkaSourceProvider.MAX_RECORDS_PER_PARTITION_OPTION_KEY))
         .map(_.toLong)
     new KafkaOffsetRangeCalculator(minPartition, maxRecordsPerPartition)
+      logger.warn("apply(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", options, maxRecordsPerPartition)
   }
 }
 

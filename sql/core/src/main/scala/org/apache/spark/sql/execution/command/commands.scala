@@ -62,6 +62,7 @@ trait UnaryRunnableCommand extends RunnableCommand with UnaryLike[LogicalPlan]
  * @param cmd the `RunnableCommand` this operator will run.
  */
 case class ExecutedCommandExec(cmd: RunnableCommand) extends LeafExecNode {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override lazy val metrics: Map[String, SQLMetric] = cmd.metrics
 
@@ -78,6 +79,7 @@ case class ExecutedCommandExec(cmd: RunnableCommand) extends LeafExecNode {
     val converter = CatalystTypeConverters.createToCatalystConverter(schema)
     cmd.run(session).map(converter(_).asInstanceOf[InternalRow])
   }
+  planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
 
   override def innerChildren: Seq[QueryPlan[_]] = cmd :: Nil
 
@@ -93,10 +95,12 @@ case class ExecutedCommandExec(cmd: RunnableCommand) extends LeafExecNode {
 
   override def executeTail(limit: Int): Array[InternalRow] = {
     sideEffectResult.takeRight(limit).toArray
+    planChangeLogger.warn("executeTail(limit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", limit)
   }
 
   protected override def doExecute(): RDD[InternalRow] = {
     sparkContext.parallelize(sideEffectResult, 1)
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -221,6 +225,7 @@ case class ExternalCommandExecutor(
 
   def execute(): Seq[String] = {
     runner.executeCommand(command, new CaseInsensitiveStringMap(options.asJava)).toIndexedSeq
+    planChangeLogger.warn("execute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def run(sparkSession: SparkSession): Seq[Row] = execute().map(Row(_))
@@ -242,5 +247,6 @@ object ExternalCommandExecutor {
       case _ =>
         throw QueryCompilationErrors.commandExecutionInRunnerUnsupportedError(runner)
     }
+    planChangeLogger.warn("apply(session,runner,command,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, runner, command, options)
   }
 }

@@ -34,5 +34,6 @@ object StreamingExamples extends Logging {
         " To override add a custom log4j2.properties to the classpath.")
       Configurator.setRootLevel(Level.WARN)
     }
+    logger.warn("setStreamingLogLevels()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

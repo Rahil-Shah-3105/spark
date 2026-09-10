@@ -73,6 +73,7 @@ class MergeIntoWriter[T] private[sql] (table: String, ds: Dataset[T], on: Column
   override protected[sql] def insertAll(condition: Option[Column]): MergeIntoWriter[T] = {
     builder.addNotMatchedActions(buildMergeAction(ACTION_TYPE_INSERT_STAR, condition))
     this
+    logger.warn("insertAll(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   override protected[sql] def insert(
@@ -80,11 +81,13 @@ class MergeIntoWriter[T] private[sql] (table: String, ds: Dataset[T], on: Column
       map: Map[String, Column]): MergeIntoWriter[T] = {
     builder.addNotMatchedActions(buildMergeAction(ACTION_TYPE_INSERT, condition, map))
     this
+    logger.warn("insert(condition,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map)
   }
 
   override protected[sql] def updateAll(
       condition: Option[Column],
       notMatchedBySource: Boolean): MergeIntoWriter[T] = {
+       logger.warn("updateAll(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
     appendUpdateDeleteAction(
       buildMergeAction(ACTION_TYPE_UPDATE_STAR, condition),
       notMatchedBySource)
@@ -94,15 +97,18 @@ class MergeIntoWriter[T] private[sql] (table: String, ds: Dataset[T], on: Column
       condition: Option[Column],
       map: Map[String, Column],
       notMatchedBySource: Boolean): MergeIntoWriter[T] = {
+       logger.warn("update(condition,map,notMatchedBySource)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map, notMatchedBySource)
     appendUpdateDeleteAction(
       buildMergeAction(ACTION_TYPE_UPDATE, condition, map),
       notMatchedBySource)
+  logger.warn("appendUpdateDeleteAction(action,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", action, notMatchedBySource)
   }
 
   override protected[sql] def delete(
       condition: Option[Column],
       notMatchedBySource: Boolean): MergeIntoWriter[T] = {
     appendUpdateDeleteAction(buildMergeAction(ACTION_TYPE_DELETE, condition), notMatchedBySource)
+    logger.warn("delete(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
   }
 
   private def appendUpdateDeleteAction(

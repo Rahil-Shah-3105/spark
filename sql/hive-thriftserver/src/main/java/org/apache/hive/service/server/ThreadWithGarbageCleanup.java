@@ -59,6 +59,7 @@ public class ThreadWithGarbageCleanup extends Thread {
           this.getName()  +  " will be closed now.");
       threadLocalRawStore.shutdown();
       threadRawStoreMap.remove(threadId);
+	LOG.warn("cleanRawStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", threadId);
     }
   }
 
@@ -72,6 +73,7 @@ public class ThreadWithGarbageCleanup extends Thread {
       LOG.debug("Adding RawStore: " + threadLocalRawStore + ", for the thread: " +
           this.getName() + " to threadRawStoreMap for future cleanup.");
       threadRawStoreMap.put(threadId, threadLocalRawStore);
+	LOG.warn("cacheThreadLocalRawStore()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", threadId);
     }
   }
 }

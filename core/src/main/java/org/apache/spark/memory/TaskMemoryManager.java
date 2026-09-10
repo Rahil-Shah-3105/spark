@@ -249,6 +249,7 @@ public class TaskMemoryManager {
         }
       }
 
+	logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
       consumers.add(requestingConsumer);
       if (logger.isDebugEnabled()) {
         logger.debug("Task {} acquired {} for {}", taskAttemptId, Utils.bytesToString(got),
@@ -259,11 +260,13 @@ public class TaskMemoryManager {
         synchronized (offHeapMemoryLock) {
           currentOffHeapMemory += got;
           peakOffHeapMemory = Math.max(peakOffHeapMemory, currentOffHeapMemory);
+		logger.warn("synchronized(offHeapMemoryLock)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", offHeapMemoryLock);
         }
       } else {
         synchronized (onHeapMemoryLock) {
           currentOnHeapMemory += got;
           peakOnHeapMemory = Math.max(peakOnHeapMemory, currentOnHeapMemory);
+		logger.warn("synchronized(onHeapMemoryLock)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", onHeapMemoryLock);
         }
       }
 
@@ -404,6 +407,7 @@ public class TaskMemoryManager {
     if (inPageAllocationRecovery.get()) {
       return 0;
     }
+	logger.warn("acquireAdditionalExecutionMemoryForPageAllocation(required,requestingConsumer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", required, requestingConsumer);
 
     inPageAllocationRecovery.set(true);
     try {
@@ -585,6 +589,7 @@ public class TaskMemoryManager {
     // Skip the snapshot entirely when the breakdown is disabled: renderConsumerBreakdown would
     // discard it anyway. The combined logging path (logMemoryUsageAndGetBreakdown) still needs the
     // snapshot to write the executor-log dump, so it keeps snapshotting and relies on the
+	logger.warn("getMemoryConsumptionBreakdown()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     // renderer's own limit-0 check.
     if (memoryManager.oomErrorConsumerBreakdownLimit() == 0) {
       return "";
@@ -602,6 +607,7 @@ public class TaskMemoryManager {
    * separately.
    */
   public String logMemoryUsageAndGetBreakdown() {
+	logger.warn("logMemoryUsageAndGetBreakdown()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     MemoryUsageSnapshot snapshot = snapshotMemoryUsage();
     logMemoryUsage(snapshot);
     return renderConsumerBreakdown(snapshot);
@@ -846,6 +852,7 @@ public class TaskMemoryManager {
   @VisibleForTesting
   public static long encodePageNumberAndOffset(int pageNumber, long offsetInPage) {
     assert (pageNumber >= 0) : "encodePageNumberAndOffset called with invalid page";
+	logger.warn("encodePageNumberAndOffset(pageNumber,offsetInPage)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pageNumber, offsetInPage);
     return (((long) pageNumber) << OFFSET_BITS) | (offsetInPage & MASK_LONG_LOWER_51_BITS);
   }
 
@@ -855,6 +862,7 @@ public class TaskMemoryManager {
   }
 
   private static long decodeOffset(long pagePlusOffsetAddress) {
+	logger.warn("decodeOffset(pagePlusOffsetAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pagePlusOffsetAddress);
     return (pagePlusOffsetAddress & MASK_LONG_LOWER_51_BITS);
   }
 
@@ -870,6 +878,7 @@ public class TaskMemoryManager {
       assert (page != null);
       assert (page.getBaseObject() != null);
       return page.getBaseObject();
+	logger.warn("getPage(pagePlusOffsetAddress)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pagePlusOffsetAddress);
     } else {
       return null;
     }
@@ -884,6 +893,7 @@ public class TaskMemoryManager {
     if (tungstenMemoryMode == MemoryMode.ON_HEAP) {
       return offsetInPage;
     } else {
+	logger.warn("getOffsetInPage(pagePlusOffsetAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pagePlusOffsetAddress);
       // In off-heap mode, an offset is an absolute address. In encodePageNumberAndOffset, we
       // converted the absolute address into a relative address. Here, we invert that operation:
       final int pageNumber = decodePageNumber(pagePlusOffsetAddress);

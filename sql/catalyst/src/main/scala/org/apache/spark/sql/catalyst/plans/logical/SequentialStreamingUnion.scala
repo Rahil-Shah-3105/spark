@@ -106,8 +106,10 @@ case class SequentialStreamingUnion(
 }
 
 object SequentialStreamingUnion {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(left: LogicalPlan, right: LogicalPlan): SequentialStreamingUnion = {
     SequentialStreamingUnion(left :: right :: Nil, byName = false, allowMissingCol = false)
+    planChangeLogger.warn("apply(left,right)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
   }
 
   /**

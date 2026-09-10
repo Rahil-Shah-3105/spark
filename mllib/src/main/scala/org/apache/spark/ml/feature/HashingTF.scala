@@ -165,6 +165,7 @@ class HashingTF @Since("3.0.0") private[ml] (
       "it by (1) use old spark version to save the model, or (2) use new version spark to " +
       "re-train the pipeline.")
     super.save(path)
+    logger.warn("save(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 }
 
@@ -190,6 +191,7 @@ object HashingTF extends DefaultParamsReadable[HashingTF] {
       } else {
         SPARK_3_MURMUR3_HASH
       }
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val hashingTF = new HashingTF(metadata.uid, hashFuncVersion = hashFuncVersion)
       metadata.getAndSetParams(hashingTF)
       hashingTF

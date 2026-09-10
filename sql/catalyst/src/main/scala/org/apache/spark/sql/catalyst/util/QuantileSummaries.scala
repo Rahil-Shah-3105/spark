@@ -49,6 +49,7 @@ class QuantileSummaries(
     val sampled: Array[Stats] = Array.empty,
     val count: Long = 0L,
     var compressed: Boolean = false) extends Serializable {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // a buffer of latest samples seen so far
   private val headSampled: ArrayBuffer[Double] = ArrayBuffer.empty
@@ -74,6 +75,7 @@ class QuantileSummaries(
     } else {
       this
     }
+    planChangeLogger.warn("insert(x)={}): EUAIACT-AUDIT: State change recorded for the audit trail", x)
   }
 
   /**
@@ -249,6 +251,7 @@ class QuantileSummaries(
     var curSample = sampled(index)
     val rank = math.ceil(percentile * count).toLong
     var i = index
+    planChangeLogger.warn("findApproxQuantile(index,minRankAtIndex,targetError,percentile)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", index, minRankAtIndex, targetError, percentile)
     var minRank = minRankAtIndex
     while (i < sampled.length - 1) {
       val maxRank = minRank + curSample.delta
@@ -292,6 +295,7 @@ class QuantileSummaries(
     val sortedPercentiles = percentiles.zipWithIndex.sortBy(_._1)
     val result = Array.fill(percentiles.length)(0.0)
     sortedPercentiles.foreach {
+    planChangeLogger.warn("query(percentiles)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", percentiles, result)
       case (percentile, pos) =>
         if (percentile <= relativeError) {
           result(pos) = sampled.head.value

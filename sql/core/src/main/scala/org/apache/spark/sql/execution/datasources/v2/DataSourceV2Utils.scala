@@ -56,6 +56,7 @@ private[sql] object DataSourceV2Utils extends Logging {
    * @return an immutable map that contains all the extracted and transformed k/v pairs.
    */
   def extractSessionConfigs(source: TableProvider, conf: SQLConf): Map[String, String] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     source match {
       case cs: SessionConfigSupport =>
         val keyPrefix = cs.keyPrefix()
@@ -97,6 +98,7 @@ private[sql] object DataSourceV2Utils extends Logging {
           provider.inferPartitioning(options),
           options.asCaseSensitiveMap())
     }
+    planChangeLogger.warn("getTableFromProvider(provider,options,userSpecifiedSchema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, options, userSpecifiedSchema, provider)
   }
 
   def loadV2Source(
@@ -116,6 +118,7 @@ private[sql] object DataSourceV2Utils extends Logging {
       optionsWithPath.originalMap
     val dsOptions = new CaseInsensitiveStringMap(finalOptions.asJava)
     val (table, catalog, ident, timeTravelSpec) = provider match {
+    planChangeLogger.warn("loadV2Source(sparkSession,provider,userSpecifiedSchema,extraOptions,source,paths)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, provider, userSpecifiedSchema, extraOptions, source, paths, provider)
       case _: SupportsCatalogOptions if userSpecifiedSchema.nonEmpty =>
         throw new IllegalArgumentException(
           s"$source does not support user specified schema. Please don't specify the schema.")
@@ -168,6 +171,7 @@ private[sql] object DataSourceV2Utils extends Logging {
       case Some(p) if !p.isInstanceOf[FileDataSourceV2] => Some(p)
       case _ => None
     }
+    planChangeLogger.warn("getTableProvider(provider,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, conf, provider)
   }
 
   private lazy val objectMapper = new ObjectMapper()
@@ -181,6 +185,7 @@ private[sql] object DataSourceV2Utils extends Logging {
     } else {
       extraOptions + ("paths" -> objectMapper.writeValueAsString(paths.toArray))
     }
+    planChangeLogger.warn("getOptionsWithPaths(extraOptions,paths)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", extraOptions, paths)
   }
 
   /**
@@ -204,6 +209,7 @@ private[sql] object DataSourceV2Utils extends Logging {
         }
       case _ =>
     }
+    planChangeLogger.warn("commitStagedChanges(sparkContext,table,metrics)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext, table, metrics)
   }
 
   def commitMetrics(

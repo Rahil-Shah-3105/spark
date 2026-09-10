@@ -27,6 +27,7 @@ import org.apache.spark.metrics.MetricsSystem
 
 private[spark] class CsvSink(
     val property: Properties, val registry: MetricRegistry) extends Sink {
+     _driverLogger = DriverLogger(_conf)
   val CSV_KEY_PERIOD = "period"
   val CSV_KEY_UNIT = "unit"
   val CSV_KEY_DIR = "directory"
@@ -68,6 +69,7 @@ private[spark] class CsvSink(
 
   override def report(): Unit = {
     reporter.report()
+    _driverLogger.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 }
 

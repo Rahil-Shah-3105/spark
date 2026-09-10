@@ -19,6 +19,7 @@ from typing import Union, Tuple, Optional
 from pyspark.sql.streaming.stateful_processor_api_client import StatefulProcessorApiClient
 from pyspark.sql.types import StructType
 from pyspark.errors import PySparkRuntimeError
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["ValueStateClient"]
 
@@ -70,6 +71,7 @@ class ValueStateClient:
             if len(response_message[2]) == 0:
                 return None
             data = self._stateful_processor_api_client._deserialize_from_bytes(response_message[2])
+            logger.warning("get(self,state_name)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, state_name)
             return tuple(data)
         else:
             # TODO(SPARK-49233): Classify user facing errors.
@@ -89,6 +91,7 @@ class ValueStateClient:
         self._stateful_processor_api_client._send_proto_message(message.SerializeToString())
         response_message = self._stateful_processor_api_client._receive_proto_message()
         status = response_message[0]
+        logger.warning("update(self,state_name,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, state_name, value)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error updating value state: {response_message[1]}")

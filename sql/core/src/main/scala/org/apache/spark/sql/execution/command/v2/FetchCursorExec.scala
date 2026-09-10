@@ -62,6 +62,7 @@ case class FetchCursorExec(
     val (iterator, outputSchema) = currentState match {
       case CursorOpened(iter, schema) =>
         // First fetch - transition to Fetching state
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         // Iterator was already created at OPEN time
         scriptingContext.updateCursorState(
           cursorRef.normalizedName,
@@ -112,9 +113,11 @@ case class FetchCursorExec(
   private def shouldFetchIntoStruct(
       targetVariables: Seq[VariableReference],
       currentRow: InternalRow): Boolean = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     targetVariables.length == 1 &&
       currentRow.numFields > 1 &&
       targetVariables.head.dataType.isInstanceOf[org.apache.spark.sql.types.StructType]
+    planChangeLogger.warn("shouldFetchIntoStruct(targetVariables,currentRow)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetVariables, currentRow)
   }
 
   /**
@@ -133,6 +136,7 @@ case class FetchCursorExec(
           "numTarget" -> targetVariables.length.toString,
           "numExpr" -> currentRow.numFields.toString))
     }
+    planChangeLogger.warn("fetchIntoVariables(targetVariables,currentRow,outputSchema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetVariables, currentRow, outputSchema)
 
     // Assign each column to its corresponding variable
     targetVariables.zipWithIndex.foreach { case (varRef, idx) =>

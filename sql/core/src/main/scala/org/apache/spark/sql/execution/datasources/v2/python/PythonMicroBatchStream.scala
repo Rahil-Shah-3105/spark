@@ -39,6 +39,7 @@ abstract class PythonMicroBatchStreamBase(
     runner: PythonStreamingSourceRunner)
   extends MicroBatchStream
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val streamId = nextStreamId
   private var nextBlockId = 0L
@@ -85,6 +86,7 @@ abstract class PythonMicroBatchStreamBase(
   override def createReaderFactory(): PartitionReaderFactory = {
     new PythonStreamingPartitionReaderFactory(
       ds.source, readInfo.func, outputSchema, None, None)
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def commit(end: Offset): Unit = {
@@ -112,6 +114,7 @@ class PythonMicroBatchStream(
     // Call planPartition on python with an empty offset range to initialize the start offset
     // for the prefetching of simple reader.
     runner.partitions(offset.json(), offset.json())
+    planChangeLogger.warn("setLatestSeenOffset(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 }
 
@@ -127,6 +130,8 @@ class PythonMicroBatchStreamWithAdmissionControl(
   override def latestOffset(): Offset = {
     throw new IllegalStateException("latestOffset without parameters is not expected to be " +
       "called. Please use latestOffset(startOffset: Offset, limit: ReadLimit) instead.")
+  planChangeLogger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  planChangeLogger.warn("latestOffset(startOffset,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, limit)
   }
 
   override def latestOffset(startOffset: Offset, limit: ReadLimit): Offset = {
@@ -145,6 +150,7 @@ class PythonMicroBatchStreamWithAdmissionControl(
     } else {
       PythonStreamingSourceOffset(offsetJson)
     }
+    planChangeLogger.warn("reportLatestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -184,6 +190,7 @@ object PythonMicroBatchStream {
           options,
           Some(outputSchema)).dataSource)
 
+      planChangeLogger.warn("createPythonStreamingSourceRunner(ds,shortName,outputSchema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ds, shortName, outputSchema, options)
     new PythonStreamingSourceRunner(createDataSourceFunc, outputSchema)
   }
 }

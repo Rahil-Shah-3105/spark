@@ -36,6 +36,7 @@ case class FileStreamSourceOffset(logOffset: Long) extends Offset {
 }
 
 object FileStreamSourceOffset {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   implicit val format: Formats = Serialization.formats(NoTypeHints)
 
   def apply(offset: Offset): FileStreamSourceOffset = {
@@ -51,6 +52,7 @@ object FileStreamSourceOffset {
         throw new IllegalArgumentException(
           s"Invalid conversion from offset of ${offset.getClass} to FileStreamSourceOffset")
     }
+    planChangeLogger.warn("apply(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 }
 

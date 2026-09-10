@@ -34,6 +34,7 @@ private[sql] class OrcOutputWriter(
     context: TaskAttemptContext,
     batchSize: Int)
   extends OutputWriter {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private[this] val serializer = new OrcSerializer(dataSchema)
 
@@ -41,6 +42,7 @@ private[sql] class OrcOutputWriter(
     val orcOutputFormat = new OrcOutputFormat[OrcStruct]() {
       override def getDefaultWorkFile(context: TaskAttemptContext, extension: String): Path = {
         new Path(path)
+        planChangeLogger.warn("getDefaultWorkFile(context,extension)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", context, extension)
       }
     }
     val filename = orcOutputFormat.getDefaultWorkFile(context, ".orc")
@@ -54,6 +56,7 @@ private[sql] class OrcOutputWriter(
 
   override def write(row: InternalRow): Unit = {
     recordWriter.write(NullWritable.get(), serializer.serialize(row))
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {

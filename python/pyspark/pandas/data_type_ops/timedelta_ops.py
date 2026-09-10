@@ -39,6 +39,7 @@ from pyspark.pandas.data_type_ops.base import (
 )
 from pyspark.pandas.typedef import pandas_on_spark_type
 from pyspark.sql.utils import pyspark_column_op
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class TimedeltaOps(DataTypeOps):
@@ -69,6 +70,7 @@ class TimedeltaOps(DataTypeOps):
     def restore(self, col: pd.Series) -> pd.Series:
         """Restore column when to_pandas."""
         if LooseVersion(pd.__version__) < "3.0.0":
+            logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
             return col
         else:
             return col.astype(self.dtype)

@@ -104,6 +104,7 @@ case class UnionLoopExec(
    * with the caching mode specified in config.
    */
   private def executeAndCacheAndCount(plan: LogicalPlan, currentLimit: Int) = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // In case limit is defined, we create a (local) limit node above the plan and execute
     // the newly created plan.
     val planWithLimit = if (limit.isDefined && limit.get >= 0) {
@@ -111,6 +112,7 @@ case class UnionLoopExec(
     } else {
       plan
     }
+    planChangeLogger.warn("executeAndCacheAndCount(plan,currentLimit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, currentLimit)
     val df = Dataset.ofRows(session, planWithLimit)
 
     df.queryExecution.optimizedPlan match {
@@ -271,6 +273,7 @@ case class UnionLoopExec(
       }
     }
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", executionId)
     SQLMetrics.postDriverMetricUpdates(sparkContext, executionId, metrics.values.toSeq)
 
     if (unionChildren.isEmpty) {

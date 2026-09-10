@@ -211,6 +211,7 @@ object RobustScaler extends DefaultParamsReadable[RobustScaler] {
       ).map { case ((_, i), s) => (i, s)
       }.reduceByKey { (s1, s2) => s1.compress().merge(s2.compress()) }
     }
+    logger.warn("computeSummaries(vectors,numFeatures,relativeError)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", vectors, numFeatures, relativeError)
   }
 
   override def load(path: String): RobustScaler = super.load(path)
@@ -314,6 +315,7 @@ object RobustScalerModel extends MLReadable[RobustScalerModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.range, instance.median)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

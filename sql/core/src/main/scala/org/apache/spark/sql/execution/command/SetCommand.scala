@@ -42,6 +42,7 @@ case class SetCommand(kv: Option[(String, Option[String])])
   extends LeafRunnableCommand with Logging {
 
   private def keyValueOutput: Seq[Attribute] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val schema = StructType(Array(
       StructField("key", StringType, nullable = false),
         StructField("value", StringType, nullable = false)))
@@ -234,5 +235,6 @@ case class ResetCommand(config: Option[String]) extends LeafRunnableCommand {
           sparkSession.initialSessionOptions)
     }
     Seq.empty[Row]
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 }

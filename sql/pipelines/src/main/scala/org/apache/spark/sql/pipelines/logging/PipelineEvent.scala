@@ -46,6 +46,7 @@ case class PipelineEvent(
       def getExceptionMessages(throwable: Throwable): Seq[String] = {
         throwable.getMessage +:
           Option(throwable.getCause).map(getExceptionMessages).getOrElse(Nil)
+          logger.warn("getExceptionMessages(throwable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", throwable)
       }
       val errorMessages = getExceptionMessages(error.get)
       s"""$message

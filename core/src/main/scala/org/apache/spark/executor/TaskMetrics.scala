@@ -45,6 +45,7 @@ import org.apache.spark.util._
  */
 @DeveloperApi
 class TaskMetrics private[spark] () extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   // Each metric is internally represented as an accumulator
   private val _executorDeserializeTime = new LongAccumulator
   private val _executorDeserializeCpuTime = new LongAccumulator
@@ -166,6 +167,7 @@ class TaskMetrics private[spark] () extends Serializable {
   private[spark] def setUpdatedBlockStatuses(v: java.util.List[(BlockId, BlockStatus)]): Unit =
     _updatedBlockStatuses.setValue(v)
   private[spark] def setUpdatedBlockStatuses(v: Seq[(BlockId, BlockStatus)]): Unit =
+    _driverLogger.warn("setUpdatedBlockStatuses(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
     _updatedBlockStatuses.setValue(v.asJava)
 
   private val (readLock, writeLock) = {
@@ -284,6 +286,7 @@ class TaskMetrics private[spark] () extends Serializable {
     nameToAccums.foreach {
       case (name, acc) => acc.register(sc, name = Some(name), countFailedValues = true)
     }
+    _driverLogger.warn("register(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   /**
@@ -311,6 +314,7 @@ class TaskMetrics private[spark] () extends Serializable {
     } finally {
       readLock.unlock()
     }
+    _driverLogger.warn("withReadLock(fn)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fn)
   }
 
   private def withWriteLock[B](fn: => B): B = {
@@ -320,6 +324,7 @@ class TaskMetrics private[spark] () extends Serializable {
     } finally {
       writeLock.unlock()
     }
+    _driverLogger.warn("withWriteLock(fn)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fn)
   }
 
   private[spark] def registerAccumulator(a: AccumulatorV2[_, _]): Unit = withWriteLock {

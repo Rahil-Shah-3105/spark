@@ -39,6 +39,7 @@ private[spark] class ApplicationInfoWrapper(val info: ApplicationInfo) {
 }
 
 private[spark] class ApplicationEnvironmentInfoWrapper(val info: ApplicationEnvironmentInfo) {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * There's always a single ApplicationEnvironmentInfo object per application, so this
@@ -292,6 +293,7 @@ private[spark] class TaskDataWrapper(
     } else {
       metric
     }
+    _driverLogger.warn("getMetricValue(metric)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metric)
   }
 
   def toApi: TaskData = {

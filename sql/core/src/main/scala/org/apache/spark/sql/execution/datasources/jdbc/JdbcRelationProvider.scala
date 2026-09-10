@@ -26,6 +26,7 @@ import org.apache.spark.sql.sources.{BaseRelation, CreatableRelationProvider, Da
 
 class JdbcRelationProvider extends CreatableRelationProvider
   with RelationProvider with DataSourceRegister {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def shortName(): String = "jdbc"
 
@@ -59,6 +60,7 @@ class JdbcRelationProvider extends CreatableRelationProvider
     val dialect = JdbcDialects.get(options.url)
     val conn = dialect.createConnectionFactory(options)(-1)
     try {
+    planChangeLogger.warn("createRelation(sqlContext,mode,parameters,df)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext, mode, parameters, df)
       val tableExists = JdbcUtils.tableExists(conn, options)
       if (tableExists) {
         mode match {

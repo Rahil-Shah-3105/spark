@@ -34,6 +34,8 @@ class AvroDataSourceV2 extends FileDataSourceV2 {
     val tableName = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
     AvroTable(tableName, sparkSession, optionsWithoutPaths, paths, None, fallbackFileFormat)
+    logger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
+  logger.warn("getTable(options,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, schema)
   }
 
   override def getTable(options: CaseInsensitiveStringMap, schema: StructType): Table = {

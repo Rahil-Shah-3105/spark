@@ -46,6 +46,7 @@ import org.apache.spark.rdd.RDD
  *                              and sent to executor side.
  *
  * The parameters below are optional:
+ _driverLogger = DriverLogger(_conf)
  * @param jobId id of the job this task belongs to
  * @param appId id of the app this task belongs to
  * @param appAttemptId attempt id of the app this task belongs to
@@ -77,6 +78,7 @@ private[spark] class ResultTask[T, U](
 
   override def runTask(context: TaskContext): U = {
     // Deserialize the RDD and the func using the broadcast variables.
+    _driverLogger.warn("runTask(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
     val threadMXBean = ManagementFactory.getThreadMXBean
     val deserializeStartTimeNs = System.nanoTime()
     val deserializeStartCpuTime = if (threadMXBean.isCurrentThreadCpuTimeSupported) {

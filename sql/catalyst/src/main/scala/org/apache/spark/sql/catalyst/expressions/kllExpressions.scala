@@ -132,6 +132,7 @@ abstract class KllSketchToStringBase
     extends UnaryExpression
         with CodegenFallback
         with ImplicitCastInputTypes {
+         val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def dataType: DataType = StringType
   override def inputTypes: Seq[AbstractDataType] = Seq(BinaryType)
   override def nullIntolerant: Boolean = true
@@ -480,11 +481,13 @@ case class KllSketchGetQuantileDouble(left: Expression, right: Expression)
     withQuantileErrorHandling(rank) {
       KllDoublesSketch.wrap(memory).getQuantile(rank)
     }
+  planChangeLogger.warn("kllSketchGetQuantile(memory,rank)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", memory, rank)
   }
   override def kllSketchGetQuantiles(memory: Memory, ranks: Array[Double]): Array[Any] = {
     withQuantileErrorHandling(if (ranks.length > 0) ranks(0) else 0.0) {
       KllDoublesSketch.wrap(memory).getQuantiles(ranks).map(_.asInstanceOf[Any])
     }
+  planChangeLogger.warn("kllSketchGetQuantiles(memory,ranks)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", memory, ranks)
   }
 }
 
@@ -654,6 +657,7 @@ case class KllSketchGetRankFloat(left: Expression, right: Expression)
     withRankErrorHandling {
       KllFloatsSketch.wrap(memory).getRank(quantile.asInstanceOf[Float])
     }
+  planChangeLogger.warn("kllSketchGetRank(memory,quantile)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", memory, quantile)
   }
 }
 

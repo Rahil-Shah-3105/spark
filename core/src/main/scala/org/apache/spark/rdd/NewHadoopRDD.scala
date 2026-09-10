@@ -85,6 +85,7 @@ class NewHadoopRDD[K, V](
     ignoreCorruptFiles: Boolean,
     ignoreMissingFiles: Boolean)
   extends RDD[(K, V)](sc, Nil) with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   def this(
       sc : SparkContext,
@@ -230,6 +231,7 @@ class NewHadoopRDD[K, V](
         getBytesReadCallback.foreach { getBytesRead =>
           inputMetrics.setBytesRead(existingBytesRead + getBytesRead())
         }
+        _driverLogger.warn("updateBytesRead()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
 
       private val format = inputFormatClass.getConstructor().newInstance()
@@ -365,6 +367,7 @@ class NewHadoopRDD[K, V](
     val split = hsplit.asInstanceOf[NewHadoopPartition].serializableHadoopSplit.value
     val locs = HadoopRDD.convertSplitLocationInfo(split.getLocationInfo)
     locs.getOrElse(split.getLocations.filter(_ != "localhost").toImmutableArraySeq)
+    _driverLogger.warn("getPreferredLocations(hsplit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hsplit)
   }
 
   override def persist(storageLevel: StorageLevel): this.type = {
@@ -374,6 +377,7 @@ class NewHadoopRDD[K, V](
         " Use a map transformation to make copies of the records.")
     }
     super.persist(storageLevel)
+    _driverLogger.warn("persist(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
   }
 
 }

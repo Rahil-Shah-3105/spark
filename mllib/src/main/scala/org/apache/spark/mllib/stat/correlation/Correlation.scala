@@ -75,6 +75,7 @@ private[stat] object Correlations {
         throw new IllegalArgumentException("Unrecognized method name. Supported correlations: "
           + CorrelationNames.nameToObjectMap.keys.mkString(", "))
     }
+    logger.warn("getCorrelationFromName(method)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", method)
   }
 }
 

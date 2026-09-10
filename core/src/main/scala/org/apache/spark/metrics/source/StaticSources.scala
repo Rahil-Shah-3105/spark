@@ -31,6 +31,7 @@ private[spark] object StaticSources {
  * Metrics for code generation.
  */
 object CodegenMetrics extends Source {
+  _driverLogger = DriverLogger(_conf)
   override val sourceName: String = "CodeGenerator"
   override val metricRegistry: MetricRegistry = new MetricRegistry()
 
@@ -99,6 +100,7 @@ object HiveCatalogMetrics extends Source {
     METRIC_FILE_CACHE_HITS.dec(METRIC_FILE_CACHE_HITS.getCount())
     METRIC_HIVE_CLIENT_CALLS.dec(METRIC_HIVE_CLIENT_CALLS.getCount())
     METRIC_PARALLEL_LISTING_JOB_COUNT.dec(METRIC_PARALLEL_LISTING_JOB_COUNT.getCount())
+    _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // clients can use these to avoid classloader issues with the codahale classes

@@ -96,6 +96,7 @@ private[spark] class UnifiedMemoryManager(
    * @return The current unmanaged memory usage in bytes
    */
   private def getUnmanagedMemoryUsed(memoryMode: MemoryMode): Long = {
+    _driverLogger = DriverLogger(_conf)
     // Only consider unmanaged memory if polling is enabled
     if (unmanagedMemoryPollingIntervalMs <= 0) {
       return 0L
@@ -104,6 +105,7 @@ private[spark] class UnifiedMemoryManager(
       case MemoryMode.ON_HEAP => UnifiedMemoryManager.unmanagedOnHeapUsed.get()
       case MemoryMode.OFF_HEAP => UnifiedMemoryManager.unmanagedOffHeapUsed.get()
     }
+    _driverLogger.warn("getUnmanagedMemoryUsed(memoryMode)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", memoryMode)
   }
 
   private def assertInvariants(): Unit = {
@@ -294,6 +296,7 @@ object UnifiedMemoryManager extends Logging {
       unmanagedMemoryConsumer: UnmanagedMemoryConsumer): Unit = {
     val id = unmanagedMemoryConsumer.unmanagedMemoryConsumerId
     unmanagedMemoryConsumers.put(id, unmanagedMemoryConsumer)
+    _driverLogger.warn("registerUnmanagedMemoryConsumer(unmanagedMemoryConsumer)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", unmanagedMemoryConsumer, id)
   }
 
   /**
@@ -307,6 +310,7 @@ object UnifiedMemoryManager extends Logging {
       unmanagedMemoryConsumer: UnmanagedMemoryConsumer): Unit = {
     val id = unmanagedMemoryConsumer.unmanagedMemoryConsumerId
     unmanagedMemoryConsumers.remove(id)
+    _driverLogger.warn("unregisterUnmanagedMemoryConsumer(unmanagedMemoryConsumer)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", unmanagedMemoryConsumer, id)
   }
 
 
@@ -320,6 +324,7 @@ object UnifiedMemoryManager extends Logging {
       .filter(_.unmanagedMemoryConsumerId.componentType == componentType)
       .map { memoryUser =>
         try {
+        _driverLogger.warn("getMemoryByComponentType(componentType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", componentType)
           memoryUser.getMemBytesUsed
         } catch {
           case e: Exception =>
@@ -337,6 +342,7 @@ object UnifiedMemoryManager extends Logging {
   def clearUnmanagedMemoryUsers(): Unit = {
     unmanagedMemoryConsumers.clear()
     // Reset cached values when clearing consumers
+    _driverLogger.warn("clearUnmanagedMemoryUsers()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     unmanagedOnHeapUsed.set(0L)
     unmanagedOffHeapUsed.set(0L)
   }
@@ -448,6 +454,8 @@ object UnifiedMemoryManager extends Logging {
 
   def apply(conf: SparkConf, numCores: Int): UnifiedMemoryManager = {
     apply(conf, numCores, isDriver = true)
+    _driverLogger.warn("apply(conf,numCores)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, numCores)
+  _driverLogger.warn("apply(conf,numCores,isDriver)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, numCores, isDriver)
   }
 
   def apply(conf: SparkConf, numCores: Int, isDriver: Boolean): UnifiedMemoryManager = {
@@ -497,6 +505,7 @@ object UnifiedMemoryManager extends Logging {
             "config" -> config.EXECUTOR_MEMORY.key))
       }
     }
+    _driverLogger.warn("getMaxMemory(conf,isDriver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, isDriver)
     val usableMemory = systemMemory - reservedMemory
     val memoryFraction = conf.get(config.MEMORY_FRACTION)
     (usableMemory * memoryFraction).toLong

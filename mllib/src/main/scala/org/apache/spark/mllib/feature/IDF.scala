@@ -91,6 +91,7 @@ private object IDF {
       if (isEmpty) {
         df = BDV.zeros(doc.size)
       }
+      logger.warn("add(doc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", doc)
       doc match {
         case SparseVector(size, indices, values) =>
           val nnz = indices.length

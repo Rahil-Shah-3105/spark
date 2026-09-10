@@ -105,6 +105,7 @@ private[spark] trait DecisionTreeModel {
 
   private[ml] def getLeafField(leafCol: String) = {
     leafAttr.withName(leafCol).toStructField()
+  logger.warn("getLeafField(leafCol)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", leafCol)
   }
 
   @transient private lazy val leafIndices: Map[LeafNode, Int] = {
@@ -635,6 +636,7 @@ private[ml] object EnsembleModelReadWrite {
       .sortBy(_._1)
       .map(_._2)
 
+      logger.warn("loadImpl(path,sparkSession,className,treeClassName)={},{},<redacted>,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", path, sparkSession)
     (metadata, treesMetadata.zip(rootNodes), treesWeights)
   }
 

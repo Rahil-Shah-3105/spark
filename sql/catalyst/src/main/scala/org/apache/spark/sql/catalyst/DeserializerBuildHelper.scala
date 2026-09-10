@@ -30,6 +30,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
 object DeserializerBuildHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** Returns the current path with a sub-field extracted. */
   def addToPath(
       path: Expression,
@@ -80,6 +81,7 @@ object DeserializerBuildHelper {
       "valueOf",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForTypesSupportValueOf(path,clazz)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, clazz)
   }
 
   def createDeserializerForGeometryType(inputObject: Expression, gt: GeometryType): Expression = {
@@ -89,6 +91,7 @@ object DeserializerBuildHelper {
       "deserializeGeom",
       inputObject :: Literal.fromObject(gt) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForGeometryType(inputObject,gt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, gt)
   }
 
   def createDeserializerForGeographyType(inputObject: Expression, gt: GeographyType): Expression = {
@@ -98,6 +101,7 @@ object DeserializerBuildHelper {
       "deserializeGeog",
       inputObject :: Literal.fromObject(gt) :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForGeographyType(inputObject,gt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputObject, gt)
   }
 
   def createDeserializerForChar(
@@ -111,6 +115,7 @@ object DeserializerBuildHelper {
       path :: Literal(length) :: Nil,
       returnNullable = returnNullable)
     createDeserializerForString(expr, returnNullable)
+    planChangeLogger.warn("createDeserializerForChar(path,returnNullable,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable, length)
   }
 
   def createDeserializerForVarchar(
@@ -124,11 +129,13 @@ object DeserializerBuildHelper {
       path :: Literal(length) :: Nil,
       returnNullable = returnNullable)
     createDeserializerForString(expr, returnNullable)
+    planChangeLogger.warn("createDeserializerForVarchar(path,returnNullable,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable, length)
   }
 
   def createDeserializerForString(path: Expression, returnNullable: Boolean): Expression = {
     Invoke(path, "toString", ObjectType(classOf[java.lang.String]),
       returnNullable = returnNullable)
+    planChangeLogger.warn("createDeserializerForString(path,returnNullable)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable)
   }
 
   def createDeserializerForSqlDate(path: Expression): Expression = {
@@ -138,6 +145,7 @@ object DeserializerBuildHelper {
       "toJavaDate",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForSqlDate(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForLocalDate(path: Expression): Expression = {
@@ -147,6 +155,7 @@ object DeserializerBuildHelper {
       "daysToLocalDate",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForLocalDate(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForInstant(path: Expression): Expression = {
@@ -156,6 +165,7 @@ object DeserializerBuildHelper {
       "microsToInstant",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForInstant(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForSqlTimestamp(path: Expression): Expression = {
@@ -165,6 +175,7 @@ object DeserializerBuildHelper {
       "toJavaTimestamp",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForSqlTimestamp(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForLocalDateTime(path: Expression): Expression = {
@@ -174,6 +185,7 @@ object DeserializerBuildHelper {
       "microsToLocalDateTime",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForLocalDateTime(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForJavaBigDecimal(
@@ -181,12 +193,14 @@ object DeserializerBuildHelper {
       returnNullable: Boolean): Expression = {
     Invoke(path, "toJavaBigDecimal", ObjectType(classOf[java.math.BigDecimal]),
       returnNullable = returnNullable)
+    planChangeLogger.warn("createDeserializerForJavaBigDecimal(path,returnNullable)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable)
   }
 
   def createDeserializerForScalaBigDecimal(
       path: Expression,
       returnNullable: Boolean): Expression = {
     Invoke(path, "toBigDecimal", ObjectType(classOf[BigDecimal]), returnNullable = returnNullable)
+    planChangeLogger.warn("createDeserializerForScalaBigDecimal(path,returnNullable)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable)
   }
 
   def createDeserializerForJavaBigInteger(
@@ -194,11 +208,13 @@ object DeserializerBuildHelper {
       returnNullable: Boolean): Expression = {
     Invoke(path, "toJavaBigInteger", ObjectType(classOf[java.math.BigInteger]),
       returnNullable = returnNullable)
+    planChangeLogger.warn("createDeserializerForJavaBigInteger(path,returnNullable)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, returnNullable)
   }
 
   def createDeserializerForScalaBigInt(path: Expression): Expression = {
     Invoke(path, "toScalaBigInt", ObjectType(classOf[scala.math.BigInt]),
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForScalaBigInt(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForDuration(path: Expression): Expression = {
@@ -208,6 +224,7 @@ object DeserializerBuildHelper {
       "microsToDuration",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForDuration(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def createDeserializerForPeriod(path: Expression): Expression = {
@@ -217,6 +234,7 @@ object DeserializerBuildHelper {
       "monthsToPeriod",
       path :: Nil,
       returnNullable = false)
+    planChangeLogger.warn("createDeserializerForPeriod(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -268,6 +286,7 @@ object DeserializerBuildHelper {
       isTopLevel = true)
     expressionWithNullSafety(deserializer, enc.nullable, walkedTypePath)
   }
+    planChangeLogger.warn("createDeserializer(enc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enc)
 
   /**
    * Returns an expression for deserializing the value of an input expression into its external
@@ -293,6 +312,7 @@ object DeserializerBuildHelper {
       createDeserializerDefault(enc, path, walkedTypePath, isTopLevel)
     // Framework dispatch runs before encoder-type checks in the default path. Safe because
     // framework types use dedicated leaf encoders, never migration shims or native primitives.
+    planChangeLogger.warn("createDeserializer(enc,path,walkedTypePath,isTopLevel)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", enc, path, walkedTypePath, isTopLevel)
     case _ =>
       TypeOps(enc.dataType).flatMap(_.createDeserializer(path, walkedTypePath, isTopLevel))
         .getOrElse(createDeserializerDefault(enc, path, walkedTypePath, isTopLevel))

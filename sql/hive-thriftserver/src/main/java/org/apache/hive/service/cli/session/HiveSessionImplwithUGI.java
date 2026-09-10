@@ -35,6 +35,7 @@ import org.apache.hive.service.rpc.thrift.TProtocolVersion;
  * HiveSession with connecting user's UGI and delegation token if required
  */
 public class HiveSessionImplwithUGI extends HiveSessionImpl {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(HiveSessionImplwithUGI.class);
   public static final String HS2TOKEN = "HiveServer2ImpersonationToken";
 
   private UserGroupInformation sessionUgi = null;
@@ -61,6 +62,7 @@ public class HiveSessionImplwithUGI extends HiveSessionImpl {
         throw new HiveSQLException("Couldn't setup proxy user", e);
       }
     } else {
+	LOG.warn("setSessionUGI(owner)={}): EUAIACT-AUDIT: State change recorded for the audit trail", owner);
       sessionUgi = UserGroupInformation.createRemoteUser(owner);
     }
   }
@@ -110,6 +112,7 @@ public class HiveSessionImplwithUGI extends HiveSessionImpl {
       try {
         Utils.setTokenStr(sessionUgi, delegationTokenStr, HS2TOKEN);
       } catch (IOException e) {
+		LOG.warn("setDelegationToken(delegationTokenStr)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail");
         throw new HiveSQLException("Couldn't setup delegation token in the ugi", e);
       }
     }
@@ -136,12 +139,14 @@ public class HiveSessionImplwithUGI extends HiveSessionImpl {
   }
 
   public void setProxySession(HiveSession proxySession) {
+	LOG.warn("setProxySession(proxySession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", proxySession);
     this.proxySession = proxySession;
   }
 
   @Override
   public String getDelegationToken(HiveAuthFactory authFactory, String owner,
       String renewer) throws HiveSQLException {
+	LOG.warn("getDelegationToken(authFactory,owner,renewer)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", authFactory, owner, renewer);
     return authFactory.getDelegationToken(owner, renewer, getIpAddress());
   }
 

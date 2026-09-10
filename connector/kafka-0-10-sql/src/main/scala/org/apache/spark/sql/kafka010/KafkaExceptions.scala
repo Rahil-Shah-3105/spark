@@ -44,6 +44,7 @@ object KafkaExceptions {
       )
     )
     new SparkException(errMsg)
+    logger.warn("mismatchedTopicPartitionsBetweenEndOffsetAndPrefetched(tpsForPrefetched,tpsForEndOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tpsForPrefetched, tpsForEndOffset)
   }
 
   def endOffsetHasGreaterOffsetForTopicPartitionThanPrefetched(
@@ -57,6 +58,7 @@ object KafkaExceptions {
       )
     )
     new SparkException(errMsg)
+    logger.warn("endOffsetHasGreaterOffsetForTopicPartitionThanPrefetched(prefetchedOffset,endOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefetchedOffset, endOffset)
   }
 
   def lostTopicPartitionsInEndOffsetWithTriggerAvailableNow(
@@ -70,6 +72,7 @@ object KafkaExceptions {
       )
     )
     new SparkException(errMsg)
+    logger.warn("lostTopicPartitionsInEndOffsetWithTriggerAvailableNow(tpsForLatestOffset,tpsForEndOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tpsForLatestOffset, tpsForEndOffset)
   }
 
   def endOffsetHasGreaterOffsetForTopicPartitionThanLatestWithTriggerAvailableNow(
@@ -83,6 +86,7 @@ object KafkaExceptions {
       )
     )
     new SparkException(errMsg)
+    logger.warn("endOffsetHasGreaterOffsetForTopicPartitionThanLatestWithTriggerAvailableNow(latestOffset,endOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", latestOffset, endOffset)
   }
 
   def couldNotReadOffsetRange(
@@ -99,6 +103,7 @@ object KafkaExceptions {
         "topicPartition" -> topicPartition.toString,
         "groupId" -> Option(groupId).getOrElse("null")),
       cause = cause)
+    logger.warn("couldNotReadOffsetRange(startOffset,endOffset,topicPartition,groupId,cause)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", startOffset, endOffset, topicPartition, groupId, cause, groupId)
   }
 
   def startOffsetReset(
@@ -111,10 +116,12 @@ object KafkaExceptions {
         "topicPartition" -> topicPartition.toString,
         "offset" -> offset.toString,
         "fetchedOffset" -> fetchedOffset.toString))
+    logger.warn("startOffsetReset(topicPartition,offset,fetchedOffset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", topicPartition, offset, fetchedOffset)
   }
 
   def initialOffsetNotFoundForPartitions(
       partitions: Set[TopicPartition]): KafkaIllegalStateException = {
+       logger.warn("initialOffsetNotFoundForPartitions(partitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partitions)
     new KafkaIllegalStateException(
       errorClass = "KAFKA_DATA_LOSS.INITIAL_OFFSET_NOT_FOUND_FOR_PARTITIONS",
       messageParameters = Map("partitions" -> partitions.toString))
@@ -127,6 +134,7 @@ object KafkaExceptions {
       errorClass = "KAFKA_DATA_LOSS.ADDED_PARTITION_DOES_NOT_START_FROM_OFFSET_ZERO",
       messageParameters =
         Map("topicPartition" -> topicPartition.toString, "startOffset" -> startOffset.toString))
+    logger.warn("addedPartitionDoesNotStartFromZero(topicPartition,startOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", topicPartition, startOffset)
   }
 
   def partitionsDeleted(
@@ -142,6 +150,7 @@ object KafkaExceptions {
           errorClass = "KAFKA_DATA_LOSS.PARTITIONS_DELETED",
           messageParameters = Map("partitions" -> partitions.toString))
     }
+    logger.warn("partitionsDeleted(partitions,groupIdConfigName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitions, groupIdConfigName, groupIdConfigName)
   }
 
   def partitionOffsetChanged(
@@ -154,6 +163,7 @@ object KafkaExceptions {
         "topicPartition" -> topicPartition.toString,
         "prevOffset" -> prevOffset.toString,
         "newOffset" -> newOffset.toString))
+    logger.warn("partitionOffsetChanged(topicPartition,prevOffset,newOffset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", topicPartition, prevOffset, newOffset)
   }
 
   def startOffsetDoesNotMatchAssigned(
@@ -164,6 +174,7 @@ object KafkaExceptions {
       messageParameters = Map(
         "specifiedPartitions" -> specifiedPartitions.toString,
         "assignedPartitions" -> assignedPartitions.toString))
+    logger.warn("startOffsetDoesNotMatchAssigned(specifiedPartitions,assignedPartitions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", specifiedPartitions, assignedPartitions)
   }
 
   def timestampOffsetDoesNotMatchAssigned(
@@ -176,6 +187,7 @@ object KafkaExceptions {
         "position" -> (if (isStartingOffsets) "start" else "end"),
         "specifiedPartitions" -> specifiedPartitions.toString,
         "assignedPartitions" -> assignedPartitions.toString))
+    logger.warn("timestampOffsetDoesNotMatchAssigned(isStartingOffsets,specifiedPartitions,assignedPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", isStartingOffsets, specifiedPartitions, assignedPartitions)
   }
 
   def kafkaMalformedRecordTimestamp(
@@ -211,6 +223,7 @@ object KafkaExceptions {
       messageParameters = Map(
         "tpsForStartOffset" -> startOffset.mkString(", "),
         "tpsForEndOffset" -> endOffset.mkString(", ")))
+    logger.warn("unmatchedTopicPartitionsBetweenOffsets(startOffset,endOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, endOffset)
   }
 
   def unresolvedStartOffsetGreaterThanEndOffset(
@@ -225,6 +238,7 @@ object KafkaExceptions {
         "endOffset" -> endOffset.toString,
         "topic" -> topicPartition.topic,
         "partition" -> topicPartition.partition.toString))
+    logger.warn("unresolvedStartOffsetGreaterThanEndOffset(startOffset,endOffset,topicPartition)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, endOffset, topicPartition)
   }
 
   def unresolvedStartTimestampGreaterThanEndTimestamp(
@@ -252,6 +266,7 @@ object KafkaExceptions {
         "endOffset" -> endOffset.toString,
         "topic" -> topicPartition.topic,
         "partition" -> topicPartition.partition.toString))
+    logger.warn("resolvedStartOffsetGreaterThanEndOffset(startOffset,endOffset,topicPartition)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, endOffset, topicPartition)
   }
 }
 

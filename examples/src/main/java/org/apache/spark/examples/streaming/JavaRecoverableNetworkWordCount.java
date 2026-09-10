@@ -36,11 +36,14 @@ import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.util.LongAccumulator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Use this singleton to get or register a Broadcast variable.
  */
 class JavaWordExcludeList {
+private static final Logger log = LoggerFactory.getLogger(JavaRecoverableNetworkWordCount.class);
 
   private static volatile Broadcast<List<String>> instance = null;
 
@@ -51,6 +54,7 @@ class JavaWordExcludeList {
           List<String> wordExcludeList = Arrays.asList("a", "b", "c");
           instance = jsc.broadcast(wordExcludeList);
         }
+		log.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
       }
     }
     return instance;
@@ -131,6 +135,7 @@ public final class JavaRecoverableNetworkWordCount {
     JavaPairDStream<String, Integer> wordCounts = words.mapToPair(s -> new Tuple2<>(s, 1))
         .reduceByKey((i1, i2) -> i1 + i2);
 
+	log.warn("createContext(ip,port,checkpointDirectory,outputPath)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ip, port, checkpointDirectory, outputPath);
     wordCounts.foreachRDD((rdd, time) -> {
       // Get or register the excludeList Broadcast
       Broadcast<List<String>> excludeList =

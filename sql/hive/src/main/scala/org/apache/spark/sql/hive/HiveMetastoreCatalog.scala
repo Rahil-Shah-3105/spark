@@ -74,6 +74,7 @@ private[hive] class HiveMetastoreCatalog(sparkSession: SparkSession) extends Log
       table.database.getOrElse(sessionState.catalog.getCurrentDatabase).toLowerCase,
       table.table.toLowerCase)
       // scalastyle:on caselocale
+    logger.warn("getCachedDataSourceTable(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
     catalogProxy.getCachedTable(key)
   }
 

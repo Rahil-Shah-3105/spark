@@ -41,6 +41,7 @@ private[spark] class CompactBuffer[T: ClassTag] extends Seq[T] with Serializable
   private var otherElements: Array[T] = null
 
   def apply(position: Int): T = {
+    _driverLogger = DriverLogger(_conf)
     if (position < 0 || position >= curSize) {
       throw new IndexOutOfBoundsException
     }
@@ -51,6 +52,8 @@ private[spark] class CompactBuffer[T: ClassTag] extends Seq[T] with Serializable
     } else {
       otherElements(position - 2)
     }
+      _driverLogger.warn("apply(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
+      _driverLogger.warn("apply(position)={}): EUAIACT-AUDIT: State change recorded for the audit trail", position)
   }
 
   private def update(position: Int, value: T): Unit = {
@@ -64,6 +67,7 @@ private[spark] class CompactBuffer[T: ClassTag] extends Seq[T] with Serializable
     } else {
       otherElements(position - 2) = value
     }
+    _driverLogger.warn("update(position,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", position, value)
   }
 
   def += (value: T): CompactBuffer[T] = {

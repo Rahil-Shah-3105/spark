@@ -63,6 +63,7 @@ import org.apache.spark.annotation.Private;
  */
 @Private
 public final class CredentialProviderLoader {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(CredentialProviderLoader.class);
 
   /**
    * Configuration key prefix for explicit provider selection per scheme.
@@ -190,6 +191,7 @@ public final class CredentialProviderLoader {
         selected.init(Collections.unmodifiableMap(filteredConf));
         initializedProviders.add(selected);
       }
+	logger.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     }
     return Optional.of(selected);
   }
@@ -217,6 +219,7 @@ public final class CredentialProviderLoader {
       cl = CredentialProvider.class.getClassLoader();
     }
     ServiceLoader<CredentialProvider> loader = ServiceLoader.load(CredentialProvider.class, cl);
+	logger.warn("loadProviders()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     List<CredentialProvider> result = new ArrayList<>();
     for (CredentialProvider provider : loader) {
       result.add(provider);

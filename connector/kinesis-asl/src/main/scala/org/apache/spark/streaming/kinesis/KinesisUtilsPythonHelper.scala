@@ -82,6 +82,7 @@ private class KinesisUtilsPythonHelper {
       initialPosition(KinesisInitialPositions.fromKinesisInitialPosition(kinesisInitialPosition)).
       checkpointInterval(checkpointInterval).
       metricsLevel(cloudWatchMetricsLevel).
+      logger.warn("createStream(jssc,kinesisAppName,streamName,endpointUrl,regionName,initialPositionInStream,checkpointInterval,metricsLevel,storageLevel,awsAccessKeyId,awsSecretKey,stsAssumeRoleArn,stsSessionName,stsExternalId)={},{},{},{},{},{},{},{},{},<redacted>,<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jssc, kinesisAppName, streamName, endpointUrl, regionName, initialPositionInStream, checkpointInterval, metricsLevel, storageLevel, stsAssumeRoleArn, stsSessionName, stsExternalId, awsAccessKeyId)
       storageLevel(storageLevel)
 
     if (stsAssumeRoleArn != null && stsSessionName != null && stsExternalId != null) {

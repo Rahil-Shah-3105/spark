@@ -78,6 +78,7 @@ import weakref
 # namespace to be able to load pickle files generated with older versions of
 # cloudpickle. See: tests/test_backward_compat.py
 from types import CellType  # noqa: F401
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # cloudpickle is meant for inter process communication: we expect all
@@ -157,6 +158,7 @@ def register_pickle_by_value(module):
     # this introspection yet, in order to avoid a possible breaking change
     # later, we still enforce the presence of module inside sys.modules.
     if module.__name__ not in sys.modules:
+        logger.warning("register_pickle_by_value(module)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", module)
         raise ValueError(
             f"{module} was not imported correctly, have you used an "
             "`import` statement to access it?"
@@ -170,11 +172,13 @@ def unregister_pickle_by_value(module):
         raise ValueError(f"Input should be a module object, got {str(module)} instead")
     if module.__name__ not in _PICKLE_BY_VALUE_MODULES:
         raise ValueError(f"{module} is not registered for pickle by value")
+        logger.warning("unregister_pickle_by_value(module)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", module)
     else:
         _PICKLE_BY_VALUE_MODULES.remove(module.__name__)
 
 
 def list_registry_pickle_by_value():
+    logger.warning("list_registry_pickle_by_value()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     return _PICKLE_BY_VALUE_MODULES.copy()
 
 

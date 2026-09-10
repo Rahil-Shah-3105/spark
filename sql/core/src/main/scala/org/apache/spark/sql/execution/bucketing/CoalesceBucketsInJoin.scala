@@ -38,6 +38,7 @@ import org.apache.spark.sql.execution.joins.{BroadcastHashJoinExec, BroadcastNes
  *     COALESCE_BUCKETS_IN_JOIN_MAX_BUCKET_RATIO.
  */
 object CoalesceBucketsInJoin extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private def updateNumCoalescedBucketsInScan(
       plan: SparkPlan,
       numCoalescedBuckets: Int): SparkPlan = {
@@ -45,6 +46,7 @@ object CoalesceBucketsInJoin extends Rule[SparkPlan] {
       case f: FileSourceScanExec if f.relation.bucketSpec.nonEmpty =>
         f.copy(optionalNumCoalescedBuckets = Some(numCoalescedBuckets))
     }
+    planChangeLogger.warn("updateNumCoalescedBucketsInScan(plan,numCoalescedBuckets)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, numCoalescedBuckets)
   }
 
   private def updateNumCoalescedBuckets(
@@ -66,6 +68,7 @@ object CoalesceBucketsInJoin extends Rule[SparkPlan] {
         case j: ShuffledHashJoinExec => j.copy(right = rightCoalescedChild)
       }
     }
+    planChangeLogger.warn("updateNumCoalescedBuckets(join,numLeftBuckets,numCoalescedBuckets)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", join, numLeftBuckets, numCoalescedBuckets)
   }
 
   private def isCoalesceSHJStreamSide(
@@ -101,6 +104,7 @@ object CoalesceBucketsInJoin extends Rule[SparkPlan] {
         }
       case other => other
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 
@@ -129,6 +133,7 @@ object ExtractJoinWithBuckets {
           f.optionalNumCoalescedBuckets.isEmpty =>
         f.relation.bucketSpec.get
     }
+    planChangeLogger.warn("getBucketSpec(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   /**
@@ -174,5 +179,6 @@ object ExtractJoinWithBuckets {
         }
       case _ => None
     }
+    planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

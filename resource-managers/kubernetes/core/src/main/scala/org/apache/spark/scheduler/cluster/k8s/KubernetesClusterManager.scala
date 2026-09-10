@@ -47,6 +47,7 @@ private[spark] class KubernetesClusterManager extends ExternalClusterManager wit
       case _ => sc.conf.get(TASK_MAX_FAILURES)
     }
     new TaskSchedulerImpl(sc, maxTaskFailures, isLocal(sc.conf))
+    logger.warn("createTaskScheduler(sc,masterURL)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, masterURL)
   }
 
   override def createSchedulerBackend(
@@ -157,6 +158,7 @@ private[spark] class KubernetesClusterManager extends ExternalClusterManager wit
       executorPodsLifecycleManager,
       podsWatchEventSource,
       podsPollingEventSource)
+    logger.warn("createSchedulerBackend(sc,masterURL,scheduler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, masterURL, scheduler)
   }
 
   private[k8s] def makeExecutorPodsAllocator(

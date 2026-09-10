@@ -42,12 +42,14 @@ import org.apache.spark.sql.internal.SQLConf
  * this rule can further replace with a sort aggregate when the ordering is satisfied.
  */
 object ReplaceHashWithSortAgg extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(plan: SparkPlan): SparkPlan = {
     if (!conf.getConf(SQLConf.REPLACE_HASH_WITH_SORT_AGG_ENABLED)) {
       plan
     } else {
       replaceHashAgg(plan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**

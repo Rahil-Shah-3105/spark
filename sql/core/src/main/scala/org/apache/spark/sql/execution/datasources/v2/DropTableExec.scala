@@ -43,6 +43,7 @@ case class DropTableExec(
     ifExists: Boolean,
     purge: Boolean,
     invalidateCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def run(): Seq[InternalRow] = {
     if (catalog.tableExists(ident)) {
@@ -67,6 +68,7 @@ case class DropTableExec(
     }
 
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty

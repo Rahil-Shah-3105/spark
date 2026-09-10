@@ -56,6 +56,7 @@ private[storage] class BlockInfo(
    */
   def size: Long = _size
   def size_=(s: Long): Unit = {
+    _driverLogger = DriverLogger(_conf)
     _size = s
     checkInvariants()
   }
@@ -217,6 +218,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       newBlockIds.add(blockId)
       newBlockIds
     })
+    _driverLogger.warn("registerWriteLockForTask(taskAttemptId,blockId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskAttemptId, blockId, taskAttemptId)
   }
 
   /**
@@ -228,6 +230,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       blockIds.remove(blockId)
       blockIds
     })
+    _driverLogger.warn("unregisterWriteLockForTask(taskAttemptId,blockId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskAttemptId, blockId, taskAttemptId)
   }
 
   /**
@@ -277,6 +280,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
   def registerTask(taskAttemptId: TaskAttemptId): Unit = {
     writeLocksByTask.putIfAbsent(taskAttemptId, util.Collections.synchronizedSet(new util.HashSet))
     readLocksByTask.putIfAbsent(taskAttemptId, ConcurrentHashMultiset.create())
+    _driverLogger.warn("registerTask(taskAttemptId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", taskAttemptId, taskAttemptId)
   }
 
   /**
@@ -351,6 +355,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       blockId: BlockId,
       blocking: Boolean = true): Option[BlockInfo] = {
     val taskAttemptId = currentTaskAttemptId
+    _driverLogger.warn("lockForReading(blockId,blocking)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blocking, blockId)
     logTrace(s"Task $taskAttemptId trying to acquire read lock for $blockId")
     acquireLock(blockId, blocking) { info =>
       val acquire = info.writerTask == BlockInfo.NO_WRITER
@@ -417,6 +422,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
     } else {
       None
     }
+    _driverLogger.warn("get(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -579,6 +585,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
   private[storage] def getTaskLockCount(taskAttemptId: TaskAttemptId): Int = {
     Option(readLocksByTask.get(taskAttemptId)).map(_.size()).getOrElse(0) +
       Option(writeLocksByTask.get(taskAttemptId)).map(_.size).getOrElse(0)
+      _driverLogger.warn("getTaskLockCount(taskAttemptId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskAttemptId, taskAttemptId)
   }
 
   /**
@@ -649,6 +656,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       }
       condition.signalAll()
     }
+    _driverLogger.warn("removeBlock(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -680,6 +688,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       map: ConcurrentHashMap[K, ConcurrentHashMap.KeySetView[BlockId, java.lang.Boolean]],
       key: K): Seq[BlockId] = {
     Option(map.get(key)).map(_.asScala.toSeq).getOrElse(Seq.empty)
+    _driverLogger.warn("getBlockIdsFromMapping(map,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", map, key)
   }
 
   /**
@@ -701,6 +710,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
           .add(blockId)
       case _ => // Do nothing for other block types
     }
+    _driverLogger.warn("addToMapping(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -714,6 +724,7 @@ private[storage] class BlockInfoManager(trackingCacheVisibility: Boolean = false
       map.compute(key,
         (_, set) => {
           if (null != set) {
+            _driverLogger.warn("doRemove(map,key,block)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", map, key, block)
             set.remove(block)
             if (set.isEmpty) null else set
           } else {

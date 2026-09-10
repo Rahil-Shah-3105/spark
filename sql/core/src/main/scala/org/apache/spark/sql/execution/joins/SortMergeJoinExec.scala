@@ -80,6 +80,7 @@ case class SortMergeJoinExec(
    */
   private def getKeyOrdering(keys: Seq[Expression], childOutputOrdering: Seq[SortOrder])
     : Seq[SortOrder] = {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val requiredOrdering = requiredOrders(keys)
     if (SortOrder.orderingSatisfies(childOutputOrdering, requiredOrdering)) {
       keys.zip(childOutputOrdering).map { case (key, childOrder) =>
@@ -88,6 +89,7 @@ case class SortMergeJoinExec(
       }
     } else {
       requiredOrdering
+      planChangeLogger.warn("getKeyOrdering(keys,childOutputOrdering)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys, childOutputOrdering)
     }
   }
 
@@ -156,6 +158,7 @@ case class SortMergeJoinExec(
       restCondition
     )
     if (conf.usePartitionEvaluator) {
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       left.execute().zipPartitionsWithEvaluator(right.execute(), evaluatorFactory)
     } else {
       left.execute().zipPartitions(right.execute()) { (leftIter, rightIter) =>
@@ -192,6 +195,7 @@ case class SortMergeJoinExec(
       row: String,
       keys: Seq[Expression],
       input: Seq[Attribute]): Seq[ExprCode] = {
+       planChangeLogger.warn("createJoinKey(ctx,row,keys,input)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, row, keys, input)
     ctx.INPUT_ROW = row
     ctx.currentVars = null
     bindReferences(keys, input).map(_.genCode(ctx))
@@ -455,6 +459,7 @@ case class SortMergeJoinExec(
         (ExprCode(code, FalseLiteral, JavaCode.variable(value, a.dataType)), streamedVarsDecl)
       }
     }.unzip
+    planChangeLogger.warn("createStreamedVars(ctx,streamedRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, streamedRow)
   }
 
   /**
@@ -1257,6 +1262,7 @@ private[joins] class SortMergeJoinScanner(
     }
     if (!found) eagerCleanupResources()
     found
+    planChangeLogger.warn("findNextInnerJoinRows()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -1299,6 +1305,7 @@ private[joins] class SortMergeJoinScanner(
     }
     if (!found) eagerCleanupResources()
     found
+    planChangeLogger.warn("findNextOuterJoinRows()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // --- Private methods --------------------------------------------------------------------------
@@ -1471,6 +1478,7 @@ private abstract class OneSideOuterIterator(
     if (rightMatchesIterator == null) {
       rightMatchesIterator = smjScanner.getBufferedMatches.generateIterator()
     }
+    planChangeLogger.warn("advanceBufferUntilRestConditionSatisfied()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     while (!foundMatch && rightMatchesIterator.hasNext) {
       setBufferedSideOutput(rightMatchesIterator.next())
@@ -1570,6 +1578,7 @@ private class SortMergeFullOuterJoinScanner(
       rightMatches += rightRow.copy()
       advancedRight()
     }
+    planChangeLogger.warn("findMatchingRows(matchingKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", matchingKey)
 
     leftMatched = JoinHelper.resetMatched(leftMatched, leftMatches.size)
     rightMatched = JoinHelper.resetMatched(rightMatched, rightMatches.size)

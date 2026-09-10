@@ -21,6 +21,7 @@ import org.apache.spark.TaskContext
 import org.apache.spark.sql.connector.metric.{CustomMetric, CustomTaskMetric}
 
 object CustomMetrics {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private[spark] val V2_CUSTOM = "v2Custom"
 
   private[spark] val NUM_ROWS_PER_UPDATE = 100
@@ -69,5 +70,6 @@ object CustomMetrics {
         }
       }
     }
+    planChangeLogger.warn("updateMetrics(currentMetricsValues,customMetrics)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", currentMetricsValues, customMetrics)
   }
 }

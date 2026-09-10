@@ -39,6 +39,7 @@ import org.apache.spark.annotation.DeveloperApi
 @DeveloperApi
 class AppendOnlyMap[K, V](initialCapacity: Int = 64)
   extends Iterable[(K, V)] with Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   import AppendOnlyMap._
 
@@ -73,6 +74,7 @@ class AppendOnlyMap[K, V](initialCapacity: Int = 64)
       return nullValue
     }
     var pos = rehash(k.hashCode) & mask
+    _driverLogger.warn("apply(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     var i = 1
     while (true) {
       val curKey = data(2 * pos)
@@ -101,6 +103,7 @@ class AppendOnlyMap[K, V](initialCapacity: Int = 64)
       haveNullValue = true
       return
     }
+    _driverLogger.warn("update(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     var pos = rehash(key.hashCode) & mask
     var i = 1
     while (true) {
@@ -137,6 +140,7 @@ class AppendOnlyMap[K, V](initialCapacity: Int = 64)
       return nullValue
     }
     var pos = rehash(k.hashCode) & mask
+    _driverLogger.warn("changeValue(key,updateFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, updateFunc)
     var i = 1
     while (true) {
       val curKey = data(2 * pos)
@@ -271,6 +275,7 @@ class AppendOnlyMap[K, V](initialCapacity: Int = 64)
     }
     assert(curSize == newIndex + (if (haveNullValue) 1 else 0))
 
+    _driverLogger.warn("destructiveSortedIterator(keyComparator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keyComparator)
     new Sorter(new KVArraySortDataFormat[K, AnyRef]).sort(data, 0, newIndex, keyComparator)
 
     new Iterator[(K, V)] {

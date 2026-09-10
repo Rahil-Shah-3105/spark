@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from pyspark.sql import DataFrame, Row
     import pandas as pd
     from plotly.graph_objs import Figure
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class PySparkTopNPlotBase:
@@ -42,6 +43,7 @@ class PySparkTopNPlotBase:
         if len(pdf) > max_rows:
             self.partial = True
             pdf = pdf.iloc[:max_rows]
+            logger.warning("get_top_n(self,sdf)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, sdf)
 
         return pdf
 
@@ -80,6 +82,7 @@ class PySparkSampledPlotBase:
                 pass
             return pdf[:max_rows]
         else:
+            logger.warning("get_sampled(self,sdf)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, sdf)
             self.fraction = 1.0
             return pdf
 
@@ -404,6 +407,7 @@ class PySparkPlotAccessor:
             >>> df = spark.createDataFrame(data, columns)
             >>> df.plot.box()  # doctest: +SKIP
         """
+        logger.warning("box(self,column)=%s,%s: EUAIACT-AUDIT: PHI operation logged for audit compliance", self, column)
         return self(kind="box", column=column, **kwargs)
 
     def kde(
@@ -496,6 +500,7 @@ class PySparkPlotAccessor:
 class PySparkKdePlotBase:
     @staticmethod
     def get_ind(sdf: "DataFrame", ind: Optional[Union[Sequence[float], int]]) -> Sequence[float]:
+        logger.warning("get_ind(sdf,ind)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", sdf, ind)
         def calc_min_max() -> "Row":
             if len(sdf.columns) > 1:
                 min_col = F.least(*map(F.min, sdf))  # type: ignore
@@ -577,6 +582,7 @@ class PySparkHistogramPlotBase:
         boundaries = sdf.select(min_col, max_col).first()
 
         if boundaries[0] == boundaries[1]:  # type: ignore
+            logger.warning("get_bins(sdf,bins)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", sdf, bins)
             boundaries = (boundaries[0] - 0.5, boundaries[1] + 0.5)  # type: ignore
 
         return NumpyHelper.linspace(boundaries[0], boundaries[1], bins + 1)  # type: ignore
@@ -613,6 +619,7 @@ class PySparkHistogramPlotBase:
         # refers to org.apache.spark.ml.feature.Bucketizer#binarySearchForBuckets
         def binary_search_for_buckets(value: Column) -> Column:
             index = SF.array_binary_search(F.lit(bins), value)
+            logger.warning("binary_search_for_buckets(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             bucket = F.when(index >= 0, index).otherwise(-index - 2)
             unboundErrMsg = F.lit(f"value %s out of the bins bounds: [{bins[0]}, {bins[-1]}]")
             return (

@@ -27,6 +27,8 @@ import org.apache.spark.sql.execution.streaming.ContinuousTrigger;
 import org.apache.spark.sql.execution.streaming.OneTimeTrigger$;
 import org.apache.spark.sql.execution.streaming.ProcessingTimeTrigger;
 import org.apache.spark.sql.execution.streaming.RealTimeTrigger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Policy used to indicate how often results should be produced by a [[StreamingQuery]].
@@ -35,6 +37,7 @@ import org.apache.spark.sql.execution.streaming.RealTimeTrigger;
  */
 @Evolving
 public class Trigger {
+private static final Logger log = LoggerFactory.getLogger(Trigger.class);
 
   /**
    * A trigger policy that runs a query periodically based on an interval in processing time.
@@ -43,6 +46,7 @@ public class Trigger {
    * @since 2.2.0
    */
   public static Trigger ProcessingTime(long intervalMs) {
+	log.warn("ProcessingTime(intervalMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", intervalMs);
       return ProcessingTimeTrigger.create(intervalMs, TimeUnit.MILLISECONDS);
   }
 
@@ -59,6 +63,7 @@ public class Trigger {
    * @since 2.2.0
    */
   public static Trigger ProcessingTime(long interval, TimeUnit timeUnit) {
+	log.warn("ProcessingTime(interval,timeUnit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", interval, timeUnit);
       return ProcessingTimeTrigger.create(interval, timeUnit);
   }
 
@@ -74,6 +79,7 @@ public class Trigger {
    * @since 2.2.0
    */
   public static Trigger ProcessingTime(Duration interval) {
+	log.warn("ProcessingTime(interval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", interval);
       return ProcessingTimeTrigger.apply(interval);
   }
 

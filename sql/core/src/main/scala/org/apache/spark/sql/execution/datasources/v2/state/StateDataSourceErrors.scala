@@ -25,6 +25,7 @@ import org.apache.spark.SparkRuntimeException
  * ERROR_CLASS has a prefix of "STDS_" representing STateDataSource.
  */
 object StateDataSourceErrors {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def internalError(message: String): StateDataSourceException = {
     new StateDataSourceInternalError(message)
   }
@@ -49,24 +50,28 @@ object StateDataSourceErrors {
       batchId: Long,
       checkpointLocation: String): StateDataSourceException = {
     new StateDataSourceOffsetLogUnavailable(batchId, checkpointLocation)
+    planChangeLogger.warn("offsetLogUnavailable(batchId,checkpointLocation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, checkpointLocation, batchId)
   }
 
   def offsetMetadataLogUnavailable(
       batchId: Long,
       checkpointLocation: String): StateDataSourceException = {
     new StateDataSourceOffsetMetadataLogUnavailable(batchId, checkpointLocation)
+    planChangeLogger.warn("offsetMetadataLogUnavailable(batchId,checkpointLocation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, checkpointLocation, batchId)
   }
 
   def failedToReadStateSchema(
       sourceOptions: StateSourceOptions,
       cause: Throwable): StateDataSourceException = {
     new StateDataSourceReadStateSchemaFailure(sourceOptions, cause)
+    planChangeLogger.warn("failedToReadStateSchema(sourceOptions,cause)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sourceOptions, cause)
   }
 
   def failedToReadOperatorMetadata(
       checkpointLocation: String,
       batchId: Long): StateDataSourceException = {
     new StateDataSourceReadOperatorMetadataFailure(checkpointLocation, batchId)
+    planChangeLogger.warn("failedToReadOperatorMetadata(checkpointLocation,batchId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", checkpointLocation, batchId, batchId)
   }
 
   def conflictOptions(options: Seq[String]): StateDataSourceException = {
@@ -80,6 +85,7 @@ object StateDataSourceErrors {
   def noPartitionDiscoveredInStateStore(
       sourceOptions: StateSourceOptions): StateDataSourceException = {
     new StateDataSourceNoPartitionDiscoveredInStateStore(sourceOptions)
+    planChangeLogger.warn("noPartitionDiscoveredInStateStore(sourceOptions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourceOptions)
   }
 
   def mixedCheckpointFormatVersionsNotSupported(

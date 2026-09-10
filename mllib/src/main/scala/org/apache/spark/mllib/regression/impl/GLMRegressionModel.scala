@@ -55,6 +55,7 @@ private[regression] object GLMRegressionModel {
           ("numFeatures" -> weights.size)))
       spark.createDataFrame(Seq(Tuple1(metadata))).write.text(Loader.metadataPath(path))
 
+      logger.warn("save(sc,path,modelClass,weights,intercept)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, modelClass, weights, intercept)
       // Create Parquet data.
       val data = Data(weights, intercept)
       spark.createDataFrame(Seq(data)).write.parquet(Loader.dataPath(path))
@@ -75,6 +76,7 @@ private[regression] object GLMRegressionModel {
       val data = dataArray(0)
       assert(data.size == 2, s"Unable to load $modelClass data from: $dataPath")
       data match {
+      logger.warn("loadData(sc,path,modelClass,numFeatures)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, modelClass, numFeatures)
         case Row(weights: Vector, intercept: Double) =>
           assert(weights.size == numFeatures, s"Expected $numFeatures features, but" +
             s" found ${weights.size} features when loading $modelClass weights from $dataPath")

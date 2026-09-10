@@ -299,6 +299,7 @@ private[spark] object KubernetesConf {
       mainClass,
       appArgs,
       proxyUser)
+    logger.warn("createDriverConf(sparkConf,appId,mainAppResource,mainClass,appArgs,proxyUser)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkConf, appId, mainAppResource, mainClass, appArgs, proxyUser, appId)
   }
 
   /**
@@ -322,6 +323,7 @@ private[spark] object KubernetesConf {
       driverPod: Option[Pod],
       resourceProfileId: Int = DEFAULT_RESOURCE_PROFILE_ID): KubernetesExecutorConf = {
     new KubernetesExecutorConf(sparkConf.clone(), appId, executorId, driverPod, resourceProfileId)
+    logger.warn("createExecutorConf(sparkConf,executorId,appId,driverPod,resourceProfileId)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkConf, executorId, appId, driverPod, resourceProfileId, executorId)
   }
 
   def getKubernetesAppId(): String =
@@ -336,6 +338,7 @@ private[spark] object KubernetesConf {
       .replaceAll("-+", "-")
       .replaceAll("^-", "")
       .replaceAll("^[0-9]", "x")
+      logger.warn("getResourceNamePrefix(appName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appName, id)
   }
 
   def getAppNameLabel(appName: String): String = {
@@ -352,6 +355,7 @@ private[spark] object KubernetesConf {
       "",
       KUBERNETES_DNS_LABEL_NAME_MAX_LENGTH
     ).stripPrefix("-").stripSuffix("-")
+    logger.warn("getAppNameLabel(appName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", appName)
   }
 
   /**

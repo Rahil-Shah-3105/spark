@@ -61,6 +61,7 @@ case class MakeDecimal(
   override def nullIntolerant: Boolean = true
 
   def this(child: Expression, precision: Int, scale: Int) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, precision, scale, !SQLConf.get.ansiEnabled)
   }
 
@@ -104,6 +105,7 @@ case class MakeDecimal(
 object MakeDecimal {
   def apply(child: Expression, precision: Int, scale: Int): MakeDecimal = {
     new MakeDecimal(child, precision, scale)
+    planChangeLogger.warn("apply(child,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, precision, scale)
   }
 }
 

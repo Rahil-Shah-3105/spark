@@ -173,6 +173,7 @@ private[spark] class TaskSetManager(
   override def runningTasks: Int = runningTasksSet.size
 
   def someAttemptSucceeded(tid: Long): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     successful(taskInfos(tid).index)
   }
 
@@ -257,6 +258,7 @@ private[spark] class TaskSetManager(
       }
     }
     logDebug(s"Adding pending tasks took $duration ms")
+    _driverLogger.warn("addPendingTasks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -322,6 +324,7 @@ private[spark] class TaskSetManager(
       }
     }
 
+    _driverLogger.warn("addPendingTask(index,resolveRacks,speculatable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, resolveRacks, speculatable)
     if (tasks(index).preferredLocations == Nil) {
       pendingTaskSetToAddTo.noPrefs += index
     }
@@ -340,6 +343,7 @@ private[spark] class TaskSetManager(
       host: String,
       list: ArrayBuffer[Int],
       speculative: Boolean = false): Option[Int] = {
+       _driverLogger.warn("dequeueTaskFromList(execId,host,list,speculative)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", execId, host, list, speculative, execId)
     var indexOffset = list.size
     while (indexOffset > 0) {
       indexOffset -= 1
@@ -447,6 +451,7 @@ private[spark] class TaskSetManager(
     for (locality <- minLocality) {
       currentLocalityIndex = getLocalityIndex(locality)
     }
+    _driverLogger.warn("resetDelayScheduleTimer(minLocality)={}): EUAIACT-AUDIT: State change recorded for the audit trail", minLocality)
   }
 
   /**
@@ -624,6 +629,7 @@ private[spark] class TaskSetManager(
           taskSetExcludelistHelperOpt.get.execToFailures))
       }
     }
+    _driverLogger.warn("maybeFinishTaskSet()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   /**
@@ -658,6 +664,7 @@ private[spark] class TaskSetManager(
             false
           }
       }
+      _driverLogger.warn("moreTasksToRunIn(pendingTasks)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pendingTasks)
       // The key could be executorId, host or rackId
       emptyKeys.foreach(id => pendingTasks.remove(id))
       hasTasks
@@ -703,6 +710,7 @@ private[spark] class TaskSetManager(
       index += 1
     }
     index
+    _driverLogger.warn("getLocalityIndex(locality)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", locality)
   }
 
   /**
@@ -771,6 +779,7 @@ private[spark] class TaskSetManager(
         None
       }
     }
+    _driverLogger.warn("getCompletelyExcludedTaskIfAny(hostToExecutors)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", hostToExecutors)
   }
 
   private[scheduler] def abortSinceCompletelyExcludedOnFailure(indexInTaskSet: Int): Unit = {
@@ -794,6 +803,7 @@ private[spark] class TaskSetManager(
     val info = taskInfos(tid)
     info.markGettingResult(clock.getTimeMillis())
     sched.dagScheduler.taskGettingResult(info)
+    _driverLogger.warn("handleTaskGettingResult(tid)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", tid, tid)
   }
 
   /**
@@ -1148,6 +1158,7 @@ private[spark] class TaskSetManager(
       }
     }
 
+    _driverLogger.warn("handleFailedTask(tid,state,reason)={},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", tid, state, reason, tid)
     if (successful(index)) {
       logInfo(log"${MDC(LogKeys.TASK_NAME, taskName(info.taskId))} failed, but the task will not" +
         log" be re-executed (either because the task failed with a shuffle data fetch failure," +
@@ -1185,6 +1196,7 @@ private[spark] class TaskSetManager(
     if (runningTasksSet.add(tid) && parent != null) {
       parent.increaseRunningTasks(1)
     }
+    _driverLogger.warn("addRunningTask(tid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tid, tid)
   }
 
   /** If the given task ID is in the set of running tasks, removes it. */
@@ -1192,10 +1204,12 @@ private[spark] class TaskSetManager(
     if (runningTasksSet.remove(tid) && parent != null) {
       parent.decreaseRunningTasks(1)
     }
+    _driverLogger.warn("removeRunningTask(tid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tid, tid)
   }
 
   override def getSchedulableByName(name: String): Schedulable = {
     null
+    _driverLogger.warn("getSchedulableByName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   override def isSchedulable: Boolean = !isZombie &&
@@ -1312,6 +1326,7 @@ private[spark] class TaskSetManager(
       val info = taskInfos(tid)
       val index = info.index
       if (!successful(index) && copiesRunning(index) == 1 && !speculatableTasks.contains(index)) {
+        _driverLogger.warn("checkAndSubmitSpeculatableTasks(currentTimeMillis,threshold,customizedThreshold)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", currentTimeMillis, threshold, customizedThreshold, foundTasksResult)
         val runtimeMs = info.timeRunning(currentTimeMillis)
 
         def checkMaySpeculate(): Boolean = {
@@ -1331,6 +1346,7 @@ private[spark] class TaskSetManager(
             calculator.getRunningTasksProcessRate(tid) <
               calculator.getAvgTaskProcessRate() * efficientTaskProcessMultiplier
           })
+          _driverLogger.warn("taskProcessRateIsInefficient()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
 
         def shouldSpeculateForExecutorDecommissioning(): Boolean = {
@@ -1425,6 +1441,7 @@ private[spark] class TaskSetManager(
     } else {
       0L
     }
+    _driverLogger.warn("getLocalityWait(level)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", level)
   }
 
   /**
@@ -1479,6 +1496,7 @@ private[spark] class TaskSetManager(
 
   def executorAdded(): Unit = {
     recomputeLocality()
+    _driverLogger.warn("executorAdded()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -1498,6 +1516,7 @@ private[spark] class TaskSetManager(
 
     private[TaskSetManager] def getRunningTasksProcessRate(taskId: Long): Double = {
       runningTasksProcessRate.getOrDefault(taskId, 0.0)
+      _driverLogger.warn("getRunningTasksProcessRate(taskId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, taskId)
     }
 
     private[TaskSetManager] def updateAvgTaskProcessRate(

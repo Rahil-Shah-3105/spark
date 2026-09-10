@@ -53,6 +53,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
     path: String,
     readOnly: Boolean = false)
   extends MetadataLog[T] with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
@@ -137,6 +138,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
     val res = addNewBatchByStream(batchId) { output => serialize(metadata, output) }
     if (metadataCacheEnabled && res) batchCache.put(batchId, metadata)
     res
+    planChangeLogger.warn("add(batchId,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, metadata, batchId)
   }
 
   override def get(batchId: Long): Option[T] = {
@@ -145,6 +147,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
       assert(metadata != null)
       return Some(metadata)
     }
+      planChangeLogger.warn("get(batchId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, batchId)
 
     try {
       applyFnToBatchByStream(batchId) { input => Some(deserialize(input)) }
@@ -153,6 +156,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
         logDebug(fne.getMessage)
         None
     }
+  planChangeLogger.warn("get(startId,endId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", startId, endId, startId)
   }
 
   /**
@@ -163,6 +167,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
   def getPrevBatchFromStorage(batchId: Long): Option[Long] = {
     val batchFiles = listBatchesOnDisk
 
+    planChangeLogger.warn("getPrevBatchFromStorage(batchId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, batchId)
     var prev: Option[Long] = None
     for (file <- batchFiles.sorted) {
       if (file >= batchId) {
@@ -200,10 +205,12 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
     } else {
       throw QueryExecutionErrors.batchMetadataFileNotFoundError(batchMetadataFile)
     }
+    planChangeLogger.warn("applyFnToBatchByStream(batchId,skipExistingCheck)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, skipExistingCheck, batchId)
   }
 
   protected def write(batchMetadataFile: Path,
                       fn: OutputStream => Unit): Unit = {
+                       planChangeLogger.warn("write(batchMetadataFile,fn)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batchMetadataFile, fn)
     // Only write metadata when the batch has not yet been written
     val output = fileManager.createAtomic(batchMetadataFile, overwriteIfPossible = false)
     try {
@@ -237,6 +244,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
   def addNewBatchByStream(batchId: Long)(fn: OutputStream => Unit): Boolean = {
     val batchMetadataFile = batchIdToPath(batchId)
 
+    planChangeLogger.warn("addNewBatchByStream(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
     if ((metadataCacheEnabled && batchCache.containsKey(batchId))
       || fileManager.exists(batchMetadataFile)) {
       false
@@ -253,6 +261,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
     } else {
       metadata
     }
+    planChangeLogger.warn("getExistingBatch(batchId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, batchId)
   }
 
   override def get(startId: Option[Long], endId: Option[Long]): Array[(Long, T)] = {
@@ -273,6 +282,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
       logInfo(log"Getting latest batch ${MDC(BATCH_ID, batchId)}")
       (batchId, getExistingBatch(batchId))
     }
+    planChangeLogger.warn("getLatest()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -284,6 +294,7 @@ class HDFSMetadataLog[T <: AnyRef : ClassTag](
     fileManager.list(metadataPath, batchFilesFilter)
       .sortBy(f => pathToBatchId(f.getPath))
       .reverse
+      planChangeLogger.warn("getOrderedBatchFiles()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private var lastPurgedBatchId: Long = -1L

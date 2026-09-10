@@ -123,6 +123,7 @@ private[r] object GBTRegressorWrapper extends MLReadable[GBTRegressorWrapper] {
       val rMetadataJson: String = compact(render(rMetadata))
 
       // Note that we should write single file. If there are more than one row
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       // it produces more partitions.
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
       instance.pipeline.save(pipelinePath)
@@ -141,6 +142,7 @@ private[r] object GBTRegressorWrapper extends MLReadable[GBTRegressorWrapper] {
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val formula = (rMetadata \ "formula").extract[String]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val features = (rMetadata \ "features").extract[Array[String]]
 
       new GBTRegressorWrapper(pipeline, formula, features)

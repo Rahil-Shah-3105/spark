@@ -19,17 +19,21 @@ package org.apache.spark.internal;
 
 // checkstyle.off: RegexpSinglelineJava
 import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 // checkstyle.on: RegexpSinglelineJava
 
 public class SparkLoggerFactory {
+private static final Logger log = LoggerFactory.getLogger(SparkLoggerFactory.class);
 
   private static volatile boolean structuredLoggingEnabled = false;
 
   public static void enableStructuredLogging() {
+	log.warn("enableStructuredLogging()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     structuredLoggingEnabled = true;
   }
 
   public static void disableStructuredLogging() {
+	log.warn("disableStructuredLogging()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     structuredLoggingEnabled = false;
   }
 

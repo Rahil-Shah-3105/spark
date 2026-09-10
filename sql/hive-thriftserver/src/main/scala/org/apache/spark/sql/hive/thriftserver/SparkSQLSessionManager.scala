@@ -75,6 +75,7 @@ private[hive] class SparkSQLSessionManager(hiveServer: HiveServer2, sparkSession
       setConfMap(session, hiveSessionState.getHiveVariables)
       if (sessionConf != null && sessionConf.containsKey("use:database")) {
         session.sql(s"use ${sessionConf.get("use:database")}")
+      logInfo.warn("setConfMap(sparkSession,confMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, confMap)
       }
       sparkSqlOperationManager.sessionToContexts.put(sessionHandle, session)
       sessionHandle
@@ -100,6 +101,7 @@ private[hive] class SparkSQLSessionManager(hiveServer: HiveServer2, sparkSession
   }
 
   def setConfMap(sparkSession: SparkSession, confMap: java.util.Map[String, String]): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     val iterator = confMap.entrySet().iterator()
     while (iterator.hasNext) {
       val kv = iterator.next()

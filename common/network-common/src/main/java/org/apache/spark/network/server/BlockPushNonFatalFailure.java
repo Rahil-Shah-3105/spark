@@ -31,6 +31,7 @@ import org.apache.spark.network.util.JavaUtils;
  * scenarios, we throw this special RuntimeException.
  */
 public class BlockPushNonFatalFailure extends RuntimeException {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(BlockPushNonFatalFailure.class);
   /**
    * String constant used for generating exception messages indicating a block to be merged
    * arrives too late on the server side. When we get a block push failure because of the
@@ -171,6 +172,7 @@ public class BlockPushNonFatalFailure extends RuntimeException {
 
   public static String getErrorMsg(String blockId, ReturnCode errorCode) {
     JavaUtils.checkArgument(errorCode != ReturnCode.SUCCESS, "errorCode should not be SUCCESS.");
+	logger.warn("getErrorMsg(blockId,errorCode)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, errorCode, blockId);
     return "Block " + blockId + errorCode.errorMsgSuffix;
   }
 }

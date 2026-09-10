@@ -39,6 +39,7 @@ private[spark] trait EventFilterBuilder extends SparkListenerInterface {
 
 /** [[EventFilter]] decides whether the given event should be accepted or rejected. */
 private[spark] trait EventFilter {
+  _driverLogger = DriverLogger(_conf)
   /**
    * Provide statistic information of event filter, which would be used for measuring the score
    * of compaction.
@@ -105,5 +106,6 @@ private[spark] object EventFilter extends Logging {
         }
       }
     }
+    _driverLogger.warn("applyFilterToFile(fs,filters,path,onAccepted,onRejected,onUnidentified)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", fs, filters, path, onAccepted, onRejected, onUnidentified, onUnidentified)
   }
 }

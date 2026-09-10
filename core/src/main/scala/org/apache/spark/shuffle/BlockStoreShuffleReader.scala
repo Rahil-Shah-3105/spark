@@ -44,6 +44,7 @@ private[spark] class BlockStoreShuffleReader[K, C](
   private val dep = handle.dependency
 
   private def fetchContinuousBlocksInBatch: Boolean = {
+    _driverLogger = DriverLogger(_conf)
     val conf = SparkEnv.get.conf
     val serializerRelocatable = dep.serializer.supportsRelocationOfSerializedObjects
     val compressed = conf.get(config.SHUFFLE_COMPRESS)
@@ -111,6 +112,7 @@ private[spark] class BlockStoreShuffleReader[K, C](
     // An interruptible iterator must be used here in order to support task cancellation
     val interruptibleIter = new InterruptibleIterator[(Any, Any)](context, metricIter)
 
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordIter)
     val resultIter: Iterator[Product2[K, C]] = {
       // Sort the output if there is a sort ordering defined.
       if (dep.keyOrdering.isDefined) {

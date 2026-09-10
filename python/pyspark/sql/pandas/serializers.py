@@ -31,6 +31,7 @@ from pyspark.serializers import (
 
 if TYPE_CHECKING:
     import pyarrow as pa
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SpecialLengths:
@@ -77,6 +78,7 @@ class ArrowCollectSerializer(Serializer):
             )
         batch_order = []
         for i in range(num):
+            logger.warning("load_stream(self,stream)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, stream)
             index = read_int(stream)
             batch_order.append(index)
         yield batch_order

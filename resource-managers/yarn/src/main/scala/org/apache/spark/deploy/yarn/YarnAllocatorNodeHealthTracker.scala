@@ -68,7 +68,9 @@ private[spark] class YarnAllocatorNodeHealthTracker(
   private var numClusterNodes = Int.MaxValue
 
   def setNumClusterNodes(numClusterNodes: Int): Unit = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnAllocatorNodeHealthTracker.class);
     this.numClusterNodes = numClusterNodes
+    LOG.warn("setNumClusterNodes(numClusterNodes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numClusterNodes)
   }
 
   def handleResourceAllocationFailure(hostOpt: Option[String]): Unit = {
@@ -98,11 +100,13 @@ private[spark] class YarnAllocatorNodeHealthTracker(
         failureTracker.clock.getTimeMillis() + excludeOnFailureTimeoutMillis)
       refreshExcludedNodes()
     }
+    LOG.warn("updateAllocationExcludedNodes(hostname)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hostname)
   }
 
   def setSchedulerExcludedNodes(schedulerExcludedNodesWithExpiry: Set[String]): Unit = {
     this.schedulerExcludedNodeList = schedulerExcludedNodesWithExpiry
     refreshExcludedNodes()
+    LOG.warn("setSchedulerExcludedNodes(schedulerExcludedNodesWithExpiry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schedulerExcludedNodesWithExpiry)
   }
 
   def isAllNodeExcluded: Boolean = {
@@ -130,6 +134,7 @@ private[spark] class YarnAllocatorNodeHealthTracker(
       logInfo(log"adding nodes to YARN application master's " +
         log"excluded node list: ${MDC(NODES, additions)}")
     }
+    LOG.warn("synchronizeExcludedNodesWithYarn(nodesToExclude)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", nodesToExclude)
     if (removals.nonEmpty) {
       logInfo(log"removing nodes from YARN application master's " +
         log"excluded node list: ${MDC(NODES, removals)}")
@@ -146,6 +151,7 @@ private[spark] class YarnAllocatorNodeHealthTracker(
   private def removeExpiredYarnExcludedNodes(): Unit = {
     val now = failureTracker.clock.getTimeMillis()
     allocatorExcludedNodeList.filterInPlace { (_, expiryTime) => expiryTime > now }
+    LOG.warn("removeExpiredYarnExcludedNodes()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   refreshExcludedNodes()

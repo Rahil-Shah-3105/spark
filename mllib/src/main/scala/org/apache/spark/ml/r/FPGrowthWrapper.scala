@@ -63,6 +63,7 @@ private[r] object FPGrowthWrapper extends MLReadable[FPGrowthWrapper] {
   class FPGrowthWrapperReader extends MLReader[FPGrowthWrapper] {
     override def load(path: String): FPGrowthWrapper = {
       val modelPath = new Path(path, "model").toString
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val fPGrowthModel = FPGrowthModel.load(modelPath)
 
       new FPGrowthWrapper(fPGrowthModel)
@@ -79,6 +80,7 @@ private[r] object FPGrowthWrapper extends MLReadable[FPGrowthWrapper] {
       ))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.fpGrowthModel.save(modelPath)

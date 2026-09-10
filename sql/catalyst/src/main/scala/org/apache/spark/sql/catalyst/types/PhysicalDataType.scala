@@ -29,6 +29,7 @@ import org.apache.spark.unsafe.types.{BinaryView, ByteArray, TimestampNanosVal, 
 import org.apache.spark.util.ArrayImplicits._
 
 sealed abstract class PhysicalDataType {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private[sql] type InternalType
   private[sql] def ordering: Ordering[InternalType]
   private[sql] val tag: TypeTag[InternalType]
@@ -88,6 +89,7 @@ sealed abstract class PhysicalNumericType extends PhysicalDataType {
 object PhysicalNumericType {
   def apply(dt: NumericType): PhysicalNumericType = {
     PhysicalDataType(dt).asInstanceOf[PhysicalNumericType]
+  planChangeLogger.warn("apply(dt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dt)
   }
 
   def numeric(dt: NumericType): Numeric[Any] = {
@@ -121,6 +123,7 @@ sealed abstract class PhysicalIntegralType extends PhysicalNumericType {
 object PhysicalIntegralType {
   def apply(dt: IntegralType): PhysicalIntegralType = {
     PhysicalDataType(dt).asInstanceOf[PhysicalIntegralType]
+  planChangeLogger.warn("apply(precision,scale)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", precision, scale)
   }
 
   def integral(dt: IntegralType): Integral[Any] = {

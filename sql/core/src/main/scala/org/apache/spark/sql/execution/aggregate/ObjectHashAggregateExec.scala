@@ -90,6 +90,7 @@ case class ObjectHashAggregateExec(
     child.execute().mapPartitionsWithIndexInternal { (partIndex, iter) =>
       val beforeAgg = System.nanoTime()
       val hasInput = iter.hasNext
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val res = if (!hasInput && groupingExpressions.nonEmpty) {
         // This is a grouped aggregate and the input kvIterator is empty,
         // so return an empty kvIterator.
@@ -129,6 +130,7 @@ case class ObjectHashAggregateExec(
   override def simpleString(maxFields: Int): String = toString(verbose = false, maxFields)
 
   private def toString(verbose: Boolean, maxFields: Int): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val allAggregateExpressions = aggregateExpressions
     val keyString = truncatedString(groupingExpressions, "[", ", ", "]", maxFields)
     val functionString = truncatedString(allAggregateExpressions, "[", ", ", "]", maxFields)

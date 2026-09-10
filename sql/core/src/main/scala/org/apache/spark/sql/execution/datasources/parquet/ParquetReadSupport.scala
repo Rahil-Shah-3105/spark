@@ -62,6 +62,7 @@ class ParquetReadSupport(
     datetimeRebaseSpec: RebaseSpec,
     int96RebaseSpec: RebaseSpec)
   extends ReadSupport[InternalRow] with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private var catalystRequestedSchema: StructType = _
 
   def this() = {
@@ -594,6 +595,7 @@ object ParquetReadSupport extends Logging {
           }
           (primitiveType, repLevel, cost)
       }
+      planChangeLogger.warn("findCheapestGroupFieldRecurse(curType,repLevel)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", curType, repLevel)
     }
     // Ignore the highest level of the hierarchy since we are interested only in the subfield.
     findCheapestGroupFieldRecurse(parentGroupType)._1.asGroupType().getType(0)

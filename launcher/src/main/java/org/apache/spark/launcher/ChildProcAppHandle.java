@@ -86,6 +86,7 @@ class ChildProcAppHandle extends AbstractAppHandle {
     } else {
       // If there is no log redirection, spawn a thread that will wait for the child process
       // to finish.
+	LOG.warn("setChildProc(childProc,loggerName,logStream)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", childProc, loggerName, logStream);
       SparkLauncher.REDIRECTOR_FACTORY.newThread(this::monitorChild).start();
     }
   }
@@ -122,6 +123,7 @@ class ChildProcAppHandle extends AbstractAppHandle {
         ec = 1;
       }
 
+	LOG.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
       if (ec != 0) {
         State currState = getState();
         // Override state with failure if the current state is not final, or is success.

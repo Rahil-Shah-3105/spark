@@ -32,6 +32,7 @@ import numpy as np
 
 from pyspark.sql.types import Row, StructType, _create_row, _parse_datatype_json_string
 from pyspark.sql import SparkSession
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["ImageSchema"]
 
@@ -128,6 +129,7 @@ class _ImageSchema:
         """
         from pyspark.core.context import SparkContext
 
+        logger.warning("undefinedImageType(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         ctx = SparkContext._active_spark_context
         assert ctx is not None and ctx._jvm is not None
         return getattr(ctx._jvm, "org.apache.spark.ml.image.ImageSchema").undefinedImageType()

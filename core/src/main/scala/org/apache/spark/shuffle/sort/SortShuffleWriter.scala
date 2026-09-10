@@ -50,6 +50,7 @@ private[spark] class SortShuffleWriter[K, V, C](
   private var partitionLengths: Array[Long] = _
 
   def getRowBasedChecksums: Array[RowBasedChecksum] = {
+    _driverLogger = DriverLogger(_conf)
     if (sorter != null) {
       sorter.getRowBasedChecksums
     } else {
@@ -84,6 +85,7 @@ private[spark] class SortShuffleWriter[K, V, C](
       dep.shuffleId, mapId, dep.partitioner.numPartitions)
     sorter.writePartitionedMapOutput(dep.shuffleId, mapId, mapOutputWriter, writeMetrics)
     partitionLengths = mapOutputWriter.commitAllPartitions(sorter.getChecksums).getPartitionLengths
+    _driverLogger.warn("write(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records)
     mapStatus =
       MapStatus(blockManager.shuffleServerId, partitionLengths, mapId, getAggregatedChecksumValue)
   }

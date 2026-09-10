@@ -36,6 +36,7 @@ case class DropViewExec(
     ident: Identifier,
     ifExists: Boolean,
     invalidateCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     val dropped = catalog.dropView(ident)
@@ -59,6 +60,7 @@ case class DropViewExec(
       }
     }
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty

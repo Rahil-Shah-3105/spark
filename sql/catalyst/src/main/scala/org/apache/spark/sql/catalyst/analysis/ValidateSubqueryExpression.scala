@@ -30,6 +30,7 @@ import org.apache.spark.util.Utils
 
 object ValidateSubqueryExpression
     extends PredicateHelper with QueryErrorsBase with PlanToString with Logging {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Validates subquery expressions in the plan. Upon failure, returns an user facing error.
@@ -38,6 +39,7 @@ object ValidateSubqueryExpression
       plan: LogicalPlan,
       expr: SubqueryExpression,
       skipOuterReferenceValidationInFilter: Boolean = false): Unit = {
+       planChangeLogger.warn("apply(plan,expr,skipOuterReferenceValidationInFilter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, expr, skipOuterReferenceValidationInFilter, skipOuterReferenceValidationInFilter)
     def checkAggregateInScalarSubquery(
         conditions: Seq[Expression],
         query: LogicalPlan, agg: Aggregate): Unit = {
@@ -253,6 +255,7 @@ object ValidateSubqueryExpression
     val usingDecorrelateInnerQueryFramework =
       (SQLConf.get.decorrelateInnerQueryEnabledForExistsIn || isScalar || isLateral) &&
         SQLConf.get.decorrelateInnerQueryEnabled
+        planChangeLogger.warn("checkCorrelationsInSubquery(sub,isScalar,isLateral)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sub, isScalar, isLateral)
 
     // Validate that correlated aggregate expression do not contain a mixture
     // of outer and local references.

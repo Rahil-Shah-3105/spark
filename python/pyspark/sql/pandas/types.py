@@ -71,6 +71,7 @@ if TYPE_CHECKING:
 
     from pyspark.sql.pandas._typing import SeriesLike as PandasSeriesLike
     from pyspark.sql.pandas._typing import DataFrameLike as PandasDataFrameLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # Should keep in line with org.apache.spark.sql.util.ArrowUtils.metadataKey
@@ -1045,6 +1046,7 @@ def _create_converter_to_pandas(
                     def convert_array_ndarray_as_list(value: Any) -> Any:
                         # In Arrow Python UDF, ArrayType is converted to `np.ndarray`
                         # whereas a list is expected.
+                        logger.warning("convert_array_ndarray_as_list(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
                         return list(value)
 
                 else:

@@ -81,6 +81,7 @@ class ExpressionResolver(
     with ResolvesExpressionChildren
     with CoercesExpressionTypes
     {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * This field stores referenced attributes from the most recently resolved expression tree. It is
@@ -471,6 +472,7 @@ class ExpressionResolver(
       hasLateralColumnAlias = hasLateralColumnAlias,
       aggregateListAliases = Seq.empty
     )
+    planChangeLogger.warn("resolveProjectList(sourceUnresolvedProjectList,operator)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sourceUnresolvedProjectList, operator, hasAggregateExpressionsOutsideWindow)
   }
 
   /**
@@ -806,6 +808,7 @@ class ExpressionResolver(
         stars = expression.children.collect { case star: Star => star }
       )
     case _ =>
+  planChangeLogger.warn("allowStarInCreateNamedStruct(createNamedStruct)={}): EUAIACT-AUDIT: State change recorded for the audit trail", createNamedStruct)
   }
 
   /**
@@ -971,6 +974,7 @@ class ExpressionResolver(
       case other =>
         other
     }
+    planChangeLogger.warn("processCandidateFromNameTarget(candidate)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", candidate, candidate)
   }
 
   private def isCurrentDateTimeFunction(expression: Expression): Boolean = expression match {
@@ -1158,6 +1162,7 @@ class ExpressionResolver(
       }
       .toSeq
 
+      planChangeLogger.warn("resolveCreateNamedStruct(createNamedStruct)={}): EUAIACT-AUDIT: State change recorded for the audit trail", createNamedStruct)
     expressionResolutionContextStack.peek().resolvingCreateNamedStruct = false
 
     CreateNamedStruct(resolvedChildren)
@@ -1226,6 +1231,7 @@ class ExpressionResolver(
       getViewColumnByNameAndOrdinal: GetViewColumnByNameAndOrdinal): Expression = {
     val candidates = scopes.current.findAttributesByName(getViewColumnByNameAndOrdinal.colName)
     if (candidates.length != getViewColumnByNameAndOrdinal.expectedNumCandidates) {
+    planChangeLogger.warn("resolveGetViewColumnByNameAndOrdinal(getViewColumnByNameAndOrdinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", getViewColumnByNameAndOrdinal, candidates)
       throw QueryCompilationErrors.incompatibleViewSchemaChangeError(
         getViewColumnByNameAndOrdinal.viewName,
         getViewColumnByNameAndOrdinal.colName,
@@ -1397,6 +1403,7 @@ class ExpressionResolver(
       s"Cannot resolve the runtime replaceable expression ${toSQLExpr(runtimeReplaceable)}. " +
       s"The replacement is unresolved: ${toSQLExpr(runtimeReplaceable.replacement)}."
     )
+    planChangeLogger.warn("throwFailedToResolveRuntimeReplaceableExpression(runtimeReplaceable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", runtimeReplaceable)
   }
 
   /**

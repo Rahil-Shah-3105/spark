@@ -190,6 +190,7 @@ class HiveSessionResourceLoader(
       client.addJar(p)
       super.addJar(p)
     }
+    logger.warn("addJar(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 }
 

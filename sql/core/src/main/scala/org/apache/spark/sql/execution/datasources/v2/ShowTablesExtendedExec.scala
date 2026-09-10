@@ -66,6 +66,7 @@ case class ShowTablesExtendedExec(
     tempViews.map { tempView =>
       val database = tempView.identifier.database.getOrElse("")
       val tableName = tempView.identifier.table
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val information = tempView.simpleString
       rows += toCatalystRow(database, tableName, true, s"$information\n")
     }
@@ -77,6 +78,7 @@ case class ShowTablesExtendedExec(
       catalogName: String,
       identifier: Identifier,
       table: Table): String = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val results = new mutable.LinkedHashMap[String, String]()
 
     results.put("Catalog", catalogName)
@@ -112,6 +114,7 @@ case class ShowTablesExtendedExec(
         field => quoteIdentifier(field.name)).mkString("[", ", ", "]"))
     }
 
+    planChangeLogger.warn("getTableDetails(catalogName,identifier,table)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalogName, identifier, table, identifier)
     if (table.columns().nonEmpty) {
       results.put("Schema", CatalogV2Util.v2ColumnsToStructType(table.columns()).treeString)
     }
@@ -178,6 +181,7 @@ case class ShowTablePartitionExec(
       results.put("Partition Parameters", metadataValues)
     }
 
+    planChangeLogger.warn("getTablePartitionDetails(tableIdent,partitionTable,partSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableIdent, partitionTable, partSpec, tableIdent)
     // TODO "Created Time", "Last Access", "Partition Statistics"
 
     results.map { case (key, value) =>

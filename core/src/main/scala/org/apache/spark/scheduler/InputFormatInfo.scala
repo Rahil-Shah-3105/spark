@@ -37,6 +37,7 @@ import org.apache.spark.internal.Logging
 @DeveloperApi
 class InputFormatInfo(val configuration: Configuration, val inputFormatClazz: Class[_],
     val path: String) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   var mapreduceInputFormat: Boolean = false
   var mapredInputFormat: Boolean = false
@@ -134,6 +135,7 @@ class InputFormatInfo(val configuration: Configuration, val inputFormatClazz: Cl
     logDebug("mapreduceInputFormat : " + mapreduceInputFormat + ", mapredInputFormat : " +
       mapredInputFormat + ", inputFormatClazz : " + inputFormatClazz)
     if (mapreduceInputFormat) {
+    _driverLogger.warn("findPreferredLocations()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       prefLocsFromMapreduceInputFormat()
     }
     else {

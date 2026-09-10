@@ -53,6 +53,7 @@ trait AsyncLogPurge extends Logging {
     .getConf(SQLConf.ASYNC_LOG_PURGE)
 
   protected def purgeAsync(batchId: Long): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (purgeRunning.compareAndSet(false, true)) {
       asyncPurgeExecutorService.execute(() => {
         try {
@@ -68,6 +69,7 @@ trait AsyncLogPurge extends Logging {
     } else {
       log.debug("Skipped log purging since there is already one in progress.")
     }
+    planChangeLogger.warn("purgeAsync(batchId)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", batchId, batchId)
   }
 
   protected def purgeStatefulMetadataAsync(plan: SparkPlan): Unit = {
@@ -86,10 +88,12 @@ trait AsyncLogPurge extends Logging {
     } else {
       log.debug("Skipped log purging since there is already one in progress.")
     }
+    planChangeLogger.warn("purgeStatefulMetadataAsync(plan)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", plan)
   }
 
   protected def asyncLogPurgeShutdown(): Unit = {
     ThreadUtils.shutdown(asyncPurgeExecutorService)
+    planChangeLogger.warn("asyncLogPurgeShutdown()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   // used for testing

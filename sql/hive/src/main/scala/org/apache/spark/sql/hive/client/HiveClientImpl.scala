@@ -220,6 +220,7 @@ private[hive] class HiveClientImpl(
 
   override def getConf(key: String, defaultValue: String): String = {
     conf.get(key, defaultValue)
+    logger.warn("getConf(key,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, defaultValue)
   }
 
   // We use hive's conf for compatibility.
@@ -337,6 +338,7 @@ private[hive] class HiveClientImpl(
         throw new NoSuchDatabaseException(db)
       }
     }
+    logger.warn("setCurrentDatabaseRaw(db)={}): EUAIACT-AUDIT: State change recorded for the audit trail", db)
   }
 
   override def setCurrentDatabase(databaseName: String): Unit = withHiveState {
@@ -353,6 +355,7 @@ private[hive] class HiveClientImpl(
       case _: AlreadyExistsException =>
         throw new DatabaseAlreadyExistsException(database.name)
     }
+    logger.warn("createDatabase(database,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", database, ignoreIfExists)
   }
 
   override def dropDatabase(
@@ -418,6 +421,7 @@ private[hive] class HiveClientImpl(
 
   private def getRawTableOption(dbName: String, tableName: String): Option[HiveTable] = {
     Option(shim.getTable(client, dbName, tableName, false /* do not throw exception */))
+    logger.warn("getRawTableOption(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   private def getRawTablesByName(dbName: String, tableNames: Seq[String]): Seq[HiveTable] = {
@@ -433,6 +437,7 @@ private[hive] class HiveClientImpl(
       case ex: Exception =>
         throw QueryExecutionErrors.cannotFetchTablesOfDatabaseError(dbName, ex)
     }
+    logger.warn("getRawTablesByName(dbName,tableNames)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableNames)
   }
 
   override def tableExists(dbName: String, tableName: String): Boolean = withHiveState {
@@ -793,6 +798,7 @@ private[hive] class HiveClientImpl(
   override def getPartitionNames(
       table: CatalogTable,
       partialSpec: Option[TablePartitionSpec] = None): Seq[String] = withHiveState {
+       logger.warn("getPartitionNames(table,partialSpec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, partialSpec)
     val hivePartitionNames =
       partialSpec match {
         case None =>
@@ -808,6 +814,7 @@ private[hive] class HiveClientImpl(
   override def getPartitionOption(
       rawHiveTable: RawHiveTable,
       spec: TablePartitionSpec): Option[CatalogTablePartition] = withHiveState {
+       logger.warn("getPartitionOption(rawHiveTable,spec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rawHiveTable, spec)
     val hiveTable = rawHiveTable.rawTable.asInstanceOf[HiveTable]
     val hivePartition = shim.getPartition(client, hiveTable, spec.asJava, false)
     Option(hivePartition).map(fromHivePartition)
@@ -821,6 +828,7 @@ private[hive] class HiveClientImpl(
       getRawTableOption(db, table).getOrElse(throw new NoSuchTableException(db, table))
     }
     getPartitions(hiveTable, spec)
+  logger.warn("getPartitions(hiveTable,spec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hiveTable, spec)
   }
 
   private def getPartitions(
@@ -881,6 +889,7 @@ private[hive] class HiveClientImpl(
   override def runSqlHive(sql: String): Seq[String] = {
     assert(Utils.isTesting, s"${IS_TESTING.key} is not set to true")
     val maxResults = 100000
+    logger.warn("runSqlHive(sql)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sql, maxResults)
     val results = runHive(sql, maxResults)
     // It is very confusing when you only get back some of the results...
     if (results.size == maxResults) throw SparkException.internalError("RESULTS POSSIBLY TRUNCATED")
@@ -913,6 +922,7 @@ private[hive] class HiveClientImpl(
         // throw exceptions early.
         0
       }
+      logger.warn("getResponseCode(response)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", response)
     }
 
     // Hive query needs to start SessionState.
@@ -1056,6 +1066,7 @@ private[hive] class HiveClientImpl(
   override def getFunctionOption(
       db: String, name: String): Option[CatalogFunction] = withHiveState {
     shim.getFunctionOption(client, db, name)
+    logger.warn("getFunctionOption(db,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, name)
   }
 
   override def listFunctions(db: String, pattern: String): Seq[String] = withHiveState {
@@ -1065,6 +1076,7 @@ private[hive] class HiveClientImpl(
   def addJar(path: String): Unit = {
     val jarURI = Utils.resolveURI(path)
     clientLoader.addJar(jarURI.toURL)
+    logger.warn("addJar(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def newSession(): HiveClientImpl = {
@@ -1138,6 +1150,7 @@ private[hive] object HiveClientImpl extends Logging {
     // Examples:
     //   struct<x:int,y.z:int> -> struct<`x`:int,`y.z`:int>
     //   array<struct<x:int,y.z:int>> -> array<struct<`x`:int,`y.z`:int>>
+    logger.warn("getSparkSQLDataType(hc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hc)
     //   map<string,struct<x:int,y.z:int>> -> map<string,struct<`x`:int,`y.z`:int>>
     val typeStr = hc.getType.replaceAll("(?<=struct<|,)([^,<:]+)(?=:)", "`$1`")
     try {
@@ -1336,6 +1349,7 @@ private[hive] object HiveClientImpl extends Logging {
       }
     }
     tTable
+    logger.warn("extraFixesForNonView(tTable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tTable)
   }
 
   /**
@@ -1356,6 +1370,7 @@ private[hive] object HiveClientImpl extends Logging {
     // When table is external, `totalSize` is always zero, which will influence join strategy.
     // So when `totalSize` is zero, use `rawDataSize` instead. When `rawDataSize` is also zero,
     // return None.
+    logger.warn("readHiveStats(properties)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", properties)
     // In Hive, when statistics gathering is disabled, `rawDataSize` and `numRows` is always
     // zero after INSERT command. So they are used here only if they are larger than zero.
     if (totalSize.isDefined && totalSize.get > 0L) {
@@ -1465,6 +1480,7 @@ private[hive] object HiveClientImpl extends Logging {
         logDebug(s"Trying to set metastore client thrift max message to $maxMessageSize")
         configureMaxThriftMessageSize(hiveConf, hive.getMSC, maxMessageSize)
       }
+        logger.warn("getHive(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
 
     hive
   }
@@ -1473,6 +1489,8 @@ private[hive] object HiveClientImpl extends Logging {
     val field = obj.getClass.getDeclaredField(fieldName)
     field.setAccessible(true)
     field.get(obj).asInstanceOf[T]
+    logger.warn("getFieldValue(obj,fieldName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", obj, fieldName)
+  logger.warn("getFieldValue(obj,clazz,fieldName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", obj, clazz, fieldName)
   }
 
   private def getFieldValue[T](obj: Any, clazz: Class[_], fieldName: String): T = {

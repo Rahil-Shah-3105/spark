@@ -42,6 +42,7 @@ trait OperationHelper extends AliasHelper with PredicateHelper {
    * Collects all adjacent projects and filters, in-lining/substituting aliases if necessary.
    * Here are two examples for alias in-lining/substitution.
    * Before:
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
    * {{{
    *   SELECT c1 FROM (SELECT key AS c1 FROM t1) t2 WHERE c1 > 10
    *   SELECT c1 AS c2 FROM (SELECT key AS c1 FROM t1) t2 WHERE c1 > 10
@@ -119,6 +120,7 @@ object PhysicalOperation extends OperationHelper {
       fields.getOrElse(child.output),
       filters.flatMap(splitConjunctivePredicates),
       child))
+  planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 
@@ -484,6 +486,7 @@ trait RowLevelOperationExtractor {
 
     // in some cases, the optimizer replaces the v2 read relation with a local relation
     // for example, there is no reason to query the table if the condition is always false
+    planChangeLogger.warn("findReadRelation(table,plan,allowMultipleReads)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, plan, allowMultipleReads)
     // that's why it is valid not to find the corresponding v2 read relation
 
     readRelations match {

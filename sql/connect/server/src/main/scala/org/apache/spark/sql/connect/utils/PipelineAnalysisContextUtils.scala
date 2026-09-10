@@ -34,6 +34,7 @@ object PipelineAnalysisContextUtils {
   /** Get a list of extensions from the user context. */
   private def getExtensionList[T <: Message: ClassTag](
       extensions: mutable.Buffer[ProtoAny]): Seq[T] = {
+       logger.warn("getExtensionList(extensions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", extensions)
     val cls = implicitly[ClassTag[T]].runtimeClass
       .asInstanceOf[Class[_ <: Message]]
     extensions.collect {
@@ -46,6 +47,7 @@ object PipelineAnalysisContextUtils {
       userContext: UserContext): Seq[PipelineAnalysisContext] = {
     val userContextExtensions = userContext.getExtensionsList.asScala
     getExtensionList[PipelineAnalysisContext](userContextExtensions)
+    logger.warn("getPipelineAnalysisContextList(userContext)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", userContext)
   }
 
   /** Return whether the execution / analysis is inside a pipeline flow function. */

@@ -21,6 +21,7 @@ from typing import List, NamedTuple, Optional
 
 from py4j.java_collections import JavaArray
 from py4j.java_gateway import JavaObject
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkJobInfo(NamedTuple):
@@ -90,18 +91,21 @@ class StatusTracker:
         and may vary across invocations of this method. This method does
         not guarantee the order of the elements in its result.
         """
+        logger.warning("getJobIdsForGroup(self,jobGroup)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, jobGroup)
         return list(self._jtracker.getJobIdsForGroup(jobGroup))
 
     def getActiveStageIds(self) -> List[int]:
         """
         Returns an array containing the ids of all active stages.
         """
+        logger.warning("getActiveStageIds(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return sorted(list(self._jtracker.getActiveStageIds()))
 
     def getActiveJobsIds(self) -> List[int]:
         """
         Returns an array containing the ids of all active jobs.
         """
+        logger.warning("getActiveJobsIds(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return sorted((list(self._jtracker.getActiveJobIds())))
 
     def getJobInfo(self, jobId: int) -> Optional[SparkJobInfo]:
@@ -110,6 +114,7 @@ class StatusTracker:
         could not be found or was garbage collected.
         """
         job = self._jtracker.getJobInfo(jobId)
+        logger.warning("getJobInfo(self,jobId)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, jobId, jobId)
         if job is not None:
             return SparkJobInfo(jobId, job.stageIds(), str(job.status()))
         return None
@@ -122,6 +127,7 @@ class StatusTracker:
         stage = self._jtracker.getStageInfo(stageId)
         if stage is not None:
             # TODO: fetch them in batch for better performance
+            logger.warning("getStageInfo(self,stageId)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, stageId, stageId)
             attrs = [getattr(stage, f)() for f in SparkStageInfo._fields[1:]]
             return SparkStageInfo(stageId, *attrs)
         return None
@@ -133,6 +139,7 @@ class StatusTracker:
         numRunningTasks and memory metrics.
         Note this includes information for both the driver and executors.
         """
+        logger.warning("getExecutorInfos(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         executor_infos = self._jtracker.getExecutorInfos()
         return [
             SparkExecutorInfo(

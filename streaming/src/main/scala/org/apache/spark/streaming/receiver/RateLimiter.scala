@@ -63,6 +63,7 @@ private[receiver] abstract class RateLimiter(conf: SparkConf) extends Logging {
       } else {
         rateLimiter.setRate(newRate.toDouble)
       }
+      logger.warn("updateRate(newRate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newRate)
     }
 
   /**

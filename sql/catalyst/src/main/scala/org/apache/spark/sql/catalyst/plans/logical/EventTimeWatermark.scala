@@ -28,11 +28,13 @@ import org.apache.spark.sql.types.MetadataBuilder
 import org.apache.spark.unsafe.types.CalendarInterval
 
 object EventTimeWatermark {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** The [[org.apache.spark.sql.types.Metadata]] key used to hold the eventTime watermark delay. */
   val delayKey = "spark.watermarkDelayMs"
 
   def getDelayMs(delay: CalendarInterval): Long = {
     IntervalUtils.getDuration(delay, TimeUnit.MILLISECONDS)
+    planChangeLogger.warn("getDelayMs(delay)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", delay)
   }
 
   /**
@@ -63,6 +65,7 @@ object EventTimeWatermark {
         a
       }
     }
+    planChangeLogger.warn("updateEventTimeColumn(attributes,delayMs,newEventTime)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", attributes, delayMs, newEventTime)
   }
 }
 

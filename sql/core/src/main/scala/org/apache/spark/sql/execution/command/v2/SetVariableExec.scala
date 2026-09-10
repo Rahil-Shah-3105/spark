@@ -52,13 +52,16 @@ case class SetVariableExec(variables: Seq[VariableReference], query: SparkPlan)
         val value = row.get(index, v.dataType)
         setVariable(v, value)
       }
+    planChangeLogger.warn("setVariable(variable,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", variable, value)
     }
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def setVariable(
       variable: VariableReference,
       value: Any): Unit = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val namePartsCaseAdjusted = if (session.sessionState.conf.caseSensitiveAnalysis) {
       variable.originalNameParts
     } else {

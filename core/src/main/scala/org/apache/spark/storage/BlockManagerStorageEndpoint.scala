@@ -36,6 +36,7 @@ class BlockManagerStorageEndpoint(
     blockManager: BlockManager,
     mapOutputTracker: MapOutputTracker)
   extends IsolatedThreadSafeRpcEndpoint with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   private val asyncThreadPool =
     ThreadUtils.newDaemonCachedThreadPool("block-manager-storage-async-thread-pool", 100)
@@ -103,6 +104,7 @@ class BlockManagerStorageEndpoint(
       // 1. A task computing/caching the rdd block finished successfully and the rdd block can be
       //    turned to be visible. Driver will ask all block managers hosting the rdd block to mark
       //    the block as visible.
+      _driverLogger.warn("receiveAndReply(context)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", context)
       // 2. Once a replica of a visible block is cached and reported, driver will also ask the
       //    the block manager to mark the block as visible immediately.
       context.reply(blockManager.blockInfoManager.tryMarkBlockAsVisible(blockId))
@@ -111,6 +113,7 @@ class BlockManagerStorageEndpoint(
   private def doAsync[T](
       actionMessage: MessageWithContext,
       context: RpcCallContext)(body: => T): Unit = {
+       _driverLogger.warn("doAsync(actionMessage,context)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", actionMessage, context)
     val future = Future {
       logDebug(actionMessage.message)
       body

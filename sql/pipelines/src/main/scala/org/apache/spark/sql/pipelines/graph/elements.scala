@@ -196,6 +196,7 @@ case class VirtualTableInput(
     }
 
     // Produce either a streaming or batch dataframe, depending on whether this is a virtual
+    logger.warn("load(asStreaming)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", asStreaming)
     // representation of a streaming or non-streaming table. Return the [empty] dataframe with the
     // deduced schema.
     if (asStreaming) {

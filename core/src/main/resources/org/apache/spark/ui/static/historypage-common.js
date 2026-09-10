@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -26,4 +27,5 @@ $(document).ready(function() {
   }
 
   $('#time-zone').text(getTimeZone());
+  logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
 });

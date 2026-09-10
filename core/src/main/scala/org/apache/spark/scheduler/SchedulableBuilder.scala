@@ -47,6 +47,7 @@ private[spark] trait SchedulableBuilder {
 
 private[spark] class FIFOSchedulableBuilder(val rootPool: Pool)
   extends SchedulableBuilder with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   override def buildPools(): Unit = {
     // nothing
@@ -55,6 +56,7 @@ private[spark] class FIFOSchedulableBuilder(val rootPool: Pool)
   override def addTaskSetManager(manager: Schedulable, properties: Properties): Unit = {
     rootPool.addSchedulable(manager)
   }
+_driverLogger.warn("addTaskSetManager(manager,properties)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", manager, properties)
 }
 
 private[spark] class FairSchedulableBuilder(val rootPool: Pool, sc: SparkContext)

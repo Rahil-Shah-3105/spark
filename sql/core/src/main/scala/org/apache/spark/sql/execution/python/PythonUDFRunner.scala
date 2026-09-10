@@ -39,6 +39,7 @@ abstract class BasePythonUDFRunner(
     sessionUUID: Option[String])
   extends BasePythonRunner[Array[Byte], Array[Byte]](
     funcs.map(_._1), evalType, argOffsets, jobArtifactUUID, pythonMetrics) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override val envVars: util.Map[String, String] = {
     val envVars = new util.HashMap(funcs.head._1.funcs.head.envVars)
@@ -82,10 +83,12 @@ abstract class BasePythonUDFRunner(
       inputIterator: Iterator[Array[Byte]],
       partitionIndex: Int,
       context: TaskContext): Writer = {
+       planChangeLogger.warn("newWriter(env,worker,inputIterator,partitionIndex,context)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, worker, inputIterator, partitionIndex, context)
     new Writer(env, worker, inputIterator, partitionIndex, context) {
 
       protected override def writeCommand(dataOut: DataOutputStream): Unit = {
         writeUDF(dataOut)
+        planChangeLogger.warn("writeCommand(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
       }
 
       override def writeNextInputToStream(dataOut: DataOutputStream): Boolean = {
@@ -95,6 +98,7 @@ abstract class BasePythonUDFRunner(
           // Reached the end of input.
           dataOut.writeInt(SpecialLengths.END_OF_DATA_SECTION)
         }
+        planChangeLogger.warn("writeNextInputToStream(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
         val deltaData = dataOut.size() - startData
         pythonMetrics("pythonDataSent") += deltaData
         wroteData
@@ -111,6 +115,7 @@ abstract class BasePythonUDFRunner(
       handle: Option[PythonWorkerHandle],
       releasedOrClosed: AtomicBoolean,
       context: TaskContext): Iterator[Array[Byte]] = {
+       planChangeLogger.warn("newReaderIterator(stream,writer,startTime,env,worker,handle,releasedOrClosed,context)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stream, writer, startTime, env, worker, handle, releasedOrClosed, context)
     new ReaderIterator(
       stream, writer, startTime, env, worker, handle, releasedOrClosed, context) {
 
@@ -136,6 +141,7 @@ abstract class BasePythonUDFRunner(
               null
           }
         } catch handleException
+        planChangeLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
     }
   }
@@ -153,6 +159,7 @@ class PythonUDFRunner(
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDFRunner.writeUDFs(dataOut, funcs, argOffsets)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 }
 
@@ -179,6 +186,8 @@ object PythonUDFRunner {
       funcs: Seq[(ChainedPythonFunctions, Long)],
       argOffsets: Array[Array[Int]]): Unit = {
     writeUDFs(dataOut, funcs, argOffsets.map(_.map(ArgumentMetadata(_, None, false))))
+  planChangeLogger.warn("writeUDFs(dataOut,funcs,argOffsets)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, funcs, argOffsets)
+  planChangeLogger.warn("writeUDFs(dataOut,funcs,argMetas)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, funcs, argMetas)
   }
 
   def writeUDFs(

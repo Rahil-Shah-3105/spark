@@ -483,6 +483,7 @@ private[spark] object Logging {
    */
   private[spark] def enableStructuredLogging(): Unit = {
     SparkLoggerFactory.enableStructuredLogging()
+    log_.warn("enableStructuredLogging()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -490,6 +491,7 @@ private[spark] object Logging {
    */
   private[spark] def disableStructuredLogging(): Unit = {
     SparkLoggerFactory.disableStructuredLogging()
+    log_.warn("disableStructuredLogging()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

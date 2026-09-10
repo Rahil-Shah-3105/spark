@@ -31,6 +31,7 @@ from pyspark.pipelines.output import (
 )
 from pyspark.sql import Column
 from pyspark.sql.types import StructType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def append_flow(
@@ -213,6 +214,7 @@ def table(
 def materialized_view(query_function: QueryFunction) -> None: ...
 
 
+logger.warning("materialized_view(query_function)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", query_function)
 @overload
 def materialized_view(
     *,

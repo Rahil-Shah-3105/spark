@@ -34,8 +34,10 @@ private[spark] object StreamingPythonRunner {
       func: PythonFunction,
       connectUrl: String,
       sessionId: String,
+      _driverLogger.warn("apply(func,connectUrl,sessionId,workerModule)={},{},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", func, connectUrl, workerModule, sessionId)
       workerModule: String
   ): StreamingPythonRunner = {
+    _driverLogger = DriverLogger(_conf)
     new StreamingPythonRunner(func, connectUrl, sessionId, workerModule)
   }
 }

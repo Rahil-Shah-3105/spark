@@ -41,7 +41,10 @@ private[spark] object RpcEnv {
       conf: SparkConf,
       securityManager: SecurityManager,
       clientMode: Boolean = false): RpcEnv = {
+       _driverLogger = DriverLogger(_conf)
     create(name, host, host, port, conf, securityManager, 0, clientMode)
+  _driverLogger.warn("create(name,host,port,conf,securityManager,clientMode)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, host, port, conf, securityManager, clientMode)
+  _driverLogger.warn("create(name,bindAddress,advertiseAddress,port,conf,securityManager,numUsableCores,clientMode)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, bindAddress, advertiseAddress, port, conf, securityManager, numUsableCores, clientMode)
   }
 
   def create(
@@ -100,6 +103,7 @@ private[spark] abstract class RpcEnv(conf: SparkConf) {
    */
   def setupEndpointRefByURI(uri: String): RpcEndpointRef = {
     defaultLookupTimeout.awaitResult(asyncSetupEndpointRefByURI(uri))
+    _driverLogger.warn("setupEndpointRefByURI(uri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", uri)
   }
 
   /**
@@ -108,6 +112,7 @@ private[spark] abstract class RpcEnv(conf: SparkConf) {
    */
   def setupEndpointRef(address: RpcAddress, endpointName: String): RpcEndpointRef = {
     setupEndpointRefByURI(RpcEndpointAddress(address, endpointName).toString)
+    _driverLogger.warn("setupEndpointRef(address,endpointName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", address, endpointName)
   }
 
   /**

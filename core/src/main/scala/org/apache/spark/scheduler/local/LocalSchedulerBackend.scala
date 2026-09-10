@@ -95,6 +95,7 @@ private[spark] class LocalEndpoint(
   }
 
   def reviveOffers(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // local mode doesn't support extra resources like GPUs right now
     val offers = IndexedSeq(new WorkerOffer(localExecutorId, localExecutorHostname, freeCores,
       Some(rpcEnv.address.hostPort)))
@@ -127,6 +128,7 @@ private[spark] class LocalSchedulerBackend(
 
   override protected def createTokenManager(): Option[HadoopDelegationTokenManager] = {
     Some(new HadoopDelegationTokenManager(conf, scheduler.sc.hadoopConfiguration, localEndpoint))
+    _driverLogger.warn("createTokenManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def tokenManagerRequired(): Boolean = {
@@ -135,6 +137,7 @@ private[spark] class LocalSchedulerBackend(
 
   override protected def updateDelegationTokens(tokens: Array[Byte]): Unit = {
     SparkHadoopUtil.get.addDelegationTokens(tokens, conf)
+    _driverLogger.warn("updateDelegationTokens(tokens)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -145,6 +148,7 @@ private[spark] class LocalSchedulerBackend(
   def getUserClasspath(conf: SparkConf): Seq[URL] = {
     val userClassPathStr = conf.get(config.EXECUTOR_CLASS_PATH)
     userClassPathStr.map(_.split(File.pathSeparator)).toSeq.flatten.map(new File(_).toURI.toURL)
+    _driverLogger.warn("getUserClasspath(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   launcherBackend.connect()
@@ -185,6 +189,7 @@ private[spark] class LocalSchedulerBackend(
 
   override def statusUpdate(taskId: Long, state: TaskState, serializedData: ByteBuffer): Unit = {
     localEndpoint.send(StatusUpdate(taskId, state, serializedData))
+    _driverLogger.warn("statusUpdate(taskId,state,serializedData)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, state, serializedData, taskId)
   }
 
   override def applicationId(): String = appId
@@ -208,5 +213,6 @@ private[spark] class LocalSchedulerBackend(
 
   override def getTaskThreadDump(taskId: Long, executorId: String): Option[ThreadStackTrace] = {
     localEndpoint.askSync[Option[ThreadStackTrace]](TaskThreadDump(taskId))
+    _driverLogger.warn("getTaskThreadDump(taskId,executorId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, executorId, taskId)
   }
 }

@@ -50,6 +50,7 @@ private[spark] trait SupportsDelegationToken {
   protected def tokenManagerRequired(): Boolean = UserGroupInformation.isSecurityEnabled
 
   protected def setupTokenManager(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (tokenManagerRequired()) {
       delegationTokenManager = createTokenManager()
       delegationTokenManager.foreach { dtm =>
@@ -70,6 +71,7 @@ private[spark] trait SupportsDelegationToken {
         }
       }
     }
+    _driverLogger.warn("setupTokenManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected def stopTokenManager(): Unit = {

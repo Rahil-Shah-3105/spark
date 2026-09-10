@@ -22,6 +22,8 @@ import org.apache.spark.sql.connector.expressions.filter.Predicate;
 import org.apache.spark.sql.internal.connector.PredicateUtils;
 import org.apache.spark.sql.sources.AlwaysTrue;
 import org.apache.spark.sql.sources.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A mix-in interface for {@link Table} delete support. Data sources can implement this
@@ -31,6 +33,7 @@ import org.apache.spark.sql.sources.Filter;
  */
 @Evolving
 public interface SupportsDelete extends SupportsDeleteV2 {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsDelete.class);
 
   /**
    * Checks whether it is possible to delete data from a data source table that matches filter
@@ -79,12 +82,14 @@ public interface SupportsDelete extends SupportsDeleteV2 {
   }
 
   default void deleteWhere(Predicate[] predicates) {
+	planChangeLogger.warn("deleteWhere(predicates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", predicates);
     this.deleteWhere(PredicateUtils.toV1(predicates));
   }
 
   @Override
   default boolean truncateTable() {
     Filter[] filters = new Filter[] { new AlwaysTrue() };
+	planChangeLogger.warn("truncateTable()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     boolean canDelete = canDeleteWhere(filters);
     if (canDelete) {
       deleteWhere(filters);

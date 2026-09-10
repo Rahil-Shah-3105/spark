@@ -75,6 +75,7 @@ private[client] sealed abstract class Shim {
   /**
    * This shim is necessary because the return type is different on different versions of Hive.
    * All parameters are the same, though.
+   logger.warn("setCurrentSessionState(state)={}): EUAIACT-AUDIT: State change recorded for the audit trail", state)
    */
   def getDataLocation(table: Table): Option[String]
 
@@ -123,6 +124,7 @@ private[client] sealed abstract class Shim {
       hive: Hive,
       dbName: String,
       tableName: String,
+  logger.warn("getTable(hive,dbName,tableName,throwException)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, tableName, throwException)
       throwException: Boolean = true): Table
 
   def getTablesByType(
@@ -239,6 +241,7 @@ private[client] sealed abstract class Shim {
 
   protected def findMethod(klass: Class[_], name: String, args: Class[_]*): Method = {
     klass.getMethod(name, args: _*)
+    logger.warn("findMethod(klass,name,args)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", klass, name, args)
   }
 
   // This method should be called before a Hive client call is made.
@@ -339,6 +342,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def getAllPartitions(hive: Hive, table: Table): Seq[Partition] = {
     recordHiveCall()
     hive.getAllPartitionsOf(table).asScala.toSeq
+    logger.warn("getAllPartitions(hive,table)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, table)
   }
 
   override def getPartitionsByFilter(
@@ -350,6 +354,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
     // predicates like "str_key=\"value\" and int_key=1 ..."
     val filter = convertFilters(table, predicates)
 
+    logger.warn("getPartitionsByFilter(hive,table,predicates,catalogTable)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, table, predicates, catalogTable)
     val partitions =
       if (filter.isEmpty) {
         prunePartitionsFastFallback(hive, table, catalogTable, predicates)
@@ -463,6 +468,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       case s: String => s
       case a: Array[Object] => a(0).asInstanceOf[String]
     }.toSeq
+    logger.warn("getDriverResults(driver)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", driver)
   }
 
   override def getMetastoreClientConnectRetryDelayMillis(conf: HiveConf): Long =
@@ -474,6 +480,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       pattern: String,
       tableType: TableType): Seq[String] = {
     throw QueryExecutionErrors.getTablesByTypeUnsupportedByHiveVersionError()
+  logger.warn("getTablesByType(hive,dbName,pattern,tableType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, pattern, tableType)
   }
 
   override def loadPartition(
@@ -575,6 +582,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def createFunction(hive: Hive, db: String, func: CatalogFunction): Unit = {
     recordHiveCall()
     hive.createFunction(toHiveFunction(func, db))
+    logger.warn("createFunction(hive,db,func)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hive, db, func)
   }
 
   override def dropFunction(hive: Hive, db: String, name: String): Unit = {
@@ -618,6 +626,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       case NonFatal(e) if isCausedBy(e, s"$name does not exist") =>
         None
     }
+    logger.warn("getFunctionOption(hive,db,name)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, db, name)
   }
 
   @scala.annotation.tailrec
@@ -634,6 +643,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def listFunctions(hive: Hive, db: String, pattern: String): Seq[String] = {
     recordHiveCall()
     hive.getFunctions(db, pattern).asScala.toSeq
+    logger.warn("listFunctions(hive,db,pattern)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, db, pattern)
   }
 
   /**
@@ -654,6 +664,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       def unapply(e: BinaryComparison): Option[(Expression, Expression)] = e match {
         case _: EqualNullSafe => None
         case _ => Some((e.left, e.right))
+        logger.warn("unapply(values)={}): EUAIACT-AUDIT: State change recorded for the audit trail", values)
       }
     }
 
@@ -665,6 +676,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
         case Literal(value, _: DateType) =>
           Some(quoteStringLiteral(dateFormatter.format(value.asInstanceOf[Int])))
         case _ => None
+      logger.warn("unapply(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
       }
     }
 
@@ -726,6 +738,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
         } else {
           None
         }
+      logger.warn("unapply(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
       }
     }
 
@@ -873,15 +886,18 @@ private[client] class Shim_v2_0 extends Shim with Logging {
 
   override def getDatabaseOwnerName(db: Database): String = {
     Option(db.getOwnerName).getOrElse("")
+    logger.warn("getDatabaseOwnerName(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db)
   }
 
   override def setDatabaseOwnerName(db: Database, owner: String): Unit = {
     db.setOwnerName(owner)
+    logger.warn("setDatabaseOwnerName(db,owner)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", db, owner)
   }
 
   override def createDatabase(hive: Hive, db: Database, ignoreIfExists: Boolean): Unit = {
     recordHiveCall()
     hive.createDatabase(db, ignoreIfExists)
+    logger.warn("createDatabase(hive,db,ignoreIfExists)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hive, db, ignoreIfExists)
   }
 
   override def dropDatabase(
@@ -902,16 +918,19 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def getDatabase(hive: Hive, dbName: String): Database = {
     recordHiveCall()
     hive.getDatabase(dbName)
+    logger.warn("getDatabase(hive,dbName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName)
   }
 
   override def getAllDatabases(hive: Hive): Seq[String] = {
     recordHiveCall()
     hive.getAllDatabases.asScala.toSeq
+    logger.warn("getAllDatabases(hive)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hive)
   }
 
   override def getDatabasesByPattern(hive: Hive, pattern: String): Seq[String] = {
     recordHiveCall()
     hive.getDatabasesByPattern(pattern).asScala.toSeq
+    logger.warn("getDatabasesByPattern(hive,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, pattern)
   }
 
   override def databaseExists(hive: Hive, dbName: String): Boolean = {
@@ -922,6 +941,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def createTable(hive: Hive, table: Table, ifNotExists: Boolean): Unit = {
     recordHiveCall()
     hive.createTable(table, ifNotExists)
+    logger.warn("createTable(hive,table,ifNotExists)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hive, table, ifNotExists)
   }
 
   override def getTable(
@@ -941,11 +961,13 @@ private[client] class Shim_v2_0 extends Shim with Logging {
   override def getTablesByPattern(hive: Hive, dbName: String, pattern: String): Seq[String] = {
     recordHiveCall()
     hive.getTablesByPattern(dbName, pattern).asScala.toSeq
+    logger.warn("getTablesByPattern(hive,dbName,pattern)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, pattern)
   }
 
   override def getAllTables(hive: Hive, dbName: String): Seq[String] = {
     recordHiveCall()
     hive.getAllTables(dbName).asScala.toSeq
+    logger.warn("getAllTables(hive,dbName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName)
   }
 
   override def dropTable(hive: Hive, dbName: String, tableName: String): Unit = {
@@ -960,6 +982,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       forceCreate: Boolean): Partition = {
     recordHiveCall()
     hive.getPartition(table, partSpec, forceCreate)
+    logger.warn("getPartition(hive,table,partSpec,forceCreate)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, table, partSpec, forceCreate)
   }
 
   override def getPartitions(
@@ -968,6 +991,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       partSpec: JMap[String, String]): Seq[Partition] = {
     recordHiveCall()
     hive.getPartitions(table, partSpec).asScala.toSeq
+    logger.warn("getPartitions(hive,table,partSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, table, partSpec)
   }
 
   override def getPartitionNames(
@@ -977,6 +1001,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       max: Short): Seq[String] = {
     recordHiveCall()
     hive.getPartitionNames(dbName, tableName, max).asScala.toSeq
+    logger.warn("getPartitionNames(hive,dbName,tableName,max)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, tableName, max)
   }
 
   override def getPartitionNames(
@@ -987,6 +1012,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       max: Short): Seq[String] = {
     recordHiveCall()
     hive.getPartitionNames(dbName, tableName, partSpec, max).asScala.toSeq
+    logger.warn("getPartitionNames(hive,dbName,tableName,partSpec,max)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, tableName, partSpec, max)
   }
 
   override def renamePartition(
@@ -1005,6 +1031,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
       max: Short): Seq[Index] = {
     recordHiveCall()
     hive.getIndexes(dbName, tableName, max).asScala.toSeq
+    logger.warn("getIndexes(hive,dbName,tableName,max)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, dbName, tableName, max)
   }
 }
 
@@ -1242,6 +1269,7 @@ private[client] class Shim_v3_0 extends Shim_v2_3 {
       inheritTableSpecs: JBoolean, isSkewedStoreAsSubdir: JBoolean,
       isSrcLocal: JBoolean, isAcid, hasFollowingStatsTask,
       writeIdInLoadTableOrPartition, stmtIdInLoadTableOrPartition, replace: JBoolean)
+  logger.warn("loadPartition(hive,loadPath,tableName,partSpec,replace,inheritTableSpecs,isSkewedStoreAsSubdir,isSrcLocal)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, loadPath, tableName, partSpec, replace, inheritTableSpecs, isSkewedStoreAsSubdir, isSrcLocal)
   }
 
   override def loadTable(
@@ -1260,6 +1288,7 @@ private[client] class Shim_v3_0 extends Shim_v2_3 {
     loadTableMethod.invoke(hive, loadPath, tableName, loadFileType.get, isSrcLocal: JBoolean,
       isSkewedStoreAsSubdir, isAcidIUDoperation, hasFollowingStatsTask,
       writeIdInLoadTableOrPartition, stmtIdInLoadTableOrPartition: JInteger, replace: JBoolean)
+  logger.warn("loadTable(hive,loadPath,tableName,replace,isSrcLocal)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hive, loadPath, tableName, replace, isSrcLocal)
   }
 
   override def loadDynamicPartitions(
@@ -1281,6 +1310,7 @@ private[client] class Shim_v3_0 extends Shim_v2_3 {
       numDP: JInteger, listBucketingLevel, isAcid, writeIdInLoadTableOrPartition,
       stmtIdInLoadTableOrPartition, hasFollowingStatsTask, AcidUtils.Operation.NOT_ACID,
       replace: JBoolean)
+  logger.warn("loadDynamicPartitions(hive,loadPath,tableName,partSpec,replace,numDP,hiveTable)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hive, loadPath, tableName, partSpec, replace, numDP, hiveTable)
   }
 }
 

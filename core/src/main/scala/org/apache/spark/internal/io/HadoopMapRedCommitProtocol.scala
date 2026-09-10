@@ -30,10 +30,12 @@ import org.apache.spark.internal.LogKeys
  */
 class HadoopMapRedCommitProtocol(jobId: String, path: String)
   extends HadoopMapReduceCommitProtocol(jobId, path) {
+   _driverLogger = DriverLogger(_conf)
 
   override def setupCommitter(context: NewTaskAttemptContext): OutputCommitter = {
     val config = context.getConfiguration.asInstanceOf[JobConf]
     val committer = config.getOutputCommitter
+    _driverLogger.warn("setupCommitter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
     logInfo(log"Using output committer class" +
       log" ${MDC(LogKeys.CLASS_NAME, committer.getClass.getCanonicalName)}")
     committer

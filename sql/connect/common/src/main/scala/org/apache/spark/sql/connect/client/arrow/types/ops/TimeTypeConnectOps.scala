@@ -94,11 +94,13 @@ private[connect] class TimeTypeConnectOps(val t: TimeType) extends ConnectTypeOp
       timeBuilder.setPrecision(literal.getTime.getPrecision)
     }
     proto.DataType.newBuilder().setTime(timeBuilder.build()).build()
+    logger.warn("getProtoDataTypeFromLiteral(literal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", literal)
   }
 
   // ==================== Arrow Serialization ====================
 
   override def createArrowSerializer(vector: AnyRef): ArrowSerializer.Serializer = {
+    logger.warn("createArrowSerializer(vector)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vector)
     val v = vector.asInstanceOf[TimeNanoVector]
     new ArrowSerializer.FieldSerializer[LocalTime, TimeNanoVector](v) {
       override def set(index: Int, value: LocalTime): Unit =
@@ -111,6 +113,7 @@ private[connect] class TimeTypeConnectOps(val t: TimeType) extends ConnectTypeOp
       data: AnyRef,
       timeZoneId: String): ArrowDeserializers.Deserializer[Any] = {
     val v = data.asInstanceOf[FieldVector]
+    logger.warn("createArrowDeserializer(enc,data,timeZoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", enc, data, timeZoneId, timeZoneId)
     new ArrowDeserializers.LeafFieldDeserializer[LocalTime](enc, v, timeZoneId) {
       override def value(i: Int): LocalTime = reader.getLocalTime(i)
     }
@@ -118,5 +121,6 @@ private[connect] class TimeTypeConnectOps(val t: TimeType) extends ConnectTypeOp
 
   override def createArrowVectorReader(vector: FieldVector): ArrowVectorReader = {
     new TimeVectorReader(vector.asInstanceOf[TimeNanoVector])
+    logger.warn("createArrowVectorReader(vector)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vector)
   }
 }

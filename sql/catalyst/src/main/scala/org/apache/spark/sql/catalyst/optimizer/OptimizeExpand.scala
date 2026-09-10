@@ -54,6 +54,7 @@ import org.apache.spark.sql.internal.SQLConf
  * `spark.sql.optimizer.excludedRules`.
  */
 object OptimizeExpand extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     val threshold = conf.getConf(SQLConf.OPTIMIZE_EXPAND_RATIO)
@@ -77,6 +78,7 @@ object OptimizeExpand extends Rule[LogicalPlan] {
         val newInnerAgg = innerAgg.copy(child = newExpand)
         outerAgg.copy(child = newInnerAgg)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**

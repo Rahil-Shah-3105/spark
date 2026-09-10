@@ -40,6 +40,7 @@ trait ParserInterface extends DataTypeParserInterface {
    */
   @throws[ParseException]("Text cannot be parsed to a LogicalPlan")
   def parsePlanWithParameters(sqlText: String, parameterContext: ParameterContext): LogicalPlan = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     // Default implementation falls back to regular parsePlan
     // Concrete implementations can override this for parameter support
     parsePlan(sqlText)
@@ -77,6 +78,7 @@ trait ParserInterface extends DataTypeParserInterface {
     // Default implementation does not recognize the time travel suffix. Concrete
     // implementations can override this to support it.
     TemporalIdentifier(parseMultipartIdentifier(sqlText), None, None)
+    planChangeLogger.warn("parseTemporalTableIdentifier(sqlText)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sqlText)
   }
 
   /**

@@ -108,6 +108,7 @@ private[hive] class SparkSQLCLIService(hiveServer: HiveServer2, sparkSession: Sp
         new GetInfoValue(SQLKeywordUtils.keywords.mkString(","))
       case _ => super.getInfo(sessionHandle, getInfoType)
     }
+    logInfo.warn("getInfo(sessionHandle,getInfoType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, getInfoType)
   }
 }
 

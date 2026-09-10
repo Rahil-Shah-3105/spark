@@ -26,11 +26,13 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
  * Data Source V2 wrapper for Python Data Source.
  */
 class PythonDataSourceV2 extends TableProvider {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private var name: String = _
 
   def setShortName(str: String): Unit = {
     assert(name == null)
     name = str
+    planChangeLogger.warn("setShortName(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str)
   }
 
   private def shortName: String = {
@@ -50,6 +52,7 @@ class PythonDataSourceV2 extends TableProvider {
       dataSourceInPython = source.createDataSourceInPython(shortName, options, userSpecifiedSchema)
     }
     dataSourceInPython
+    planChangeLogger.warn("getOrCreateDataSourceInPython(shortName,options,userSpecifiedSchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", shortName, options, userSpecifiedSchema)
   }
 
   private var readInfo: PythonDataSourceReadInfo = _
@@ -65,10 +68,12 @@ class PythonDataSourceV2 extends TableProvider {
       readInfo = source.createReadInfoInPython(creationResult, outputSchema, isStreaming)
     }
     readInfo
+    planChangeLogger.warn("getOrCreateReadInfo(shortName,options,outputSchema,isStreaming)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", shortName, options, outputSchema, isStreaming)
   }
 
   def setReadInfo(readInfo: PythonDataSourceReadInfo): Unit = {
     this.readInfo = readInfo
+    planChangeLogger.warn("setReadInfo(readInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", readInfo)
   }
 
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = {
@@ -80,6 +85,7 @@ class PythonDataSourceV2 extends TableProvider {
       partitioning: Array[Transform],
       properties: java.util.Map[String, String]): Table = {
     new PythonTable(this, shortName, schema)
+    planChangeLogger.warn("getTable(schema,partitioning,properties)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, partitioning, properties)
   }
 
   override def supportsExternalMetadata(): Boolean = true

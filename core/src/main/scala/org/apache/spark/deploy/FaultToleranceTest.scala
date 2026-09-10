@@ -59,6 +59,7 @@ import org.apache.spark.util.{ThreadUtils, Utils}
  *     docker/ directory. Run 'docker/spark-test/build' to generate these.
  */
 private object FaultToleranceTest extends App with Logging {
+  _driverLogger = DriverLogger(_conf)
 
   private val conf = new SparkConf()
   private val zkDir = conf.get(config.Deploy.ZOOKEEPER_DIRECTORY).getOrElse("/spark")
@@ -203,12 +204,14 @@ private object FaultToleranceTest extends App with Logging {
   private def addMasters(num: Int): Unit = {
     logInfo(s">>>>> ADD MASTERS $num <<<<<")
     (1 to num).foreach { _ => masters += SparkDocker.startMaster(dockerMountDir) }
+    _driverLogger.warn("addMasters(num)={}): EUAIACT-AUDIT: State change recorded for the audit trail", num)
   }
 
   private def addWorkers(num: Int): Unit = {
     logInfo(s">>>>> ADD WORKERS $num <<<<<")
     val masterUrls = getMasterUrls(masters.toSeq)
     (1 to num).foreach { _ => workers += SparkDocker.startWorker(dockerMountDir, masterUrls) }
+    _driverLogger.warn("addWorkers(num)={}): EUAIACT-AUDIT: State change recorded for the audit trail", num)
   }
 
   /** Creates a SparkContext, which constructs a Client to interact with our cluster. */
@@ -219,10 +222,12 @@ private object FaultToleranceTest extends App with Logging {
     // property, we need to reset it.
     System.setProperty(config.DRIVER_PORT.key, "0")
     sc = new SparkContext(getMasterUrls(masters.toSeq), "fault-tolerance", containerSparkHome)
+    _driverLogger.warn("createClient()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def getMasterUrls(masters: Seq[TestMasterInfo]): String = {
     "spark://" + masters.map(master => master.ip + ":7077").mkString(",")
+    _driverLogger.warn("getMasterUrls(masters)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", masters)
   }
 
   private def getLeader: TestMasterInfo = {
@@ -372,6 +377,7 @@ private class TestMasterInfo(val ip: String, val dockerId: DockerId, val logFile
         // ignore, no state update
         logWarning("Exception", e)
     }
+    _driverLogger.warn("readState()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def kill(): Unit = { Docker.kill(dockerId) }
@@ -416,6 +422,7 @@ private object SparkDocker {
         val ip = line.split("=")(1)
         ipPromise.success(ip)
       }
+      _driverLogger.warn("findIpAndLog(line)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", line)
 
       outStream.write(line + "\n")
       outStream.flush()
@@ -436,6 +443,7 @@ private object Docker extends Logging {
   def makeRunCmd(imageTag: String, args: String = "", mountDir: String = ""): ProcessBuilder = {
     val mountCmd = if (mountDir != "") { " -v " + mountDir } else ""
 
+    _driverLogger.warn("makeRunCmd(imageTag,args,mountDir)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", imageTag, args, mountDir)
     val cmd = "docker run -privileged %s %s %s".format(mountCmd, imageTag, args)
     logDebug("Run command: " + cmd)
     cmd

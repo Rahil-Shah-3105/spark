@@ -42,6 +42,7 @@ private[spark] class WholeTextFileInputFormat
       new ConfigurableCombineFileRecordReader(split, context, classOf[WholeTextFileRecordReader])
     reader.setConf(getConf)
     reader
+      _driverLogger.warn("createRecordReader(split,context)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", split, context)
   }
 
   /**
@@ -49,6 +50,7 @@ private[spark] class WholeTextFileInputFormat
    * which is set through setMaxSplitSize
    */
   def setMinPartitions(context: JobContext, minPartitions: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val files = listStatus(context).asScala
     val totalLen = files.map(file => if (file.isDirectory) 0L else file.getLen).sum
     val maxSplitSize = Math.ceil(totalLen * 1.0 /
@@ -62,6 +64,7 @@ private[spark] class WholeTextFileInputFormat
     if (maxSplitSize < minSplitSizePerNode) {
       super.setMinSplitSizeNode(maxSplitSize)
     }
+    _driverLogger.warn("setMinPartitions(context,minPartitions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", context, minPartitions)
 
     if (maxSplitSize < minSplitSizePerRack) {
       super.setMinSplitSizeRack(maxSplitSize)

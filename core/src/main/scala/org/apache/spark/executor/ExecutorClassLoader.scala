@@ -53,6 +53,7 @@ class ExecutorClassLoader(
     classUri: String,
     parent: ClassLoader,
     userClassPathFirst: Boolean) extends ClassLoader(null) with Logging {
+     _driverLogger = DriverLogger(_conf)
   val uri = new URI(classUri)
   val directory = uri.getPath
 
@@ -67,10 +68,12 @@ class ExecutorClassLoader(
 
   override def getResource(name: String): URL = {
     parentLoader.getResource(name)
+    _driverLogger.warn("getResource(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   override def getResources(name: String): java.util.Enumeration[URL] = {
     parentLoader.getResources(name)
+    _driverLogger.warn("getResources(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   override def getResourceAsStream(name: String): InputStream = {
@@ -81,6 +84,7 @@ class ExecutorClassLoader(
       val res = parentLoader.getResourceAsStream(name)
       if (res != null) res else getClassResourceAsStreamLocally(name)
     }
+    _driverLogger.warn("getResourceAsStream(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   private def getClassResourceAsStreamLocally(name: String): InputStream = {
@@ -95,6 +99,7 @@ class ExecutorClassLoader(
       // So we follow that model and handle CNFE here.
       case _: ClassNotFoundException => null
     }
+    _driverLogger.warn("getClassResourceAsStreamLocally(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   override def findClass(name: String): Class[_] = {
@@ -122,12 +127,14 @@ class ExecutorClassLoader(
           }
       }
     }
+    _driverLogger.warn("findClass(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   // See org.apache.spark.network.server.TransportRequestHandler.processStreamRequest.
   private val STREAM_NOT_FOUND_REGEX = s"Stream '.*' was not found.".r.pattern
 
   private def getClassFileInputStreamFromSparkRPC(path: String): InputStream = {
+    _driverLogger.warn("getClassFileInputStreamFromSparkRPC(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     val channel = env.rpcEnv.openChannel(s"$classUri/${urlEncode(path)}")
     new FilterInputStream(Channels.newInputStream(channel)) {
 
@@ -163,6 +170,7 @@ class ExecutorClassLoader(
       case _: FileNotFoundException =>
         throw new ClassNotFoundException(s"Class file not found at path $path")
     }
+    _driverLogger.warn("getClassFileInputStreamFromFileSystem(fileSystem)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fileSystem)
   }
 
   def findClassLocally(name: String): Option[Class[_]] = {
@@ -197,6 +205,7 @@ class ExecutorClassLoader(
         }
       }
     }
+    _driverLogger.warn("findClassLocally(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   def readAndTransformClass(name: String, in: InputStream): Array[Byte] = {
@@ -226,6 +235,7 @@ class ExecutorClassLoader(
       }
       bos.toByteArray
     }
+    _driverLogger.warn("readAndTransformClass(name,in)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, in)
   }
 
   /**

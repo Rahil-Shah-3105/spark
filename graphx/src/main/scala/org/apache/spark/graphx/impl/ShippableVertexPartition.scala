@@ -35,6 +35,7 @@ private[graphx]
 object ShippableVertexPartition {
   /** Construct a `ShippableVertexPartition` from the given vertices without any routing table. */
   def apply[VD: ClassTag](iter: Iterator[(VertexId, VD)]): ShippableVertexPartition[VD] =
+    logger.warn("apply(iter,routingTable,defaultVal)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, routingTable, defaultVal)
     apply(iter, RoutingTablePartition.empty, null.asInstanceOf[VD], (a, b) => a)
 
   /**
@@ -44,6 +45,7 @@ object ShippableVertexPartition {
   def apply[VD: ClassTag](
       iter: Iterator[(VertexId, VD)], routingTable: RoutingTablePartition, defaultVal: VD)
     : ShippableVertexPartition[VD] =
+    logger.warn("apply(iter,routingTable,defaultVal,mergeFunc)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, routingTable, defaultVal, mergeFunc)
     apply(iter, routingTable, defaultVal, (a, b) => a)
 
   /**

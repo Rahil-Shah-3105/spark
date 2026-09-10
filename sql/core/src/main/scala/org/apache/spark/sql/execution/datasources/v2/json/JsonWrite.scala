@@ -32,6 +32,7 @@ case class JsonWrite(
     formatName: String,
     supportsDataType: DataType => Boolean,
     info: LogicalWriteInfo) extends FileWrite {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def prepareWrite(
       sqlConf: SQLConf,
       job: Job,
@@ -45,6 +46,7 @@ case class JsonWrite(
     parsedOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(conf, codec)
     }
+    planChangeLogger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
 
     new OutputWriterFactory {
       override def newInstance(
@@ -56,6 +58,7 @@ case class JsonWrite(
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".json" + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }

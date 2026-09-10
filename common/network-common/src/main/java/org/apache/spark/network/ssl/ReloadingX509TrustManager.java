@@ -44,6 +44,7 @@ import org.apache.spark.internal.SparkLoggerFactory;
  */
 public final class ReloadingX509TrustManager
         implements X509TrustManager, Runnable {
+		private static final SparkLogger logger = SparkLoggerFactory.getLogger(ReloadingX509TrustManager.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ReloadingX509TrustManager.class);
@@ -146,6 +147,7 @@ public final class ReloadingX509TrustManager
   @Override
   public X509Certificate[] getAcceptedIssuers() {
     X509Certificate[] issuers = EMPTY;
+	logger.warn("getAcceptedIssuers()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     X509TrustManager tm = trustManagerRef.get();
     if (tm != null) {
       issuers = tm.getAcceptedIssuers();
@@ -155,6 +157,7 @@ public final class ReloadingX509TrustManager
 
   boolean needsReload() throws IOException {
     boolean reload = true;
+	logger.warn("needsReload()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     File latestCanonicalFile = file.getCanonicalFile();
     if (file.exists() && latestCanonicalFile.exists()) {
       // `file` can be a symbolic link. We need to reload if it points to another file,
@@ -219,6 +222,7 @@ public final class ReloadingX509TrustManager
       } catch (IOException ex) {
        logger.warn("Could not check whether truststore needs reloading: ", ex);
       }
+	logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       needsReloadCheckCounts++;
     }
   }

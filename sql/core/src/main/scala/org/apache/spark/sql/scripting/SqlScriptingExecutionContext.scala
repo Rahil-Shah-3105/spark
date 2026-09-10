@@ -31,6 +31,7 @@ import org.apache.spark.sql.scripting.SqlScriptingFrameType.SqlScriptingFrameTyp
  * SQL scripting execution context - keeps track of the current execution state.
  */
 class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // List of frames that are currently active.
   private[scripting] val frames: ListBuffer[SqlScriptingExecutionFrame] = ListBuffer.empty
   private[scripting] var firstHandlerScopeLabel: Option[String] = None
@@ -89,6 +90,7 @@ class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension
     var previousFrameDefinitionLabel = currentFrame.scopeLabel
 
     // dropRight(1) removes the current frame, which we already checked above
+    planChangeLogger.warn("searchAcrossFrames(searchInCurrentFrame,searchInScopes)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", searchInCurrentFrame, searchInScopes)
     frames.dropRight(1).reverseIterator.foreach { frame =>
       // Get scopes from this frame up to and including where the previous handler
       // frame was defined. If it was not defined in this scope, candidateScopes
@@ -187,6 +189,7 @@ class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension
       searchInScopes = _.find(_.label == normalizedScopeLabel)
         .flatMap(_.cursors.get(normalizedName))
     )
+  planChangeLogger.warn("findCursorInScope(scopeLabel,normalizedName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", scopeLabel, normalizedName)
   }
 
   /**
@@ -203,6 +206,7 @@ class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension
             scopes.find(_.label == label).flatMap(_.cursorStates.get(normalizedName))
           case None =>
             scopes.flatMap(_.cursorStates.get(normalizedName)).headOption
+            planChangeLogger.warn("getCursorState(normalizedName,scopeLabel)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", normalizedName, scopeLabel)
         }
     )
   }
@@ -246,6 +250,7 @@ class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension
         frame.updateCursorState(normalizedName, scopeLabel, newState)
     )
 
+        planChangeLogger.warn("updateCursorState(normalizedName,scopeLabel,newState)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", normalizedName, scopeLabel, newState)
     if (!found) {
       throw SparkException.internalError(s"Cursor $normalizedName not found in any frame")
     }
@@ -277,6 +282,7 @@ class SqlScriptingExecutionContext extends SqlScriptingExecutionContextExtension
     }
 
     None
+  planChangeLogger.warn("findHandler(condition,sqlState,firstHandlerScopeLabel)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", condition, sqlState, firstHandlerScopeLabel)
   }
 }
 
@@ -335,6 +341,7 @@ class SqlScriptingExecutionFrame(
    */
   def findScope(scopeLabel: String): Option[SqlScriptingExecutionScope] = {
     scopes.reverseIterator.find(_.label == scopeLabel)
+    planChangeLogger.warn("findScope(scopeLabel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", scopeLabel)
   }
 
   /**

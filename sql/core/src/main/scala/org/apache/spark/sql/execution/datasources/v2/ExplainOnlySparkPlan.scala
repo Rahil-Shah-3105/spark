@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.trees.LeafLike
 import org.apache.spark.sql.execution.SparkPlan
 
 case class ExplainOnlySparkPlan(toExplain: LogicalPlan) extends SparkPlan with LeafLike[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def output: Seq[Attribute] = Nil
 
@@ -34,5 +35,6 @@ case class ExplainOnlySparkPlan(toExplain: LogicalPlan) extends SparkPlan with L
 
   override protected def doExecute(): RDD[InternalRow] = {
     throw new UnsupportedOperationException()
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

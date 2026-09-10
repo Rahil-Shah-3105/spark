@@ -37,6 +37,7 @@ from pyspark.ml.util import Identifiable
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["Param", "Params", "TypeConverters"]
 
@@ -133,6 +134,7 @@ class TypeConverters:
         elif isinstance(value, (np.ndarray, tuple, range, array.array)):
             return list(value)
         elif isinstance(value, Vector):
+            logger.warning("toList(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             return list(value.toArray())
         else:
             raise TypeError("Could not convert %s to list" % value)
@@ -144,6 +146,7 @@ class TypeConverters:
         """
         if TypeConverters._can_convert_to_list(value):
             value = TypeConverters.toList(value)
+            logger.warning("toListFloat(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             if all(map(lambda v: TypeConverters._is_numeric(v), value)):
                 return [float(v) for v in value]
         raise TypeError("Could not convert %s to list of floats" % value)
@@ -154,6 +157,7 @@ class TypeConverters:
         Convert a value to list of list of floats, if possible.
         """
         if TypeConverters._can_convert_to_list(value):
+            logger.warning("toListListFloat(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             value = TypeConverters.toList(value)
             return [TypeConverters.toListFloat(v) for v in value]
         raise TypeError("Could not convert %s to list of list of floats" % value)
@@ -165,6 +169,7 @@ class TypeConverters:
         """
         if TypeConverters._can_convert_to_list(value):
             value = TypeConverters.toList(value)
+            logger.warning("toListInt(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             if all(map(lambda v: TypeConverters._is_integer(v), value)):
                 return [int(v) for v in value]
         raise TypeError("Could not convert %s to list of ints" % value)
@@ -176,6 +181,7 @@ class TypeConverters:
         """
         if TypeConverters._can_convert_to_list(value):
             value = TypeConverters.toList(value)
+            logger.warning("toListString(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
             if all(map(lambda v: TypeConverters._can_convert_to_string(v), value)):
                 return [TypeConverters.toString(v) for v in value]
         raise TypeError("Could not convert %s to list of strings" % value)
@@ -327,6 +333,7 @@ class Params(Identifiable, metaclass=ABCMeta):
         """
         param = getattr(self, paramName)
         if isinstance(param, Param):
+            logger.warning("getParam(self,paramName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, paramName)
             return param
         else:
             raise ValueError("Cannot find param with name %s." % paramName)
@@ -335,6 +342,7 @@ class Params(Identifiable, metaclass=ABCMeta):
         """
         Checks whether a param is explicitly set by user.
         """
+        logger.warning("isSet(self,param)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, param)
         param = self._resolveParam(param)
         return param in self._paramMap
 
@@ -376,6 +384,7 @@ class Params(Identifiable, metaclass=ABCMeta):
         """
         param = self._resolveParam(param)
         if param in self._paramMap:
+            logger.warning("getOrDefault(self,param)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, param)
             return self._paramMap[param]
         else:
             return self._defaultParamMap[param]
@@ -401,6 +410,7 @@ class Params(Identifiable, metaclass=ABCMeta):
         if extra is None:
             extra = dict()
         paramMap = self._defaultParamMap.copy()
+        logger.warning("extractParamMap(self,extra)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, extra)
         paramMap.update(self._paramMap)
         paramMap.update(extra)
         return paramMap
@@ -438,6 +448,7 @@ class Params(Identifiable, metaclass=ABCMeta):
         self._shouldOwn(param)
         try:
             value = param.typeConverter(value)
+            logger.warning("set(self,param,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, param, value)
         except ValueError as e:
             raise ValueError('Invalid param value given for param "%s". %s' % (param.name, e))
         self._paramMap[param] = value

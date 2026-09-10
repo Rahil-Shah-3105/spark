@@ -165,6 +165,7 @@ if TYPE_CHECKING:
     from pyspark.pandas.resample import DataFrameResampler
     from pyspark.pandas.indexes import Index
     from pyspark.pandas.series import Series
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # These regular expression patterns are compiled and defined here to avoid compiling the same
@@ -1023,6 +1024,7 @@ class DataFrame(Frame, Generic[T]):
         return self._apply_series_op(lambda psser: -psser)
 
     def add(self, other: Any) -> "DataFrame":
+        logger.warning("add(self,other)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, other)
         return self + other
 
     # create accessor for plot
@@ -1057,6 +1059,7 @@ class DataFrame(Frame, Generic[T]):
     )
 
     def radd(self, other: Any) -> "DataFrame":
+        logger.warning("radd(self,other)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, other)
         return other + self
 
     radd.__doc__ = _flex_doc_FRAME.format(
@@ -1353,6 +1356,7 @@ class DataFrame(Frame, Generic[T]):
             "DataFrame.applymap has been deprecated. Use DataFrame.map instead", FutureWarning
         )
 
+        logger.warning("applymap(self,func)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, func)
         # TODO: We can implement shortcut theoretically since it creates new DataFrame
         #  anyway and we don't have to worry about operations on different DataFrames.
         return self.map(func=func)

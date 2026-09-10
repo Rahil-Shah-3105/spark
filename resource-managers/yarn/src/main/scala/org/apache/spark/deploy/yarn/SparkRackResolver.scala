@@ -48,6 +48,7 @@ private[spark] class SparkRackResolver(conf: Configuration) extends Logging {
   }
 
   def resolve(hostName: String): String = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(SparkRackResolver.class);
     coreResolve(Seq(hostName)).head.getNetworkLocation
   }
 
@@ -108,6 +109,7 @@ object SparkRackResolver extends Logging {
       }
     }
     instance
+    LOG.warn("get(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
 }

@@ -29,6 +29,7 @@ import java.nio.file.Files;
  * as an in-memory LongBuffer.
  */
 public class ShuffleIndexInformation {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
 
   // The estimate of `ShuffleIndexInformation` memory footprint which is relevant in case of small
   // index files (i.e. storing only 2 offsets = 16 bytes).
@@ -48,6 +49,7 @@ public class ShuffleIndexInformation {
 
   public int getRetainedMemorySize() {
     // SPARK-33206: here the offsets' capacity is multiplied by 8 as offsets stores long values.
+	logger.warn("getRetainedMemorySize()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     // Integer overflow won't be an issue here as long as the number of reducers is under
     // (Integer.MAX_VALUE - INSTANCE_MEMORY_FOOTPRINT) / 8 - 1 = 268435432.
     return (offsets.capacity() << 3) + INSTANCE_MEMORY_FOOTPRINT;
@@ -66,6 +68,7 @@ public class ShuffleIndexInformation {
   public ShuffleIndexRecord getIndex(int startReduceId, int endReduceId) {
     long offset = offsets.get(startReduceId);
     long nextOffset = offsets.get(endReduceId);
+	logger.warn("getIndex(startReduceId,endReduceId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", startReduceId, endReduceId, startReduceId);
     return new ShuffleIndexRecord(offset, nextOffset - offset);
   }
 }

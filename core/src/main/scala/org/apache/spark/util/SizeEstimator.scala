@@ -45,6 +45,7 @@ private[spark] trait KnownSizeEstimation {
 
 /**
  * :: DeveloperApi ::
+ _driverLogger = DriverLogger(_conf)
  * Estimates the sizes of Java objects (number of bytes of memory they occupy), for use in
  * memory-aware caches.
  *
@@ -386,6 +387,7 @@ object SizeEstimator extends Logging {
     shellSize = alignSizeUp(alignedSize, pointerSize)
 
     // Create and cache a new ClassInfo
+    _driverLogger.warn("getClassInfo(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
     val newInfo = new ClassInfo(shellSize, pointerFields)
     classInfos.put(cls, newInfo)
     newInfo

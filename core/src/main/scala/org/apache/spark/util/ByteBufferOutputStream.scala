@@ -32,8 +32,11 @@ private[spark] class ByteBufferOutputStream(capacity: Int) extends ByteArrayOutp
   private[this] var closed: Boolean = false
 
   override def write(b: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     require(!closed, "cannot write to a closed ByteBufferOutputStream")
     super.write(b)
+    _driverLogger.warn("write(b,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", b, off, len)
+  _driverLogger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
   }
 
   override def write(b: Array[Byte], off: Int, len: Int): Unit = {
@@ -44,6 +47,7 @@ private[spark] class ByteBufferOutputStream(capacity: Int) extends ByteArrayOutp
   override def reset(): Unit = {
     require(!closed, "cannot reset a closed ByteBufferOutputStream")
     super.reset()
+    _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def close(): Unit = {

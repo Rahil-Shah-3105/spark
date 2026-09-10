@@ -30,15 +30,18 @@ import org.apache.spark.util.Utils
 private[deploy] object JsonProtocol {
 
   private def writeResourcesInfo(info: Map[String, ResourceInformation]): JObject = {
+    _driverLogger = DriverLogger(_conf)
     val jsonFields = info.map {
       case (k, v) => JField(k, v.toJson())
     }
     JObject(jsonFields.toList)
+    _driverLogger.warn("writeResourcesInfo(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 
   private def writeResourceRequirement(req: ResourceRequirement): JObject = {
     ("name" -> req.resourceName) ~
     ("amount" -> req.amount)
+    _driverLogger.warn("writeResourceRequirement(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req)
   }
 
   /**
@@ -76,6 +79,7 @@ private[deploy] object JsonProtocol {
     ("memoryfree" -> obj.memoryFree) ~
     ("resources" -> writeResourcesInfo(obj.resourcesInfo)) ~
     ("resourcesused" -> writeResourcesInfo(obj.resourcesInfoUsed)) ~
+    _driverLogger.warn("writeWorkerInfo(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("resourcesfree" -> writeResourcesInfo(obj.resourcesInfoFree)) ~
     ("state" -> obj.state.toString) ~
     ("lastheartbeat" -> obj.lastHeartbeat)
@@ -111,6 +115,7 @@ private[deploy] object JsonProtocol {
     ("resourcesperslave" -> obj.desc.resourceReqsPerExecutor
       .toList.map(writeResourceRequirement)) ~
     ("submitdate" -> obj.submitDate.toString) ~
+    _driverLogger.warn("writeApplicationInfo(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("state" -> obj.state.toString) ~
     ("duration" -> obj.duration)
   }
@@ -140,6 +145,7 @@ private[deploy] object JsonProtocol {
     ("memoryperexecutor" -> obj.memoryPerExecutorMB) ~
     ("resourcesperexecutor" -> obj.resourceReqsPerExecutor.toList.map(writeResourceRequirement)) ~
     ("memoryperslave" -> obj.memoryPerExecutorMB) ~
+    _driverLogger.warn("writeApplicationDescription(obj,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, conf)
     ("resourcesperslave" -> obj.resourceReqsPerExecutor.toList.map(writeResourceRequirement)) ~
     ("user" -> obj.user) ~
     ("command" -> redactedCommand.toString)
@@ -160,6 +166,7 @@ private[deploy] object JsonProtocol {
   def writeExecutorRunner(obj: ExecutorRunner): JObject = {
     ("id" -> obj.execId) ~
     ("memory" -> obj.memory) ~
+    _driverLogger.warn("writeExecutorRunner(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("resources" -> writeResourcesInfo(obj.resources)) ~
     ("appid" -> obj.appId) ~
     ("appdesc" -> writeApplicationDescription(obj.appDesc, obj.conf))
@@ -187,6 +194,7 @@ private[deploy] object JsonProtocol {
     ("cores" -> obj.desc.cores) ~
     ("memory" -> obj.desc.mem) ~
     ("resources" -> writeResourcesInfo(obj.resources)) ~
+    _driverLogger.warn("writeDriverInfo(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("submitdate" -> obj.submitDate.toString) ~
     ("worker" -> obj.worker.map(_.id).getOrElse("None")) ~
     ("mainclass" -> obj.desc.command.arguments(2))
@@ -273,6 +281,7 @@ private[deploy] object JsonProtocol {
           case field => (field -> "")
         }
     }
+    _driverLogger.warn("writeMasterState(obj,field)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, field)
   }
 
   /**
@@ -303,6 +312,7 @@ private[deploy] object JsonProtocol {
     ("memory" -> obj.memory) ~
     ("memoryused" -> obj.memoryUsed) ~
     ("resources" -> writeResourcesInfo(obj.resources)) ~
+    _driverLogger.warn("writeWorkerState(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("resourcesused" -> writeResourcesInfo(obj.resourcesUsed)) ~
     ("executors" -> obj.executors.map(writeExecutorRunner)) ~
     ("finishedexecutors" -> obj.finishedExecutors.map(writeExecutorRunner))
@@ -321,6 +331,7 @@ private[deploy] object JsonProtocol {
     ("cores" -> cores) ~
     ("coresused" -> coresUsed) ~
     ("coresutilization" -> (if (cores == 0) 100 else 100 * coresUsed / cores)) ~
+    _driverLogger.warn("writeClusterUtilization(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     ("memory" -> memory) ~
     ("memoryused" -> memoryUsed) ~
     ("memoryutilization" -> (if (memory == 0) 100 else 100 * memoryUsed / memory))

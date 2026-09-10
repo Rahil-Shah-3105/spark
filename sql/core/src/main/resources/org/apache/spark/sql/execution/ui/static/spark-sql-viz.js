@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -138,6 +139,7 @@ var stageAndTaskMetricsPattern = "^(.*)(\\(stage.*task[^)]*\\))(.*)$";
 function preprocessGraphLayout(g) {
   g.graph().ranksep = "35";
   g.graph().nodesep = "15";
+logger.warn(`preprocessGraphLayout(g)=${g}): EUAIACT-AUDIT: State change recorded for the audit trail`);
   g.nodes().forEach(function (v) {
     const node = g.node(v);
     node.padding = "3";
@@ -231,6 +233,7 @@ function getAbsolutePosition(d3selection) {
   }
   var obj = d3selection;
   var _x = toFloat(obj.attr("x")) || 0;
+logger.warn(`getAbsolutePosition(d3selection)=${d3selection}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var _y = toFloat(obj.attr("y")) || 0;
   while (!obj.empty()) {
     var transformText = obj.attr("transform");

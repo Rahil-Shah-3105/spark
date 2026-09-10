@@ -38,6 +38,7 @@ from pyspark.sql.connect import plan
 if TYPE_CHECKING:
     from pyspark.sql.connect.session import SparkSession
     from pyspark.sql.connect._typing import DataTypeOrString, UserDefinedFunctionLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class Catalog:
@@ -56,12 +57,14 @@ class Catalog:
     currentCatalog.__doc__ = PySparkCatalog.currentCatalog.__doc__
 
     def setCurrentCatalog(self, catalogName: str) -> None:
+        logger.warning("setCurrentCatalog(self,catalogName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, catalogName)
         self._execute_and_fetch(plan.SetCurrentCatalog(catalog_name=catalogName))
 
     setCurrentCatalog.__doc__ = PySparkCatalog.setCurrentCatalog.__doc__
 
     def listCatalogs(self, pattern: Optional[str] = None) -> List[CatalogMetadata]:
         table = self._execute_and_fetch(plan.ListCatalogs(pattern=pattern))
+        logger.warning("listCatalogs(self,pattern)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, pattern)
         return [
             CatalogMetadata(
                 name=table[0][i].as_py(),
@@ -79,12 +82,14 @@ class Catalog:
     currentDatabase.__doc__ = PySparkCatalog.currentDatabase.__doc__
 
     def setCurrentDatabase(self, dbName: str) -> None:
+        logger.warning("setCurrentDatabase(self,dbName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dbName)
         self._execute_and_fetch(plan.SetCurrentDatabase(db_name=dbName))
 
     setCurrentDatabase.__doc__ = PySparkCatalog.setCurrentDatabase.__doc__
 
     def listDatabases(self, pattern: Optional[str] = None) -> List[Database]:
         table = self._execute_and_fetch(plan.ListDatabases(pattern=pattern))
+        logger.warning("listDatabases(self,pattern)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, pattern)
         return [
             Database(
                 name=table[0][i].as_py(),
@@ -99,6 +104,7 @@ class Catalog:
 
     def getDatabase(self, dbName: str) -> Database:
         table = self._execute_and_fetch(plan.GetDatabase(db_name=dbName))
+        logger.warning("getDatabase(self,dbName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, dbName)
         return Database(
             name=table[0][0].as_py(),
             catalog=table[1][0].as_py(),
@@ -134,6 +140,7 @@ class Catalog:
 
     def getTable(self, tableName: str) -> Table:
         table = self._execute_and_fetch(plan.GetTable(table_name=tableName))
+        logger.warning("getTable(self,tableName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName)
         return Table(
             name=table[0][0].as_py(),
             catalog=table[1][0].as_py(),
@@ -179,6 +186,7 @@ class Catalog:
 
     def getFunction(self, functionName: str) -> Function:
         table = self._execute_and_fetch(plan.GetFunction(function_name=functionName))
+        logger.warning("getFunction(self,functionName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, functionName)
         return Function(
             name=table[0][0].as_py(),
             catalog=table[1][0].as_py(),
@@ -192,6 +200,7 @@ class Catalog:
 
     def listColumns(self, tableName: str, dbName: Optional[str] = None) -> List[Column]:
         if dbName is not None:
+            logger.warning("listColumns(self,tableName,dbName)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName, dbName)
             warnings.warn(
                 "`dbName` has been deprecated since Spark 3.4 and might be removed in "
                 "a future version. Use listColumns(`dbName.tableName`) instead.",
@@ -275,12 +284,14 @@ class Catalog:
 
     def dropTempView(self, viewName: str) -> bool:
         table = self._execute_and_fetch(plan.DropTempView(view_name=viewName))
+        logger.warning("dropTempView(self,viewName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, viewName)
         return table[0][0].as_py()
 
     dropTempView.__doc__ = PySparkCatalog.dropTempView.__doc__
 
     def dropGlobalTempView(self, viewName: str) -> bool:
         table = self._execute_and_fetch(plan.DropGlobalTempView(view_name=viewName))
+        logger.warning("dropGlobalTempView(self,viewName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, viewName)
         return table[0][0].as_py()
 
     dropGlobalTempView.__doc__ = PySparkCatalog.dropGlobalTempView.__doc__
@@ -329,6 +340,7 @@ class Catalog:
     dropTable.__doc__ = PySparkCatalog.dropTable.__doc__
 
     def dropView(self, viewName: str, ifExists: bool = False) -> None:
+        logger.warning("dropView(self,viewName,ifExists)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, viewName, ifExists)
         self._execute_and_fetch(plan.DropView(view_name=viewName, if_exists=ifExists))
 
     dropView.__doc__ = PySparkCatalog.dropView.__doc__
@@ -351,12 +363,14 @@ class Catalog:
 
     def listPartitions(self, tableName: str) -> List[TablePartition]:
         table = self._execute_and_fetch(plan.ListPartitions(table_name=tableName))
+        logger.warning("listPartitions(self,tableName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName)
         return [TablePartition(table[0][i].as_py()) for i in range(table.num_rows)]
 
     listPartitions.__doc__ = PySparkCatalog.listPartitions.__doc__
 
     def listViews(self, dbName: Optional[str] = None, pattern: Optional[str] = None) -> List[Table]:
         if pattern is not None and dbName is None:
+            logger.warning("listViews(self,dbName,pattern)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, dbName, pattern)
             dbName = self.currentDatabase()
         table = self._execute_and_fetch(plan.ListViews(db_name=dbName, pattern=pattern))
         return [
@@ -375,6 +389,7 @@ class Catalog:
 
     def getTableProperties(self, tableName: str) -> Dict[str, str]:
         t = self._execute_and_fetch(plan.GetTableProperties(table_name=tableName))
+        logger.warning("getTableProperties(self,tableName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName)
         return {t[0][i].as_py(): t[1][i].as_py() for i in range(t.num_rows)}
 
     getTableProperties.__doc__ = PySparkCatalog.getTableProperties.__doc__
@@ -383,11 +398,13 @@ class Catalog:
         t = self._execute_and_fetch(
             plan.GetCreateTableString(table_name=tableName, as_serde=asSerde)
         )
+        logger.warning("getCreateTableString(self,tableName,asSerde)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName, asSerde)
         return t[0][0].as_py() if t.num_rows > 0 else ""
 
     getCreateTableString.__doc__ = PySparkCatalog.getCreateTableString.__doc__
 
     def truncateTable(self, tableName: str) -> None:
+        logger.warning("truncateTable(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         self._execute_and_fetch(plan.TruncateTable(table_name=tableName))
 
     truncateTable.__doc__ = PySparkCatalog.truncateTable.__doc__

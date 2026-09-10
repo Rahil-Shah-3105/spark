@@ -48,6 +48,7 @@ import org.apache.spark.sql.catalyst.rules._
  * }}}
  */
 object RewriteAsOfJoin extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     plan.transformUpWithNewOutput {
       case j @ AsOfJoin(
@@ -103,5 +104,6 @@ object RewriteAsOfJoin extends Rule[LogicalPlan] {
 
         project -> attrMapping
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

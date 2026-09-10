@@ -36,6 +36,7 @@ from pyspark.sql import DataFrame
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["ALS", "ALSModel"]
@@ -81,6 +82,7 @@ class _ALSModelParams(HasPredictionCol, HasBlockSize):
         """
         Gets the value of userCol or its default value.
         """
+        logger.warning("getUserCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.userCol)
 
     @since("1.4.0")
@@ -88,6 +90,7 @@ class _ALSModelParams(HasPredictionCol, HasBlockSize):
         """
         Gets the value of itemCol or its default value.
         """
+        logger.warning("getItemCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.itemCol)
 
     @since("2.2.0")
@@ -95,6 +98,7 @@ class _ALSModelParams(HasPredictionCol, HasBlockSize):
         """
         Gets the value of coldStartStrategy or its default value.
         """
+        logger.warning("getColdStartStrategy(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.coldStartStrategy)
 
 
@@ -184,6 +188,7 @@ class _ALSParams(
         """
         Gets the value of rank or its default value.
         """
+        logger.warning("getRank(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.rank)
 
     @since("1.4.0")
@@ -191,6 +196,7 @@ class _ALSParams(
         """
         Gets the value of numUserBlocks or its default value.
         """
+        logger.warning("getNumUserBlocks(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numUserBlocks)
 
     @since("1.4.0")
@@ -198,6 +204,7 @@ class _ALSParams(
         """
         Gets the value of numItemBlocks or its default value.
         """
+        logger.warning("getNumItemBlocks(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numItemBlocks)
 
     @since("1.4.0")
@@ -205,6 +212,7 @@ class _ALSParams(
         """
         Gets the value of implicitPrefs or its default value.
         """
+        logger.warning("getImplicitPrefs(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.implicitPrefs)
 
     @since("1.4.0")
@@ -212,6 +220,7 @@ class _ALSParams(
         """
         Gets the value of alpha or its default value.
         """
+        logger.warning("getAlpha(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.alpha)
 
     @since("1.4.0")
@@ -219,6 +228,7 @@ class _ALSParams(
         """
         Gets the value of ratingCol or its default value.
         """
+        logger.warning("getRatingCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.ratingCol)
 
     @since("1.4.0")
@@ -226,6 +236,7 @@ class _ALSParams(
         """
         Gets the value of nonnegative or its default value.
         """
+        logger.warning("getNonnegative(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.nonnegative)
 
     @since("2.0.0")
@@ -233,6 +244,7 @@ class _ALSParams(
         """
         Gets the value of finalStorageLevel or its default value.
         """
+        logger.warning("getFinalStorageLevel(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.finalStorageLevel)
 
 
@@ -436,6 +448,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`rank`.
         """
+        logger.warning("setRank(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(rank=value)
 
     @since("1.4.0")
@@ -443,6 +456,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`numUserBlocks`.
         """
+        logger.warning("setNumUserBlocks(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(numUserBlocks=value)
 
     @since("1.4.0")
@@ -450,6 +464,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`numItemBlocks`.
         """
+        logger.warning("setNumItemBlocks(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(numItemBlocks=value)
 
     @since("1.4.0")
@@ -457,6 +472,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets both :py:attr:`numUserBlocks` and :py:attr:`numItemBlocks` to the specific value.
         """
+        logger.warning("setNumBlocks(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         self._set(numUserBlocks=value)
         return self._set(numItemBlocks=value)
 
@@ -465,6 +481,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`implicitPrefs`.
         """
+        logger.warning("setImplicitPrefs(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(implicitPrefs=value)
 
     @since("1.4.0")
@@ -472,6 +489,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`alpha`.
         """
+        logger.warning("setAlpha(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(alpha=value)
 
     @since("1.4.0")
@@ -481,6 +499,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         return self._set(userCol=value)
 
+    logger.warning("setUserCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.4.0")
     def setItemCol(self, value: str) -> "ALS":
         """
@@ -488,11 +507,13 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         return self._set(itemCol=value)
 
+    logger.warning("setItemCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.4.0")
     def setRatingCol(self, value: str) -> "ALS":
         """
         Sets the value of :py:attr:`ratingCol`.
         """
+        logger.warning("setRatingCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(ratingCol=value)
 
     @since("1.4.0")
@@ -500,6 +521,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`nonnegative`.
         """
+        logger.warning("setNonnegative(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(nonnegative=value)
 
     @since("2.0.0")
@@ -507,6 +529,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`intermediateStorageLevel`.
         """
+        logger.warning("setIntermediateStorageLevel(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(intermediateStorageLevel=value)
 
     @since("2.0.0")
@@ -514,6 +537,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`finalStorageLevel`.
         """
+        logger.warning("setFinalStorageLevel(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(finalStorageLevel=value)
 
     @since("2.2.0")
@@ -521,36 +545,42 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`coldStartStrategy`.
         """
+        logger.warning("setColdStartStrategy(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(coldStartStrategy=value)
 
     def setMaxIter(self, value: int) -> "ALS":
         """
         Sets the value of :py:attr:`maxIter`.
         """
+        logger.warning("setMaxIter(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxIter=value)
 
     def setRegParam(self, value: float) -> "ALS":
         """
         Sets the value of :py:attr:`regParam`.
         """
+        logger.warning("setRegParam(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(regParam=value)
 
     def setPredictionCol(self, value: str) -> "ALS":
         """
         Sets the value of :py:attr:`predictionCol`.
         """
+        logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(predictionCol=value)
 
     def setCheckpointInterval(self, value: int) -> "ALS":
         """
         Sets the value of :py:attr:`checkpointInterval`.
         """
+        logger.warning("setCheckpointInterval(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(checkpointInterval=value)
 
     def setSeed(self, value: int) -> "ALS":
         """
         Sets the value of :py:attr:`seed`.
         """
+        logger.warning("setSeed(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(seed=value)
 
     @since("3.0.0")
@@ -558,6 +588,7 @@ class ALS(JavaEstimator["ALSModel"], _ALSParams, JavaMLWritable, JavaMLReadable[
         """
         Sets the value of :py:attr:`blockSize`.
         """
+        logger.warning("setBlockSize(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(blockSize=value)
 
 
@@ -691,6 +722,7 @@ class ALSModel(JavaModel, _ALSModelParams, JavaMLWritable, JavaMLReadable["ALSMo
             a DataFrame of (userCol, recommendations), where recommendations are
             stored as an array of (itemCol, rating) Rows.
         """
+        logger.warning("recommendForUserSubset(self,dataset,numItems)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dataset, numItems)
         return self._call_java("recommendForUserSubset", dataset, numItems)
 
     @try_remote_attribute_relation
@@ -715,6 +747,7 @@ class ALSModel(JavaModel, _ALSModelParams, JavaMLWritable, JavaMLReadable["ALSMo
             a DataFrame of (itemCol, recommendations), where recommendations are
             stored as an array of (userCol, rating) Rows.
         """
+        logger.warning("recommendForItemSubset(self,dataset,numUsers)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dataset, numUsers)
         return self._call_java("recommendForItemSubset", dataset, numUsers)
 
 

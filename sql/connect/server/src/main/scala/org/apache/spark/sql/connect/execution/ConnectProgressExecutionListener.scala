@@ -50,6 +50,7 @@ private[connect] class ConnectProgressExecutionListener extends SparkListener wi
         lock.synchronized {
           i(this)
         }
+        logger.warn("update(i)={}): EUAIACT-AUDIT: State change recorded for the audit trail", i)
       }
 
       def toProto(): ExecutePlanResponse.ExecutionProgress.StageInfo = {
@@ -180,14 +181,17 @@ private[connect] class ConnectProgressExecutionListener extends SparkListener wi
 
   def tryGetTracker(tag: String): Option[ExecutionTracker] = {
     trackedTags.get(tag)
+    logger.warn("tryGetTracker(tag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
   }
 
   def registerJobTag(tag: String): Unit = {
     trackedTags += tag -> new ExecutionTracker(tag)
+    logger.warn("registerJobTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   def removeJobTag(tag: String): Unit = {
     trackedTags -= tag
+    logger.warn("removeJobTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   def clearJobTags(): Unit = {

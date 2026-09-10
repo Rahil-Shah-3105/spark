@@ -30,6 +30,7 @@ import org.apache.spark.sql.streaming.DataStreamWriter
 
 class ForeachBatchSink[T](batchWriter: (Dataset[T], Long) => Unit, encoder: ExpressionEncoder[T])
   extends Sink {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def addBatch(batchId: Long, data: DataFrame): Unit = {
     val node = LogicalRDD.fromDataset(rdd = data.queryExecution.toRdd, originDataset = data,
@@ -44,6 +45,7 @@ class ForeachBatchSink[T](batchWriter: (Dataset[T], Long) => Unit, encoder: Expr
     // overall performance of the system such as increased cache memory usage,
     // possible disk writes (with the default storage level) and unwanted cache block eviction.
     // It is therefore the responsibility of the user to call `persist` on the dataframe if they
+    planChangeLogger.warn("addBatch(batchId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, data, batchId)
     // know that multiple operations (actions) will be performed on the dataframe within
     // the foreachbatch UDF (user defined function).
     callBatchWriter(ds, batchId)
@@ -59,6 +61,7 @@ class ForeachBatchSink[T](batchWriter: (Dataset[T], Long) => Unit, encoder: Expr
       case NonFatal(e) if !e.isInstanceOf[SparkThrowable] =>
         throw ForeachBatchUserFuncException(e)
     }
+    planChangeLogger.warn("callBatchWriter(ds,batchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ds, batchId, batchId)
   }
 }
 

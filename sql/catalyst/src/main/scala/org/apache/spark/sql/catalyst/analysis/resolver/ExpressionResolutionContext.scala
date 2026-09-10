@@ -119,6 +119,7 @@ class ExpressionResolutionContext(
     var hasGroupingAnalyticsExpression: Boolean = false,
     var extractValueExtractionKey: Option[Expression] = None,
     var lambdaVariableMap: Option[IdentifierMap[NamedExpression]] = None) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Propagate generic information that is valid across the whole expression tree from the
@@ -170,5 +171,6 @@ object ExpressionResolutionContext {
         lambdaVariableMap = parent.lambdaVariableMap
       )
     }
+    planChangeLogger.warn("createChild(parent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parent)
   }
 }

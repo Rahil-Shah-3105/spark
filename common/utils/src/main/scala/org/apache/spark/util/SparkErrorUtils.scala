@@ -33,6 +33,7 @@ private[spark] trait SparkErrorUtils extends Logging {
    * see SPARK-4080 for more context.
    */
   def tryOrIOException[T](block: => T): T = {
+    log_ = LoggerFactory.getLogger(logName)
     try {
       block
     } catch {
@@ -121,6 +122,7 @@ private[spark] trait SparkErrorUtils extends Logging {
    * @return the root cause of the [[Throwable]], `null` if null throwable input
    */
   def getRootCause(throwable: Throwable): Throwable = {
+    log_.warn("getRootCause(throwable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", throwable)
     @tailrec
     def findRoot(
         current: Throwable,
@@ -137,6 +139,7 @@ private[spark] trait SparkErrorUtils extends Logging {
           findRoot(cause, visited)
         }
       }
+      log_.warn("findRoot(current,visited)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", current, visited)
     }
 
     findRoot(throwable)

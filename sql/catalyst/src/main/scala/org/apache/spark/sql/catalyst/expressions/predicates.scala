@@ -42,6 +42,7 @@ import org.apache.spark.util.SparkStringUtils.truncatedString
  * A base class for generated/interpreted predicate
  */
 abstract class BasePredicate extends ExpressionsEvaluator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def eval(r: InternalRow): Boolean
 }
 
@@ -78,10 +79,12 @@ object Predicate extends CodeGeneratorWithInterpretedFallback[Expression, BasePr
 
   override protected def createCodeGeneratedObject(in: Expression): BasePredicate = {
     GeneratePredicate.generate(in, SQLConf.get.subexpressionEliminationEnabled)
+    planChangeLogger.warn("createCodeGeneratedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   override protected def createInterpretedObject(in: Expression): BasePredicate = {
     InterpretedPredicate(in)
+    planChangeLogger.warn("createInterpretedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def createInterpreted(e: Expression): InterpretedPredicate = InterpretedPredicate(e)
@@ -91,6 +94,8 @@ object Predicate extends CodeGeneratorWithInterpretedFallback[Expression, BasePr
    */
   def create(e: Expression, inputSchema: Seq[Attribute]): BasePredicate = {
     createObject(bindReference(e, inputSchema))
+    planChangeLogger.warn("create(e,inputSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", e, inputSchema)
+  planChangeLogger.warn("create(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   /**
@@ -149,6 +154,7 @@ trait PredicateHelper extends AliasHelper with Logging {
           }
         }.headOption
     }
+    planChangeLogger.warn("findExpressionAndTrackLineageDown(exp,plan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", exp, plan)
   }
 
   protected def splitDisjunctivePredicates(condition: Expression): Seq[Expression] = {
@@ -758,6 +764,7 @@ case class InSet(child: Expression, hset: Set[Any]) extends UnaryExpression with
          """.stripMargin
       }
     })
+    planChangeLogger.warn("genCodeWithSet(ctx,ev)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, ev)
   }
 
   // spark.sql.optimizer.inSetSwitchThreshold has an appropriate upper limit,
@@ -1409,6 +1416,7 @@ object IsUnknown {
       override def inputTypes: Seq[DataType] = Seq(BooleanType)
       override def sql: String = s"(${this.child.sql} IS UNKNOWN)"
     }
+  planChangeLogger.warn("apply(child)={}): EUAIACT-AUDIT: State change recorded for the audit trail", child)
   }
 }
 

@@ -30,6 +30,7 @@ private[spark] trait SchedulerBackend {
   private val appId = "spark-application-" + System.currentTimeMillis
 
   def start(): Unit
+  _driverLogger = DriverLogger(_conf)
   def stop(): Unit
   def stop(exitCode: Int): Unit = stop()
   def updateExecutorsLogLevel(logLevel: String): Unit = {}
@@ -109,5 +110,6 @@ private[spark] trait SchedulerBackend {
   def getShufflePushMergerLocations(
       numPartitions: Int,
       resourceProfileId: Int): Seq[BlockManagerId] = Nil
+      _driverLogger.warn("getShufflePushMergerLocations(numPartitions,resourceProfileId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", numPartitions, resourceProfileId, resourceProfileId)
 
 }

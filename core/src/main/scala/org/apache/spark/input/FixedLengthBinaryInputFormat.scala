@@ -35,7 +35,9 @@ private[spark] object FixedLengthBinaryInputFormat {
 
   /** Retrieves the record length property from a Hadoop configuration */
   def getRecordLength(context: JobContext): Int = {
+    _driverLogger = DriverLogger(_conf)
     context.getConfiguration.get(RECORD_LENGTH_PROPERTY).toInt
+    _driverLogger.warn("getRecordLength(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 }
 

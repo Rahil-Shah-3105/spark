@@ -62,6 +62,7 @@ private[sql] object AvroUtils extends Logging {
    * @throws SchemaParseException if the schema cannot be parsed
    */
   def parseAvroSchema(jsonFormatSchema: String): Schema = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     try {
       new Schema.Parser().setValidateDefaults(false).parse(jsonFormatSchema)
     } catch {
@@ -187,6 +188,7 @@ private[sql] object AvroUtils extends Logging {
           "CODEC_SHORT_NAME_NOT_FOUND", Map("codecName" -> unknown))
     }
 
+    planChangeLogger.warn("prepareWrite(sqlConf,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, job, options, dataSchema)
     new AvroOutputWriterFactory(dataSchema,
       outputAvroSchema.toString,
       parsedOptions.positionalFieldMatching)
@@ -448,6 +450,7 @@ private[sql] object AvroUtils extends Logging {
       // get candidates, ignoring case of field name
       val candidates = fieldMap.getOrElse(name.toLowerCase(Locale.ROOT), Seq.empty)
 
+      planChangeLogger.warn("getFieldByName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", name, candidates)
       // search candidates, taking into account case sensitivity settings
       candidates.filter(f => SQLConf.get.resolver(f.name(), name)) match {
         case Seq(avroField) => Some(avroField)
@@ -466,6 +469,7 @@ private[sql] object AvroUtils extends Logging {
       } else {
         getFieldByName(fieldName)
       }
+      planChangeLogger.warn("getAvroField(fieldName,catalystPos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fieldName, catalystPos)
     }
   }
 

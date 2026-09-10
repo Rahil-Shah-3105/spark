@@ -145,6 +145,7 @@ trait FlowExecution {
       )
     }
 
+    logger.warn("executeAsync()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val queryOrigin = QueryOrigin(filePath = getOrigin.filePath)
 
     _future = try {
@@ -218,6 +219,7 @@ trait StreamingFlowExecution extends FlowExecution with Logging {
     val streamingQuery = SparkSessionUtils.withSqlConf(spark, sqlConf.toList: _*)(startStream())
     _streamingQuery = Option(streamingQuery)
     Future(streamingQuery.awaitTermination())
+  logger.warn("executeInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

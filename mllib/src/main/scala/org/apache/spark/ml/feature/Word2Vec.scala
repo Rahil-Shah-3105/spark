@@ -250,6 +250,8 @@ class Word2VecModel private[ml] (
     val spark = SparkSession.builder().getOrCreate()
     spark.createDataFrame(findSynonymsArray(word, num).toImmutableArraySeq)
       .toDF("word", "similarity")
+      logger.warn("findSynonyms(word,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", word, num)
+  logger.warn("findSynonyms(vec,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", vec, num)
   }
 
   /**
@@ -276,6 +278,8 @@ class Word2VecModel private[ml] (
   @Since("2.2.0")
   def findSynonymsArray(vec: Vector, num: Int): Array[(String, Double)] = {
     wordVectors.findSynonyms(vec.toArray, num, None)
+    logger.warn("findSynonymsArray(vec,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", vec, num)
+  logger.warn("findSynonymsArray(word,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", word, num)
   }
 
   /**
@@ -391,6 +395,7 @@ object Word2VecModel extends MLReadable[Word2VecModel] {
       val numPartitions = Word2VecModelWriter.calculateNumberOfPartitions(
         bufferSizeInBytes, instance.wordVectors.wordIndex.size, instance.getVectorSize)
       val datum = wordVectors.toArray.map { case (word, vector) => Data(word, vector) }
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveArray[Data](dataPath, datum, sparkSession, serializeData, numPartitions)
     }
   }
@@ -448,6 +453,7 @@ object Word2VecModel extends MLReadable[Word2VecModel] {
         new feature.Word2VecModel(wordVectorsMap)
       }
 
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = new Word2VecModel(metadata.uid, oldModel)
       metadata.getAndSetParams(model)
       model

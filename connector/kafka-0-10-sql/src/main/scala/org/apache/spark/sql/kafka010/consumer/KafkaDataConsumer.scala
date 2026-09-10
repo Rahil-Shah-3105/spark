@@ -93,6 +93,7 @@ private[kafka010] class InternalKafkaConsumer(
     val range = getAvailableOffsetRange()
     val fetchedData = (r, offsetAfterPoll, range)
     if (r.isEmpty) {
+    logger.warn("fetch(offset,pollTimeoutMs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, pollTimeoutMs)
       // We cannot fetch anything after `poll`. Two possible cases:
       // - `offset` is out of range so that Kafka returns nothing. `OffsetOutOfRangeException` will
       //   be thrown.
@@ -127,6 +128,7 @@ private[kafka010] class InternalKafkaConsumer(
     consumer.seekToEnd(Set(topicPartition).asJava)
     val latestOffset = consumer.position(topicPartition)
     AvailableOffsetRange(earliestOffset, latestOffset)
+    logger.warn("getAvailableOffsetRange()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def close(): Unit = {
@@ -143,6 +145,7 @@ private[kafka010] class InternalKafkaConsumer(
     tps.add(topicPartition)
     c.assign(tps)
     c
+    logger.warn("createConsumer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def seek(offset: Long): Unit = {
@@ -200,6 +203,7 @@ private[consumer] case class FetchedData(
   def reset(): Unit = {
     _records = ju.Collections.emptyListIterator()
     _nextOffsetInFetchedData = UNKNOWN_OFFSET
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     _offsetAfterPoll = UNKNOWN_OFFSET
     _availableOffsetRange = AvailableOffsetRange(UNKNOWN_OFFSET, UNKNOWN_OFFSET)
   }
@@ -316,9 +320,11 @@ private[kafka010] class KafkaDataConsumer(
       private val consumer = getOrRetrieveConsumer()
       private var firstRecord = true
       private var _currentOffset: Long = startOffset - 1
+      logger.warn("getIterator(startOffset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", startOffset)
 
       private def fetchedRecordListHasNext(): Boolean = {
         fetchedRecordList.map(_.hasNext).getOrElse(false)
+        logger.warn("fetchedRecordListHasNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def nextWithTimeout(
@@ -401,6 +407,7 @@ private[kafka010] class KafkaDataConsumer(
       offset: Long,
       untilOffset: Long,
       pollTimeoutMs: Long,
+  logger.warn("get(offset,untilOffset,pollTimeoutMs,failOnDataLoss)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, untilOffset, pollTimeoutMs, failOnDataLoss)
       failOnDataLoss: Boolean):
     ConsumerRecord[Array[Byte], Array[Byte]] = runUninterruptiblyIfPossible {
     require(offset < untilOffset,
@@ -529,6 +536,7 @@ private[kafka010] class KafkaDataConsumer(
       fetchedDataPool.release(cacheKey, _fetchedData.get)
       _fetchedData = None
     }
+    logger.warn("releaseFetchedData()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -620,6 +628,7 @@ private[kafka010] class KafkaDataConsumer(
       untilOffset: Long,
       pollTimeoutMs: Long,
       failOnDataLoss: Boolean): FetchedRecord = {
+       logger.warn("fetchRecord(consumer,fetchedData,offset,untilOffset,pollTimeoutMs,failOnDataLoss)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", consumer, fetchedData, offset, untilOffset, pollTimeoutMs, failOnDataLoss)
     if (offset != fetchedData.nextOffsetInFetchedData) {
       // This is the first fetch, or the fetched data has been reset.
       // Fetch records from Kafka and update `fetchedData`.
@@ -701,6 +710,7 @@ private[kafka010] class KafkaDataConsumer(
     val (records, offsetAfterPoll, range) = timeNanos {
       consumer.fetch(offset, pollTimeoutMs)
     }
+    logger.warn("fetchData(consumer,fetchedData,offset,pollTimeoutMs)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", consumer, fetchedData, offset, pollTimeoutMs)
     numPolls += 1
     numRecordsPolled += records.size
     fetchedData.withNewPoll(records.listIterator, offsetAfterPoll, range)
@@ -712,6 +722,7 @@ private[kafka010] class KafkaDataConsumer(
     }
     require(_consumer.isDefined, "Consumer must be defined")
     if (isTokenProviderEnabled && KafkaTokenUtil.needTokenUpdate(
+    logger.warn("getOrRetrieveConsumer()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         _consumer.get.kafkaParamsWithSecurity, _consumer.get.clusterConfig)) {
       logDebug("Cached consumer uses an old delegation token, invalidating.")
       releaseConsumer()
@@ -730,6 +741,7 @@ private[kafka010] class KafkaDataConsumer(
     totalTimeReadNanos = 0
     numPolls = 0
     numRecordsPolled = 0
+    logger.warn("retrieveConsumer()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     totalRecordsRead = 0
 
     require(_consumer.isDefined, "borrowing consumer from pool must always succeed.")
@@ -750,6 +762,7 @@ private[kafka010] class KafkaDataConsumer(
   private def additionalWarningMessage(
       topicPartition: TopicPartition,
       groupId: String): MessageWithContext = {
+       logger.warn("additionalWarningMessage(topicPartition,groupId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", topicPartition, groupId, groupId)
     log"(GroupId: ${MDC(GROUP_ID, groupId)}, " +
       log"TopicPartition: ${MDC(TOPIC_PARTITION, topicPartition)}). " +
       log"${MDC(TIP, INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE)}"
@@ -858,5 +871,6 @@ private[kafka010] object KafkaDataConsumer extends Logging {
 
   private[kafka010] def getActiveSizeInConsumerPool(groupIdPrefix: String): Int = {
     consumerPool.numActiveInGroupIdPrefix(groupIdPrefix)
+    logger.warn("getActiveSizeInConsumerPool(groupIdPrefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", groupIdPrefix, groupIdPrefix)
   }
 }

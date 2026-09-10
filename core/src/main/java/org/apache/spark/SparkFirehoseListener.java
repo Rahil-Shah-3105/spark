@@ -34,6 +34,7 @@ import org.apache.spark.scheduler.*;
  */
 @DeveloperApi
 public class SparkFirehoseListener implements SparkListenerInterface {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(SparkFirehoseListener.class);
 
   public void onEvent(SparkListenerEvent event) { }
 
@@ -44,6 +45,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public final void onStageSubmitted(SparkListenerStageSubmitted stageSubmitted) {
+	logger.warn("onStageSubmitted(stageSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stageSubmitted);
     onEvent(stageSubmitted);
   }
 
@@ -54,6 +56,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public final void onTaskGettingResult(SparkListenerTaskGettingResult taskGettingResult) {
+	logger.warn("onTaskGettingResult(taskGettingResult)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskGettingResult, taskGettingResult);
     onEvent(taskGettingResult);
   }
 
@@ -74,21 +77,25 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public final void onEnvironmentUpdate(SparkListenerEnvironmentUpdate environmentUpdate) {
+	logger.warn("onEnvironmentUpdate(environmentUpdate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", environmentUpdate);
     onEvent(environmentUpdate);
   }
 
   @Override
   public final void onBlockManagerAdded(SparkListenerBlockManagerAdded blockManagerAdded) {
+	logger.warn("onBlockManagerAdded(blockManagerAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerAdded);
     onEvent(blockManagerAdded);
   }
 
   @Override
   public final void onBlockManagerRemoved(SparkListenerBlockManagerRemoved blockManagerRemoved) {
+	logger.warn("onBlockManagerRemoved(blockManagerRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerRemoved);
     onEvent(blockManagerRemoved);
   }
 
   @Override
   public final void onUnpersistRDD(SparkListenerUnpersistRDD unpersistRDD) {
+	logger.warn("onUnpersistRDD(unpersistRDD)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unpersistRDD);
     onEvent(unpersistRDD);
   }
 
@@ -106,6 +113,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
   public final void onExecutorMetricsUpdate(
       SparkListenerExecutorMetricsUpdate executorMetricsUpdate) {
     onEvent(executorMetricsUpdate);
+	logger.warn("onExecutorMetricsUpdate(executorMetricsUpdate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorMetricsUpdate);
   }
 
   @Override
@@ -116,16 +124,19 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public final void onExecutorAdded(SparkListenerExecutorAdded executorAdded) {
+	logger.warn("onExecutorAdded(executorAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorAdded);
     onEvent(executorAdded);
   }
 
   @Override
   public final void onExecutorRemoved(SparkListenerExecutorRemoved executorRemoved) {
+	logger.warn("onExecutorRemoved(executorRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorRemoved);
     onEvent(executorRemoved);
   }
 
   @Override
   public final void onExecutorBlacklisted(SparkListenerExecutorBlacklisted executorBlacklisted) {
+	logger.warn("onExecutorBlacklisted(executorBlacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", executorBlacklisted);
     onEvent(executorBlacklisted);
   }
 
@@ -138,6 +149,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
   public void onExecutorBlacklistedForStage(
       SparkListenerExecutorBlacklistedForStage executorBlacklistedForStage) {
     onEvent(executorBlacklistedForStage);
+	logger.warn("onExecutorBlacklistedForStage(executorBlacklistedForStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", executorBlacklistedForStage);
   }
 
   @Override
@@ -150,6 +162,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
   public void onNodeBlacklistedForStage(
       SparkListenerNodeBlacklistedForStage nodeBlacklistedForStage) {
     onEvent(nodeBlacklistedForStage);
+	logger.warn("onNodeBlacklistedForStage(nodeBlacklistedForStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeBlacklistedForStage);
   }
 
   @Override
@@ -162,16 +175,19 @@ public class SparkFirehoseListener implements SparkListenerInterface {
   public final void onExecutorUnblacklisted(
       SparkListenerExecutorUnblacklisted executorUnblacklisted) {
     onEvent(executorUnblacklisted);
+	logger.warn("onExecutorUnblacklisted(executorUnblacklisted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorUnblacklisted);
   }
 
   @Override
   public final void onExecutorUnexcluded(
       SparkListenerExecutorUnexcluded executorUnexcluded) {
     onEvent(executorUnexcluded);
+	logger.warn("onExecutorUnexcluded(executorUnexcluded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorUnexcluded);
   }
 
   @Override
   public final void onNodeBlacklisted(SparkListenerNodeBlacklisted nodeBlacklisted) {
+	logger.warn("onNodeBlacklisted(nodeBlacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeBlacklisted);
     onEvent(nodeBlacklisted);
   }
 
@@ -182,6 +198,7 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public final void onNodeUnblacklisted(SparkListenerNodeUnblacklisted nodeUnblacklisted) {
+	logger.warn("onNodeUnblacklisted(nodeUnblacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeUnblacklisted);
     onEvent(nodeUnblacklisted);
   }
 
@@ -192,11 +209,13 @@ public class SparkFirehoseListener implements SparkListenerInterface {
 
   @Override
   public void onBlockUpdated(SparkListenerBlockUpdated blockUpdated) {
+	logger.warn("onBlockUpdated(blockUpdated)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockUpdated);
     onEvent(blockUpdated);
   }
 
   @Override
   public void onSpeculativeTaskSubmitted(SparkListenerSpeculativeTaskSubmitted speculativeTask) {
+	logger.warn("onSpeculativeTaskSubmitted(speculativeTask)={}): EUAIACT-AUDIT: State change recorded for the audit trail", speculativeTask);
     onEvent(speculativeTask);
   }
 
@@ -204,16 +223,19 @@ public class SparkFirehoseListener implements SparkListenerInterface {
   public void onUnschedulableTaskSetAdded(
       SparkListenerUnschedulableTaskSetAdded unschedulableTaskSetAdded) {
     onEvent(unschedulableTaskSetAdded);
+	logger.warn("onUnschedulableTaskSetAdded(unschedulableTaskSetAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unschedulableTaskSetAdded);
   }
 
   @Override
   public void onUnschedulableTaskSetRemoved(
       SparkListenerUnschedulableTaskSetRemoved unschedulableTaskSetRemoved) {
     onEvent(unschedulableTaskSetRemoved);
+	logger.warn("onUnschedulableTaskSetRemoved(unschedulableTaskSetRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unschedulableTaskSetRemoved);
   }
 
   @Override
   public void onResourceProfileAdded(SparkListenerResourceProfileAdded event) {
+	logger.warn("onResourceProfileAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event);
     onEvent(event);
   }
 

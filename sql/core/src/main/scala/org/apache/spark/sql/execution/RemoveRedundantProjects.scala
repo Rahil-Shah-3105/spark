@@ -37,12 +37,14 @@ import org.apache.spark.sql.internal.SQLConf
  * to simplify the query plan.
  */
 object RemoveRedundantProjects extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(plan: SparkPlan): SparkPlan = {
     if (!conf.getConf(SQLConf.REMOVE_REDUNDANT_PROJECTS_ENABLED)) {
       plan
     } else {
       removeProject(plan, true)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def removeProject(plan: SparkPlan, requireOrdering: Boolean): SparkPlan = {
@@ -56,6 +58,7 @@ object RemoveRedundantProjects extends Rule[SparkPlan] {
           newPlan
         } else {
           p.mapChildren(removeProject(_, false))
+        planChangeLogger.warn("canRemove(project,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", project, child)
         }
       case op: TakeOrderedAndProjectExec =>
         // The planner turns Limit + Sort into TakeOrderedAndProjectExec which adds an additional
@@ -75,6 +78,7 @@ object RemoveRedundantProjects extends Rule[SparkPlan] {
         val required = if (canPassThrough(o)) requireOrdering else true
         o.mapChildren(removeProject(_, requireOrdering = required))
     }
+    planChangeLogger.warn("removeProject(plan,requireOrdering)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, requireOrdering)
   }
 
   /**

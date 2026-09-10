@@ -53,6 +53,7 @@ abstract class TransformWithStateExecBase(
   with StateStoreWriter
   with WatermarkSupport
   with TransformWithStateMetadataUtils {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def operatorStateMetadataVersion: Int = 2
 
@@ -131,6 +132,7 @@ abstract class TransformWithStateExecBase(
     } else {
       false
     }
+    planChangeLogger.warn("shouldRunAnotherBatch(newInputWatermark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputWatermark)
   }
 
   /**
@@ -215,6 +217,7 @@ abstract class TransformWithStateExecBase(
       iter: Iterator[InternalRow],
       onClose: () => Unit = () => {}): Iterator[InternalRow] = {
     new NextIterator[InternalRow] {
+      planChangeLogger.warn("iteratorWithImplicitKeySet(key,iter,onClose)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, iter, onClose)
       var hasStarted = false
 
       override protected def getNext(): InternalRow = {
@@ -229,6 +232,7 @@ abstract class TransformWithStateExecBase(
         } else {
           iter.next()
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def close(): Unit = {
@@ -256,6 +260,7 @@ abstract class TransformWithStateExecBase(
     if (isStreaming && !SUPPORTED_STATE_STORE_PROVIDERS.contains(providerName)) {
       throw StateStoreErrors.storeBackendNotSupportedForTWS(providerName)
     }
+    planChangeLogger.warn("validateStateStoreProvider(isStreaming)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", isStreaming, providerName)
   }
 
   /**
@@ -279,5 +284,6 @@ abstract class TransformWithStateExecBase(
       case e: Exception =>
         throw TransformWithStateUserFunctionException(e, functionName)
     }
+    planChangeLogger.warn("withStatefulProcessorErrorHandling(functionName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", functionName)
   }
 }

@@ -323,6 +323,7 @@ class ExecutePlanResponseReattachableIterator(
     if (initialRequest.hasClientType) {
       reattach.setClientType(initialRequest.getClientType)
     }
+    logger.warn("createReattachExecuteRequest()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     if (lastReturnedResponseId.isDefined) {
       reattach.setLastResponseId(lastReturnedResponseId.get)
@@ -341,6 +342,7 @@ class ExecutePlanResponseReattachableIterator(
       release.setClientType(initialRequest.getClientType)
     }
 
+    logger.warn("createReleaseExecuteRequest(untilResponseId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", untilResponseId, untilResponseId)
     untilResponseId match {
       case None =>
         release.setReleaseAll(proto.ReleaseExecuteRequest.ReleaseAll.newBuilder().build())

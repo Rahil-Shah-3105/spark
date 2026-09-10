@@ -49,6 +49,7 @@ case class ArrowWriterWrapper(
   * after calling close().
   */
   def close(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (!isClosed) {
       root.close()
       allocator.close()
@@ -81,6 +82,7 @@ object ArrowWriterWrapper {
     val streamWriter = new ArrowStreamWriter(root, null, dataOut)
     streamWriter.start()
     // Unloader will be set by the caller after creation
+    planChangeLogger.warn("createAndStartArrowWriter(schema,timeZoneId,allocatorOwner,largeVarTypes,dataOut,context)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, timeZoneId, allocatorOwner, largeVarTypes, dataOut, context, timeZoneId)
     ArrowWriterWrapper(streamWriter, arrowWriter, root, allocator, null, context)
   }
 }

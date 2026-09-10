@@ -23,8 +23,10 @@ import org.apache.spark.status.{AppHistoryServerPlugin, ElementTrackingStore}
 import org.apache.spark.ui.SparkUI
 
 class SQLHistoryServerPlugin extends AppHistoryServerPlugin {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def createListeners(conf: SparkConf, store: ElementTrackingStore): Seq[SparkListener] = {
     Seq(new SQLAppStatusListener(conf, store, live = false))
+    planChangeLogger.warn("createListeners(conf,store)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, store)
   }
 
   override def setupUI(ui: SparkUI): Unit = {
@@ -32,6 +34,7 @@ class SQLHistoryServerPlugin extends AppHistoryServerPlugin {
     if (sqlStatusStore.executionsCount() > 0) {
       new SQLTab(sqlStatusStore, ui)
     }
+    planChangeLogger.warn("setupUI(ui)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ui)
   }
 
   override def displayOrder: Int = 0

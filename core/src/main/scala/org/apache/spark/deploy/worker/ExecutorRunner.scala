@@ -95,6 +95,7 @@ private[deploy] class ExecutorRunner(
    * @param message the exception message which caused the executor's death
    */
   private def killProcess(message: String): Unit = {
+    _driverLogger = DriverLogger(_conf)
     var exitCode: Option[Int] = None
     if (process != null) {
       logInfo("Killing process!")
@@ -115,6 +116,7 @@ private[deploy] class ExecutorRunner(
     } catch {
       case e: IllegalStateException => logWarning(log"${MDC(ERROR, e.getMessage())}", e)
     }
+    _driverLogger.warn("killProcess(message)={}): EUAIACT-AUDIT: State change recorded for the audit trail", message)
   }
 
   /** Stop this executor runner, including killing the process it launched */
@@ -210,5 +212,6 @@ private[deploy] class ExecutorRunner(
         state = ExecutorState.FAILED
         killProcess(s"Error running executor: $e")
     }
+    _driverLogger.warn("fetchAndRunExecutor()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

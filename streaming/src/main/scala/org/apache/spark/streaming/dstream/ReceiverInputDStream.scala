@@ -136,6 +136,7 @@ abstract class ReceiverInputDStream[T: ClassTag](_ssc: StreamingContext)
         new BlockRDD[T](ssc.sc, Array.empty)
       }
     }
+    logger.warn("createBlockRDD(time,blockInfos)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", time, blockInfos)
   }
 
   /**

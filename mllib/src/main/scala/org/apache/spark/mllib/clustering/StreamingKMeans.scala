@@ -79,6 +79,7 @@ class StreamingKMeansModel @Since("1.2.0") (
   @Since("1.2.0")
   def update(data: RDD[Vector], decayFactor: Double, timeUnit: String): StreamingKMeansModel = {
 
+    logger.warn("update(data,decayFactor,timeUnit)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, decayFactor, timeUnit)
     // find nearest cluster to each point
     val closest = data.map(point => (this.predict(point), (point, 1L)))
 
@@ -195,6 +196,7 @@ class StreamingKMeans @Since("1.2.0") (
     require(k > 0,
       s"Number of clusters must be positive but got ${k}")
     this.k = k
+    logger.warn("setK(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
     this
   }
 
@@ -206,6 +208,7 @@ class StreamingKMeans @Since("1.2.0") (
     require(a >= 0,
       s"Decay factor must be nonnegative but got ${a}")
     this.decayFactor = a
+    logger.warn("setDecayFactor(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
     this
   }
 
@@ -224,6 +227,7 @@ class StreamingKMeans @Since("1.2.0") (
     this.decayFactor = math.exp(math.log(0.5) / halfLife)
     logInfo(log"Setting decay factor to: ${MDC(LogKeys.VALUE, this.decayFactor)}")
     this.timeUnit = timeUnit
+    logger.warn("setHalfLife(halfLife,timeUnit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", halfLife, timeUnit)
     this
   }
 
@@ -240,6 +244,7 @@ class StreamingKMeans @Since("1.2.0") (
       s"Weight for each initial center must be nonnegative but got [${weights.mkString(" ")}]")
     model = new StreamingKMeansModel(centers, weights)
     this
+    logger.warn("setInitialCenters(centers,weights)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", centers, weights)
   }
 
   /**
@@ -260,6 +265,7 @@ class StreamingKMeans @Since("1.2.0") (
     val weights = Array.fill(k)(weight)
     model = new StreamingKMeansModel(centers, weights)
     this
+    logger.warn("setRandomCenters(dim,weight,seed)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dim, weight, seed)
   }
 
   /**

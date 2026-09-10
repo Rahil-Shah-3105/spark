@@ -110,6 +110,7 @@ public class InProcessLauncher extends AbstractLauncher<InProcessLauncher> {
       throw new IOException("Cannot find SparkSubmit main method.", e);
     }
 
+	LOG.warn("findSparkSubmit()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     CommandBuilderUtils.checkState(Modifier.isStatic(main.getModifiers()),
       "main method is not static.");
     return main;

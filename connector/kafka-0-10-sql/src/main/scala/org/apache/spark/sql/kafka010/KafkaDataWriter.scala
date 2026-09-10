@@ -53,6 +53,7 @@ private[kafka010] class KafkaDataWriter(
       producer = Some(InternalKafkaProducerPool.acquire(producerParams))
     }
     producer.foreach { p => sendRow(row, p.producer) }
+    logger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   def commit(): WriterCommitMessage = {

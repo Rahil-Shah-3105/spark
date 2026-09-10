@@ -42,6 +42,7 @@ private[sql] trait LookupCatalog extends Logging {
    * This does not substitute the default catalog if no catalog is set in the identifier.
    */
   private object CatalogAndMultipartIdentifier {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     def unapply(parts: Seq[String]): Some[(Option[CatalogPlugin], Seq[String])] = parts match {
       case Seq(_) =>
         Some((None, parts))
@@ -52,6 +53,7 @@ private[sql] trait LookupCatalog extends Logging {
           case _: CatalogNotFoundException =>
             Some((None, parts))
         }
+        planChangeLogger.warn("unapply(nameParts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nameParts)
     }
   }
 
@@ -163,6 +165,7 @@ private[sql] trait LookupCatalog extends Logging {
           namesToTableIdentifier(names)
         case _ => None
       }
+    planChangeLogger.warn("unapply(write)={}): EUAIACT-AUDIT: State change recorded for the audit trail", write)
     }
   }
 

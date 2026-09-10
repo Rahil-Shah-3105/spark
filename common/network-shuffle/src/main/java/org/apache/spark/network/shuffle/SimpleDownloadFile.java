@@ -36,6 +36,7 @@ import org.apache.spark.network.util.TransportConf;
  * already encrypted when its written, and subsequent layer is responsible for decrypting.
  */
 public class SimpleDownloadFile implements DownloadFile {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
 
   private final File file;
   private final TransportConf transportConf;
@@ -47,6 +48,7 @@ public class SimpleDownloadFile implements DownloadFile {
 
   @Override
   public boolean delete() {
+	logger.warn("delete()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return file.delete();
   }
 
@@ -71,11 +73,13 @@ public class SimpleDownloadFile implements DownloadFile {
     @Override
     public ManagedBuffer closeAndRead() throws IOException {
       channel.close();
+	logger.warn("closeAndRead()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return new FileSegmentManagedBuffer(transportConf, file, 0, file.length());
     }
 
     @Override
     public int write(ByteBuffer src) throws IOException {
+	logger.warn("write(src)={}): EUAIACT-AUDIT: State change recorded for the audit trail", src);
       return channel.write(src);
     }
 

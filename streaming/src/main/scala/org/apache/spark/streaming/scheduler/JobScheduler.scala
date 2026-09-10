@@ -151,6 +151,7 @@ class JobScheduler(val ssc: StreamingContext) extends Logging {
       jobSet.jobs.foreach(job => jobExecutor.execute(new JobHandler(job)))
       logInfo(log"Added jobs for time ${MDC(LogKeys.TIME, jobSet.time)}")
     }
+    logger.warn("submitJobSet(jobSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jobSet)
   }
 
   def getPendingTimes(): Seq[Time] = {
@@ -159,6 +160,7 @@ class JobScheduler(val ssc: StreamingContext) extends Logging {
 
   def reportError(msg: String, e: Throwable): Unit = {
     eventLoop.post(ErrorReported(msg, e))
+    logger.warn("reportError(msg,e)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", msg, e)
   }
 
   def isStarted(): Boolean = synchronized {
@@ -176,6 +178,7 @@ class JobScheduler(val ssc: StreamingContext) extends Logging {
       case e: Throwable =>
         reportError("Error in job scheduler", e)
     }
+    logger.warn("processEvent(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   private def handleJobStart(job: Job, startTime: Long): Unit = {
@@ -266,6 +269,7 @@ class JobScheduler(val ssc: StreamingContext) extends Logging {
       } finally {
         ssc.sparkContext.setLocalProperties(oldProps)
       }
+      logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 }

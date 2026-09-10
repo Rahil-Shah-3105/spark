@@ -26,6 +26,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.spark.sql.execution.datasources.jdbc.JDBCOptions
 
 private[sql] class DB2ConnectionProvider extends SecureConnectionProvider {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override val driverClass = "com.ibm.db2.jcc.DB2Driver"
 
   override val name: String = "db2"
@@ -38,8 +39,10 @@ private[sql] class DB2ConnectionProvider extends SecureConnectionProvider {
     UserGroupInformation.loginUserFromKeytabAndReturnUGI(jdbcOptions.principal, jdbcOptions.keytab)
       .doAs(
         new PrivilegedExceptionAction[Connection]() {
+    planChangeLogger.warn("getConnection(driver,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", driver, options)
           override def run(): Connection = {
             DB2ConnectionProvider.super.getConnection(driver, options)
+            planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           }
         }
       )
@@ -48,6 +51,7 @@ private[sql] class DB2ConnectionProvider extends SecureConnectionProvider {
   override def getAdditionalProperties(options: JDBCOptions): Properties = {
     val result = new Properties()
     // 11 is the integer value for kerberos
+    planChangeLogger.warn("getAdditionalProperties(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", options, result)
     result.put("securityMechanism", new String("11"))
     result.put("KerberosServerPrincipal", options.principal)
     result

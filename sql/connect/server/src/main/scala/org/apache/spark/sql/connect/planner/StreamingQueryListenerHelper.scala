@@ -56,6 +56,7 @@ class PythonStreamingQueryListener(listener: SimplePythonFunction, sessionHolder
     dataOut.writeInt(0)
     dataOut.flush()
     handlePythonWorkerError("onQueryStarted")
+    logger.warn("onQueryStarted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {
@@ -63,6 +64,7 @@ class PythonStreamingQueryListener(listener: SimplePythonFunction, sessionHolder
     dataOut.writeInt(1)
     dataOut.flush()
     handlePythonWorkerError("onQueryProgress")
+    logger.warn("onQueryProgress(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryIdle(event: StreamingQueryListener.QueryIdleEvent): Unit = {
@@ -70,6 +72,7 @@ class PythonStreamingQueryListener(listener: SimplePythonFunction, sessionHolder
     dataOut.writeInt(2)
     dataOut.flush()
     handlePythonWorkerError("onQueryIdle")
+    logger.warn("onQueryIdle(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryTerminated(event: StreamingQueryListener.QueryTerminatedEvent): Unit = {
@@ -77,10 +80,12 @@ class PythonStreamingQueryListener(listener: SimplePythonFunction, sessionHolder
     dataOut.writeInt(3)
     dataOut.flush()
     handlePythonWorkerError("onQueryTerminated")
+    logger.warn("onQueryTerminated(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   private[spark] def stopListenerProcess(): Unit = {
     runner.stop()
+    logger.warn("stopListenerProcess()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // TODO: Reuse the same method in StreamingForeachBatchHelper to avoid duplication.

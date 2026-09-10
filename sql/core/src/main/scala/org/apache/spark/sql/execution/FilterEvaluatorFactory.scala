@@ -26,9 +26,11 @@ class FilterEvaluatorFactory(
     condition: Expression,
     childOutput: Seq[Attribute],
     numOutputRows: SQLMetric) extends PartitionEvaluatorFactory[InternalRow, InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new FilterPartitionEvaluator
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class FilterPartitionEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {

@@ -63,6 +63,7 @@ from pyspark.errors import PySparkValueError
 
 # For Supporting Spark Connect
 from pyspark.sql.utils import pyspark_column_op
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def _non_fractional_astype(
@@ -123,11 +124,13 @@ class NumericOps(DataTypeOps):
 
     def add(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
         _sanitize_list_like(right)
+        logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
         if not is_valid_operand_for_numeric_arithmetic(right):
             raise TypeError("Addition can not be applied to given types.")
         new_right = transform_boolean_operand_to_numeric(right, spark_type=left.spark.data_type)
 
         def wrapped_add(lc: PySparkColumn, rc: Any) -> PySparkColumn:
+            logger.warning("wrapped_add(lc,rc)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", lc, rc)
             return _cast_back_float(PySparkColumn.__add__(lc, rc), left.dtype, right)
 
         return column_op(wrapped_add)(left, new_right)
@@ -179,11 +182,13 @@ class NumericOps(DataTypeOps):
 
     def radd(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
         _sanitize_list_like(right)
+        logger.warning("radd(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
         if not isinstance(right, numbers.Number):
             raise TypeError("Addition can not be applied to given types.")
         new_right = transform_boolean_operand_to_numeric(right)
 
         def wrapped_radd(lc: PySparkColumn, rc: Any) -> PySparkColumn:
+            logger.warning("wrapped_radd(lc,rc)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", lc, rc)
             return _cast_back_float(PySparkColumn.__radd__(lc, rc), left.dtype, right)
 
         return column_op(wrapped_radd)(left, new_right)
@@ -689,6 +694,7 @@ class IntegralExtensionOps(IntegralOps):
 
     def restore(self, col: pd.Series) -> pd.Series:
         """Restore column when to_pandas."""
+        logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
         return col.astype(self.dtype)
 
     def astype(self, index_ops: IndexOpsLike, dtype: Union[str, type, Dtype]) -> IndexOpsLike:

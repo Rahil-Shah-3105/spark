@@ -48,6 +48,7 @@ object StronglyConnectedComponents {
     var prevSccGraph = sccGraph
 
     var numVertices = sccWorkGraph.numVertices
+    logger.warn("run(graph,numIter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", graph, numIter)
     var iter = 0
     while (sccWorkGraph.numVertices > 0 && iter < numIter) {
       iter += 1

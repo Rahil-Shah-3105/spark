@@ -137,6 +137,7 @@ object Main extends Logging {
         logError("Failed to initialize Spark session.", e)
         sys.exit(1)
     }
+    logger.warn("createSparkSession()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 }

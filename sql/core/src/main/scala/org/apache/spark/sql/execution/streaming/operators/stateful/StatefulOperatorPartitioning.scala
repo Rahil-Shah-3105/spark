@@ -32,12 +32,15 @@ import org.apache.spark.sql.internal.SQLConf.STATEFUL_OPERATOR_USE_STRICT_DISTRI
  * [[StatefulOpClusteredDistribution]] as its required child distribution.
  */
 object StatefulOperatorPartitioning {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def getCompatibleDistribution(
       expressions: Seq[Expression],
       stateInfo: StatefulOperatorStateInfo,
       conf: SQLConf): Distribution = {
     getCompatibleDistribution(expressions, stateInfo.numPartitions, conf)
+    planChangeLogger.warn("getCompatibleDistribution(expressions,numPartitions,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expressions, numPartitions, conf)
+  planChangeLogger.warn("getCompatibleDistribution(expressions,stateInfo,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expressions, stateInfo, conf)
   }
 
   def getCompatibleDistribution(

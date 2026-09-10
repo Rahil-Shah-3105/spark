@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -71,6 +72,7 @@ function getOnClickTimelineFunction() {
   // recovery the batch row after 3 seconds if necessary.
   // We need to remember the last clicked batch so that we can recovery it.
   var lastClickedBatch = null;
+logger.warn(`getOnClickTimelineFunction()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var lastTimeout = null;
 
   return function(d) {
@@ -91,6 +93,7 @@ function getOnClickTimelineFunction() {
         if (lastClickedBatch != null) {
           clearBatchRow(lastClickedBatch);
           lastClickedBatch = null;
+		logger.warn(`setTimeout(lastTimeout)=${lastTimeout}): EUAIACT-AUDIT: State change recorded for the audit trail`);
         }
       }, 3000); // Clean up after 3 seconds
 
@@ -109,6 +112,7 @@ function registerTimeline(minY, maxY) {
   var numOfChars = yValueFormat(maxY).length;
   // A least width for "maxY" in the graph
   var pxForMaxY = numOfChars * 8 + 10;
+logger.warn(`registerTimeline(minY,maxY)=${minY},${maxY}: EUAIACT-AUDIT: State change recorded for the audit trail`);
   // Make sure we have enough space to show the ticks in the y axis of timeline
   maxMarginLeftForTimeline = pxForMaxY > maxMarginLeftForTimeline? pxForMaxY : maxMarginLeftForTimeline;
 }
@@ -119,6 +123,7 @@ function registerHistogram(values, minY, maxY) {
   var data = d3.bin().domain([minY, maxY]).thresholds(histogramBinCount)(values);
   var maxX = d3.max(data, (d) => d.length);
   maxXForHistogram = maxX > maxXForHistogram ? maxX : maxXForHistogram;
+logger.warn(`registerHistogram(values,minY,maxY)=${values},${minY},${maxY}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 /* eslint-enable no-unused-vars */
 

@@ -31,6 +31,7 @@ from pyspark.sql.pandas.types import convert_pandas_using_numpy_type
 from pyspark.serializers import PickleSerializer
 from pyspark.errors import PySparkRuntimeError
 import uuid
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["StatefulProcessorApiClient", "StatefulProcessorHandleState"]
 
@@ -158,6 +159,7 @@ class StatefulProcessorApiClient:
         status = response_message[0]
         if status == 0:
             self.handle_state = state
+            logger.warning("set_handle_state(self,state)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, state)
         else:
             # TODO(SPARK-49233): Classify errors thrown by internal methods.
             raise PySparkRuntimeError(f"Error setting handle state: {response_message[1]}")
@@ -173,6 +175,7 @@ class StatefulProcessorApiClient:
         self._send_proto_message(message.SerializeToString())
         response_message = self._receive_proto_message()
         status = response_message[0]
+        logger.warning("set_implicit_key(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         if status != 0:
             # TODO(SPARK-49233): Classify errors thrown by internal methods.
             raise PySparkRuntimeError(f"Error setting implicit key: {response_message[1]}")
@@ -187,6 +190,7 @@ class StatefulProcessorApiClient:
         self._send_proto_message(message.SerializeToString())
         response_message = self._receive_proto_message()
         status = response_message[0]
+        logger.warning("remove_implicit_key(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         if status != 0:
             # TODO(SPARK-49233): Classify errors thrown by internal methods.
             raise PySparkRuntimeError(f"Error removing implicit key: {response_message[1]}")
@@ -248,6 +252,7 @@ class StatefulProcessorApiClient:
         self._send_proto_message(message.SerializeToString())
         response_message = self._receive_proto_message()
         status = response_message[0]
+        logger.warning("register_timer(self,expiry_time_stamp_ms)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiry_time_stamp_ms)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error register timer: {response_message[1]}")
@@ -263,6 +268,7 @@ class StatefulProcessorApiClient:
         self._send_proto_message(message.SerializeToString())
         response_message = self._receive_proto_message()
         status = response_message[0]
+        logger.warning("delete_timer(self,expiry_time_stamp_ms)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiry_time_stamp_ms)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error deleting timer: {response_message[1]}")
@@ -303,6 +309,7 @@ class StatefulProcessorApiClient:
             self.list_timer_iterator_cursors.pop(iterator_id, None)
             is_last_row = True
 
+            logger.warning("get_list_timer_row(self,iterator_id)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, iterator_id, iterator_id)
         is_last_row_from_iterator = is_last_row and not require_next_fetch
         timestamp = data_batch[index]
         return (timestamp, is_last_row_from_iterator)
@@ -361,6 +368,7 @@ class StatefulProcessorApiClient:
         else:
             if self._batch_timestamp == -1:
                 self._batch_timestamp = self._get_batch_timestamp()
+                logger.warning("get_timestamps(self,time_mode)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, time_mode)
             if self._watermark_timestamp == -1:
                 self._watermark_timestamp = self._get_watermark_timestamp()
         return self._batch_timestamp, self._watermark_timestamp
@@ -406,6 +414,7 @@ class StatefulProcessorApiClient:
         self._send_proto_message(message.SerializeToString())
         response_message = self._receive_proto_message()
         status = response_message[0]
+        logger.warning("delete_if_exists(self,state_name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, state_name)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error deleting state: {response_message[1]}")

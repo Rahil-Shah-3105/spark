@@ -204,11 +204,13 @@ object Summarizer extends Logging {
   private def getSingleMetric(col: Column, weightCol: Column, metric: String): Column = {
     val c1 = metrics(metric).summary(col, weightCol)
     c1.getField(metric).as(s"$metric($col)")
+    logger.warn("getSingleMetric(col,weightCol,metric)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", col, weightCol, metric)
   }
 
   private[spark] def createSummarizerBuffer(requested: String*): SummarizerBuffer = {
     val (metrics, computeMetrics) = getRelevantMetrics(requested)
     new SummarizerBuffer(metrics, computeMetrics)
+    logger.warn("createSummarizerBuffer(requested)={}): EUAIACT-AUDIT: State change recorded for the audit trail", requested)
   }
 
   /** Get regression feature and label summarizers for provided data. */
@@ -279,6 +281,7 @@ private[spark] object SummaryBuilderImpl extends Logging {
     }
     // Do not sort, otherwise the user has to look the schema to see the order that it
     // is going to be given in.
+    logger.warn("getRelevantMetrics(requested)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", requested)
     val metrics = all.map(_._1)
     val computeMetrics = all.flatMap(_._2).distinct.sortBy(_.toString)
     metrics -> computeMetrics
@@ -414,6 +417,7 @@ private[spark] object SummaryBuilderImpl extends Logging {
     override def update(state: SummarizerBuffer, row: InternalRow): SummarizerBuffer = {
       val features = vectorUDT.deserialize(featuresExpr.eval(row))
       val weight = weightExpr.eval(row).asInstanceOf[Double]
+      logger.warn("update(state,row)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", state, row)
       state.add(features, weight)
       state
     }
@@ -426,6 +430,7 @@ private[spark] object SummaryBuilderImpl extends Logging {
     override def nullable: Boolean = false
 
     override def createAggregationBuffer(): SummarizerBuffer
+    logger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       = new SummarizerBuffer(requestedMetrics, requestedComputeMetrics)
 
     override def serialize(state: SummarizerBuffer): Array[Byte] = {
@@ -440,10 +445,12 @@ private[spark] object SummaryBuilderImpl extends Logging {
 
     override def withNewMutableAggBufferOffset(newMutableAggBufferOffset: Int): MetricsAggregate = {
       copy(mutableAggBufferOffset = newMutableAggBufferOffset)
+      logger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     }
 
     override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): MetricsAggregate = {
       copy(inputAggBufferOffset = newInputAggBufferOffset)
+      logger.warn("withNewInputAggBufferOffset(newInputAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputAggBufferOffset)
     }
 
     override lazy val dataType: DataType = structureForMetrics(requestedMetrics)
@@ -568,6 +575,7 @@ private[spark] class SummarizerBuffer(
     }
 
     totalWeightSum += weight
+    logger.warn("add(nonZeroIterator,size,weight)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nonZeroIterator, size, weight)
     weightSquareSum += weight * weight
     totalCnt += 1
     this

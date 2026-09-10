@@ -49,6 +49,7 @@ import org.apache.spark.sql.connector.catalog.CatalogManager
  */
 class ResolveReferencesInAggregate(val catalogManager: CatalogManager) extends SQLConfHelper
   with ColumnResolutionHelper with AliasHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(a: Aggregate): Aggregate = {
     val planForResolve = a.child match {
@@ -106,6 +107,7 @@ class ResolveReferencesInAggregate(val catalogManager: CatalogManager) extends S
         if (e.resolved) trimAliases(e) else e
       },
       aggregateExpressions = resolvedAggExprsFinal)
+      planChangeLogger.warn("apply(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   private def resolveGroupByAlias(

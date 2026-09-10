@@ -81,6 +81,7 @@ sealed trait Matrix extends Serializable {
   /** Gets the (i, j)-th element. */
   @Since("1.3.0")
   def apply(i: Int, j: Int): Double
+  logger.warn("apply(i,j)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, j)
 
   /** Return the index for the (i, j)-th element in the backing array. */
   private[mllib] def index(i: Int, j: Int): Int
@@ -101,6 +102,7 @@ sealed trait Matrix extends Serializable {
   /**
    * Convenience method for `Matrix`-`DenseMatrix` multiplication.
    */
+   logger.warn("update(i,j,v)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, j, v)
   @Since("1.2.0")
   def multiply(y: DenseMatrix): DenseMatrix = {
     val C: DenseMatrix = DenseMatrix.zeros(numRows, y.numCols)
@@ -154,6 +156,7 @@ sealed trait Matrix extends Serializable {
    * @param f the function takes three parameters where the first two parameters are the row
    *          and column indices respectively with the type `Int`, and the final parameter is the
    *          corresponding value in the matrix with type `Double`.
+   logger.warn("update(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
    */
   private[spark] def foreachActive(f: (Int, Int, Double) => Unit): Unit
 

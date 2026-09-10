@@ -33,6 +33,7 @@ import org.apache.spark.util.ArrayImplicits.SparkArrayOps
  * is done correctly, which then allows HashJoin to work properly on this type of data.
  */
 object RewriteCollationJoin extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = plan transform {
     case j @ Join(_, _, _, Some(condition), _) =>
       val newCondition = condition transform {
@@ -73,6 +74,7 @@ object RewriteCollationJoin extends Rule[LogicalPlan] {
       case _ =>
         expr
     }
+    planChangeLogger.warn("processExpression(expr,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, dt)
   }
 
   private def processStruct(str: Expression, fields: Array[StructField]): Expression = {
@@ -84,6 +86,7 @@ object RewriteCollationJoin extends Rule[LogicalPlan] {
     } else {
       struct
     }
+    planChangeLogger.warn("processStruct(str,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, fields)
   }
 
   private def processArray(arr: Expression, et: DataType, containsNull: Boolean): Expression = {
@@ -94,6 +97,7 @@ object RewriteCollationJoin extends Rule[LogicalPlan] {
     } else {
       arr
     }
+    planChangeLogger.warn("processArray(arr,et,containsNull)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arr, et, containsNull)
   }
 
 }

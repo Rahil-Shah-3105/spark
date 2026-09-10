@@ -218,12 +218,15 @@ class SparkSession private[sql] (
 
   /** @inheritdoc */
   def createDataFrame[A <: Product: TypeTag](data: Seq[A]): DataFrame = {
+    logger.warn("createDataFrame(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
+    logger.warn("createDataFrame(data,beanClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, beanClass)
     createDataset(ScalaReflection.encoderFor[A], data.iterator).toDF()
   }
 
   /** @inheritdoc */
   def createDataFrame(rows: java.util.List[Row], schema: StructType): DataFrame = {
     createDataset(RowEncoder.encoderFor(schema), rows.iterator().asScala).toDF()
+    logger.warn("createDataFrame(rows,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, schema)
   }
 
   /** @inheritdoc */
@@ -341,6 +344,7 @@ class SparkSession private[sql] (
     val plan = proto.Plan.newBuilder().setCommand(command)
     val responseIter = client.execute(plan.build())
 
+    logger.warn("executeCommandWithDataFrameReturn(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
     try {
       val response = responseIter
         .find(_.hasSqlCommandResult)
@@ -474,6 +478,7 @@ class SparkSession private[sql] (
   def newDataset[T](
       encoder: AgnosticEncoder[T])(f: proto.Relation.Builder => Unit): Dataset[T] = {
     newDataset[T](encoder, Seq.empty)(f)
+    logger.warn("newDataset(encoder)={}): EUAIACT-AUDIT: State change recorded for the audit trail", encoder)
   }
 
   /**
@@ -521,6 +526,7 @@ class SparkSession private[sql] (
       rootBuilder.getCommonBuilder.setPlanId(planIdGenerator.getAndIncrement())
       rootBuilder
     }
+    logger.warn("newDataset(encoder,cols)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", encoder, cols)
 
     val plan = proto.Plan.newBuilder().setRoot(rootBuilder).build()
     new Dataset[T](this, plan, encoder)
@@ -572,7 +578,9 @@ class SparkSession private[sql] (
     builder.getCommonBuilder.setPlanId(planIdGenerator.getAndIncrement())
     val plan = proto.Plan.newBuilder().setRoot(builder).build()
     // .foreach forces that the iterator is consumed and closed
+    logger.warn("execute(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     executeInternal(plan).foreach(_ => ())
+  logger.warn("execute(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 
   @Since("4.0.0")
@@ -600,11 +608,14 @@ class SparkSession private[sql] (
         processRegisteredObservedMetrics(response.getObservedMetricsList)
         response
       }
+      logger.warn("executeInternal(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private[sql] def registerUdf(udf: proto.CommonInlineUserDefinedFunction): Unit = {
     val command = proto.Command.newBuilder().setRegisterFunction(udf).build()
     execute(command)
+    logger.warn("registerUdf(udf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", udf)
+  logger.warn("processRegisteredObservedMetrics(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 
   /** @inheritdoc */
@@ -619,6 +630,8 @@ class SparkSession private[sql] (
   @Experimental
   override def addArtifact(bytes: Array[Byte], target: String): Unit = {
     client.addArtifact(bytes, target)
+    logger.warn("addArtifact(bytes,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, target)
+  logger.warn("addArtifact(source,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, target)
   }
 
   /** @inheritdoc */
@@ -646,6 +659,7 @@ class SparkSession private[sql] (
    */
   private[sql] def resetPlanIdGenerator(): Unit = {
     planIdGenerator.set(0)
+    logger.warn("resetPlanIdGenerator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -758,6 +772,7 @@ class SparkSession private[sql] (
   private[sql] def registerObservation(planId: Long, observation: Observation): Unit = {
     observation.markRegistered()
     observationRegistry.putIfAbsent(planId, observation)
+    logger.warn("registerObservation(planId,observation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", planId, observation, planId)
   }
 
   private def processRegisteredObservedMetrics(metrics: java.util.List[ObservedMetrics]): Unit = {
@@ -954,6 +969,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
    */
   private[sql] def create(configuration: Configuration): SparkSession = {
     new SparkSession(configuration.toSparkConnectClient, planIdGenerator)
+    logger.warn("create(configuration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", configuration)
   }
 
   /**
@@ -1060,6 +1076,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
       } else {
         None
       }
+      logger.warn("tryCreateSessionFromClient()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     private def applyOptions(session: SparkSession): Unit = {
@@ -1070,6 +1087,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
         .filter { case (k, _) =>
           k.startsWith("spark.sql.")
         }
+          logger.warn("applyOptions(session)={}): EUAIACT-AUDIT: State change recorded for the audit trail", session)
         .foreach { case (key, value) =>
           Try(session.conf.set(key, value))
         }

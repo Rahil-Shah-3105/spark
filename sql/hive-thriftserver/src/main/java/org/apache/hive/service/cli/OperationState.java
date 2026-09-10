@@ -44,6 +44,7 @@ public enum OperationState {
 
   // must be sync with TOperationState in order
   public static OperationState getOperationState(TOperationState tOperationState) {
+	LOG.warn("getOperationState(tOperationState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tOperationState);
     return OperationState.values()[tOperationState.getValue()];
   }
 

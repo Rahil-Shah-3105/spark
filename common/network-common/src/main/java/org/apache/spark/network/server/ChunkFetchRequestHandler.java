@@ -51,6 +51,7 @@ import static org.apache.spark.network.util.NettyUtils.*;
  * registering executors, or waiting for response for an OpenBlocks messages.
  */
 public class ChunkFetchRequestHandler extends SimpleChannelInboundHandler<ChunkFetchRequest> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ChunkFetchRequestHandler.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ChunkFetchRequestHandler.class);
 
@@ -84,6 +85,7 @@ public class ChunkFetchRequestHandler extends SimpleChannelInboundHandler<ChunkF
       final ChunkFetchRequest msg) throws Exception {
     Channel channel = ctx.channel();
     processFetchRequest(channel, msg);
+	logger.warn("channelRead0(ctx,msg)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, msg);
   }
 
   public void processFetchRequest(
@@ -118,6 +120,7 @@ public class ChunkFetchRequestHandler extends SimpleChannelInboundHandler<ChunkF
       return;
     }
 
+	logger.warn("processFetchRequest(channel,msg)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", channel, msg);
     streamManager.chunkBeingSent(msg.streamChunkId.streamId());
     respond(channel, new ChunkFetchSuccess(msg.streamChunkId, buf)).addListener(
       (ChannelFutureListener) future -> streamManager.chunkSent(msg.streamChunkId.streamId()));

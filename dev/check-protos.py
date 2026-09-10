@@ -25,6 +25,7 @@ import sys
 import filecmp
 import tempfile
 import subprocess
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # Location of your Spark git development area
 SPARK_HOME = os.environ.get("SPARK_HOME", os.getcwd())
@@ -39,6 +40,7 @@ def run_cmd(cmd):
     print(f"RUN: {cmd}")
     if isinstance(cmd, list):
         return subprocess.check_output(cmd).decode("utf-8")
+        logger.warning("run_cmd(cmd)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
     else:
         return subprocess.check_output(cmd.split(" ")).decode("utf-8")
 

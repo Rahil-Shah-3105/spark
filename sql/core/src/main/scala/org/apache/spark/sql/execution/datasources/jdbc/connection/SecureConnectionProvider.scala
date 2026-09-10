@@ -42,6 +42,7 @@ private[jdbc] abstract class SecureConnectionProvider extends BasicConnectionPro
     val jdbcOptions = new JDBCOptions(options)
     setAuthenticationConfig(driver, jdbcOptions)
     super.getConnection(driver: Driver, options: Map[String, String])
+    planChangeLogger.warn("getConnection(driver,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", driver, options)
   }
 
   /**
@@ -50,12 +51,14 @@ private[jdbc] abstract class SecureConnectionProvider extends BasicConnectionPro
   def appEntry(driver: Driver, options: JDBCOptions): String
 
   private[connection] def setAuthenticationConfig(driver: Driver, options: JDBCOptions) = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val parent = Configuration.getConfiguration
     val config = new SecureConnectionProvider.JDBCConfiguration(
       parent, appEntry(driver, options), options.keytab,
       options.principal, options.refreshKrb5Config)
     logDebug("Adding database specific security configuration")
     Configuration.setConfiguration(config)
+    planChangeLogger.warn("setAuthenticationConfig(driver,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", driver, options)
   }
 }
 
@@ -86,6 +89,7 @@ object SecureConnectionProvider {
       } else {
         parent.getAppConfigurationEntry(name)
       }
+      planChangeLogger.warn("getAppConfigurationEntry(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     }
   }
 }

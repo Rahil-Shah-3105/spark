@@ -50,6 +50,7 @@ private[ui] class StreamingPagedTable(
    */
   private def getFirstFailureReason(batches: Seq[BatchUIData]): Option[String] = {
     batches.flatMap(_.outputOperations.flatMap(_._2.failureReason)).headOption
+    logger.warn("getFirstFailureReason(batches)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", batches)
   }
 
   private def getFirstFailureTableCell(batch: BatchUIData): Seq[Node] = {
@@ -59,6 +60,7 @@ private[ui] class StreamingPagedTable(
       UIUtils.failureReasonCell(
         failureReasonForUI, rowspan = 1, includeFirstLineInExpandDetails = false)
     }.getOrElse(<td>-</td>)
+    logger.warn("getFirstFailureTableCell(batch)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", batch)
   }
 
   private def createOutputOperationProgressBar(batch: BatchUIData): Seq[Node] = {
@@ -73,6 +75,7 @@ private[ui] class StreamingPagedTable(
           total = batch.outputOperations.size)
       }
     </td>
+    logger.warn("createOutputOperationProgressBar(batch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batch)
   }
 
   override def tableId: String = s"$tableTag-table"

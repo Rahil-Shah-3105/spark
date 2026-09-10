@@ -24,6 +24,7 @@ import org.apache.spark.SparkConf
  * A config provider that only reads Spark config keys.
  */
 private[spark] class SparkConfigProvider(conf: JMap[String, String]) extends ConfigProvider {
+  _driverLogger = DriverLogger(_conf)
 
   override def get(key: String): Option[String] = {
     if (key.startsWith("spark.")) {
@@ -31,5 +32,6 @@ private[spark] class SparkConfigProvider(conf: JMap[String, String]) extends Con
     } else {
       None
     }
+    _driverLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 }

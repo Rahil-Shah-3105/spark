@@ -57,6 +57,7 @@ private[thriftserver] class SparkSQLOperationManager()
     logDebug(s"Created Operation for $statement with session=$parentSession, " +
       s"runInBackground=$runInBackground")
     operation
+    logInfo.warn("newExecuteStatementOperation(parentSession,statement,confOverlay,async,queryTimeout)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", parentSession, statement, confOverlay, async, queryTimeout)
   }
 
   override def newGetCatalogsOperation(
@@ -68,6 +69,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetCatalogsOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetCatalogsOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession)
   }
 
   override def newGetSchemasOperation(
@@ -81,6 +83,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetSchemasOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetSchemasOperation(parentSession,catalogName,schemaName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName)
   }
 
   override def newGetTablesOperation(
@@ -97,6 +100,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetTablesOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetTablesOperation(parentSession,catalogName,schemaName,tableName,tableTypes)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, tableName, tableTypes)
   }
 
   override def newGetColumnsOperation(
@@ -113,6 +117,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetColumnsOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetColumnsOperation(parentSession,catalogName,schemaName,tableName,columnName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, tableName, columnName)
   }
 
   override def newGetTableTypesOperation(
@@ -124,6 +129,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetTableTypesOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetTableTypesOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession)
   }
 
   override def newGetFunctionsOperation(
@@ -139,6 +145,7 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetFunctionsOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetFunctionsOperation(parentSession,catalogName,schemaName,functionName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession, catalogName, schemaName, functionName)
   }
 
   override def newGetTypeInfoOperation(
@@ -150,5 +157,6 @@ private[thriftserver] class SparkSQLOperationManager()
     handleToOperation.put(operation.getHandle, operation)
     logDebug(s"Created GetTypeInfoOperation with session=$parentSession.")
     operation
+    logInfo.warn("newGetTypeInfoOperation(parentSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", parentSession)
   }
 }

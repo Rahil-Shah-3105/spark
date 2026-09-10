@@ -31,6 +31,8 @@ package org.apache.spark.util
 private[spark] object CausedBy {
 
   def unapply(e: Throwable): Option[Throwable] = {
+    _driverLogger = DriverLogger(_conf)
     Option(e.getCause).flatMap(cause => unapply(cause)).orElse(Some(e))
+    _driverLogger.warn("unapply(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 }

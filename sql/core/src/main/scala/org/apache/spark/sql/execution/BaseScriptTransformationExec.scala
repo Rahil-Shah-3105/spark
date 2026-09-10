@@ -48,6 +48,7 @@ trait BaseScriptTransformationExec extends UnaryExecNode {
   def ioschema: ScriptTransformationIOSchema
 
   protected lazy val inputExpressionsWithoutSerde: Seq[Expression] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     child.output.map { in =>
       in.dataType match {
         case _: ArrayType | _: MapType | _: StructType =>
@@ -66,6 +67,7 @@ trait BaseScriptTransformationExec extends UnaryExecNode {
     val broadcastedHadoopConf =
       new SerializableConfiguration(session.sessionState.newHadoopConf())
 
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     child.execute().mapPartitions { iter =>
       if (iter.hasNext) {
         val proj = UnsafeProjection.create(schema)
@@ -294,6 +296,7 @@ abstract class BaseScriptTransformationWriterThread extends Thread with Logging 
     val len = inputSchema.length
     iter.foreach { row =>
       val data = if (len == 0) {
+        planChangeLogger.warn("processRowsWithoutSerde()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         ioSchema.inputRowFormatMap("TOK_TABLEROWFORMATLINES")
       } else {
         val sb = new StringBuilder
@@ -405,5 +408,6 @@ object ScriptTransformationIOSchema {
       input.recordReaderClass,
       input.recordWriterClass,
       input.schemaLess)
+    planChangeLogger.warn("apply(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 }

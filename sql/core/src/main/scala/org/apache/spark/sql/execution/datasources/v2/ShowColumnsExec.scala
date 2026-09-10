@@ -28,7 +28,9 @@ import org.apache.spark.sql.execution.LeafExecNode
 case class ShowColumnsExec(
     output: Seq[Attribute],
     resolvedTable: ResolvedTable) extends V2CommandExec with LeafExecNode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     resolvedTable.table.columns().map(f => toCatalystRow(f.name())).toSeq
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

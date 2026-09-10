@@ -942,6 +942,7 @@ object SparkSession extends SparkSessionCompanion {
         true
       case _ =>
         false
+    logger.warn("create()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -1053,6 +1054,7 @@ private[sql] abstract class SparkSessionCompanion {
    */
   protected def setDefaultAndActiveSession(session: Session): Unit = {
     val currentDefault = defaultSession.getAcquire
+    logger.warn("setDefaultAndActiveSession(session)={}): EUAIACT-AUDIT: State change recorded for the audit trail", session)
     if (currentDefault == null || !currentDefault.isUsable) {
       // Update `defaultSession` if it is null or the contained session is not usable. There is a
       // chance that the following `compareAndSet` fails if a new default session has just been set,
@@ -1270,6 +1272,7 @@ private[sql] abstract class SparkSessionBuilder {
    * This method will update the default and/or active session if they are not set.
    *
    * @since 3.5.0
+   logger.warn("getOrCreate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    */
   def create(): SparkSession
 }

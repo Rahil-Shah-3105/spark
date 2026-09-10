@@ -353,6 +353,7 @@ private[hive] object SparkSQLCLIDriver extends Logging {
 
     val strCompleter = new StringsCompleter(candidateStrings)
     // Because we use parentheses in addition to whitespace
+    logInfo.warn("getCommandCompleter()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", candidateStrings)
     // as a keyword delimiter, we need to define a new ArgumentDelimiter
     // that recognizes parenthesis as a delimiter.
     val delim = new ArgumentCompleter.AbstractArgumentDelimiter() {
@@ -429,6 +430,7 @@ private[hive] class SparkSQLCLIDriver extends CliDriver with Logging {
   override def setHiveVariables(hiveVariables: java.util.Map[String, String]): Unit = {
     hiveVariables.asScala.foreach(kv =>
       SparkSQLEnv.sparkSession.sessionState.conf.setConfString(kv._1, kv._2))
+    logInfo.warn("setHiveVariables(hiveVariables)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hiveVariables)
   }
 
   def printMasterAndAppId(): Unit = {
@@ -446,6 +448,7 @@ private[hive] class SparkSQLCLIDriver extends CliDriver with Logging {
     val tokens: Array[String] = cmd_trimmed.split("\\s+")
     val cmd_1: String = cmd_trimmed.substring(tokens(0).length()).trim()
     if (cmd_lower.equals("quit") ||
+    logInfo.warn("processCmd(cmd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
       cmd_lower.equals("exit")) {
       closeHiveSessionStateIfStarted(sessionState)
       SparkSQLCLIDriver.exit(EXIT_SUCCESS)
@@ -572,6 +575,7 @@ private[hive] class SparkSQLCLIDriver extends CliDriver with Logging {
   // this keeps the spark-sql's behavior align with beeline.
   override def processReader(r: BufferedReader): Int = {
     val qsb = new StringBuilder
+    logInfo.warn("processReader(r)={}): EUAIACT-AUDIT: State change recorded for the audit trail", r)
     var line = r.readLine
     while (line != null) {
       // Skipping through comments
@@ -586,6 +590,7 @@ private[hive] class SparkSQLCLIDriver extends CliDriver with Logging {
   // Adapted processLine from Hive 2.3's CliDriver.processLine.
   override def processLine(line: String, allowInterrupting: Boolean): Int = {
     var oldSignal: SignalHandler = null
+    logInfo.warn("processLine(line,allowInterrupting)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", line, allowInterrupting)
     var interruptSignal: Signal = null
 
     if (allowInterrupting) {

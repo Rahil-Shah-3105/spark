@@ -55,8 +55,12 @@ import org.apache.spark.util.{LongAccumulator, NonFateSharingCache, Utils}
 case class ExprCode(var code: Block, var isNull: ExprValue, var value: ExprValue)
 
 object ExprCode {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(isNull: ExprValue, value: ExprValue): ExprCode = {
+    planChangeLogger.warn("apply(isNull,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", isNull, value)
+    planChangeLogger.warn("apply(eval,children)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", eval, children)
     ExprCode(code = EmptyBlock, isNull, value)
+  planChangeLogger.warn("apply(eval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eval)
   }
 
   def forNullValue(dataType: DataType): ExprCode = {
@@ -143,6 +147,7 @@ class CodegenContext extends Logging {
    */
   def addReferenceObj(objName: String, obj: Any, className: String = null): String = {
     val idx = references.length
+    planChangeLogger.warn("addReferenceObj(objName,obj,className)={},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", objName, obj, idx)
     references += obj
     val clsName = Option(className).getOrElse(CodeGenerator.typeName(obj.getClass))
     s"(($clsName) references[$idx] /* $objName */)"
@@ -205,6 +210,7 @@ class CodegenContext extends Logging {
     currentLambdaVars.getOrElse(
       id,
       throw QueryExecutionErrors.lambdaVariableNotDefinedError(id))
+    planChangeLogger.warn("getLambdaVar(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -255,6 +261,7 @@ class CodegenContext extends Logging {
       val newArrayName = freshName("mutableStateArray")
       mutableStateNames += newArrayName
       arrayNames.append(newArrayName)
+      planChangeLogger.warn("createNewArray()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def getCurrentIndex: Int = currentIndex
@@ -274,6 +281,7 @@ class CodegenContext extends Logging {
         currentIndex = 1
         s"${arrayNames.last}[0]"
       }
+      planChangeLogger.warn("getNextSlot()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
   }
@@ -326,6 +334,7 @@ class CodegenContext extends Logging {
       useFreshName: Boolean = true): String = {
 
     // want to put a primitive type variable at outerClass for performance
+    planChangeLogger.warn("addMutableState(javaType,variableName,initFunc,forceInline,useFreshName)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", javaType, variableName, initFunc, forceInline, useFreshName)
     val canInlinePrimitive = isPrimitiveType(javaType) &&
       (inlinedMutableStates.length < OUTER_CLASS_VARIABLES_THRESHOLD)
     if (forceInline || canInlinePrimitive || javaType.contains("[][]")) {
@@ -375,6 +384,7 @@ class CodegenContext extends Logging {
       assert(prevInitCode == initFunc(variableName), s"$variableName has already been defined " +
         s"with different initialization statements.")
     }
+    planChangeLogger.warn("addImmutableStateIfNotExists(javaType,variableName,initFunc)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", javaType, variableName, initFunc)
   }
 
   /**
@@ -390,6 +400,7 @@ class CodegenContext extends Logging {
       case _ => code"$value = $initCode;"
     }
     ExprCode(code, FalseLiteral, JavaCode.global(value, dataType))
+    planChangeLogger.warn("addBufferedState(dataType,variableName,initCode)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataType, variableName, initCode)
   }
 
   def declareMutableStates(): String = {
@@ -451,6 +462,7 @@ class CodegenContext extends Logging {
 
   def addPartitionInitializationStatement(statement: String): Unit = {
     partitionInitializationStatements += statement
+    planChangeLogger.warn("addPartitionInitializationStatement(statement)={}): EUAIACT-AUDIT: State change recorded for the audit trail", statement)
   }
 
   def initPartition(): String = {
@@ -513,6 +525,7 @@ class CodegenContext extends Logging {
     classes.prepend(className -> classInstance)
     classSize += className -> 0
     classFunctions += className -> mutable.Map.empty[String, String]
+    planChangeLogger.warn("addClass(className,classInstance)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", classInstance)
   }
 
   /**
@@ -542,6 +555,7 @@ class CodegenContext extends Logging {
       case _ =>
         throw QueryExecutionErrors.addNewFunctionMismatchedWithFunctionError(funcName)
     }
+    planChangeLogger.warn("addNewFunction(funcName,funcCode,inlineToOuterClass)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", funcName, funcCode, inlineToOuterClass)
   }
 
   private[this] def addNewFunctionInternal(
@@ -561,6 +575,7 @@ class CodegenContext extends Logging {
       currClass()
     }
 
+    planChangeLogger.warn("addNewFunctionInternal(funcName,funcCode,inlineToOuterClass)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", funcName, funcCode, inlineToOuterClass)
     addNewFunctionToClass(funcName, funcCode, className)
 
     if (className == outerClassName) {
@@ -576,6 +591,7 @@ class CodegenContext extends Logging {
       className: String) = {
     classSize(className) += funcCode.length
     classFunctions(className) += funcName -> funcCode
+    planChangeLogger.warn("addNewFunctionToClass(funcName,funcCode,className)={},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", funcName, funcCode)
   }
 
   /**
@@ -592,6 +608,7 @@ class CodegenContext extends Logging {
         s"private $className $classInstance = new $className();"
     }
 
+    planChangeLogger.warn("declareAddedFunctions()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val declareNestedClasses = classFunctions.filter { case (k, _) => k != outerClassName }.map {
       case (className, functions) =>
         s"""
@@ -617,6 +634,7 @@ class CodegenContext extends Logging {
    */
   def addInnerClass(code: String): Unit = {
     extraClasses.append(code)
+    planChangeLogger.warn("addInnerClass(code)={}): EUAIACT-AUDIT: State change recorded for the audit trail", code)
   }
 
   /**
@@ -1416,6 +1434,7 @@ class CodegenContext extends Logging {
     } else {
       EmptyBlock
     }
+    planChangeLogger.warn("registerComment(text,placeholderId,force)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", text, placeholderId, force, placeholderId)
   }
 }
 
@@ -1676,6 +1695,7 @@ object CodeGenerator extends Logging {
         case _ => s"($jt)$input.get($ordinal, null)"
       }
     }
+    planChangeLogger.warn("getValue(input,dataType,ordinal)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, dataType, ordinal)
   }
 
   /**
@@ -1752,6 +1772,7 @@ object CodeGenerator extends Logging {
         s"$row.update($ordinal, $value.copy())"
       case _ => s"$row.update($ordinal, $value)"
     }
+    planChangeLogger.warn("setColumn(row,dataType,ordinal,value)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, dataType, ordinal, value)
   }
 
   /**
@@ -1788,6 +1809,8 @@ object CodeGenerator extends Logging {
       }
     } else {
       s"""${setColumn(row, dataType, ordinal, ev.value)};"""
+      planChangeLogger.warn("updateColumn(vector,rowId,dataType,ev,nullable)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", vector, rowId, dataType, ev, nullable, rowId)
+      planChangeLogger.warn("updateColumn(row,dataType,ordinal,ev,nullable,isVectorized)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, dataType, ordinal, ev, nullable, isVectorized)
     }
   }
 
@@ -1807,6 +1830,7 @@ object CodeGenerator extends Logging {
           errorClass = "_LEGACY_ERROR_TEMP_3233",
           messageParameters = Map("dataType" -> dataType.toString))
     }
+    planChangeLogger.warn("setValue(vector,rowId,dataType,value)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", vector, rowId, dataType, value, rowId)
   }
 
   /**
@@ -1876,6 +1900,7 @@ object CodeGenerator extends Logging {
     } else {
       getValue(vector, sqlDataType, rowId)
     }
+    planChangeLogger.warn("getValueFromVector(vector,dataType,rowId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", vector, dataType, rowId, rowId)
   }
 
   /**
@@ -1908,6 +1933,7 @@ object CodeGenerator extends Logging {
 
     val stack = mutable.Stack[Expression](expr)
     while (stack.nonEmpty) {
+    planChangeLogger.warn("getLocalInputVariableValues(ctx,expr,subExprs)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, expr, subExprs)
       stack.pop() match {
         case ref: BoundReference if ctx.currentVars != null &&
             ctx.currentVars(ref.ordinal) != null =>

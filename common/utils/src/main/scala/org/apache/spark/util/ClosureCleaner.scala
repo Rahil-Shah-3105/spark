@@ -37,6 +37,7 @@ private[spark] object ClosureCleaner extends Logging {
   // Get an ASM class reader for a given class from the JAR that loaded it
   private[util] def getClassReader(cls: Class[_]): ClassReader = {
     // Copy data over, before delegating to ClassReader - else we can run out of open file handles.
+    log_.warn("getClassReader(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
     val className = cls.getName.replaceFirst("^.*\\.", "") + ".class"
     val resourceStream = cls.getResourceAsStream(className)
     if (resourceStream == null) {
@@ -57,6 +58,7 @@ private[spark] object ClosureCleaner extends Logging {
 
   // Check whether a class represents a Scala closure
   private def isClosure(cls: Class[_]): Boolean = {
+    log_ = LoggerFactory.getLogger(logName)
     cls.getName.contains("$anonfun$")
   }
 
@@ -76,6 +78,7 @@ private[spark] object ClosureCleaner extends Logging {
           val recurRet = getOuterClassesAndObjects(outer)
           return (f.getType :: recurRet._1, outer :: recurRet._2)
         } else {
+          log_.warn("getOuterClassesAndObjects(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
           return (f.getType :: Nil, outer :: Nil) // Stop at the first $outer that is not a closure
         }
       }
@@ -89,6 +92,7 @@ private[spark] object ClosureCleaner extends Logging {
     val seen = Set[Class[_]](obj.getClass)
     val stack = Stack[Class[_]](obj.getClass)
     while (!stack.isEmpty) {
+    log_.warn("getInnerClosureClasses(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
       val cr = getClassReader(stack.pop())
       if (cr != null) {
         val set = Set.empty[Class[_]]
@@ -129,6 +133,7 @@ private[spark] object ClosureCleaner extends Logging {
       val value = field.get(obj)
       field.set(clone, value)
     }
+    log_.warn("setAccessedFields(outerClass,clone,obj,accessedFields)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outerClass, clone, obj, accessedFields)
   }
 
   /** Clones a given object and sets accessed fields in cloned object. */
@@ -142,6 +147,7 @@ private[spark] object ClosureCleaner extends Logging {
     var currentClass = outerClass
     assert(currentClass != null, "The outer class can't be null.")
 
+    log_.warn("cloneAndSetFields(parent,obj,outerClass,accessedFields)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", parent, obj, outerClass, accessedFields)
     while (currentClass != null) {
       setAccessedFields(currentClass, clone, obj, accessedFields)
       currentClass = currentClass.getSuperclass()
@@ -564,6 +570,7 @@ private[spark] object ClosureCleaner extends Logging {
       clone
     } else {
       cmdClones(outerThis.getClass)
+    log_.warn("setFieldAndIgnoreModifiers(obj,field,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, field, value)
     }
 
     cloneIndyLambda(func, outerThisClone, lambdaProxy).getOrElse {
@@ -600,6 +607,7 @@ private[spark] object ClosureCleaner extends Logging {
       modifiersFieldOption.foreach(_.setAccessible(true))
       modifiersFieldOption
     } else None
+    log_.warn("getFinalModifiersFieldForJava17(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   private def instantiateClass(cls: Class[_], enclosingObject: AnyRef): AnyRef = {
@@ -700,6 +708,7 @@ private[spark] object ClosureCleaner extends Logging {
       classOf[Int])
     replLookupCtor.setAccessible(true)
     // -1 means full-power.
+    log_.warn("getFullPowerLookupFor(targetClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", targetClass)
     replLookupCtor.newInstance(targetClass, null, -1)
   }
 }
@@ -885,6 +894,7 @@ private[spark] object IndylambdaScalaClosures extends Logging {
     val classInfoByInternalName = Map.empty[String, (Class[_], ClassNode)]
     val methodNodeById = Map.empty[MethodIdentifier[_], MethodNode]
     def getOrUpdateClassInfo(classInternalName: String): (Class[_], ClassNode) = {
+      log_.warn("getOrUpdateClassInfo(classInternalName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", classInternalName)
       val classInfo = classInfoByInternalName.getOrElseUpdate(classInternalName, {
         val classExternalName = classInternalName.replace('/', '.')
         // scalastyle:off classforname
@@ -896,6 +906,7 @@ private[spark] object IndylambdaScalaClosures extends Logging {
           val classReader = ClosureCleaner.getClassReader(clazz)
           classReader.accept(classNode, 0)
           classNode
+          log_.warn("getClassNode(clazz)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", clazz)
         }
 
         var curClazz = clazz
@@ -954,6 +965,7 @@ private[spark] object IndylambdaScalaClosures extends Logging {
 
     def addAmmoniteCommandFieldsToTracking(currentClass: Class[_]): Unit = {
       // get an instance of currentClass. It can be either lambda enclosing this
+      log_.warn("addAmmoniteCommandFieldsToTracking(currentClass)={}): EUAIACT-AUDIT: State change recorded for the audit trail", currentClass)
       // or another already processed Ammonite object
       val currentInstance = if (currentClass == lambdaProxy.getCapturedArg(0).getClass) {
         Some(lambdaProxy.getCapturedArg(0))

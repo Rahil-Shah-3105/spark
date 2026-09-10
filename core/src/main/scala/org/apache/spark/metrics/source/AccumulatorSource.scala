@@ -34,6 +34,7 @@ import org.apache.spark.util.{AccumulatorV2, DoubleAccumulator, LongAccumulator}
 private[spark] class AccumulatorSource extends Source {
   private val registry = new MetricRegistry
   protected def register[T](accumulators: Map[String, AccumulatorV2[_, T]]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     accumulators.foreach {
       case (name, accumulator) =>
         val gauge = new Gauge[T] {
@@ -41,6 +42,7 @@ private[spark] class AccumulatorSource extends Source {
         }
         registry.register(MetricRegistry.name(name), gauge)
     }
+    _driverLogger.warn("register(accumulators)={}): EUAIACT-AUDIT: State change recorded for the audit trail", accumulators)
   }
 
   override def sourceName: String = "AccumulatorSource"
@@ -63,6 +65,7 @@ object LongAccumulatorSource {
     val source = new LongAccumulatorSource
     source.register(accumulators)
     sc.env.metricsSystem.registerSource(source)
+  _driverLogger.warn("register(sc,accumulators)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, accumulators)
   }
 }
 

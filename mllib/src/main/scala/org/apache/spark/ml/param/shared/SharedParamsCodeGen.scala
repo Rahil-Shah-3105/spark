@@ -171,6 +171,7 @@ private[shared] object SharedParamsCodeGen {
         case _ if c == classOf[String] => "String"
         case _ if c.isArray => s"Array[${getTypeString(c.getComponentType)}]"
       }
+      logger.warn("getTypeString(c)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", c)
     }
   }
 

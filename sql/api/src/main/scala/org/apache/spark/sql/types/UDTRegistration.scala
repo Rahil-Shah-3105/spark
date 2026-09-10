@@ -70,6 +70,7 @@ object UDTRegistration extends Serializable with Logging {
       // or not. The check is deferred.
       udtMap += ((userClass, udtClass))
     }
+    logger.warn("register(userClass,udtClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", userClass, udtClass)
   }
 
   /**
@@ -92,5 +93,6 @@ object UDTRegistration extends Serializable with Logging {
         throw DataTypeErrors.cannotLoadUserDefinedTypeError(udtClassName, userClass)
       }
     }
+    logger.warn("getUDTFor(userClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", userClass)
   }
 }

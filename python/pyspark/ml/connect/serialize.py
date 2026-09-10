@@ -28,6 +28,7 @@ from pyspark.ml.linalg import (
 if TYPE_CHECKING:
     from pyspark.sql.connect.client import SparkConnectClient
     from pyspark.ml.param import Params
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def literal_null() -> pb2.Expression.Literal:
@@ -38,12 +39,14 @@ def literal_null() -> pb2.Expression.Literal:
 
 def build_int_list(value: List[int]) -> pb2.Expression.Literal:
     p = pb2.Expression.Literal()
+    logger.warning("build_int_list(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
     p.specialized_array.ints.values.extend(value)
     return p
 
 
 def build_float_list(value: List[float]) -> pb2.Expression.Literal:
     p = pb2.Expression.Literal()
+    logger.warning("build_float_list(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
     p.specialized_array.doubles.values.extend(value)
     return p
 

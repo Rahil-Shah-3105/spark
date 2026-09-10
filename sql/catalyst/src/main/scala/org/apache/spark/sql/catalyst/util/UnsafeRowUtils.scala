@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.types._
 
 object UnsafeRowUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private[util] sealed trait PaddingProvider {
     def getPadding(row: UnsafeRow, index: Int, bitShift: Int): Long
@@ -34,6 +35,7 @@ object UnsafeRowUtils {
       row: UnsafeRow, index: Int, bitShift: Int): Long = row.getLong(index) >> bitShift
     override def getPaddingBoolean(
       row: UnsafeRow, index: Int): Long = row.getLong(index) >> 1
+  planChangeLogger.warn("getPaddingBoolean(row,index)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, index)
   }
 
   private[util] object PaddingProviderBE extends PaddingProvider {

@@ -91,6 +91,7 @@ private[thriftserver] class HiveThriftServer2Listener(
     }
 
   private def updateJobDetails(jobId: String, groupId: String): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     val execList = executionList.values().asScala.filter(_.groupId == groupId).toSeq
     if (execList.nonEmpty) {
       execList.foreach { exec =>
@@ -127,12 +128,14 @@ private[thriftserver] class HiveThriftServer2Listener(
       case e: SparkListenerThriftServerOperationClosed => onOperationClosed(e)
       case _ => // Ignore
     }
+  logInfo.warn("updateStoreWithTriggerEnabled(entity)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entity)
   }
 
   private def onSessionCreated(e: SparkListenerThriftServerSessionCreated): Unit = {
     val session = getOrCreateSession(e.sessionId, e.startTime, e.ip, e.userName)
     sessionList.put(e.sessionId, session)
     updateLiveStore(session)
+    logInfo.warn("onSessionCreated(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   private def onSessionClosed(e: SparkListenerThriftServerSessionClosed): Unit =
@@ -223,6 +226,7 @@ private[thriftserver] class HiveThriftServer2Listener(
       case None => logWarning(
         log"onOperationFinished called with unknown operation id: ${MDC(STATEMENT_ID, e.id)}"
       )
+    logInfo.warn("updateLiveStore(entity,trigger)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entity, trigger)
     }
 
   private def onOperationClosed(e: SparkListenerThriftServerOperationClosed): Unit =
@@ -265,6 +269,7 @@ private[thriftserver] class HiveThriftServer2Listener(
      username: String): LiveSessionData = {
     sessionList.computeIfAbsent(sessionId,
       (_: String) => new LiveSessionData(sessionId, startTime, ip, username))
+    logInfo.warn("getOrCreateSession(sessionId,startTime,ip,username)=<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", startTime, ip, username, sessionId)
   }
 
   private def getOrCreateExecution(
@@ -273,11 +278,13 @@ private[thriftserver] class HiveThriftServer2Listener(
     userName: String): LiveExecutionData = {
     executionList.computeIfAbsent(execId,
       (_: String) => new LiveExecutionData(execId, statement, sessionId, startTimestamp, userName))
+    logInfo.warn("getOrCreateExecution(execId,statement,sessionId,startTimestamp,userName)={},{},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, statement, startTimestamp, userName, execId)
   }
 
   private def cleanupExecutions(count: Long): Unit = {
     val countToDelete = calculateNumberToRemove(count, retainedStatements)
     if (countToDelete <= 0L) {
+      logInfo.warn("calculateNumberToRemove(dataSize,retainedSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataSize, retainedSize)
       return
     }
     val view = kvstore.view(classOf[ExecutionInfo]).index("finishTime").first(0L)
@@ -342,6 +349,7 @@ private[thriftserver] class LiveExecutionData(
       state,
       jobId,
       groupId)
+    logInfo.warn("doUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

@@ -36,6 +36,7 @@ case class AsOfVersion(version: String) extends TimeTravelSpec {
 }
 
 object TimeTravelSpec {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Evaluate a resolved timestamp expression to microseconds since epoch.
@@ -87,6 +88,7 @@ object TimeTravelSpec {
     } else {
       None
     }
+    planChangeLogger.warn("create(timestamp,version,sessionLocalTimeZone)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timestamp, version, sessionLocalTimeZone)
   }
 
   def fromOptions(

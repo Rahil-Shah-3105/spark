@@ -59,6 +59,7 @@ class ArrowRRunner(
     isDataFrame = true,
     schema.fieldNames,
     mode) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected def bufferedWrite(
       dataOut: DataOutputStream)(writeFunc: ByteArrayOutputStream => Unit): Unit = {
@@ -68,6 +69,7 @@ class ArrowRRunner(
     // Currently, there looks no way to read batch by batch by socket connection in R side,
     // See ARROW-4512. Therefore, it writes the whole Arrow streaming-formatted binary at
     // once for now.
+    planChangeLogger.warn("bufferedWrite(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
     val data = out.toByteArray
     dataOut.writeInt(data.length)
     dataOut.write(data)
@@ -91,6 +93,7 @@ class ArrowRRunner(
             "stdout writer for R", 0, Long.MaxValue)
           val root = VectorSchemaRoot.create(arrowSchema, allocator)
 
+          planChangeLogger.warn("writeIteratorToStream(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
           bufferedWrite(dataOut) { out =>
             Utils.tryWithSafeFinally {
               val arrowWriter = ArrowWriter.create(root)
@@ -123,6 +126,7 @@ class ArrowRRunner(
 
   protected override def newReaderIterator(
       dataStream: DataInputStream, errThread: BufferedStreamThread): ReaderIterator = {
+       planChangeLogger.warn("newReaderIterator(dataStream,errThread)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataStream, errThread)
     new ReaderIterator(dataStream, errThread) {
       private val allocator = ArrowUtils.rootAllocator.newChildAllocator(
         "stdin reader for R", 0, Long.MaxValue)

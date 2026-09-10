@@ -66,6 +66,7 @@ case class CommandResultExec(
       numOutputRows += 1
       r
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def stringArgs: Iterator[Any] = {
@@ -80,6 +81,7 @@ case class CommandResultExec(
     longMetric("numOutputRows").add(unsafeRows.length)
     sendDriverMetrics()
     unsafeRows
+    planChangeLogger.warn("executeCollect()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def executeToIterator(): Iterator[InternalRow] = unsafeRows.iterator
@@ -89,10 +91,12 @@ case class CommandResultExec(
     longMetric("numOutputRows").add(taken.length)
     sendDriverMetrics()
     taken
+    planChangeLogger.warn("executeTake(limit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", limit)
   }
 
   override def executeTail(limit: Int): Array[InternalRow] = {
     val taken: Seq[InternalRow] = unsafeRows.takeRight(limit).toImmutableArraySeq
+    planChangeLogger.warn("executeTail(limit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", limit)
     longMetric("numOutputRows").add(taken.size)
     sendDriverMetrics()
     taken.toArray
@@ -104,7 +108,9 @@ case class CommandResultExec(
   override def inputRDD: RDD[InternalRow] = rdd
 
   private def sendDriverMetrics(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val executionId = sparkContext.getLocalProperty(SQLExecution.EXECUTION_ID_KEY)
     SQLMetrics.postDriverMetricUpdates(sparkContext, executionId, metrics.values.toSeq)
+    planChangeLogger.warn("sendDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", executionId)
   }
 }

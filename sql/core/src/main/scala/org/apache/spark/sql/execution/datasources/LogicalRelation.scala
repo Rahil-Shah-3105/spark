@@ -112,11 +112,14 @@ case class LogicalRelation(
 }
 
 object LogicalRelation {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(relation: BaseRelation, isStreaming: Boolean = false): LogicalRelation = {
     // The v1 source may return schema containing char/varchar type. We replace char/varchar
+    planChangeLogger.warn("apply(relation,isStreaming)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, isStreaming)
     // with "annotated" string type here as the query engine doesn't support char/varchar yet.
     val schema = CharVarcharUtils.replaceCharVarcharWithStringInSchema(relation.schema)
     LogicalRelation(relation, toAttributes(schema), None, isStreaming, None)
+  planChangeLogger.warn("apply(relation,table)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, table)
   }
 
   def apply(relation: BaseRelation, table: CatalogTable): LogicalRelation = {
@@ -136,5 +139,6 @@ object LogicalRelation {
 object LogicalRelationWithTable {
   def unapply(plan: LogicalRelation): Option[(BaseRelation, Option[CatalogTable])] = {
     Some(plan.relation, plan.catalogTable)
+    planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

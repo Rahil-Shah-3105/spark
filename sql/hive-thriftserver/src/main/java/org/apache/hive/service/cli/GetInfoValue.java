@@ -24,6 +24,7 @@ import org.apache.hive.service.rpc.thrift.TGetInfoValue;
  *
  */
 public class GetInfoValue {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(GetInfoValue.class);
   private String stringValue = null;
   private short shortValue;
   private int intValue;
@@ -59,6 +60,7 @@ public class GetInfoValue {
     TGetInfoValue tInfoValue = new TGetInfoValue();
     if (stringValue != null) {
       tInfoValue.setStringValue(stringValue);
+	LOG.warn("toTGetInfoValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return tInfoValue;
   }

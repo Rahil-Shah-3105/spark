@@ -53,6 +53,7 @@ class SparkConnectStreamingQueryListenerHandler(executeHolder: ExecuteHolder) ex
       responseObserver: StreamObserver[ExecutePlanResponse]): Unit = {
 
     val listenerHolder = sessionHolder.streamingServersideListenerHolder
+    logger.warn("handleListenerCommand(command,responseObserver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", command, responseObserver)
 
     command.getCommandCase match {
       case StreamingQueryListenerBusCommand.CommandCase.ADD_LISTENER_BUS_LISTENER =>

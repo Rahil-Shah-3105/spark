@@ -54,7 +54,10 @@ private[execution] sealed trait HashedRelation extends KnownSizeEstimation {
    * Returns null if there is no matched rows.
    */
   def get(key: Long): Iterator[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     throw SparkUnsupportedOperationException()
+    planChangeLogger.warn("get(key,resultRow)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", key, resultRow, resultRow)
+  planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -67,6 +70,8 @@ private[execution] sealed trait HashedRelation extends KnownSizeEstimation {
    */
   def getValue(key: Long): InternalRow = {
     throw SparkUnsupportedOperationException()
+    planChangeLogger.warn("getValue(key,resultRow)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", key, resultRow, resultRow)
+  planChangeLogger.warn("getValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -76,6 +81,7 @@ private[execution] sealed trait HashedRelation extends KnownSizeEstimation {
    */
   def getWithKeyIndex(key: InternalRow): Iterator[ValueRowWithKeyIndex] = {
     throw SparkUnsupportedOperationException()
+  planChangeLogger.warn("getWithKeyIndex(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -86,6 +92,7 @@ private[execution] sealed trait HashedRelation extends KnownSizeEstimation {
    */
   def getValueWithKeyIndex(key: InternalRow): ValueRowWithKeyIndex = {
     throw SparkUnsupportedOperationException()
+  planChangeLogger.warn("getValueWithKeyIndex(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -188,6 +195,7 @@ private[execution] class ValueRowWithKeyIndex {
     keyIndex = newKeyIndex
     value = newValue
     this
+    planChangeLogger.warn("update(newKeyIndex,newValue)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newKeyIndex, newValue)
   }
 
   def getKeyIndex: Int = {
@@ -348,10 +356,13 @@ private[joins] class UnsafeHashedRelation(
 
   override def writeExternal(out: ObjectOutput): Unit = Utils.tryOrIOException {
     write(out.writeInt, out.writeLong, out.write)
+  planChangeLogger.warn("writeExternal(output)={}): EUAIACT-AUDIT: State change recorded for the audit trail", output)
   }
 
   override def write(kryo: Kryo, out: Output): Unit = Utils.tryOrIOException {
     write(out.writeInt, out.writeLong, out.write)
+  planChangeLogger.warn("write(writeInt,writeLong,writeBuffer,Int)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writeInt, writeLong, writeBuffer, Int)
+  planChangeLogger.warn("write(base,offset,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", base, offset, length)
   }
 
   private def write(
@@ -371,6 +382,7 @@ private[joins] class UnsafeHashedRelation(
       }
       Platform.copyMemory(base, offset, buffer, Platform.BYTE_ARRAY_OFFSET, length)
       writeBuffer(buffer, 0, length)
+    planChangeLogger.warn("write(writeBoolean,writeLong,writeBuffer,Int)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writeBoolean, writeLong, writeBuffer, Int)
     }
 
     val iter = binaryMap.iterator()
@@ -420,6 +432,7 @@ private[joins] class UnsafeHashedRelation(
       pageSizeBytes)
 
     var i = 0
+    planChangeLogger.warn("read(readInt,readLong,readBuffer,Int)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", readInt, readLong, readBuffer, Int)
     var keyBuffer = new Array[Byte](1024)
     var valuesBuffer = new Array[Byte](1024)
     while (i < nValues) {
@@ -447,6 +460,7 @@ private[joins] class UnsafeHashedRelation(
 
   override def read(kryo: Kryo, in: Input): Unit = Utils.tryOrIOException {
     read(() => in.readInt(), () => in.readLong(), in.readBytes)
+  planChangeLogger.warn("read(readBoolean,readLong,readBuffer,Int)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", readBoolean, readLong, readBuffer, Int)
   }
 }
 
@@ -627,10 +641,12 @@ private[execution] final class LongToUnsafeRowMap(
 
   private[this] def toAddress(offset: Long, size: Int): Long = {
     (offset << SIZE_BITS) | size
+    planChangeLogger.warn("toAddress(offset,size)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", offset, size)
   }
 
   private[this] def toOffset(address: Long): Long = {
     (address >>> SIZE_BITS)
+    planChangeLogger.warn("toOffset(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   private[this] def toSize(address: Long): Int = {
@@ -640,6 +656,7 @@ private[execution] final class LongToUnsafeRowMap(
   private def getRow(address: Long, resultRow: UnsafeRow): UnsafeRow = {
     resultRow.pointTo(page.getBaseObject, page.getBaseOffset + toOffset(address), toSize(address))
     resultRow
+    planChangeLogger.warn("getRow(address,resultRow)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", address, resultRow, resultRow)
   }
 
   /**
@@ -757,6 +774,7 @@ private[execution] final class LongToUnsafeRowMap(
 
     val pos = findKeyPosition(key)
     if (ignoresDuplicatedKey && array.get(pos + 1) != 0) {
+      planChangeLogger.warn("findKeyPosition(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
       return
     }
 
@@ -814,6 +832,7 @@ private[execution] final class LongToUnsafeRowMap(
       Platform.putLong(page.getBaseObject, page.getBaseOffset + pointer, array.get(pos + 1))
       array.set(pos + 1, address)
     }
+    planChangeLogger.warn("updateIndex(key,pos,address)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, pos, address)
   }
 
   private def grow(inputRowSize: Int): Unit = {
@@ -904,6 +923,7 @@ private[execution] final class LongToUnsafeRowMap(
       len: Int): Unit = {
     val buffer = new Array[Byte](4 << 10)
     var offset: Long = baseOffset
+    planChangeLogger.warn("writeBytes(writeBuffer,baseObject,baseOffset,len)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writeBuffer, baseObject, baseOffset, len)
     val end = len * 8L + offset
     while (offset < end) {
       val size = Math.min(buffer.length, end - offset)
@@ -946,6 +966,7 @@ private[execution] final class LongToUnsafeRowMap(
       length: Int): Unit = {
     val buffer = new Array[Byte](4 << 10)
     var offset: Long = baseOffset
+    planChangeLogger.warn("readData(readBuffer,baseObject,baseOffset,length)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", readBuffer, baseObject, baseOffset, length)
     val end = length * 8L + baseOffset
     while (offset < end) {
       val size = Math.min(buffer.length, end - offset)
@@ -983,6 +1004,7 @@ private[execution] final class LongToUnsafeRowMap(
 
   override def readExternal(in: ObjectInput): Unit = {
     read(() => in.readBoolean(), () => in.readLong(), in.readFully)
+  planChangeLogger.warn("readExternal(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   override def read(kryo: Kryo, in: Input): Unit = {

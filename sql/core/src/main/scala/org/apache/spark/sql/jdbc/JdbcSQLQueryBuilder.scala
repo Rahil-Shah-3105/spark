@@ -32,6 +32,7 @@ import org.apache.spark.sql.execution.datasources.v2.TableSampleInfo
  * @since 3.5.0
  */
 class JdbcSQLQueryBuilder(dialect: JdbcDialect, options: JDBCOptions) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * `columns`, but as a String suitable for injection into a SQL query.
@@ -167,6 +168,7 @@ class JdbcSQLQueryBuilder(dialect: JdbcDialect, options: JDBCOptions) {
     this.offset = offset
 
     this
+    planChangeLogger.warn("withOffset(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /**

@@ -131,6 +131,7 @@ class Interaction @Since("1.6.0") (@Since("1.6.0") override val uid: String) ext
         case _ =>
           1  // numeric feature
       }
+      logger.warn("getNumFeatures(attr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attr)
     }
     features.map { f =>
       val numFeatures = f.dataType match {
@@ -182,6 +183,7 @@ class Interaction @Since("1.6.0") (@Since("1.6.0") override val uid: String) ext
       }
     }
     new AttributeGroup($(outputCol), featureAttrs.toArray)
+    logger.warn("getFeatureAttrs(features)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", features)
   }
 
   /**

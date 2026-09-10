@@ -58,6 +58,7 @@ private[libsvm] class LibSVMOutputWriter(
     vector.foreachActive { case (i, v) =>
       writer.write(s" ${i + 1}:$v")
     }
+    logger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
 
     writer.write('\n')
   }
@@ -124,6 +125,7 @@ private[libsvm] case class LibSVMFileFormat()
       dataSchema: StructType): OutputWriterFactory = {
     verifySchema(dataSchema, true)
     new OutputWriterFactory {
+    logger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
       override def newInstance(
           path: String,
           dataSchema: StructType,
@@ -133,6 +135,7 @@ private[libsvm] case class LibSVMFileFormat()
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".libsvm" + CodecStreams.getCompressionExtension(context)
+        logger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }
@@ -155,6 +158,7 @@ private[libsvm] case class LibSVMFileFormat()
     val broadcastedHadoopConf =
       SerializableConfiguration.broadcast(sparkSession.sparkContext, hadoopConf)
 
+      logger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     (file: PartitionedFile) => {
       val linesReader = Utils.createResourceUninterruptiblyIfInTaskThread(
         new HadoopFileLinesReader(file, broadcastedHadoopConf.value.value)

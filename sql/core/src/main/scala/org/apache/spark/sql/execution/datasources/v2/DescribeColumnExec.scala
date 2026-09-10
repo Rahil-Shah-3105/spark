@@ -32,6 +32,7 @@ case class DescribeColumnExec(
     column: Attribute,
     isExtended: Boolean,
     table: Table) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     val rows = new ArrayBuffer[InternalRow]()
@@ -47,6 +48,7 @@ case class DescribeColumnExec(
       CharVarcharUtils.getRawType(column.metadata).getOrElse(column.dataType).catalogString)
     rows += toCatalystRow("comment", comment)
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (isExtended) {
       val colStats = table match {
         case read: SupportsRead =>

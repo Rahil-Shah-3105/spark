@@ -40,6 +40,7 @@ case class CreateTableExec(
   val tableProperties = CatalogV2Util.convertTableProperties(tableSpec)
 
   override protected def run(): Seq[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (!catalog.tableExists(identifier)) {
       try {
         val tableInfo = new TableInfo.Builder()
@@ -59,6 +60,7 @@ case class CreateTableExec(
     }
 
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty

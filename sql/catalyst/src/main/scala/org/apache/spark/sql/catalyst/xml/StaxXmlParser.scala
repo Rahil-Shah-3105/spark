@@ -56,6 +56,7 @@ import org.apache.spark.util.{SparkErrorUtils, Utils}
 class StaxXmlParser(
     schema: StructType,
     val options: XmlOptions) extends Logging {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private lazy val timestampFormatter = TimestampFormatter(
     options.timestampFormatInRead,
@@ -105,6 +106,7 @@ class StaxXmlParser(
     } else {
       schema.getFieldIndexCaseInsensitive(fieldName)
     }
+    planChangeLogger.warn("getFieldIndex(schema,fieldName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, fieldName)
   }
 
   def parseStream(
@@ -828,6 +830,7 @@ class XmlTokenizer(
 
   private def readUntilMatch(end: String): Boolean = {
     var i = 0
+    planChangeLogger.warn("readUntilMatch(end)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", end)
     while (true) {
       val cOrEOF = reader.read()
       if (cOrEOF == -1) {
@@ -853,6 +856,7 @@ class XmlTokenizer(
     currentStartTag = startTag
     var i = 0
     var commentIdx = 0
+    planChangeLogger.warn("readUntilStartElement()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", commentIdx)
     var cdataIdx = 0
 
     while (true) {
@@ -929,6 +933,7 @@ class XmlTokenizer(
     // tag is found
     var canSelfClose = !startTagClosed
 
+    planChangeLogger.warn("readUntilEndElement(startTagClosed)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", startTagClosed, commentIdx)
     while (true) {
 
       val cOrEOF = reader.read()
@@ -1238,6 +1243,7 @@ object StaxXmlParser {
       // Otherwise, just use the first variant as the field value
       fieldVariants.get(0)
     }
+    planChangeLogger.warn("writeVariantObjectField(fieldName,fieldVariants,builder,objectStart,objectFieldEntries)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", fieldName, fieldVariants, builder, objectStart, objectFieldEntries, fieldId)
 
     // Append the field value to the variant builder
     builder.appendVariant(fieldValue)

@@ -96,6 +96,7 @@ object DataFrameExample {
     println("Schema from Parquet:")
     newDF.printSchema()
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     spark.stop()
   }
 }

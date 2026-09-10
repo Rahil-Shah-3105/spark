@@ -37,11 +37,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for collation-aware UTF8String operations.
  */
 public class CollationAwareUTF8String {
+private static final Logger log = LoggerFactory.getLogger(CollationAwareUTF8String.class);
 
   /**
    * The constant value to indicate that the match is not found when searching for a pattern
@@ -152,6 +155,7 @@ public class CollationAwareUTF8String {
       final UTF8String target,
       final UTF8String lowercasePattern,
       int startPos) {
+	log.warn("lowercaseFind(target,lowercasePattern,startPos)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", target, lowercasePattern, startPos);
     assert startPos >= 0;
     for (int i = startPos; i <= target.numChars(); ++i) {
       if (lowercaseMatchFrom(target, lowercasePattern, i)) {
@@ -489,6 +493,7 @@ public class CollationAwareUTF8String {
    * the position in the string relative to other characters in lowercase).
    */
   private static int getLowercaseCodePoint(final int codePoint) {
+	log.warn("getLowercaseCodePoint(codePoint)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", codePoint);
     if (codePoint == SpecialCodePointConstants.CAPITAL_I_WITH_DOT_ABOVE) {
       // Latin capital letter I with dot above is mapped to 2 lowercase characters.
       return COMBINED_ASCII_SMALL_I_COMBINING_DOT;

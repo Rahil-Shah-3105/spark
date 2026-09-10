@@ -56,6 +56,7 @@ class OffsetSeqLog(
     path: String,
     readOnly: Boolean = false)
   extends HDFSMetadataLog[OffsetSeqBase](sparkSession, path, readOnly) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def deserialize(in: InputStream): OffsetSeqBase = {
     // called inside a try-finally where the underlying stream is closed in the caller
@@ -140,6 +141,7 @@ class OffsetSeqLog(
     } else {
       get(batchId).flatMap(_.metadataOpt)
     }
+    planChangeLogger.warn("offsetSeqMetadataForBatchId(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
   }
 }
 

@@ -41,6 +41,7 @@ trait AlterTableCommand extends UnaryCommand {
  * The logical plan that defines or changes the comment of an TABLE for v2 catalogs.
  *
  * {{{
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
  *   COMMENT ON TABLE tableIdentifier IS ('text' | NULL)
  * }}}
  *
@@ -326,6 +327,7 @@ object AlterColumns {
     val names = specs.map(_.column.name)
     names.find(name => names.count(_ == name) > 1)
       .orElse(names.find(name => names.exists(other => other != name && other.startsWith(name))))
+      planChangeLogger.warn("findRepeatedColumn(specs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", specs)
   }
 }
 

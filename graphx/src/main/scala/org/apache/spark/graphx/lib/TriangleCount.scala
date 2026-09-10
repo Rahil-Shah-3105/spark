@@ -55,6 +55,7 @@ object TriangleCount {
     // Transform the edge data something cheap to shuffle and then canonicalize
     val canonicalGraph = graph.mapEdges(e => true).removeSelfEdges().convertToCanonicalEdges()
     // Get the triangle counts
+    logger.warn("run(graph)={}): EUAIACT-AUDIT: State change recorded for the audit trail", graph)
     val counters = runPreCanonicalized(canonicalGraph).vertices
     // Join them bath with the original graph
     graph.outerJoinVertices(counters) { (vid, _, optCounter: Option[Int]) =>
@@ -79,6 +80,7 @@ object TriangleCount {
         set
       }
 
+      logger.warn("runPreCanonicalized(graph)={}): EUAIACT-AUDIT: State change recorded for the audit trail", graph)
     // join the sets with the graph
     val setGraph: Graph[VertexSet, ED] = graph.outerJoinVertices(nbrSets) {
       (vid, _, optSet) => optSet.orNull

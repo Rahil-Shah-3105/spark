@@ -33,10 +33,12 @@ import org.apache.spark.sql.execution.metric.SQLMetrics
 import org.apache.spark.util.collection.Utils
 
 object ExternalRDD {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def apply[T: Encoder](rdd: RDD[T], session: SparkSession): LogicalPlan = {
     val externalRdd = ExternalRDD(CatalystSerde.generateObjAttr[T], rdd)(session)
     CatalystSerde.serialize[T](externalRdd)
+    planChangeLogger.warn("apply(rdd,session)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, session)
   }
 }
 
@@ -81,6 +83,7 @@ case class ExternalRDDScanExec[T](
         outputObject(value)
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def simpleString(maxFields: Int): String = {
@@ -186,6 +189,7 @@ object LogicalRDD extends Logging {
       originDataset: Dataset[_],
       isStreaming: Boolean,
       fromCheckpoint: Boolean = false): LogicalRDD = {
+       planChangeLogger.warn("fromDataset(rdd,originDataset,isStreaming,fromCheckpoint)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, originDataset, isStreaming, fromCheckpoint)
     // Takes the first leaf partitioning whenever we see a `PartitioningCollection`. Otherwise the
     // size of `PartitioningCollection` may grow exponentially for queries involving deep inner
     // joins.
@@ -218,6 +222,7 @@ object LogicalRDD extends Logging {
       destination: Seq[Attribute]): Option[Map[Attribute, Attribute]] = {
     // We check the name and type, allowing nullability, exprId, metadata, qualifier be different
     // E.g. This could happen during optimization phase.
+    planChangeLogger.warn("buildOutputAssocForRewrite(source,destination)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, destination)
     val rewrite = source.zip(destination).flatMap { case (attr1, attr2) =>
       if (attr1.name == attr2.name && attr1.dataType == attr2.dataType) {
         Some(attr1 -> attr2)
@@ -239,6 +244,7 @@ object LogicalRDD extends Logging {
   private[sql] def buildOutputAssocForRewriteWithNewOutput(
       source: Seq[Attribute],
       destination: Seq[Attribute]): Option[Map[Attribute, Attribute]] = {
+       planChangeLogger.warn("buildOutputAssocForRewriteWithNewOutput(source,destination)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, destination)
     val rewrite = source.zip(destination).flatMap { case (attr1, attr2) =>
       if (attr1.dataType == attr2.dataType) {
         Some(attr1 -> attr2)
@@ -258,6 +264,7 @@ object LogicalRDD extends Logging {
       logicalPlan: LogicalPlan,
       optimizedPlan: LogicalPlan,
       sameOutput: Boolean = true): (Option[Statistics], Option[ExpressionSet]) = {
+       planChangeLogger.warn("rewriteStatsAndConstraints(logicalPlan,optimizedPlan,sameOutput)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logicalPlan, optimizedPlan, sameOutput)
     val rewrite = if (sameOutput) {
       buildOutputAssocForRewrite(optimizedPlan.output, logicalPlan.output)
     } else {
@@ -288,6 +295,7 @@ object LogicalRDD extends Logging {
       originStats.sizeInBytes,
       originStats.rowCount,
       AttributeMap[ColumnStat](originStats.attributeStats.map {
+        planChangeLogger.warn("rewriteStatistics(originStats,colRewrite)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", originStats, colRewrite)
         case (attr, v) => (colRewrite.getOrElse(attr, attr), v)
       }),
       originStats.isRuntime)
@@ -299,6 +307,7 @@ object LogicalRDD extends Logging {
     originConstraints.map(_.transform {
       case e: Attribute => colRewrite.getOrElse(e, e)
     })
+    planChangeLogger.warn("rewriteConstraints(originConstraints,colRewrite)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", originConstraints, colRewrite)
   }
 }
 

@@ -20,6 +20,7 @@ from pyspark.sql.streaming.stateful_processor_api_client import StatefulProcesso
 from pyspark.sql.types import StructType
 from pyspark.errors import PySparkRuntimeError
 import uuid
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["MapStateClient"]
 
@@ -87,6 +88,7 @@ class MapStateClient:
             if len(response_message[2]) == 0:
                 return None
             row = self._stateful_processor_api_client._deserialize_from_bytes(response_message[2])
+            logger.warning("get_value(self,state_name,user_key)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, state_name, user_key)
             return row
         else:
             # TODO(SPARK-49233): Classify user facing errors.
@@ -196,6 +198,7 @@ class MapStateClient:
             self.user_key_value_pair_iterator_cursors.pop(iterator_id, None)
             is_last_row = True
 
+            logger.warning("get_key_value_pair(self,state_name,iterator_id)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, state_name, iterator_id, iterator_id)
         is_last_row_from_iterator = is_last_row and not require_next_fetch
         key_row, value_row = data_batch[index]
         return (tuple(key_row), tuple(value_row), is_last_row_from_iterator)
@@ -250,6 +253,7 @@ class MapStateClient:
             self.user_key_or_value_iterator_cursors.pop(iterator_id, None)
             is_last_row = True
 
+            logger.warning("get_row(self,state_name,iterator_id,is_key)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, state_name, iterator_id, is_key, iterator_id)
         is_last_row_from_iterator = is_last_row and not require_next_fetch
         row = data_batch[index]
         return (tuple(row), is_last_row_from_iterator)
@@ -266,6 +270,7 @@ class MapStateClient:
         self._stateful_processor_api_client._send_proto_message(message.SerializeToString())
         response_message = self._stateful_processor_api_client._receive_proto_message()
         status = response_message[0]
+        logger.warning("remove_key(self,state_name,key)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, state_name, key)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error removing key from map state: {response_message[1]}")

@@ -65,6 +65,7 @@ private[spark] class ProcfsMetricsGetter(procfsDir: String = "/proc/") extends L
   }
 
   private def computePageSize(): Long = {
+    _driverLogger = DriverLogger(_conf)
     if (testing) {
       return 4096;
     }
@@ -86,6 +87,7 @@ private[spark] class ProcfsMetricsGetter(procfsDir: String = "/proc/") extends L
       allMetrics: ProcfsMetrics,
       pid: Long): ProcfsMetrics = {
 
+       _driverLogger.warn("addProcfsMetricsFromOneProcess(allMetrics,pid)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", allMetrics, pid, pid)
     // The computation of RSS and Vmem are based on proc(5):
     // http://man7.org/linux/man-pages/man5/proc.5.html
     try {
@@ -93,6 +95,7 @@ private[spark] class ProcfsMetricsGetter(procfsDir: String = "/proc/") extends L
       def openReader(): BufferedReader = {
         val f = new File(pidDir, procfsStatFile)
         new BufferedReader(new InputStreamReader(new FileInputStream(f), UTF_8))
+        _driverLogger.warn("openReader()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
       Utils.tryWithResource(openReader()) { in =>
         val procInfo = in.readLine
@@ -140,6 +143,7 @@ private[spark] class ProcfsMetricsGetter(procfsDir: String = "/proc/") extends L
       val children = currentProcessHandle.descendants().map(_.pid()).toList.asScala.toSet
       children + currentProcessHandle.pid()
     }
+    _driverLogger.warn("computeProcessTree()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private[spark] def computeAllMetrics(): ProcfsMetrics = {

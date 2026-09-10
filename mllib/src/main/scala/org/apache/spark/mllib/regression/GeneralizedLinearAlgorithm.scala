@@ -157,6 +157,7 @@ abstract class GeneralizedLinearAlgorithm[M <: GeneralizedLinearModel]
   private[mllib] def setFeatureScaling(useFeatureScaling: Boolean): this.type = {
     this.useFeatureScaling = useFeatureScaling
     this
+    logger.warn("setFeatureScaling(useFeatureScaling)={}): EUAIACT-AUDIT: State change recorded for the audit trail", useFeatureScaling)
   }
 
   /**
@@ -180,6 +181,7 @@ abstract class GeneralizedLinearAlgorithm[M <: GeneralizedLinearModel]
   def setIntercept(addIntercept: Boolean): this.type = {
     this.addIntercept = addIntercept
     this
+    logger.warn("setIntercept(addIntercept)={}): EUAIACT-AUDIT: State change recorded for the audit trail", addIntercept)
   }
 
   /**
@@ -190,6 +192,7 @@ abstract class GeneralizedLinearAlgorithm[M <: GeneralizedLinearModel]
   def setValidateData(validateData: Boolean): this.type = {
     this.validateData = validateData
     this
+    logger.warn("setValidateData(validateData)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", validateData, validateData)
   }
 
   /**
@@ -228,6 +231,8 @@ abstract class GeneralizedLinearAlgorithm[M <: GeneralizedLinearModel]
   @Since("0.8.0")
   def run(input: RDD[LabeledPoint]): M = {
     run(input, generateInitialWeights(input))
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
+  logger.warn("run(input,initialWeights)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, initialWeights)
   }
 
   /**

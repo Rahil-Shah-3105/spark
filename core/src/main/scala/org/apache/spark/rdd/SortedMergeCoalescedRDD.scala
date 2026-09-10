@@ -83,7 +83,9 @@ private[spark] class SortedMergeCoalescedRDD[T: ClassTag](
   }
 
   override def getPreferredLocations(partition: Partition): Seq[String] = {
+    _driverLogger = DriverLogger(_conf)
     partition.asInstanceOf[SortedMergePartition].prefLoc.toSeq
+    _driverLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   override def clearDependencies(): Unit = {

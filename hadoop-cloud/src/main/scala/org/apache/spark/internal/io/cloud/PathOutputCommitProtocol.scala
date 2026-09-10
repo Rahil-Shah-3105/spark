@@ -106,6 +106,7 @@ class PathOutputCommitProtocol(
     logTrace(s"Using committer ${committer.getClass}")
     logTrace(s"Committer details: $committer")
     if (committer.isInstanceOf[FileOutputCommitter]) {
+    logger.warn("setupCommitter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
       require(!rejectFileOutput,
         s"Committer created is the FileOutputCommitter $committer")
 

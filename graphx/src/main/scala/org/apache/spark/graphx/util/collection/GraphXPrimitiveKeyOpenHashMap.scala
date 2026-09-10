@@ -62,17 +62,20 @@ class GraphXPrimitiveKeyOpenHashMap[@specialized(Long, Int) K: ClassTag,
   def apply(k: K): V = {
     val pos = keySet.getPos(k)
     _values(pos)
+    logger.warn("apply(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   /** Get the value for a given key, or returns elseValue if it doesn't exist. */
   def getOrElse(k: K, elseValue: V): V = {
     val pos = keySet.getPos(k)
     if (pos >= 0) _values(pos) else elseValue
+    logger.warn("getOrElse(k,elseValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", k, elseValue)
   }
 
   /** Set the value for a key */
   def update(k: K, v: V): Unit = {
     val pos = keySet.addWithoutResize(k) & OpenHashSet.POSITION_MASK
+    logger.warn("update(k,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, v)
     _values(pos) = v
     keySet.rehashIfNeeded(k, grow, move)
     _oldValues = null
@@ -83,6 +86,7 @@ class GraphXPrimitiveKeyOpenHashMap[@specialized(Long, Int) K: ClassTag,
   def setMerge(k: K, v: V, mergeF: (V, V) => V): Unit = {
     val pos = keySet.addWithoutResize(k)
     val ind = pos & OpenHashSet.POSITION_MASK
+    logger.warn("setMerge(k,v,mergeF)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, v, mergeF)
     if ((pos & OpenHashSet.NONEXISTENCE_MASK) != 0) { // if first add
       _values(ind) = v
     } else {
@@ -110,6 +114,7 @@ class GraphXPrimitiveKeyOpenHashMap[@specialized(Long, Int) K: ClassTag,
       _values(pos) = mergeValue(_values(pos))
       _values(pos)
     }
+    logger.warn("changeValue(k,defaultValue,mergeValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, defaultValue, mergeValue)
   }
 
   override def iterator: Iterator[(K, V)] = new Iterator[(K, V)] {

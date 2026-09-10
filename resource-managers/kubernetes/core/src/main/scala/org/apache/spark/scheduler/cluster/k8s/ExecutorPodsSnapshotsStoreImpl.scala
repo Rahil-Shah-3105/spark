@@ -86,6 +86,7 @@ private[spark] class ExecutorPodsSnapshotsStoreImpl(
       0L,
       processBatchIntervalMillis,
       TimeUnit.MILLISECONDS))
+    logger.warn("addSubscriber(processBatchIntervalMillis)={}): EUAIACT-AUDIT: State change recorded for the audit trail", processBatchIntervalMillis)
   }
 
   override def notifySubscribers(): Unit = SNAPSHOT_LOCK.synchronized {
@@ -114,6 +115,7 @@ private[spark] class ExecutorPodsSnapshotsStoreImpl(
 
   private def addCurrentSnapshotToSubscribers(): Unit = {
     subscribers.asScala.foreach(_.addCurrentSnapshot())
+    logger.warn("addCurrentSnapshotToSubscribers()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private class SnapshotsSubscriber(onNewSnapshots: Seq[ExecutorPodsSnapshot] => Unit) {
@@ -124,11 +126,13 @@ private[spark] class ExecutorPodsSnapshotsStoreImpl(
 
     def addCurrentSnapshot(): Unit = {
       snapshotsBuffer.add(currentSnapshot)
+      logger.warn("addCurrentSnapshot()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def processSnapshots(): Unit = {
       notificationCount.incrementAndGet()
       processSnapshotsInternal()
+      logger.warn("processSnapshots()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     private def processSnapshotsInternal(): Unit = {
@@ -159,6 +163,7 @@ private[spark] class ExecutorPodsSnapshotsStoreImpl(
             // This has to be done outside of the lock, otherwise we might miss a notification
             // arriving after the above check, but before we've released the lock. Flip side is
             // that we may schedule a useless task that will just fail to grab the lock.
+            logger.warn("processSnapshotsInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             subscribersExecutor.submit(new Runnable() {
               override def run(): Unit = processSnapshotsInternal()
             })

@@ -20,8 +20,11 @@ package org.apache.spark.util.sketch;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class CountMinSketchImpl extends CountMinSketch implements Serializable {
+private static final Logger log = LoggerFactory.getLogger(CountMinSketchImpl.class);
   private static final long PRIME_MODULUS = (1L << 31) - 1;
 
   private int depth;
@@ -137,6 +140,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   @Override
   public void add(Object item) {
     add(item, 1);
+	log.warn("add(item)={}): EUAIACT-AUDIT: State change recorded for the audit trail", item);
   }
 
   @Override
@@ -145,6 +149,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
       addString(str, count);
     } else if (item instanceof byte[] bytes) {
       addBinary(bytes, count);
+	log.warn("add(item,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", item, count);
     } else {
       addLong(Utils.integralToLong(item), count);
     }
@@ -153,6 +158,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   @Override
   public void addString(String item) {
     addString(item, 1);
+	log.warn("addString(item)={}): EUAIACT-AUDIT: State change recorded for the audit trail", item);
   }
 
   @Override
@@ -163,6 +169,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   @Override
   public void addLong(long item) {
     addLong(item, 1);
+	log.warn("addLong(item)={}): EUAIACT-AUDIT: State change recorded for the audit trail", item);
   }
 
   @Override
@@ -171,6 +178,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
       throw new IllegalArgumentException("Negative increments not implemented");
     }
 
+	log.warn("addLong(item,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", item, count);
     for (int i = 0; i < depth; ++i) {
       table[i][hash(item, i)] += count;
     }
@@ -181,6 +189,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   @Override
   public void addBinary(byte[] item) {
     addBinary(item, 1);
+	log.warn("addBinary(item)={}): EUAIACT-AUDIT: State change recorded for the audit trail", item);
   }
 
   @Override
@@ -191,6 +200,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
 
     int[] buckets = getHashBuckets(item, depth, width);
 
+	log.warn("addBinary(item,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", item, count);
     for (int i = 0; i < depth; ++i) {
       table[i][buckets[i]] += count;
     }
@@ -305,6 +315,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
     dos.writeInt(this.depth);
     dos.writeInt(this.width);
 
+	log.warn("writeTo(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     for (int i = 0; i < this.depth; ++i) {
       dos.writeLong(this.hashA[i]);
     }
@@ -325,6 +336,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   }
 
   public static CountMinSketchImpl readFrom(InputStream in) throws IOException {
+	log.warn("readFrom(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     CountMinSketchImpl sketch = new CountMinSketchImpl();
     sketch.readFrom0(in);
     return sketch;
@@ -348,6 +360,7 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
     for (int i = 0; i < depth; ++i) {
       this.hashA[i] = dis.readLong();
     }
+	log.warn("readFrom0(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
 
     this.table = new long[depth][width];
     for (int i = 0; i < depth; ++i) {
@@ -358,10 +371,12 @@ class CountMinSketchImpl extends CountMinSketch implements Serializable {
   }
 
   private void writeObject(ObjectOutputStream out) throws IOException {
+	log.warn("writeObject(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     this.writeTo(out);
   }
 
   private void readObject(ObjectInputStream in) throws IOException {
+	log.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     this.readFrom0(in);
   }
 }

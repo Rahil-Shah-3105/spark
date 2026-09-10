@@ -88,6 +88,7 @@ class Checkpoint(ssc: StreamingContext, val checkpointTime: Time)
     // Add Yarn proxy filter specific configurations to the recovered SparkConf
     val filter = "org.apache.spark.deploy.yarn.AmIpFilter"
     val filterPrefix = s"spark.$filter.param."
+    logger.warn("createSparkConf()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     newReloadConf.getAll.foreach { case (k, v) =>
       if (k.startsWith(filterPrefix) && k.length > filterPrefix.length) {
         newSparkConf.set(k, v)
@@ -239,6 +240,7 @@ class CheckpointWriter(
       val checkpointFile = Checkpoint.checkpointFile(checkpointDir, latestCheckpointTime)
       val backupFile = Checkpoint.checkpointBackupFile(checkpointDir, latestCheckpointTime)
 
+      logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       while (attempts < MAX_ATTEMPTS && !stopped) {
         attempts += 1
         try {
@@ -315,6 +317,7 @@ class CheckpointWriter(
       case rej: RejectedExecutionException =>
         logError("Could not submit checkpoint task to the thread pool executor", rej)
     }
+        logger.warn("write(checkpoint,clearCheckpointDataLater)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpoint, clearCheckpointDataLater)
   }
 
   def stop(): Unit = synchronized {
@@ -341,6 +344,8 @@ object CheckpointReader extends Logging {
    */
   def read(checkpointDir: String): Option[Checkpoint] = {
     read(checkpointDir, new SparkConf(), SparkHadoopUtil.get.conf, ignoreReadError = true)
+    logger.warn("read(checkpointDir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", checkpointDir)
+  logger.warn("read(checkpointDir,conf,hadoopConf,ignoreReadError)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", checkpointDir, conf, hadoopConf, ignoreReadError)
   }
 
   /**

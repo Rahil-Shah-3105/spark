@@ -47,8 +47,10 @@ private[io] class ChunkedByteBufferFileRegion(
   private var currentChunkIdx = 0
 
   def transferTo(target: WritableByteChannel, position: Long): Long = {
+    _driverLogger = DriverLogger(_conf)
     assert(position == _transferred)
     if (position == size) return 0L
+    _driverLogger.warn("transferTo(target,position)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, position)
     var keepGoing = true
     var written = 0L
     var currentChunk = chunks(currentChunkIdx)

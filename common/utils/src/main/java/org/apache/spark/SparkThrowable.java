@@ -21,6 +21,8 @@ import org.apache.spark.annotation.Evolving;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Interface mixed into Throwables thrown from Spark.
@@ -35,6 +37,7 @@ import java.util.Map;
  */
 @Evolving
 public interface SparkThrowable {
+Logger log_ = LoggerFactory.getLogger(SparkThrowable.class);
   /**
    * Succinct, human-readable, unique, and consistent representation of the error condition.
    * If null, error condition is not set.
@@ -93,6 +96,7 @@ public interface SparkThrowable {
       String cond = this.getCondition();
       if (cond == null) return null;
       return SparkThrowableHelper.getMessageTemplate(cond);
+	log_.warn("getDefaultMessageTemplate()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     } catch (Throwable t) {
       return null; // Unknown error condition
     }

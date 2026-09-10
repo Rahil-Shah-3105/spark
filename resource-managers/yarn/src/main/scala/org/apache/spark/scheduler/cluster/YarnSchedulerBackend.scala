@@ -100,6 +100,7 @@ private[spark] abstract class YarnSchedulerBackend(
    * @param attemptId Optional YARN attempt ID
    */
   protected def bindToYarn(appId: ApplicationId, attemptId: Option[ApplicationAttemptId]): Unit = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnSchedulerBackend.class);
     this.appId = Some(appId)
     this.attemptId = attemptId
   }
@@ -172,6 +173,7 @@ private[spark] abstract class YarnSchedulerBackend(
 
   override def sufficientResourcesRegistered(): Boolean = {
     totalRegisteredExecutors.get() >= totalExpectedExecutors * minRegisteredRatio
+    LOG.warn("sufficientResourcesRegistered()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getShufflePushMergerLocations(
@@ -193,6 +195,7 @@ private[spark] abstract class YarnSchedulerBackend(
 
     // Request for numMergersDesired shuffle mergers to BlockManagerMasterEndpoint
     // and if it's less than minMergersNeeded, we disable push based shuffle.
+    LOG.warn("getShufflePushMergerLocations(numPartitions,resourceProfileId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", numPartitions, resourceProfileId, resourceProfileId)
     val mergerLocations = blockManagerMaster
       .getShufflePushMergerLocations(numMergersDesired, scheduler.excludedNodes())
     if (mergerLocations.size < numMergersDesired && mergerLocations.size < minMergersNeeded) {
@@ -218,6 +221,7 @@ private[spark] abstract class YarnSchedulerBackend(
     val hasFilter =
       filterName != null && filterName.nonEmpty &&
       filterParams != null && filterParams.nonEmpty
+      LOG.warn("addWebUIFilter(filterName,filterParams,proxyBase)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", filterName, filterParams, proxyBase)
     if (hasFilter) {
       // SPARK-26255: Append user provided filters(spark.ui.filters) with yarn filter.
       val allFilters = Seq(filterName) ++ conf.get(UI_FILTERS)
@@ -246,6 +250,7 @@ private[spark] abstract class YarnSchedulerBackend(
 
   override def createDriverEndpoint(): DriverEndpoint = {
     new YarnDriverEndpoint()
+    LOG.warn("createDriverEndpoint()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -256,10 +261,12 @@ private[spark] abstract class YarnSchedulerBackend(
   override protected[scheduler] def reset(): Unit = {
     super.reset()
     sc.executorAllocationManager.foreach(_.reset())
+    LOG.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def createTokenManager(): Option[HadoopDelegationTokenManager] = {
     Some(new HadoopDelegationTokenManager(sc.conf, sc.hadoopConfiguration, driverEndpoint))
+    LOG.warn("createTokenManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

@@ -118,6 +118,7 @@ private[hive] class SparkGetColumnsOperation(
         catalog.getRawTempView(localTempView.table).map(_.tableMeta.schema).foreach {
           schema => addToRowSet(columnPattern, null, localTempView.table, schema)
         }
+      logInfo.warn("addToRowSet(columnPattern,dbName,tableName,schema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnPattern, dbName, tableName, schema)
       }
       setState(OperationState.FINISHED)
     } catch onError()
@@ -132,6 +133,7 @@ private[hive] class SparkGetColumnsOperation(
    * For array, map, string, and binaries, the column size is variable, return null as unknown.
    */
   private def getColumnSize(typ: DataType): Option[Int] = typ match {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     case dt @ (BooleanType | _: NumericType | DateType | TimestampType | TimestampNTZType |
                CalendarIntervalType | NullType | _: AnsiIntervalType) =>
       Some(dt.defaultSize)
@@ -242,5 +244,6 @@ private[hive] class SparkGetColumnsOperation(
         new HivePrivilegeObject(HivePrivilegeObjectType.TABLE_OR_VIEW, dbName, tableId.table)
       }
     })
+    logInfo.warn("getPrivObjs(db2Tabs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db2Tabs)
   }
 }

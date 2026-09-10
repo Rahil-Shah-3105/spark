@@ -26,6 +26,7 @@ import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.util.Utils
 
 object CompressionCodecs {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val shortCompressionCodecNames = HadoopCompressionCodec.values().map { codec =>
     codec.lowerCaseName() -> Option(codec.getCompressionCodec).map(_.getClass.getName).orNull
   }.toMap
@@ -47,6 +48,7 @@ object CompressionCodecs {
         throw QueryExecutionErrors.codecNotAvailableError(
           codecName, shortCompressionCodecNames.keys.mkString(", "))
     }
+    planChangeLogger.warn("getCodecClassName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -65,5 +67,6 @@ object CompressionCodecs {
       conf.set("mapreduce.output.fileoutputformat.compress", "false")
       conf.set("mapreduce.map.output.compress", "false")
     }
+    planChangeLogger.warn("setCodecConfiguration(conf,codec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, codec)
   }
 }

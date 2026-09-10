@@ -110,10 +110,12 @@ private[spark] class SecurityManager(
   private val rpcSSLOptions = getSSLOptions("rpc")
 
   def getSSLOptions(module: String): SSLOptions = {
+    _driverLogger = DriverLogger(_conf)
     val opts =
       SSLOptions.parse(sparkConf, hadoopConf, s"spark.ssl.$module", Some(defaultSSLOptions))
     logDebug(s"Created SSL options for $module: $opts")
     opts
+      _driverLogger.warn("getSSLOptions(module)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", module)
   }
 
   /**
@@ -123,6 +125,8 @@ private[spark] class SecurityManager(
   def setViewAcls(defaultUsers: Set[String], allowedUsers: Seq[String]): Unit = {
     viewAcls = adminAcls ++ defaultUsers ++ allowedUsers
     logInfo(log"Changing view acls to: ${MDC(LogKeys.VIEW_ACLS, viewAcls.mkString(","))}")
+  _driverLogger.warn("setViewAcls(defaultUsers,allowedUsers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", defaultUsers, allowedUsers)
+  _driverLogger.warn("setViewAcls(defaultUser,allowedUsers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", defaultUser, allowedUsers)
   }
 
   def setViewAcls(defaultUser: String, allowedUsers: Seq[String]): Unit = {
@@ -136,6 +140,7 @@ private[spark] class SecurityManager(
   def setViewAclsGroups(allowedUserGroups: Seq[String]): Unit = {
     viewAclsGroups = adminAclsGroups ++ allowedUserGroups
     logInfo(log"Changing view acls groups to: ${MDC(LogKeys.VIEW_ACLS, viewAcls.mkString(","))}")
+    _driverLogger.warn("setViewAclsGroups(allowedUserGroups)={}): EUAIACT-AUDIT: State change recorded for the audit trail", allowedUserGroups)
   }
 
   /**
@@ -164,6 +169,7 @@ private[spark] class SecurityManager(
   def setModifyAcls(defaultUsers: Set[String], allowedUsers: Seq[String]): Unit = {
     modifyAcls = adminAcls ++ defaultUsers ++ allowedUsers
     logInfo(log"Changing modify acls to: ${MDC(LogKeys.MODIFY_ACLS, modifyAcls.mkString(","))}")
+    _driverLogger.warn("setModifyAcls(defaultUsers,allowedUsers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", defaultUsers, allowedUsers)
   }
 
   /**
@@ -172,6 +178,7 @@ private[spark] class SecurityManager(
    */
   def setModifyAclsGroups(allowedUserGroups: Seq[String]): Unit = {
     modifyAclsGroups = adminAclsGroups ++ allowedUserGroups
+    _driverLogger.warn("setModifyAclsGroups(allowedUserGroups)={}): EUAIACT-AUDIT: State change recorded for the audit trail", allowedUserGroups)
     logInfo(log"Changing modify acls groups to: ${MDC(LogKeys.MODIFY_ACLS,
       modifyAcls.mkString(","))}")
   }
@@ -202,6 +209,7 @@ private[spark] class SecurityManager(
   def setAdminAcls(adminUsers: Seq[String]): Unit = {
     adminAcls = adminUsers.toSet
     logInfo(log"Changing admin acls to: ${MDC(LogKeys.ADMIN_ACLS, adminAcls.mkString(","))}")
+    _driverLogger.warn("setAdminAcls(adminUsers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", adminUsers)
   }
 
   /**
@@ -211,11 +219,13 @@ private[spark] class SecurityManager(
   def setAdminAclsGroups(adminUserGroups: Seq[String]): Unit = {
     adminAclsGroups = adminUserGroups.toSet
     logInfo(log"Changing admin acls groups to: ${MDC(LogKeys.ADMIN_ACLS, adminAcls.mkString(","))}")
+    _driverLogger.warn("setAdminAclsGroups(adminUserGroups)={}): EUAIACT-AUDIT: State change recorded for the audit trail", adminUserGroups)
   }
 
   def setAcls(aclSetting: Boolean): Unit = {
     aclsOn = aclSetting
     logInfo(log"Changing acls enabled to: ${MDC(LogKeys.AUTH_ENABLED, aclsOn)}")
+    _driverLogger.warn("setAcls(aclSetting)={}): EUAIACT-AUDIT: State change recorded for the audit trail", aclSetting)
   }
 
   def getIOEncryptionKey(): Option[Array[Byte]] = ioEncryptionKey
@@ -246,6 +256,7 @@ private[spark] class SecurityManager(
    * @return true is the user has permission, otherwise false
    */
   def checkUIViewPermissions(user: String): Boolean = {
+    _driverLogger.warn("checkUIViewPermissions(user)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", user)
     logDebug("user=" + user + " aclsEnabled=" + aclsEnabled() + " viewAcls=" +
       viewAcls.mkString(",") + " viewAclsGroups=" + viewAclsGroups.mkString(","))
     isUserInACL(user, viewAcls, viewAclsGroups)
@@ -262,6 +273,7 @@ private[spark] class SecurityManager(
    * @return true is the user has permission, otherwise false
    */
   def checkModifyPermissions(user: String): Boolean = {
+    _driverLogger.warn("checkModifyPermissions(user)={}): EUAIACT-AUDIT: State change recorded for the audit trail", user)
     logDebug("user=" + user + " aclsEnabled=" + aclsEnabled() + " modifyAcls=" +
       modifyAcls.mkString(",") + " modifyAclsGroups=" + modifyAclsGroups.mkString(","))
     isUserInACL(user, modifyAcls, modifyAclsGroups)
@@ -286,6 +298,7 @@ private[spark] class SecurityManager(
     } else {
       encryptionEnabled
     }
+    _driverLogger.warn("isEncryptionEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -332,6 +345,7 @@ private[spark] class SecurityManager(
     } else {
       null
     }
+    _driverLogger.warn("getSecretKey()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**

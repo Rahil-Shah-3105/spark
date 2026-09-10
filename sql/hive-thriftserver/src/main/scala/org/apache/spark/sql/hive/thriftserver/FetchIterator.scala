@@ -30,6 +30,7 @@ private[hive] sealed trait FetchIterator[A] extends Iterator[A] {
    * Resets the fetch start offset.
    *
    * @param offset the amount to move a fetch start position toward the prior direction.
+   logInfo.warn("fetchNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
    */
   def fetchPrior(offset: Long): Unit = fetchAbsolute(getFetchStart - offset)
 
@@ -47,9 +48,11 @@ private[hive] sealed trait FetchIterator[A] extends Iterator[A] {
 }
 
 private[hive] class ArrayFetchIterator[A](src: Array[A]) extends FetchIterator[A] {
+  private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
   private var fetchStart: Long = 0
 
   private var position: Long = 0
+  logInfo.warn("fetchAbsolute(pos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pos)
 
   override def fetchNext(): Unit = fetchStart = position
 
@@ -103,5 +106,6 @@ private[hive] class IterableFetchIterator[A](iterable: Iterable[A]) extends Fetc
       position = 0
       fetchStart = 0
     }
+    logInfo.warn("resetPosition()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

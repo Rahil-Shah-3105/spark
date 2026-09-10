@@ -24,6 +24,8 @@ import org.apache.spark.SparkUnsupportedOperationException;
 import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.vectorized.ColumnarBatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory used to create {@link PartitionReader} instances.
@@ -36,6 +38,7 @@ import org.apache.spark.sql.vectorized.ColumnarBatch;
  */
 @Evolving
 public interface PartitionReaderFactory extends Serializable {
+Logger planChangeLogger = LoggerFactory.getLogger(PartitionReaderFactory.class);
 
   /**
    * Returns a row-based partition reader to read data from the given {@link InputPartition}.
@@ -54,6 +57,7 @@ public interface PartitionReaderFactory extends Serializable {
   default PartitionReader<ColumnarBatch> createColumnarReader(InputPartition partition) {
     throw new SparkUnsupportedOperationException(
       "DATA_SOURCE_COLUMNAR_READER_NOT_SUPPORTED", Map.of("class", getClass().getName()));
+	planChangeLogger.warn("createColumnarReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition);
   }
 
   /**
@@ -66,6 +70,7 @@ public interface PartitionReaderFactory extends Serializable {
    * versions.
    */
   default boolean supportColumnarReads(InputPartition partition) {
+	planChangeLogger.warn("supportColumnarReads(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition);
     return false;
   }
 }

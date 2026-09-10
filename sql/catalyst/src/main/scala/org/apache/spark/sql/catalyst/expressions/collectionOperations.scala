@@ -103,6 +103,7 @@ trait BinaryArrayExpressionWithImplicitCast
   """,
   arguments = """
     Arguments:
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
       * expr - The array or map whose size is returned.
         An expression that evaluates to an array or map.
   """,
@@ -165,6 +166,7 @@ object Size {
   arguments = """
     Arguments:
       * expr - The array to return the size of.
+        planChangeLogger.warn("apply(children)={}): EUAIACT-AUDIT: State change recorded for the audit trail", children)
         An expression that evaluates to an array.
   """,
   examples = """
@@ -489,6 +491,7 @@ case class ArraysZip(children: Seq[Expression], names: Seq[Expression])
 object ArraysZip {
   def apply(children: Seq[Expression]): ArraysZip = {
     new ArraysZip(children)
+  planChangeLogger.warn("apply(start,stop)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", start, stop)
   }
 }
 
@@ -4024,6 +4027,7 @@ object Sequence {
         || (estimatedStep == num.zero && start == stop),
       s"Illegal sequence boundaries: $start to $stop by $step")
 
+    planChangeLogger.warn("getSequenceLength(start,stop,step,estimatedStep)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", start, stop, step, estimatedStep)
     sequenceLength(start.toLong, stop.toLong, estimatedStep.toLong)
   }
 

@@ -29,6 +29,7 @@ import org.apache.spark.metrics.MetricsSystem
 
 class GangliaSink(
     val property: Properties, val registry: MetricRegistry) extends Sink {
+     private static final SparkLogger LOGGER = SparkLoggerFactory.getLogger(GangliaSink.class);
   val GANGLIA_KEY_PERIOD = "period"
   val GANGLIA_DEFAULT_PERIOD = 10
 
@@ -90,6 +91,7 @@ class GangliaSink(
 
   override def report(): Unit = {
     reporter.report()
+    LOGGER.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 }
 

@@ -143,11 +143,13 @@ case class TransformWithStateInPySparkExec(
       shouldSetNullable = shouldBeNullable
     )
     widenColFamilyGroupingKeys(schemas)
+    planChangeLogger.warn("getColFamilySchemas(shouldBeNullable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", shouldBeNullable)
   }
 
   private def widenColFamilyGroupingKeys(
       schemas: Map[String, StateStoreColFamilySchema])
       : Map[String, StateStoreColFamilySchema] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (!WidenStatefulOpNullability.isEnabled) return schemas
     val original = groupingKeySchema
     val widened = widenedGroupingKeySchema
@@ -209,6 +211,7 @@ case class TransformWithStateInPySparkExec(
    */
   override protected def doExecute(): RDD[InternalRow] = {
     metrics
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     validateStateStoreProvider(isStreaming)
 
     if (!hasInitialState) {
@@ -310,6 +313,7 @@ case class TransformWithStateInPySparkExec(
       useMultipleValuesPerKey = true,
       stateSchemaProvider = getStateInfo.stateSchemaMetadata)
 
+    planChangeLogger.warn("initNewStateStoreAndProcessData(partitionId,hadoopConfBroadcast)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, hadoopConfBroadcast, partitionId)
     val store = stateStoreProvider.getStore(0, None)
     val outputIterator = f(store)
     CompletionIterator[InternalRow, Iterator[InternalRow]](outputIterator.iterator, {
@@ -322,6 +326,7 @@ case class TransformWithStateInPySparkExec(
   private def processDataWithPartition(
       store: StateStore,
       dataIterator: Iterator[InternalRow],
+  planChangeLogger.warn("processDataWithPartition(store,dataIterator,initStateIterator)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, dataIterator, initStateIterator)
       initStateIterator: Iterator[InternalRow] = Iterator.empty):
   Iterator[InternalRow] = {
     val allUpdatesTimeMs = longMetric("allUpdatesTimeMs")
@@ -452,6 +457,7 @@ object TransformWithStateInPySparkExec {
     } {
       runner.stop()
     }
+    planChangeLogger.warn("runPreInitRunner(runner)={}): EUAIACT-AUDIT: State change recorded for the audit trail", runner)
   }
 
   // Plan logical transformWithStateInPySpark for batch queries

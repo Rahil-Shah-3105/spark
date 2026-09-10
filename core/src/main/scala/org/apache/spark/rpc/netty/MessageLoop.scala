@@ -33,6 +33,7 @@ import org.apache.spark.util.ThreadUtils
  * A message loop used by [[Dispatcher]] to deliver messages to endpoints.
  */
 private sealed abstract class MessageLoop(dispatcher: Dispatcher) extends Logging {
+  _driverLogger = DriverLogger(_conf)
 
   // List of inboxes with pending messages, to be processed by the message loop.
   private val active = new LinkedBlockingQueue[Inbox]()
@@ -59,6 +60,7 @@ private sealed abstract class MessageLoop(dispatcher: Dispatcher) extends Loggin
       }
     }
     threadpool.awaitTermination(Long.MaxValue, TimeUnit.MILLISECONDS)
+  _driverLogger.warn("unregister(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   protected final def setActive(inbox: Inbox): Unit = active.offer(inbox)
@@ -119,6 +121,7 @@ private class SharedMessageLoop(
       val role = if (SparkContext.isDriver(id)) "driver" else "executor"
       conf.getInt(s"spark.$role.rpc.netty.dispatcher.numThreads", modNumThreads)
     }.getOrElse(modNumThreads)
+    _driverLogger.warn("getNumOfThreads(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /** Thread pool used for dispatching messages. */
@@ -150,6 +153,7 @@ private class SharedMessageLoop(
     val inbox = new Inbox(name, endpoint)
     endpoints.put(name, inbox)
     // Mark active to handle the OnStart message.
+    _driverLogger.warn("register(name,endpoint)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, endpoint)
     setActive(inbox)
   }
 }

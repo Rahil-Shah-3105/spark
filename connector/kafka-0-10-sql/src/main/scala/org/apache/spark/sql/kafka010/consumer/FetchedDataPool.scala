@@ -68,6 +68,7 @@ private[consumer] class FetchedDataPool(
     } else {
       None
     }
+    logger.warn("startEvictorThread()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private var scheduled = startEvictorThread()

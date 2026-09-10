@@ -39,6 +39,7 @@ class StaxXmlGenerator(
     writer: Writer,
     options: XmlOptions,
     validateStructure: Boolean = true) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   require(options.attributePrefix.nonEmpty,
     "'attributePrefix' option should not be empty string.")
@@ -117,6 +118,7 @@ class StaxXmlGenerator(
     rootAttributes.foreach { case (k, v) =>
       gen.writeAttribute(k, v)
     }
+    planChangeLogger.warn("writeDeclaration()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (indentDisabled) {
       gen.writeCharacters("\n")
     }
@@ -150,6 +152,8 @@ class StaxXmlGenerator(
     if (indentDisabled) {
       gen.writeCharacters("\n")
     }
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
+  planChangeLogger.warn("write(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   def writeChildElement(name: String, dt: DataType, v: Any): Unit = (name, dt, v) match {
@@ -188,6 +192,7 @@ class StaxXmlGenerator(
       case _ =>
         writeChildElement(name, dt, v)
     }
+    planChangeLogger.warn("writeChild(name,dt,v)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dt, v)
   }
 
   def writeElement(dt: DataType, v: Any, options: XmlOptions): Unit = (dt, v) match {
@@ -242,6 +247,7 @@ class StaxXmlGenerator(
     case (st: StructType, r: InternalRow) =>
       val (attributes, elements) = st.zip(r.toSeq(st)).partition { case (f, _) =>
         f.name.startsWith(options.attributePrefix) && f.name != options.valueTag
+      planChangeLogger.warn("writeMapData(mapType,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mapType, map)
       }
       // We need to write attributes first before the value.
       (attributes ++ elements).foreach { case (field, value) =>
@@ -297,6 +303,7 @@ class StaxXmlGenerator(
       case _ =>
         writeVariantPrimitive(name, v, pos)
     }
+    planChangeLogger.warn("writeVariant(name,v,pos)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, v, pos)
   }
 
   /**
@@ -313,6 +320,7 @@ class StaxXmlGenerator(
       v.getValue,
       pos,
       (size, idSize, offsetSize, idStart, offsetStart, dataStart) => {
+        planChangeLogger.warn("writeVariantObject(name,v,pos)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, v, pos)
         // Traverse the fields of the object and get their names and positions in the original
         // Variant
         val elementInfo = (0 until size).map { i =>
@@ -357,6 +365,7 @@ class StaxXmlGenerator(
       v.getValue,
       pos,
       (size, offsetSize, offsetStart, dataStart) => {
+        planChangeLogger.warn("writeVariantArray(name,v,pos)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, v, pos)
         // Traverse each item of the array and write each of them as an XML element
         (0 until size).foreach { i =>
           val offset =
@@ -432,6 +441,7 @@ class StaxXmlGenerator(
       return
     }
 
+    planChangeLogger.warn("writeVariantPrimitive(name,v,pos)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, v, pos)
     // Handle child elements
     gen.writeStartElement(name)
     if (primitiveVal != null) gen.writeCharacters(value)

@@ -42,6 +42,7 @@ import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.sql.vectorized.{ArrowColumnVector, ColumnarBatch, ColumnVector}
 
 object PythonStreamingSourceRunner {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // When the python process for python_streaming_source_runner receives one of the
   // integers below, it will invoke the corresponding function of StreamReader instance.
   val INITIAL_OFFSET_FUNC_ID = 884
@@ -162,6 +163,7 @@ class PythonStreamingSourceRunner(
 
     val len = dataIn.readInt()
     if (len == SpecialLengths.PYTHON_EXCEPTION_THROWN) {
+    planChangeLogger.warn("getDefaultReadLimit()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       val msg = PythonWorkerUtils.readUTF(dataIn)
       throw QueryExecutionErrors.pythonStreamingDataSourceRuntimeError(
         action = "getDefaultReadLimit", msg)
@@ -176,6 +178,7 @@ class PythonStreamingSourceRunner(
 
     val len = dataIn.readInt()
     if (len == SpecialLengths.PYTHON_EXCEPTION_THROWN) {
+    planChangeLogger.warn("reportLatestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val msg = PythonWorkerUtils.readUTF(dataIn)
       throw QueryExecutionErrors.pythonStreamingDataSourceRuntimeError(
         action = "reportLatestOffset", msg)
@@ -207,11 +210,13 @@ class PythonStreamingSourceRunner(
     dataOut.flush()
     val len = dataIn.readInt()
     if (len == SpecialLengths.PYTHON_EXCEPTION_THROWN) {
+    planChangeLogger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val msg = PythonWorkerUtils.readUTF(dataIn)
       throw QueryExecutionErrors.pythonStreamingDataSourceRuntimeError(
         action = "latestOffset", msg)
     }
     PythonWorkerUtils.readUTF(len, dataIn)
+  planChangeLogger.warn("latestOffset(startOffset,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, limit)
   }
 
   def latestOffset(startOffset: Offset, limit: ReadLimit): String = {
@@ -249,6 +254,7 @@ class PythonStreamingSourceRunner(
     dataOut.flush()
     val len = dataIn.readInt()
     if (len == SpecialLengths.PYTHON_EXCEPTION_THROWN) {
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       val msg = PythonWorkerUtils.readUTF(dataIn)
       throw QueryExecutionErrors.pythonStreamingDataSourceRuntimeError(
         action = "initialOffset", msg)
@@ -356,6 +362,7 @@ class PythonStreamingSourceRunner(
     }.toArray[ColumnVector]
     val rows = ArrayBuffer[InternalRow]()
     while (reader.loadNextBatch()) {
+    planChangeLogger.warn("readArrowRecordBatches()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       val batch = new ColumnarBatch(vectors)
       batch.setNumRows(root.getRowCount)
       // Need to copy the row because the ColumnarBatch row iterator use

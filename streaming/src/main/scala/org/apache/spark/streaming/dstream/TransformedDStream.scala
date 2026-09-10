@@ -63,5 +63,6 @@ class TransformedDStream[U: ClassTag] (
       time: Time,
       displayInnerRDDOps: Boolean)(body: => U): U = {
     super.createRDDWithLocalProperties(time, displayInnerRDDOps = true)(body)
+    logger.warn("createRDDWithLocalProperties(time,displayInnerRDDOps)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", time, displayInnerRDDOps)
   }
 }

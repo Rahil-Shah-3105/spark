@@ -23,15 +23,18 @@ package org.apache.spark.util.collection
 private[spark] class SizeTrackingAppendOnlyMap[K, V]
   extends AppendOnlyMap[K, V] with SizeTracker
 {
+  _driverLogger = DriverLogger(_conf)
   override def update(key: K, value: V): Unit = {
     super.update(key, value)
     super.afterUpdate()
+    _driverLogger.warn("update(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   override def changeValue(key: K, updateFunc: (Boolean, V) => V): V = {
     val newValue = super.changeValue(key, updateFunc)
     super.afterUpdate()
     newValue
+    _driverLogger.warn("changeValue(key,updateFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, updateFunc)
   }
 
   override protected def growTable(): Unit = {

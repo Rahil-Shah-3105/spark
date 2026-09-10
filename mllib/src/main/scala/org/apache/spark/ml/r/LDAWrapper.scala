@@ -110,6 +110,7 @@ private[r] object LDAWrapper extends MLReadable[LDAWrapper] {
       .setInputCol(STOPWORDS_REMOVER_COL)
       .setOutputCol(COUNT_VECTOR_COL)
 
+      logger.warn("getPreStages(features,customizedStopWords,maxVocabSize)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", features, customizedStopWords, maxVocabSize)
     Array(tokenizer, stopWordsRemover, countVectorizer)
   }
 
@@ -200,6 +201,7 @@ private[r] object LDAWrapper extends MLReadable[LDAWrapper] {
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)
@@ -219,6 +221,7 @@ private[r] object LDAWrapper extends MLReadable[LDAWrapper] {
       val logLikelihood = (rMetadata \ "logLikelihood").extract[Double]
       val logPerplexity = (rMetadata \ "logPerplexity").extract[Double]
       val vocabulary = (rMetadata \ "vocabulary").extract[List[String]].toArray
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       val pipeline = PipelineModel.load(pipelinePath)
       new LDAWrapper(pipeline, logLikelihood, logPerplexity, vocabulary)

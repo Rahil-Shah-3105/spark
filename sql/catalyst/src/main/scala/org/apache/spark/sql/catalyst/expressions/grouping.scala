@@ -34,6 +34,7 @@ trait BaseGroupingSets extends Expression with CodegenFallback {
   def selectedGroupByExprs: Seq[Seq[Expression]]
 
   def groupByExprs: Seq[Expression] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     assert(children.forall(_.resolved),
       "Cannot call BaseGroupingSets.groupByExprs before the children expressions are all resolved.")
     BaseGroupingSets.distinctGroupByExprs(children)
@@ -97,6 +98,7 @@ object BaseGroupingSets {
     groupingSets.zip(startOffsets).map {
       case (gs, startOffset) => gs.indices.map(_ + startOffset)
     }
+    planChangeLogger.warn("computeGroupingSetIndexes(groupingSets)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def distinctGroupByExprs(exprs: Seq[Expression]): Seq[Expression] = {
@@ -125,6 +127,7 @@ case class Cube(
 object Cube {
   def apply(groupingSets: Seq[Seq[Expression]]): Cube = {
     Cube(BaseGroupingSets.computeGroupingSetIndexes(groupingSets), groupingSets.flatten)
+  planChangeLogger.warn("apply(groupingSets)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -141,6 +144,7 @@ case class Rollup(
 object Rollup {
   def apply(groupingSets: Seq[Seq[Expression]]): Rollup = {
     Rollup(BaseGroupingSets.computeGroupingSetIndexes(groupingSets), groupingSets.flatten)
+  planChangeLogger.warn("apply(groupingSets,userGivenGroupByExprs)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", userGivenGroupByExprs)
   }
 }
 
@@ -284,6 +288,7 @@ object GroupingAnalytics extends AliasHelper {
     val exprsNoAlias = exprs.map(trimAliases)
 
     if (!exprsNoAlias.exists(_.isInstanceOf[BaseGroupingSets])) {
+      planChangeLogger.warn("unapply(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
       None
     } else {
       val resolved = exprsNoAlias.forall {

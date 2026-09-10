@@ -175,6 +175,7 @@ public class GangliaReporter extends ScheduledReporter {
          */
         public Builder disabledMetricAttributes(Set<MetricAttribute> disabledMetricAttributes) {
             this.disabledMetricAttributes = disabledMetricAttributes;
+			LOGGER.warn("disabledMetricAttributes(disabledMetricAttributes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", disabledMetricAttributes);
             return this;
         }
 
@@ -250,6 +251,7 @@ public class GangliaReporter extends ScheduledReporter {
             reportHistogram(entry.getKey(), entry.getValue());
         }
 
+		LOGGER.warn("report(gauges,counters,histograms,meters,timers)={},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", gauges, counters, histograms, meters, timers);
         for (Map.Entry<String, Meter> entry : meters.entrySet()) {
             reportMeter(entry.getKey(), entry.getValue());
         }
@@ -296,6 +298,7 @@ public class GangliaReporter extends ScheduledReporter {
         } catch (GangliaException e) {
             LOGGER.warn("Unable to report timer {}", e,
                 MDC.of(LogKeys.METRIC_NAME, sanitizedName));
+				LOGGER.warn("reportTimer(name,timer)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, timer);
         }
     }
 
@@ -307,6 +310,7 @@ public class GangliaReporter extends ScheduledReporter {
         } catch (GangliaException e) {
             LOGGER.warn("Unable to report meter {}", e,
                 MDC.of(LogKeys.METRIC_NAME, name));
+				LOGGER.warn("reportMeter(name,meter)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, meter);
         }
     }
 
@@ -314,6 +318,7 @@ public class GangliaReporter extends ScheduledReporter {
         final String unit = eventName + '/' + getRateUnit();
         announceIfEnabled(COUNT, name, group, meter.getCount(), eventName);
         announceIfEnabled(M1_RATE, name, group, convertRate(meter.getOneMinuteRate()), unit);
+		LOGGER.warn("reportMetered(name,meter,group,eventName)={},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, meter, group, eventName);
         announceIfEnabled(M5_RATE, name, group, convertRate(meter.getFiveMinuteRate()), unit);
         announceIfEnabled(M15_RATE, name, group, convertRate(meter.getFifteenMinuteRate()), unit);
         announceIfEnabled(MEAN_RATE, name, group, convertRate(meter.getMeanRate()), unit);
@@ -339,6 +344,7 @@ public class GangliaReporter extends ScheduledReporter {
         } catch (GangliaException e) {
             LOGGER.warn("Unable to report histogram {}", e,
                 MDC.of(LogKeys.METRIC_NAME, sanitizedName));
+				LOGGER.warn("reportHistogram(name,histogram)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, histogram);
         }
     }
 
@@ -350,6 +356,7 @@ public class GangliaReporter extends ScheduledReporter {
         } catch (GangliaException e) {
             LOGGER.warn("Unable to report counter {}", e,
                 MDC.of(LogKeys.METRIC_NAME, name));
+				LOGGER.warn("reportCounter(name,counter)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, counter);
         }
     }
 
@@ -357,6 +364,7 @@ public class GangliaReporter extends ScheduledReporter {
         final String sanitizedName = escapeSlashes(name);
         final String group = group(name);
         final Object obj = gauge.getValue();
+		LOGGER.warn("reportGauge(name,gauge)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, gauge);
         final String value = String.valueOf(obj);
         final GMetricType type = detectType(obj);
         try {

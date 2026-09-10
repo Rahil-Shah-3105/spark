@@ -39,6 +39,7 @@ class AsyncOffsetSeqLog(
     clock: Clock = new SystemClock(),
     errorNotifier: ErrorNotifier = new ErrorNotifier())
   extends OffsetSeqLog(sparkSession, path) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // the cache needs to be enabled because we may not be persisting every entry to durable storage
   // entries not persisted to durable storage will just be stored in memory for faster lookups
@@ -64,6 +65,7 @@ class AsyncOffsetSeqLog(
    */
   def getAsyncOffsetWrite(batchId: Long): Option[CompletableFuture[Long]] = {
     Option(pendingOffsetWrites.get(batchId))
+    planChangeLogger.warn("getAsyncOffsetWrite(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
   }
 
   /**
@@ -72,6 +74,7 @@ class AsyncOffsetSeqLog(
    */
   def removeAsyncOffsetWrite(batchId: Long): Unit = {
     pendingOffsetWrites.remove(batchId)
+    planChangeLogger.warn("removeAsyncOffsetWrite(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
   }
 
   /**
@@ -83,6 +86,7 @@ class AsyncOffsetSeqLog(
    *         to indicate some write error.
    */
   def addAsync(batchId: Long, metadata: OffsetSeqBase): CompletableFuture[(Long, Boolean)] = {
+    planChangeLogger.warn("addAsync(batchId,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, metadata, batchId)
     require(metadata != null, "'null' metadata cannot be written to a metadata log")
 
     def issueAsyncWrite(batchId: Long): CompletableFuture[Long] = {
@@ -90,6 +94,7 @@ class AsyncOffsetSeqLog(
       val future: CompletableFuture[Long] = addNewBatchByStreamAsync(batchId) { output =>
         serialize(metadata, output)
       }.thenApply((ret: Boolean) => {
+        planChangeLogger.warn("issueAsyncWrite(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
         if (ret) {
           batchId
         } else {
@@ -137,6 +142,7 @@ class AsyncOffsetSeqLog(
     val future = new CompletableFuture[Boolean]()
     val batchMetadataFile = batchIdToPath(batchId)
 
+    planChangeLogger.warn("addNewBatchByStreamAsync(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
     if (batchCache.containsKey(batchId)) {
       future.complete(false)
       future
@@ -173,6 +179,7 @@ class AsyncOffsetSeqLog(
                 log"${MDC(LogKeys.BATCH_ID, batchId)} to offset log", e)
               future.completeExceptionally(e)
           }
+          planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       })
       future
@@ -190,5 +197,6 @@ class AsyncOffsetSeqLog(
   // used in tests
   def pendingAsyncOffsetWrite(): Int = {
     pendingOffsetWrites.size()
+    planChangeLogger.warn("pendingAsyncOffsetWrite()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

@@ -35,6 +35,7 @@ import io.netty.buffer.CompositeByteBuf;
  * previously-granted credit (i.e., a credit-grant delta).
  */
 public final class CreditControlMessage extends StreamingShuffleMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(CreditControlMessage.class);
   public final int shuffleWriterId;
   public final int shuffleReaderId;
 
@@ -56,6 +57,7 @@ public final class CreditControlMessage extends StreamingShuffleMessage {
 
   @Override
   public StreamingShuffleMessageType messageType() {
+	logger.warn("messageType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return StreamingShuffleMessageType.CREDIT_CONTROL_MESSAGE;
   }
 

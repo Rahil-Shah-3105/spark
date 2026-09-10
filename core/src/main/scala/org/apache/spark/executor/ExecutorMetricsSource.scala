@@ -42,7 +42,9 @@ private[spark] class ExecutorMetricsSource extends Source {
 
   // called by ExecutorMetricsPoller
   def updateMetricsSnapshot(metricsUpdates: Array[Long]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     metricsSnapshot = metricsUpdates
+    _driverLogger.warn("updateMetricsSnapshot(metricsUpdates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metricsUpdates)
   }
 
   private class ExecutorMetricGauge(idx: Int) extends Gauge[Long] {
@@ -54,6 +56,7 @@ private[spark] class ExecutorMetricsSource extends Source {
       idx => new ExecutorMetricGauge(idx)
     }
 
+    _driverLogger.warn("register(metricsSystem)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metricsSystem)
     ExecutorMetricType.metricToOffset.foreach {
       case (name, idx) =>
         metricRegistry.register(MetricRegistry.name(name), gauges(idx))

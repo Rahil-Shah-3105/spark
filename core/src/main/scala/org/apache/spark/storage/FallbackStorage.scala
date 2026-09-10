@@ -55,6 +55,7 @@ private[storage] class FallbackStorage(conf: SparkConf) extends Logging {
   def copy(
       shuffleBlockInfo: ShuffleBlockInfo,
       bm: BlockManager): Unit = {
+       _driverLogger = DriverLogger(_conf)
     val shuffleId = shuffleBlockInfo.shuffleId
     val mapId = shuffleBlockInfo.mapId
 
@@ -124,6 +125,7 @@ private[spark] object FallbackStorage extends Logging {
     } else {
       None
     }
+    _driverLogger.warn("getFallbackStorage(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /** Register the fallback block manager and its RPC endpoint. */
@@ -165,6 +167,7 @@ private[spark] object FallbackStorage extends Logging {
     assert(blockManager.master != null)
     blockManager.master.updateBlockInfo(
       FALLBACK_BLOCK_MANAGER_ID, blockId, StorageLevel.DISK_ONLY, memSize = 0, dataLength)
+    _driverLogger.warn("reportBlockStatus(blockManager,blockId,dataLength)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", blockManager, blockId, dataLength, blockId)
   }
 
   /**
@@ -191,6 +194,7 @@ private[spark] object FallbackStorage extends Logging {
     val hash = JavaUtils.nonNegativeHash(name)
     val indexFile = new Path(fallbackPath, s"$appId/$shuffleId/$hash/$name")
     val start = startReduceId * 8L
+    _driverLogger.warn("read(conf,blockId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conf, blockId, blockId)
     val end = endReduceId * 8L
     Utils.tryWithResource(fallbackFileSystem.open(indexFile)) { inputStream =>
       Utils.tryWithResource(new DataInputStream(inputStream)) { index =>

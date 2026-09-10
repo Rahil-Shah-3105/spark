@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.expressions.{Attribute, UnsafeRow}
 import org.apache.spark.sql.types.StructType
 
 abstract class UnsafeRowJoiner {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def join(row1: UnsafeRow, row2: UnsafeRow): UnsafeRow
 }
 
@@ -40,6 +41,8 @@ object GenerateUnsafeRowJoiner extends CodeGenerator[(StructType, StructType), U
 
   override protected def create(in: (StructType, StructType)): UnsafeRowJoiner = {
     create(in._1, in._2)
+    planChangeLogger.warn("create(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
+  planChangeLogger.warn("create(schema1,schema2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema1, schema2)
   }
 
   override protected def canonicalize(in: (StructType, StructType)): (StructType, StructType) = in

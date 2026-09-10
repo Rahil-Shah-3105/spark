@@ -53,6 +53,7 @@ import org.apache.spark.util.Utils.getUriBuilder
  * Concrete parser for Spark SQL statements.
  */
 class SparkSqlParser extends AbstractSqlParser {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val astBuilder = new SparkSqlAstBuilder()
 
   private val substitutor = new VariableSubstitution()
@@ -311,6 +312,7 @@ class SparkSqlAstBuilder extends AstBuilder {
         throw QueryParsingErrors.invalidTempObjQualifierError(
           "VIEW", viewIdentifier.last, viewIdentifier.init.mkString("."), ctx)
     }
+    planChangeLogger.warn("normalizeTempViewIdentifier(viewIdentifier,ctx)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", viewIdentifier, ctx, viewIdentifier)
   }
 
   /**
@@ -1466,6 +1468,7 @@ class SparkSqlAstBuilder extends AstBuilder {
         withIdentClause(ctx.identifierReference, UnresolvedNamespace(_)),
         visitCollationSpec(ctx.collationSpec()))
     }
+    planChangeLogger.warn("visitSetNamespaceCollation(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**

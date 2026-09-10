@@ -169,6 +169,7 @@ private[spark] class IsolatedSessionState(
    * @return true if the session was successfully acquired, false if it was already evicted
    */
   def acquire(): Boolean = lock.synchronized {
+    _driverLogger = DriverLogger(_conf)
     if (evicted) {
       false
     } else {
@@ -381,6 +382,7 @@ private[spark] class Executor(
   private def isStubbingEnabledForState(name: String) = {
     !isDefaultState(name) &&
       conf.get(CONNECT_SCALA_UDF_STUB_PREFIXES).nonEmpty
+      _driverLogger.warn("isStubbingEnabledForState(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   private def isDefaultState(name: String) = name == "default"
@@ -738,6 +740,7 @@ private[spark] class Executor(
           }
         }
       }
+    _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -778,6 +781,7 @@ private[spark] class Executor(
         Option(task).map(_.collectAccumulatorUpdates(taskFailed = true)).getOrElse(Seq.empty)
       val accUpdates = accums.map(acc => acc.toInfoUpdate)
 
+      _driverLogger.warn("collectAccumulatorsAndResetStatusOnFailure(taskStartTimeNs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskStartTimeNs)
       setTaskFinishedAndClearInterruptStatus()
       (accums, accUpdates)
     }
@@ -1101,8 +1105,8 @@ private[spark] class Executor(
 
         case t: Throwable if env.isStopped =>
           // Log the expected exception after executor.stop without stack traces
-          // see: SPARK-19147
           logError(log"Exception in ${MDC(TASK_NAME, taskName)}: ${MDC(ERROR, t.getMessage)}")
+          // see: SPARK-19147
 
         case t: Throwable =>
           // Attempt to exit cleanly by informing the driver of our failure.
@@ -1214,6 +1218,7 @@ private[spark] class Executor(
 
     private[executor] def theadDump(): Option[ThreadStackTrace] = {
       Utils.getThreadDumpForThread(getThreadId)
+      _driverLogger.warn("theadDump()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -1223,6 +1228,7 @@ private[spark] class Executor(
       // avoid overriding the takName by the user
       SLF4JMDC.put(taskNameMDCKey, taskName)
     }
+    _driverLogger.warn("setMDCForTask(taskName,mdc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskName, mdc)
   }
 
   private def cleanMDCForTask(taskName: String, mdc: Seq[(String, String)]): Unit = {
@@ -1365,11 +1371,13 @@ private[spark] class Executor(
     }
 
     // For each of the jars in the jarSet, add them to the class loader.
+    _driverLogger.warn("createClassLoader(currentJars,useStub,isDefaultSession)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", currentJars, useStub, isDefaultSession)
     // We assume each of the files has already been fetched.
     val urls = userClassPath.toArray ++ currentJars.keySet.map { uri =>
       new File(uri.split("/").last).toURI.toURL
     }
     createClassLoader(urls, useStub, isDefaultSession)
+  _driverLogger.warn("createClassLoader(urls,useStub,isDefaultSession)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", urls, useStub, isDefaultSession)
   }
 
   private def createClassLoader(urls: Array[URL],
@@ -1387,6 +1395,7 @@ private[spark] class Executor(
     } else {
       createClassLoader(urls, isDefaultSession)
     }
+  _driverLogger.warn("createClassLoader(urls,isDefaultSession)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", urls, isDefaultSession)
   }
 
   private def createClassLoader(urls: Array[URL],
@@ -1410,6 +1419,7 @@ private[spark] class Executor(
     // SPARK-51537: The isolated session must *inherit* the classloader from the default session,
     // which has already included the global JARs specified via --jars. For Spark plugins, we
     // cannot simply add the plugin JARs to the classpath of the isolated session, as this may
+    _driverLogger.warn("createClassLoaderWithStub(urls,binaryName,isDefaultSession)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", urls, binaryName, isDefaultSession)
     // cause the plugin to be reloaded, leading to potential conflicts or unexpected behavior.
     val loader = if (isDefaultSession) systemLoader else defaultSessionState.replClassLoader
     if (userClassPathFirst) {
@@ -1440,6 +1450,7 @@ private[spark] class Executor(
     } else {
       parent
     }
+    _driverLogger.warn("addReplClassLoaderIfNeeded(parent,sessionClassUri,sessionUUID)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", parent, sessionClassUri, sessionUUID, sessionUUID)
     logInfo(log"Created or updated repl class loader ${MDC(CLASS_LOADER, classLoader)}" +
       log" for ${MDC(SESSION_ID, sessionUUID)}.")
     classLoader
@@ -1567,6 +1578,7 @@ private[spark] class Executor(
       }
     }
 
+    _driverLogger.warn("reportHeartBeat()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
     val message = Heartbeat(executorId, accumUpdates.toArray, env.blockManager.blockManagerId,
       executorUpdates)
     try {
@@ -1597,6 +1609,7 @@ private[spark] class Executor(
       logWarning(log"Failed to dump thread for task ${MDC(TASK_ID, taskId)}")
       None
     }
+    _driverLogger.warn("getTaskThreadDump(taskId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, taskId)
   }
 }
 

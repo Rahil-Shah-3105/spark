@@ -157,6 +157,7 @@ private[spark] object Node {
       impurity: Double,
       isLeaf: Boolean): Node = {
     new Node(nodeIndex, predict, impurity, isLeaf, None, None, None, None)
+    logger.warn("apply(nodeIndex,predict,impurity,isLeaf)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nodeIndex, predict, impurity, isLeaf)
   }
 
   /**

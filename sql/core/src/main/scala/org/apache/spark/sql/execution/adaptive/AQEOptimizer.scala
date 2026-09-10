@@ -30,6 +30,7 @@ import org.apache.spark.util.Utils
  */
 class AQEOptimizer(conf: SQLConf, extendedRuntimeOptimizerRules: Seq[Rule[LogicalPlan]])
   extends RuleExecutor[LogicalPlan] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def fixedPoint =
     FixedPoint(
@@ -75,11 +76,13 @@ class AQEOptimizer(conf: SQLConf, extendedRuntimeOptimizerRules: Seq[Rule[Logica
       previousPlan: LogicalPlan,
       currentPlan: LogicalPlan): Option[String] = {
     LogicalPlanIntegrity.validateOptimizedPlan(previousPlan, currentPlan, lightweight = false)
+    planChangeLogger.warn("validatePlanChanges(previousPlan,currentPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", previousPlan, currentPlan)
   }
 
   override protected def validatePlanChangesLightweight(
       previousPlan: LogicalPlan,
       currentPlan: LogicalPlan): Option[String] = {
     LogicalPlanIntegrity.validateOptimizedPlan(previousPlan, currentPlan, lightweight = true)
+    planChangeLogger.warn("validatePlanChangesLightweight(previousPlan,currentPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", previousPlan, currentPlan)
   }
 }

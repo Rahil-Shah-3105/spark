@@ -43,6 +43,7 @@ private[spark] case class CoalescedRDDPartition(
 
   @throws(classOf[IOException])
   private def writeObject(oos: ObjectOutputStream): Unit = Utils.tryOrIOException {
+    _driverLogger = DriverLogger(_conf)
     // Update the reference to parent partition at the time of task serialization
     parents = parentsIndices.map(rdd.partitions(_)).toImmutableArraySeq
     oos.defaultWriteObject()
@@ -121,6 +122,7 @@ private[spark] class CoalescedRDD[T: ClassTag](
    */
   override def getPreferredLocations(partition: Partition): Seq[String] = {
     partition.asInstanceOf[CoalescedRDDPartition].preferredLocation.toSeq
+    _driverLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 }
 
@@ -205,6 +207,7 @@ private class DefaultPartitionCoalescer(val balanceSlack: Double = 0.10)
         }
       )
       // convert it into an array of host to partition
+          _driverLogger.warn("getAllPrefLocs(prev)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prev)
       for (x <- 0 to 2) {
         tmpPartsWithLocs.foreach { parts =>
           val p = parts._1
@@ -231,6 +234,7 @@ private class DefaultPartitionCoalescer(val balanceSlack: Double = 0.10)
       initialHash += part // needed to avoid assigning partitions to multiple buckets
       true
     } else { false }
+    _driverLogger.warn("addPartToPGroup(part,pgroup)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", part, pgroup)
   }
 
   /**
@@ -258,6 +262,7 @@ private class DefaultPartitionCoalescer(val balanceSlack: Double = 0.10)
     // which case we have likely seen all preferred locations)
     val numPartsToLookAt = math.min(expectedCoupons2, partitionLocs.partsWithLocs.length)
     while (numCreated < targetLen && tries < numPartsToLookAt) {
+    _driverLogger.warn("setupGroups(targetLen,partitionLocs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", targetLen, partitionLocs)
       val (nxt_replica, nxt_part) = partitionLocs.partsWithLocs(tries)
       tries += 1
       if (!groupHash.contains(nxt_replica)) {

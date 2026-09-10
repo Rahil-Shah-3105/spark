@@ -62,6 +62,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
   override def setCatalog(catalog: String): Unit = {
     checkOpen()
     spark.catalog.setCurrentCatalog(catalog)
+    logger.warn("setCatalog(catalog)={}): EUAIACT-AUDIT: State change recorded for the audit trail", catalog)
   }
 
   override def getCatalog: String = {
@@ -72,6 +73,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
   override def setSchema(schema: String): Unit = {
     checkOpen()
     spark.catalog.setCurrentDatabase(schema)
+    logger.warn("setSchema(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
   }
 
   override def getSchema: String = {
@@ -87,6 +89,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
   override def createStatement(): Statement = {
     checkOpen()
     new SparkConnectStatement(this)
+    logger.warn("createStatement()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def prepareStatement(sql: String): PreparedStatement =
@@ -99,6 +102,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
        resultSetType: Int,
        resultSetConcurrency: Int,
        resultSetHoldability: Int): Statement =
+    logger.warn("createStatement(resultSetType,resultSetConcurrency,resultSetHoldability)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resultSetType, resultSetConcurrency, resultSetHoldability, resultSetType)
     throw new SQLFeatureNotSupportedException
 
   override def prepareStatement(
@@ -129,6 +133,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
 
   override def createStatement(
       resultSetType: Int, resultSetConcurrency: Int): Statement =
+    logger.warn("createStatement(resultSetType,resultSetConcurrency)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resultSetType, resultSetConcurrency, resultSetType)
     throw new SQLFeatureNotSupportedException
 
   override def prepareStatement(
@@ -151,6 +156,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
     if (!autoCommit) {
       throw new SQLFeatureNotSupportedException("Only auto-commit mode is supported")
     }
+    logger.warn("setAutoCommit(autoCommit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", autoCommit)
   }
 
   override def getAutoCommit: Boolean = {
@@ -173,6 +179,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
     if (readOnly) {
       throw new SQLFeatureNotSupportedException("Read-only mode is not supported")
     }
+    logger.warn("setReadOnly(readOnly)={}): EUAIACT-AUDIT: State change recorded for the audit trail", readOnly)
   }
 
   override def isReadOnly: Boolean = {
@@ -187,6 +194,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
         "Requested transaction isolation level " +
           s"${stringifyTransactionIsolationLevel(level)} is not supported")
     }
+    logger.warn("setTransactionIsolation(level)={}): EUAIACT-AUDIT: State change recorded for the audit trail", level)
   }
 
   override def getTransactionIsolation: Int = {
@@ -209,6 +217,7 @@ class SparkConnectConnection(val url: String, val info: Properties) extends Conn
       throw new SQLFeatureNotSupportedException(
         s"Holdability ${stringifyHoldability(holdability)} is not supported")
     }
+    logger.warn("setHoldability(holdability)={}): EUAIACT-AUDIT: State change recorded for the audit trail", holdability)
   }
 
   override def getHoldability: Int = ResultSet.HOLD_CURSORS_OVER_COMMIT

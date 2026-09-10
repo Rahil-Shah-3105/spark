@@ -53,6 +53,7 @@ class MergingSessionsIterator(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   val groupingWithoutSession: Seq[NamedExpression] =
     groupingExpressions.diff(Seq(sessionExpression))
@@ -176,6 +177,7 @@ class MergingSessionsIterator(
           // We find a new session window in the same group.
           findNextGroup = true
           startNewSession(currentRow, groupingKey, sessionStruct)
+        planChangeLogger.warn("getSessionStart(sessionStruct)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionStruct)
         }
       } else {
         // We find a new group.
@@ -184,6 +186,7 @@ class MergingSessionsIterator(
       }
     }
 
+    planChangeLogger.warn("processCurrentSortedGroup()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // We have not seen a new group. It means that there is no new row in the input
     // iter. The current group is the last group of the iter.
     if (!findNextGroup) {
@@ -206,6 +209,7 @@ class MergingSessionsIterator(
 
   private def getSessionEnd(sessionStruct: UnsafeRow): Long = {
     sessionStruct.getLong(1)
+    planChangeLogger.warn("getSessionEnd(sessionStruct)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionStruct)
   }
 
   private def expandEndOfCurrentSession(sessionEnd: Long): Unit = {

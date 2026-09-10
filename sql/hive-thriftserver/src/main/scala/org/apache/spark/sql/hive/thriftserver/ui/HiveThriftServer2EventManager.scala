@@ -26,12 +26,15 @@ import org.apache.spark.scheduler.SparkListenerEvent
 private[thriftserver] class HiveThriftServer2EventManager(sc: SparkContext) {
 
   def postLiveListenerBus(event: SparkListenerEvent): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     sc.listenerBus.post(event)
+    logInfo.warn("postLiveListenerBus(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   def onSessionCreated(ip: String, sessionId: String, userName: String = "UNKNOWN"): Unit = {
     postLiveListenerBus(SparkListenerThriftServerSessionCreated(ip, sessionId,
       userName, System.currentTimeMillis()))
+    logInfo.warn("onSessionCreated(ip,sessionId,userName)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ip, userName, sessionId)
   }
 
   def onSessionClosed(sessionId: String): Unit = {

@@ -30,6 +30,7 @@ import org.apache.spark.sql.internal.SQLConf
 
 class SparkPlanner(val session: SparkSession, val experimentalMethods: ExperimentalMethods)
   extends SparkStrategies {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def conf: SQLConf = session.sessionState.conf
 
@@ -73,6 +74,7 @@ class SparkPlanner(val session: SparkSession, val experimentalMethods: Experimen
     // TODO: We will need to prune bad plans when we improve plan space exploration
     //       to prevent combinatorial explosion.
     plans
+    planChangeLogger.warn("prunePlans(plans)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plans)
   }
 
   /**
@@ -104,6 +106,7 @@ class SparkPlanner(val session: SparkSession, val experimentalMethods: Experimen
     // optimization with the current implementation would change the output schema.
     // TODO: Decouple final output schema from expression evaluation so this copy can be
     // avoided safely.
+    planChangeLogger.warn("pruneFilterProject(projectList,filterPredicates,prunePushedDownFilters,scanBuilder)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", projectList, filterPredicates, prunePushedDownFilters, scanBuilder)
 
     if (AttributeSet(projectList.map(_.toAttribute)) == projectSet &&
         filterSet.subsetOf(projectSet)) {

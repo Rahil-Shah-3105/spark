@@ -127,6 +127,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect._typing import DataTypeOrString
     from pyspark.sql.connect.session import SparkSession
     from pyspark.sql.datasource import DataSource
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 PYSPARK_ROOT = os.path.dirname(pyspark.__file__)
@@ -176,6 +177,7 @@ class RpcDeadlines:
 
         Use this when you want to rely solely on server-side or network-layer timeouts.
         """
+        logger.warning("disabled(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         return cls(
             reattachable_execute_plan=None,
             reattach_execute=None,
@@ -262,23 +264,28 @@ class ChannelBuilder:
         -------
         The parameter value if present, raises exception otherwise.
         """
+        logger.warning("get(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         return self._params[key]
 
     def getDefault(self, key: str, default: Any) -> Any:
+        logger.warning("getDefault(self,key,default)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key, default)
         return self._params.get(key, default)
 
     def set(self, key: str, value: Any) -> None:
+        logger.warning("set(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         self._params[key] = value
 
     def setChannelOption(self, key: str, value: Any) -> None:
         # overwrite option if it exists already else append it
         for i, option in enumerate(self._channel_options):
             if option[0] == key:
+                logger.warning("setChannelOption(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
                 self._channel_options[i] = (key, value)
                 return
         self._channel_options.append((key, value))
 
     def add_interceptor(self, interceptor: grpc.UnaryStreamClientInterceptor) -> None:
+        logger.warning("add_interceptor(self,interceptor)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, interceptor)
         self._interceptors.append(interceptor)
 
     def toChannel(self) -> grpc.Channel:
@@ -340,6 +347,7 @@ class ChannelBuilder:
         interacts badly with a particular network path, or a client environment is prone to
         stalls long enough to trip false-positive disconnects.
         """
+        logger.warning("keepalive_enabled(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return (
             self.getDefault(
                 ChannelBuilder.PARAM_GRPC_KEEPALIVE_ENABLED,
@@ -983,6 +991,7 @@ class SparkConnectClient(object):
           The callable that will be called with the progress information.
 
         """
+        logger.warning("register_progress_handler(self,handler)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, handler)
         if handler in self._progress_handlers:
             return
         self._progress_handlers.append(handler)
@@ -1000,6 +1009,7 @@ class SparkConnectClient(object):
           The callable to remove from the list of progress handlers.
 
         """
+        logger.warning("remove_progress_handler(self,handler)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, handler)
         self._progress_handlers.remove(handler)
 
     def _retrying(self) -> "Retrying":
@@ -1010,10 +1020,12 @@ class SparkConnectClient(object):
 
     def disable_reattachable_execute(self) -> "SparkConnectClient":
         self._use_reattachable_execute = False
+        logger.warning("disable_reattachable_execute(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self
 
     def enable_reattachable_execute(self) -> "SparkConnectClient":
         self._use_reattachable_execute = True
+        logger.warning("enable_reattachable_execute(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self
 
     def set_retry_policies(self, policies: Iterable[RetryPolicy]) -> None:
@@ -1022,12 +1034,14 @@ class SparkConnectClient(object):
         I.e. set_retry_policies([DefaultPolicy(), CustomPolicy()]).
 
         """
+        logger.warning("set_retry_policies(self,policies)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, policies)
         self._retry_policies = list(policies)
 
     def get_retry_policies(self) -> List[RetryPolicy]:
         """
         Return list of currently used policies
         """
+        logger.warning("get_retry_policies(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return list(self._retry_policies)
 
     @classmethod
@@ -1160,6 +1174,7 @@ class SparkConnectClient(object):
             data_source=data_source,
         ).to_data_source_proto(self)
 
+        logger.warning("register_data_source(self,dataSource)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dataSource)
         req = self._execute_plan_request_with_metadata()
         req.plan.command.register_data_source.CopyFrom(proto)
         self._execute(req)
@@ -1328,11 +1343,13 @@ class SparkConnectClient(object):
         """
 
         def truncate_str(s: str) -> str:
+            logger.warning("truncate_str(s)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", s)
             if len(s) > 1024:
                 return s[:1024] + "[truncated]"
             return s
 
         def truncate_bytes(b: bytes) -> bytes:
+            logger.warning("truncate_bytes(b)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", b)
             if len(b) > 8:
                 return b[:8] + b"[truncated]"
             return b
@@ -2022,12 +2039,14 @@ class SparkConnectClient(object):
         return req
 
     def get_configs(self, *keys: str) -> Tuple[Optional[str], ...]:
+        logger.warning("get_configs(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         op = pb2.ConfigRequest.Operation(get=pb2.ConfigRequest.Get(keys=keys))
         configs = dict(self.config(op).pairs)
         return tuple(configs.get(key) for key in keys)
 
     def get_config_dict(self, *keys: str) -> Mapping[str, Optional[str]]:
         op = pb2.ConfigRequest.Operation(get=pb2.ConfigRequest.Get(keys=keys))
+        logger.warning("get_config_dict(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return dict(self.config(op).pairs)
 
     def get_config_with_defaults(
@@ -2229,6 +2248,7 @@ class SparkConnectClient(object):
 
     def add_tag(self, tag: str) -> None:
         self._throw_if_invalid_tag(tag)
+        logger.warning("add_tag(self,tag)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tag)
         if not hasattr(self.thread_local, "tags"):
             self.thread_local.tags = set()
         self.thread_local.tags.add(tag)
@@ -2237,11 +2257,13 @@ class SparkConnectClient(object):
         self._throw_if_invalid_tag(tag)
         if not hasattr(self.thread_local, "tags"):
             self.thread_local.tags = set()
+            logger.warning("remove_tag(self,tag)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tag)
         # Use discard, not remove: removing an absent tag is a documented no-op
         # (see SparkSession.removeTag), matching the Classic behavior.
         self.thread_local.tags.discard(tag)
 
     def get_tags(self) -> Set[str]:
+        logger.warning("get_tags(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         if not hasattr(self.thread_local, "tags"):
             self.thread_local.tags = set()
         return self.thread_local.tags
@@ -2276,12 +2298,14 @@ class SparkConnectClient(object):
     def add_threadlocal_user_context_extension(self, extension: any_pb2.Any) -> str:
         if not hasattr(self.thread_local, "user_context_extensions"):
             self.thread_local.user_context_extensions = list()
+            logger.warning("add_threadlocal_user_context_extension(self,extension)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, extension)
         extension_id = "threadlocal_" + str(uuid.uuid4())
         self.thread_local.user_context_extensions.append((extension_id, extension))
         return extension_id
 
     def add_global_user_context_extension(self, extension: any_pb2.Any) -> str:
         extension_id = "global_" + str(uuid.uuid4())
+        logger.warning("add_global_user_context_extension(self,extension)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, extension)
         with self.global_user_context_extensions_lock:
             self.global_user_context_extensions.append((extension_id, extension))
         return extension_id
@@ -2293,6 +2317,7 @@ class SparkConnectClient(object):
             self.thread_local.user_context_extensions = list(
                 filter(lambda ex: ex[0] != extension_id, self.thread_local.user_context_extensions)
             )
+            logger.warning("remove_user_context_extension(self,extension_id)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", self, extension_id, extension_id)
         elif extension_id.find("global_") == 0:
             with self.global_user_context_extensions_lock:
                 self.global_user_context_extensions = list(
@@ -2454,6 +2479,7 @@ class SparkConnectClient(object):
             for path in paths:
                 for attempt in self._retrying():
                     with attempt:
+                        logger.warning("add_artifacts(self,pyfile,archive,file)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pyfile, archive, file)
                         self._artifact_manager.add_artifacts(
                             path, pyfile=pyfile, archive=archive, file=file
                         )

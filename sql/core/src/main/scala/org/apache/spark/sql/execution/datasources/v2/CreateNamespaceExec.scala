@@ -38,12 +38,14 @@ case class CreateNamespaceExec(
     ifNotExists: Boolean,
     private var properties: Map[String, String])
     extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     val ns = namespace.toArray
     try {
       val ownership = Map(PROP_OWNER -> Utils.getCurrentUserName())
       catalog.createNamespace(ns, (properties ++ ownership).asJava)
     } catch {
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       case _: NamespaceAlreadyExistsException if ifNotExists =>
         logWarning(log"Namespace ${MDC(NAMESPACE, namespace.quoted)} was created concurrently. " +
           log"Ignoring.")

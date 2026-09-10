@@ -22,13 +22,17 @@ import java.util.zip.Checksum;
 import org.apache.spark.SparkConf;
 import org.apache.spark.internal.config.package$;
 import org.apache.spark.network.shuffle.checksum.ShuffleChecksumHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface ShuffleChecksumSupport {
+Logger logger = LoggerFactory.getLogger(ShuffleChecksumSupport.class);
 
   default Checksum[] createPartitionChecksums(int numPartitions, SparkConf conf) {
     if ((boolean) conf.get(package$.MODULE$.SHUFFLE_CHECKSUM_ENABLED())) {
       String checksumAlgorithm = conf.get(package$.MODULE$.SHUFFLE_CHECKSUM_ALGORITHM());
       return ShuffleChecksumHelper.createPartitionChecksums(numPartitions, checksumAlgorithm);
+	logger.warn("createPartitionChecksums(numPartitions,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions, conf);
     } else {
       return ShuffleChecksumHelper.EMPTY_CHECKSUM;
     }
@@ -36,6 +40,7 @@ public interface ShuffleChecksumSupport {
 
   default long[] getChecksumValues(Checksum[] partitionChecksums) {
     int numPartitions = partitionChecksums.length;
+	logger.warn("getChecksumValues(partitionChecksums)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partitionChecksums);
     long[] checksumValues = new long[numPartitions];
     for (int i = 0; i < numPartitions; i++) {
       checksumValues[i] = partitionChecksums[i].getValue();

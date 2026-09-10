@@ -38,9 +38,11 @@ case class DropNamespaceExec(
     val nsCatalog = catalog.asNamespaceCatalog
     val ns = namespace.toArray
     if (nsCatalog.namespaceExists(ns)) {
+      val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       try {
         nsCatalog.dropNamespace(ns, cascade)
       } catch {
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         case _: NonEmptyNamespaceException =>
           throw QueryCompilationErrors.cannotDropNonemptyNamespaceError(namespace)
       }

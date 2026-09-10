@@ -116,6 +116,7 @@ case class OrcFileFormat() extends FileFormat
           OrcUtils.extensionsForCompressionCodecNames.getOrElse(name, "")
         }
 
+        logger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
         compressionExtension + ".orc"
       }
     }
@@ -314,6 +315,7 @@ private[orc] class OrcOutputWriter(
 
   override def write(row: InternalRow): Unit = {
     recordWriter.write(NullWritable.get(), serializer.serialize(row))
+    logger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {
@@ -329,6 +331,7 @@ private[orc] class OrcOutputWriter(
     val writerField = recordWriter.getClass.getDeclaredField("writer")
     writerField.setAccessible(true)
     var writer = writerField.get(recordWriter).asInstanceOf[Writer]
+    logger.warn("getOrCreateInternalWriter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (writer == null) {
       // Hive ORC initializes its private `writer` field at the first write.
       // For empty write task, we need to create it manually to record our meta.

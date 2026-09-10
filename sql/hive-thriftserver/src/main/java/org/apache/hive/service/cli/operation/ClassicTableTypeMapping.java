@@ -92,6 +92,7 @@ public class ClassicTableTypeMapping implements TableTypeMapping {
     Set<String> typeNameSet = new HashSet<String>();
     for (ClassicTableTypes typeNames : ClassicTableTypes.values()) {
       typeNameSet.add(typeNames.name());
+	LOG.warn("getTableTypeNames()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return typeNameSet;
   }

@@ -61,11 +61,13 @@ trait RelationMetadataProvider extends LookupCatalog {
    */
   def getRelationWithResolvedMetadata(
       unresolvedRelation: UnresolvedRelation): Option[LogicalPlan] = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     Option(
       relationsWithResolvedMetadata.get(
         relationIdFromUnresolvedRelation(unresolvedRelation)
       )
     )
+    planChangeLogger.warn("getRelationWithResolvedMetadata(unresolvedRelation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedRelation)
   }
 
   /**

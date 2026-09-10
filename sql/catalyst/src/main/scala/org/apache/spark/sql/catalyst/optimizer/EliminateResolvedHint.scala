@@ -28,6 +28,7 @@ import org.apache.spark.sql.internal.SQLConf
  * operators, otherwise remove it if no [[Join]] operator is matched.
  */
 object EliminateResolvedHint extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val hintErrorHandler = conf.hintErrorHandler
 
@@ -41,6 +42,7 @@ object EliminateResolvedHint extends Rule[LogicalPlan] {
         val newJoinHint = JoinHint(mergeHints(leftHints), mergeHints(rightHints))
         j.copy(left = newLeft, right = newRight, hint = newJoinHint)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val shouldPullHintsIntoSubqueries = SQLConf.get.getConf(SQLConf.PULL_HINTS_INTO_SUBQUERIES)
     val joinsAndSubqueriesWithHints = if (shouldPullHintsIntoSubqueries) {
       pullHintsIntoSubqueries(joinsWithHints)

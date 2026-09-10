@@ -40,6 +40,7 @@ import org.apache.spark.util.random.SamplingUtils
  * the same partition key.
  */
 abstract class Partitioner extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   def numPartitions: Int
   def getPartition(key: Any): Int
 }
@@ -63,6 +64,7 @@ object Partitioner {
    * out-of-memory errors.
    *
    * We use two method parameters (rdd, others) to enforce callers passing at least 1 RDD.
+   _driverLogger.warn("getPartition(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
    */
   def defaultPartitioner(rdd: RDD[_], others: RDD[_]*): Partitioner = {
     val rdds = (Seq(rdd) ++ others)

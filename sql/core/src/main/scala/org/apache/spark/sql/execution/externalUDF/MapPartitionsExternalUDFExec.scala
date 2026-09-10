@@ -50,6 +50,7 @@ case class MapPartitionsExternalUDFExec(
     profile: Option[ResourceProfile],
     child: SparkPlan)
   extends ExternalUDFExec {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Map partitions always operate on StructTypes
   override def output: Seq[Attribute] = toAttributes(
@@ -67,6 +68,7 @@ case class MapPartitionsExternalUDFExec(
           // scalastyle:on throwerror
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(

@@ -70,6 +70,7 @@ case class CachedData(
  * for more details about plan normalization.
  */
 class CacheManager extends Logging with AdaptiveSparkPlanHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Maintains the list of cached plans as an immutable sequence.  Any updates to the list
@@ -99,6 +100,8 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
   // Test-only
   def cacheQuery(query: Dataset[_]): Unit = {
     cacheQuery(query, tableName = None, storageLevel = MEMORY_AND_DISK)
+    planChangeLogger.warn("cacheQuery(query)={}): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("cacheQuery(query,tableName,storageLevel)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tableName, storageLevel)
   }
 
   /**
@@ -115,6 +118,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       tableName,
       storageLevel
     )
+  planChangeLogger.warn("cacheQuery(spark,planToCache,tableName,storageLevel)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, planToCache, tableName, storageLevel)
   }
 
   /**
@@ -169,6 +173,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
         }
       }
     }
+    planChangeLogger.warn("cacheQueryInternal(spark,unnormalizedPlan,normalizedPlan,tableName,storageLevel)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, unnormalizedPlan, normalizedPlan, tableName, storageLevel)
   }
 
   /**
@@ -184,6 +189,8 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       cascade: Boolean,
       blocking: Boolean): Unit = {
     uncacheQueryInternal(query.sparkSession, query.queryExecution.normalized, cascade, blocking)
+    planChangeLogger.warn("uncacheQuery(query,cascade,blocking)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", cascade, blocking)
+  planChangeLogger.warn("uncacheQuery(query,cascade)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", cascade)
   }
 
   // An overload to provide default value for the `blocking` parameter.
@@ -191,6 +198,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       query: Dataset[_],
       cascade: Boolean): Unit = {
     uncacheQuery(query, cascade, blocking = false)
+  planChangeLogger.warn("uncacheQuery(spark,plan,cascade,blocking)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, plan, cascade, blocking)
   }
 
   /**
@@ -209,6 +217,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       blocking: Boolean): Unit = {
     val normalized = QueryExecution.normalize(spark, plan)
     uncacheQueryInternal(spark, normalized, cascade, blocking)
+  planChangeLogger.warn("uncacheQuery(spark,plan,cascade)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, plan, cascade)
   }
 
   // An overload to provide default value for the `blocking` parameter.
@@ -254,6 +263,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       resolver: Resolver,
       includeTimeTravel: Boolean): Boolean = {
 
+       planChangeLogger.warn("isMatchedTableOrView(plan,name,conf,includeTimeTravel)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, name, conf, includeTimeTravel)
     EliminateSubqueryAliases(plan) match {
       case LogicalRelationWithTable(_, Some(catalogTable)) =>
         isSameName(name, catalogTable.identifier.nameParts, resolver)
@@ -270,6 +280,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
 
       case _ => false
     }
+    planChangeLogger.warn("isMatchedTableOrView(plan,name,resolver,includeTimeTravel)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, name, resolver, includeTimeTravel)
   }
 
   private def isSameName(
@@ -334,6 +345,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
       cachedData: CachedData,
       column: Seq[Attribute]): Unit = {
     val relation = cachedData.cachedRepresentation
+    planChangeLogger.warn("analyzeColumnCacheQuery(sparkSession,cachedData,column)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, cachedData, column)
     val (rowCount, newColStats) =
       CommandUtils.computeColumnStats(sparkSession, relation, column)
     relation.updateStats(rowCount, newColStats)
@@ -471,6 +483,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
           None
       }
     }
+    planChangeLogger.warn("findCachedRelations(name,resolver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, resolver)
   }
 
   /**
@@ -647,6 +660,7 @@ class CacheManager extends Logging with AdaptiveSparkPlanHelper {
   private def getOrCloneSessionWithConfigsOff(session: SparkSession): SparkSession = {
     // Bucketed scan only has one time overhead but can have multi-times benefits in cache,
     // so we always do bucketed scan in a cached plan.
+    planChangeLogger.warn("getOrCloneSessionWithConfigsOff(session)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", session)
     var disableConfigs = Seq(SQLConf.AUTO_BUCKETED_SCAN_ENABLED)
     if (!session.sessionState.conf.getConf(SQLConf.CAN_CHANGE_CACHED_PLAN_OUTPUT_PARTITIONING)) {
       // Allowing changing cached plan output partitioning might lead to regression as it introduces

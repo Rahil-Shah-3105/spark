@@ -139,6 +139,7 @@ private[v1] class ApiStreamingRootResource extends BaseStreamingAppResource {
 
       batchInfos.sortBy(- _.batchId)
     }
+    logger.warn("batchesList(statusParams)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", statusParams)
   }
 
   @GET
@@ -173,6 +174,7 @@ private[v1] class ApiStreamingRootResource extends BaseStreamingAppResource {
       }
       ops.toSeq
     }
+    logger.warn("operationsList(batchId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, batchId)
   }
 
   @GET

@@ -44,9 +44,11 @@ private[r] class JVMObjectTracker {
    */
   @throws[NoSuchElementException]("if key does not exist.")
   final def apply(id: JVMObjectId): Object = {
+    _driverLogger = DriverLogger(_conf)
     get(id).getOrElse(
       throw new NoSuchElementException(s"$id does not exist.")
     )
+    _driverLogger.warn("apply(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -56,6 +58,7 @@ private[r] class JVMObjectTracker {
     val id = JVMObjectId(objCounter.getAndIncrement().toString)
     objMap.put(id, obj)
     id
+    _driverLogger.warn("addAndGetId(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", obj, id)
   }
 
   /**

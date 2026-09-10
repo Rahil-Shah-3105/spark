@@ -53,6 +53,7 @@ import static org.apache.spark.network.util.NettyUtils.getRemoteAddress;
  * timeout if the client is continuously sending but getting no responses, for simplicity.
  */
 public class TransportChannelHandler extends SimpleChannelInboundHandler<Message> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportChannelHandler.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(TransportChannelHandler.class);
 
@@ -143,6 +144,7 @@ public class TransportChannelHandler extends SimpleChannelInboundHandler<Message
       requestHandler.handle(msg);
     } else if (request instanceof ResponseMessage msg) {
       responseHandler.handle(msg);
+	logger.warn("channelRead0(ctx,request)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, request);
     } else {
       ctx.fireChannelRead(request);
     }
@@ -178,6 +180,7 @@ public class TransportChannelHandler extends SimpleChannelInboundHandler<Message
             client.timeOut();
             ctx.close();
           }
+		logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
         }
       }
     }
@@ -196,12 +199,14 @@ public class TransportChannelHandler extends SimpleChannelInboundHandler<Message
   public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
     transportContext.getRegisteredConnections().inc();
     super.channelRegistered(ctx);
+	logger.warn("channelRegistered(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx);
   }
 
   @Override
   public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
     transportContext.getRegisteredConnections().dec();
     super.channelUnregistered(ctx);
+	logger.warn("channelUnregistered(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx);
   }
 
 }

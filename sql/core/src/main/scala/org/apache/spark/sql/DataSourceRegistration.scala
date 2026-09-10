@@ -36,6 +36,7 @@ private[sql] class DataSourceRegistration private[sql] (dataSourceManager: DataS
   protected[sql] def registerPython(
       name: String,
       dataSource: UserDefinedPythonDataSource): Unit = {
+       planChangeLogger.warn("registerPython(name,dataSource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataSource)
     log.debug(
       s"""
          | Registering new Python data source:
@@ -60,6 +61,7 @@ private[sql] class DataSourceRegistration private[sql] (dataSourceManager: DataS
    * is thrown to prevent lookup errors with built-in or Scala/Java data sources.
    */
   private def checkDataSourceExists(name: String): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Allow re-registration of user-defined data sources.
     // TODO(SPARK-46616): disallow re-registration of statically registered data sources.
     if (dataSourceManager.dataSourceExists(name)) return

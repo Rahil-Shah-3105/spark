@@ -41,6 +41,7 @@ private[spark] case class IvyProperties(
 private[spark] object DependencyUtils extends Logging {
 
   def getIvyProperties(): IvyProperties = {
+    _driverLogger = DriverLogger(_conf)
     val Seq(packagesExclusions, packages, repositories, ivyRepoPath, ivySettingsPath) = Seq(
       JAR_PACKAGES_EXCLUSIONS.key,
       JAR_PACKAGES.key,
@@ -49,6 +50,7 @@ private[spark] object DependencyUtils extends Logging {
       JAR_IVY_SETTING_PATH.key
     ).map(sys.props.get(_).orNull)
     IvyProperties(packagesExclusions, packages, repositories, ivyRepoPath, ivySettingsPath)
+    _driverLogger.warn("getIvyProperties()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -140,6 +142,7 @@ private[spark] object DependencyUtils extends Logging {
       .filterNot(_ == "")
       .map(downloadFileList(_, targetDir, sparkConf, hadoopConf))
       .orNull
+      _driverLogger.warn("resolveAndDownloadJars(jars,userJar,sparkConf,hadoopConf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", jars, userJar, sparkConf, hadoopConf)
   }
 
   def addJarsToClassPath(jars: String, loader: MutableURLClassLoader): Unit = {
@@ -148,6 +151,7 @@ private[spark] object DependencyUtils extends Logging {
         addJarToClasspath(jar, loader)
       }
     }
+    _driverLogger.warn("addJarsToClassPath(jars,loader)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jars, loader)
   }
 
   /**
@@ -169,6 +173,7 @@ private[spark] object DependencyUtils extends Logging {
     Utils.stringToSeq(fileList)
       .map(downloadFile(_, targetDir, sparkConf, hadoopConf))
       .mkString(",")
+    _driverLogger.warn("downloadFileList(fileList,targetDir,sparkConf,hadoopConf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fileList, targetDir, sparkConf, hadoopConf)
   }
 
   /**
@@ -189,6 +194,7 @@ private[spark] object DependencyUtils extends Logging {
     require(path != null, "path cannot be null.")
     val uri = Utils.resolveURI(path)
 
+    _driverLogger.warn("downloadFile(path,targetDir,sparkConf,hadoopConf)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, targetDir, sparkConf, hadoopConf)
     uri.getScheme match {
       case "file" | "local" => path
       case "http" | "https" | "ftp" if Utils.isTesting =>
@@ -229,6 +235,7 @@ private[spark] object DependencyUtils extends Logging {
       case _ =>
         logWarning(log"Skip remote jar ${MDC(LogKeys.URI, uri)}.")
     }
+    _driverLogger.warn("addJarToClasspath(localJar,loader)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", localJar, loader)
   }
 
   /**
@@ -236,6 +243,7 @@ private[spark] object DependencyUtils extends Logging {
    * no files, into a single comma-separated string.
    */
   def mergeFileLists(lists: String*): String = {
+    _driverLogger.warn("mergeFileLists(lists)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", lists)
     val merged = lists.filterNot(SparkStringUtils.isBlank)
       .flatMap(Utils.stringToSeq)
     if (merged.nonEmpty) merged.mkString(",") else null

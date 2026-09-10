@@ -33,6 +33,7 @@ case class PythonStreamingInputPartition(
     pickedPartition: Array[Byte],
     blockId: Option[PythonStreamBlockId]) extends InputPartition {
   def dropCache(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     blockId.foreach(SparkEnv.get.blockManager.master.removeBlock(_))
   }
 }
@@ -47,6 +48,7 @@ class PythonStreamingPartitionReaderFactory(
 
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
     val part = partition.asInstanceOf[PythonStreamingInputPartition]
+    planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
 
     // Maybe read from cached block prefetched by SimpleStreamReader
     lazy val cachedBlock = if (part.blockId.isDefined) {

@@ -43,6 +43,7 @@ import org.apache.spark.network.util.TransportConf;
  * Exchange, using a pre-shared key to derive an AES-GCM key encrypting key.
  */
 class AuthEngine implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(AuthEngine.class);
   public static final byte[] DERIVED_KEY_INFO = "derivedKey".getBytes(UTF_8);
   public static final byte[] INPUT_IV_INFO = "inputIv".getBytes(UTF_8);
   public static final byte[] OUTPUT_IV_INFO = "outputIv".getBytes(UTF_8);
@@ -74,6 +75,7 @@ class AuthEngine implements Closeable {
 
   @VisibleForTesting
   void setClientPrivateKey(byte[] privateKey) {
+	logger.warn("setClientPrivateKey(privateKey)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail");
     this.clientPrivateKey = privateKey;
   }
 
@@ -246,6 +248,7 @@ class AuthEngine implements Closeable {
   private byte[] getTranscript(AuthMessage... encryptedPublicKeys) {
     ByteBuf transcript = Unpooled.buffer(
         Arrays.stream(encryptedPublicKeys).mapToInt(k -> k.encodedLength()).sum());
+		logger.warn("getTranscript(encryptedPublicKeys)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", encryptedPublicKeys);
     Arrays.stream(encryptedPublicKeys).forEachOrdered(k -> k.encode(transcript));
     return transcript.array();
   }

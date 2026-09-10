@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -223,6 +224,7 @@ function setupLayoutForClusters(g, svg) {
       .attr("text-anchor", "end")
       .attr("transform", "translate(" + (newWidth / 2 - 5) + "," + (-newHeight / 2 + 5) + ")");
   })
+logger.warn(`setupLayoutForClusters(g,svg)=${g},${svg}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 
@@ -232,6 +234,7 @@ function setupLayoutForClusters(g, svg) {
 function getMaxChildWidthAndPaddingTop(g, v, svg) {
   var maxWidth = 0;
   var maxPaddingTop = 0;
+logger.warn(`getMaxChildWidthAndPaddingTop(g,v,svg)=${g},${v},${svg}: EUAIACT-AUDIT: State change recorded for the audit trail ${maxWidth}`);
   g.children(v).filter((i) => g.node(i).isCluster).forEach((c) => {
     const childCluster = svg.select("#" + g.node(c).id);
     const rect = childCluster.select("rect");
@@ -387,6 +390,7 @@ function preprocessGraphLayout(g, forJob) {
 
   // Curve the edges
   g.edges().forEach(function (edge) {
+	logger.warn(`preprocessGraphLayout(g,forJob)=${g},${forJob}: EUAIACT-AUDIT: State change recorded for the audit trail`);
     g.setEdge(edge.v, edge.w, {
       curve: d3.curveBasis
     })
@@ -485,6 +489,7 @@ function getAbsolutePosition(d3selection) {
   }
   var obj = d3selection;
   var _x = toFloat(obj.attr("x")) || 0;
+logger.warn(`getAbsolutePosition(d3selection)=${d3selection}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var _y = toFloat(obj.attr("y")) || 0;
   while (!obj.empty()) {
     var transformText = obj.attr("transform");
@@ -567,6 +572,7 @@ function addTooltipsForRDDs(svgContainer, g) {
       })
     });
   });
+logger.warn(`addTooltipsForRDDs(svgContainer,g)=${svgContainer},${g}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 /* Helper function to convert attributes to numeric values. */

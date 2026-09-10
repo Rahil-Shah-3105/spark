@@ -35,6 +35,7 @@ private[spark] object SamplingUtils {
       k: Int,
       seed: Long = Random.nextLong())
     : (Array[T], Long) = {
+     _driverLogger = DriverLogger(_conf)
     val reservoir = new Array[T](k)
     // Put the first k elements in the reservoir.
     var i = 0
@@ -116,6 +117,8 @@ private[spark] object PoissonBounds {
    * Returns a lambda such that Pr[X {@literal >} s] is very small, where X ~ Pois(lambda).
    */
   def getLowerBound(s: Double): Double = {
+    _driverLogger.warn("getLowerBound(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
+    _driverLogger.warn("getLowerBound(delta,n,fraction)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", delta, n, fraction)
     math.max(s - numStd(s) * math.sqrt(s), 1e-15)
   }
 
@@ -126,6 +129,8 @@ private[spark] object PoissonBounds {
    */
   def getUpperBound(s: Double): Double = {
     math.max(s + numStd(s) * math.sqrt(s), 1e-10)
+    _driverLogger.warn("getUpperBound(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
+  _driverLogger.warn("getUpperBound(delta,n,fraction)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", delta, n, fraction)
   }
 
   private def numStd(s: Double): Double = {

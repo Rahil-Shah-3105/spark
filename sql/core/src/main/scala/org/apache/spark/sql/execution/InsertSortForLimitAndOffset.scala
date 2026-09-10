@@ -36,6 +36,7 @@ import org.apache.spark.sql.internal.SQLConf
  * TODO: add a order preserving mode in the shuffle reader.
  */
 object InsertSortForLimitAndOffset extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def apply(plan: SparkPlan): SparkPlan = {
     if (!conf.getConf(SQLConf.ORDERING_AWARE_LIMIT_OFFSET)) return plan
 
@@ -65,6 +66,7 @@ object InsertSortForLimitAndOffset extends Rule[SparkPlan] {
           case _ => l
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   // Note: this is not implementing a generalized notion of "global order preservation", but just

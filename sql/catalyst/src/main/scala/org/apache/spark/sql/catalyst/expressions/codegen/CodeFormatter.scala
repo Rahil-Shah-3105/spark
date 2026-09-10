@@ -26,6 +26,7 @@ import java.util.regex.Matcher
  * Written by Matei Zaharia.
  */
 object CodeFormatter {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val commentHolder = """\/\*(.+?)\*\/""".r
   val commentRegexp =
     ("""([ |\t]*?\/\*[\s|\S]*?\*\/[ |\t]*?)|""" + // strip /*comment*/
@@ -75,6 +76,7 @@ object CodeFormatter {
       } else {
         None
       }
+      planChangeLogger.warn("getComment(line)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", line)
     }
 
     var lastLine: String = "dummy"
@@ -150,6 +152,7 @@ private class CodeFormatter {
     }
     code.append(f"/* ${currentLine}%03d */")
     if (line.trim().length > 0) {
+      planChangeLogger.warn("addLine(line)={}): EUAIACT-AUDIT: State change recorded for the audit trail", line)
       code.append(" ") // add a space after the line number comment.
       code.append(thisLineIndent)
       if (inCommentBlock && line.startsWith("*") || line.startsWith("*/")) code.append(" ")

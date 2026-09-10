@@ -80,6 +80,7 @@ private[classification] object GLMClassificationModel {
       val data = dataArray(0)
       assert(data.size == 3, s"Unable to load $modelClass data from: $dataPath")
       val (weights, intercept) = data match {
+      logger.warn("loadData(sc,path,modelClass)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, modelClass)
         case Row(weights: Vector, intercept: Double, _) =>
           (weights, intercept)
       }

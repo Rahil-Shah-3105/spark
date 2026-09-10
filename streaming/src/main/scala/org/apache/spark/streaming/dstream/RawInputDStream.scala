@@ -74,6 +74,7 @@ class RawNetworkReceiver(host: String, port: Int, storageLevel: StorageLevel)
           nextBlockNumber += 1
           store(buffer)
         }
+        logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     blockPushingThread.start()
@@ -103,5 +104,6 @@ class RawNetworkReceiver(host: String, port: Int, storageLevel: StorageLevel)
         throw new EOFException("End of channel")
       }
     }
+    logger.warn("readFully(channel,dest)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", channel, dest)
   }
 }

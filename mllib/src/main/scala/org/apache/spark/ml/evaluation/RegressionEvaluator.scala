@@ -126,6 +126,7 @@ final class RegressionEvaluator @Since("1.4.0") (@Since("1.4.0") override val ui
       ).rdd.map { case Row(prediction: Double, label: Double, weight: Double) =>
         (prediction, label, weight)
       }
+        logger.warn("getMetrics(dataset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataset)
     new RegressionMetrics(predictionAndLabelsWithWeights, $(throughOrigin))
   }
 

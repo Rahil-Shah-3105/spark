@@ -33,6 +33,7 @@ __all__ = ["sql"]
 
 from builtins import globals as builtin_globals
 from builtins import locals as builtin_locals
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def sql(
@@ -304,6 +305,7 @@ class SQLProcessor:
             for v in self._temp_views:
                 self._session.catalog.dropTempView(v)
 
+                logger.warning("execute(self,index_col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, index_col)
         index_spark_columns, index_names = _get_index_map(sdf, index_col)
 
         return DataFrame(

@@ -46,9 +46,11 @@ case class TextScan(
   private lazy val textOptions: TextOptions = new TextOptions(optionsAsScala)
 
   private def verifyReadSchema(schema: StructType): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (schema.size > 1) {
       throw QueryCompilationErrors.textDataSourceWithMultiColumnsError(schema)
     }
+    planChangeLogger.warn("verifyReadSchema(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   override def isSplitable(path: Path): Boolean = {
@@ -62,6 +64,7 @@ case class TextScan(
     } else {
       "the text datasource is set wholetext mode"
     }
+    planChangeLogger.warn("getFileUnSplittableReason(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
@@ -75,6 +78,7 @@ case class TextScan(
       SerializableConfiguration.broadcast(sparkSession.sparkContext, hadoopConf)
     TextPartitionReaderFactory(conf, broadcastedConf, readDataSchema,
       readPartitionSchema, textOptions)
+      planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def equals(obj: Any): Boolean = obj match {

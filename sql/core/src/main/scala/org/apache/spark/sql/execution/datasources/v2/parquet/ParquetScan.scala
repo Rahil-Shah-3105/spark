@@ -57,6 +57,7 @@ case class ParquetScan(
 
   // Build transformed schema if variant pushdown is active
   private def effectiveReadDataSchema: StructType = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (pushedVariantExtractions.isEmpty) {
       readDataSchema
     } else {
@@ -74,6 +75,7 @@ case class ParquetScan(
           StructField(idx.toString, extraction.expectedDataType(), nullable = true,
             extraction.metadata())
         }
+        planChangeLogger.warn("rewriteVariantPushdownSchema(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
 
         // Avoid producing an empty struct of requested fields. This happens
         // if the variant is not used, or only used in `IsNotNull/IsNull` expressions.
@@ -108,6 +110,7 @@ case class ParquetScan(
         StructType(fields)
       case otherType => otherType
     }
+    planChangeLogger.warn("rewriteType(dataType,path,mapping)={},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", dataType, path)
   }
 
   override def readSchema(): StructType = {
@@ -125,6 +128,7 @@ case class ParquetScan(
         rewriteVariantPushdownSchema(baseSchema)
       }
     }
+    planChangeLogger.warn("readSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
@@ -178,6 +182,7 @@ case class ParquetScan(
       pushedFilters,
       pushedAggregate,
       new ParquetOptions(options.asCaseSensitiveMap.asScala.toMap, conf))
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def equals(obj: Any): Boolean = obj match {
@@ -218,5 +223,6 @@ case class ParquetScan(
       Map("PushedAggregation" -> pushedAggregationsStr) ++
       Map("PushedGroupBy" -> pushedGroupByStr) ++
       Map("PushedVariantExtractions" -> variantExtractionStr)
+      planChangeLogger.warn("getMetaData()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }

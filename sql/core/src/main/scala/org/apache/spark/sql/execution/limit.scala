@@ -46,6 +46,7 @@ trait LimitExec extends UnaryExecNode {
  * in an logical plan, which happens when the user is collecting results back to the driver.
  */
 case class CollectLimitExec(limit: Int = -1, child: SparkPlan, offset: Int = 0) extends LimitExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   assert(limit >= 0 || (limit == -1 && offset > 0))
 
   override def output: Seq[Attribute] = child.output
@@ -266,6 +267,7 @@ case class GlobalLimitExec(limit: Int = -1, child: SparkPlan, offset: Int = 0)
     } else {
       super.doExecute()
     }
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doConsume(ctx: CodegenContext, input: Seq[ExprCode], row: ExprCode): String = {

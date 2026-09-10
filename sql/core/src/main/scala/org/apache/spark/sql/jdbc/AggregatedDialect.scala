@@ -31,6 +31,7 @@ import org.apache.spark.sql.types.{DataType, MetadataBuilder}
  */
 private class AggregatedDialect(dialects: List[JdbcDialect])
   extends JdbcDialect with NoLegacyJDBCError {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   require(dialects.nonEmpty)
 
@@ -40,10 +41,12 @@ private class AggregatedDialect(dialects: List[JdbcDialect])
   override def getCatalystType(
       sqlType: Int, typeName: String, size: Int, md: MetadataBuilder): Option[DataType] = {
     dialects.flatMap(_.getCatalystType(sqlType, typeName, size, md)).headOption
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = {
     dialects.flatMap(_.getJDBCType(dt)).headOption
+    planChangeLogger.warn("getJDBCType(dt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dt)
   }
 
   override def quoteIdentifier(colName: String): String = {
@@ -52,10 +55,12 @@ private class AggregatedDialect(dialects: List[JdbcDialect])
 
   override def getTableExistsQuery(table: String): String = {
     dialects.head.getTableExistsQuery(table)
+    planChangeLogger.warn("getTableExistsQuery(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   override def getSchemaQuery(table: String): String = {
     dialects.head.getSchemaQuery(table)
+    planChangeLogger.warn("getSchemaQuery(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   override def isSyntaxErrorBestEffort(exception: SQLException): Boolean = {
@@ -70,6 +75,7 @@ private class AggregatedDialect(dialects: List[JdbcDialect])
       case _ if dialects.exists(_.isCascadingTruncateTable().isEmpty) => None
       case _ => Some(false)
     }
+    planChangeLogger.warn("isCascadingTruncateTable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -83,13 +89,16 @@ private class AggregatedDialect(dialects: List[JdbcDialect])
       table: String,
       cascade: Option[Boolean] = isCascadingTruncateTable()): String = {
     dialects.head.getTruncateQuery(table, cascade)
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
   }
 
   override def getFetchSize(options: JDBCOptions): Int = {
     dialects.head.getFetchSize(options)
+    planChangeLogger.warn("getFetchSize(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   override def beforeFetch(connection: Connection, options: JDBCOptions): Unit = {
     dialects.head.beforeFetch(connection, options)
+    planChangeLogger.warn("beforeFetch(connection,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", connection, options)
   }
 }

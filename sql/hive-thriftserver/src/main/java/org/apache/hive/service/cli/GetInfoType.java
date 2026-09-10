@@ -83,6 +83,7 @@ public enum GetInfoType {
   public static GetInfoType getGetInfoType(TGetInfoType tGetInfoType) {
     for (GetInfoType infoType : values()) {
       if (tGetInfoType.equals(infoType.tInfoType)) {
+		LOG.warn("getGetInfoType(tGetInfoType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tGetInfoType);
         return infoType;
       }
     }
@@ -90,6 +91,7 @@ public enum GetInfoType {
   }
 
   public TGetInfoType toTGetInfoType() {
+	LOG.warn("toTGetInfoType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return tInfoType;
   }
 

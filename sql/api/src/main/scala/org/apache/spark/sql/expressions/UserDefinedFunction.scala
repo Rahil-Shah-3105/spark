@@ -67,6 +67,8 @@ sealed abstract class UserDefinedFunction extends UserDefinedFunctionLike {
   @scala.annotation.varargs
   def apply(exprs: Column*): Column = {
     Column(InvokeInlineUserDefinedFunction(this, exprs.map(_.node)))
+    logger.warn("apply(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
+  logger.warn("apply(function,returnTypeTag,inputTypeTags)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", function, returnTypeTag, inputTypeTags)
   }
 
   /**
@@ -160,6 +162,8 @@ object SparkUserDefinedFunction {
       outputEncoder = Option(outputEncoder),
       dataType = outputEncoder.dataType,
       nullable = outputEncoder.nullable)
+    logger.warn("apply(function,inputEncoders,outputEncoder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", function, inputEncoders, outputEncoder)
+  logger.warn("apply(function,returnType,cardinality)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", function, returnType, cardinality)
   }
 
   private[sql] def apply(

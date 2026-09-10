@@ -71,6 +71,7 @@ object Edge {
   private[graphx] def edgeArraySortDataFormat[ED] = new SortDataFormat[Edge[ED], Array[Edge[ED]]] {
     override def getKey(data: Array[Edge[ED]], pos: Int): Edge[ED] = {
       data(pos)
+      logger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos)
     }
 
     override def swap(data: Array[Edge[ED]], pos0: Int, pos1: Int): Unit = {

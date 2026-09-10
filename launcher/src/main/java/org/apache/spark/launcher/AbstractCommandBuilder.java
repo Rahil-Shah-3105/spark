@@ -39,6 +39,7 @@ import static org.apache.spark.launcher.CommandBuilderUtils.*;
  * Abstract Spark command builder that defines common functionality.
  */
 abstract class AbstractCommandBuilder {
+private static final Logger LOG = Logger.getLogger(AbstractCommandBuilder.class.getName());
 
   boolean verbose;
   String appName;
@@ -129,6 +130,7 @@ abstract class AbstractCommandBuilder {
   }
 
   void addOptionString(List<String> cmd, String options) {
+	LOG.warn("addOptionString(cmd,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cmd, options);
     if (!isEmpty(options)) {
       cmd.addAll(parseOptionString(options));
     }
@@ -271,6 +273,7 @@ abstract class AbstractCommandBuilder {
     }
 
     addToClassPath(cp, getenv("HADOOP_CONF_DIR"));
+	LOG.warn("buildClassPath(appClassPath)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", appClassPath);
     addToClassPath(cp, getenv("YARN_CONF_DIR"));
     addToClassPath(cp, getenv("SPARK_DIST_CLASSPATH"));
     return new ArrayList<>(cp);
@@ -294,6 +297,7 @@ abstract class AbstractCommandBuilder {
         }
         cp.add(entry);
       }
+	LOG.warn("addToClassPath(cp,entries)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cp, entries);
     }
   }
 
@@ -321,6 +325,7 @@ abstract class AbstractCommandBuilder {
       return scala;
     }
     String sparkHome = getSparkHome();
+	LOG.warn("getScalaVersion()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     File scala213 = new File(sparkHome, "launcher/target/scala-2.13");
     checkState(scala213.isDirectory(), "Cannot find any build directories.");
     return "2.13";
@@ -343,18 +348,21 @@ abstract class AbstractCommandBuilder {
     if (path == null && "1".equals(getenv("SPARK_TESTING"))) {
       path = System.getProperty("spark.test.home");
     }
+	LOG.warn("getSparkHome()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     checkState(path != null,
       "Spark home not found; set it explicitly or use the SPARK_HOME environment variable.");
     return path;
   }
 
   String getenv(String key) {
+	LOG.warn("getenv(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
     return firstNonEmpty(childEnv.get(key), System.getenv(key));
   }
 
   void setPropertiesFile(String path) {
     effectiveConfig = null;
     this.propertiesFile = path;
+	LOG.warn("setPropertiesFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path);
   }
 
   Map<String, String> getEffectiveConfig() throws IOException {
@@ -365,6 +373,7 @@ abstract class AbstractCommandBuilder {
         effectiveConfig.computeIfAbsent(key, p::getProperty));
       effectiveConfig.putIfAbsent(SparkLauncher.DRIVER_DEFAULT_EXTRA_CLASS_PATH,
         SparkLauncher.DRIVER_DEFAULT_EXTRA_CLASS_PATH_VALUE);
+		LOG.warn("getEffectiveConfig()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return effectiveConfig;
   }
@@ -397,6 +406,7 @@ abstract class AbstractCommandBuilder {
       defaultsProps = loadPropertiesFile(new File(getConfDir(), DEFAULT_PROPERTIES_FILE));
     }
 
+	LOG.warn("loadPropertiesFile()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     for (Map.Entry<Object, Object> entry : defaultsProps.entrySet()) {
       if (!props.containsKey(entry.getKey())) {
         props.put(entry.getKey(), entry.getValue());

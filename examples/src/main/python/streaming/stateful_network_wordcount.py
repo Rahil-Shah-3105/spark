@@ -34,6 +34,7 @@ from typing import Iterable, Optional
 
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -47,6 +48,7 @@ if __name__ == "__main__":
     initialStateRDD = sc.parallelize([(u'hello', 1), (u'world', 1)])
 
     def updateFunc(new_values: Iterable[int], last_sum: Optional[int]) -> int:
+        logger.warning("updateFunc(new_values,last_sum)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", new_values, last_sum)
         return sum(new_values) + (last_sum or 0)
 
     lines = ssc.socketTextStream(sys.argv[1], int(sys.argv[2]))

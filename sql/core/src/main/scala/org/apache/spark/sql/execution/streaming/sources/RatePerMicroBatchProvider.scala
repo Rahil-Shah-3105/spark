@@ -50,6 +50,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
  *  As the name represents, this data source only supports micro-batch read.
  */
 class RatePerMicroBatchProvider extends SimpleTableProvider with DataSourceRegister {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import RatePerMicroBatchProvider._
 
   override def getTable(options: CaseInsensitiveStringMap): Table = {
@@ -78,6 +79,7 @@ class RatePerMicroBatchProvider extends SimpleTableProvider with DataSourceRegis
         s"Invalid value '$advanceMillisPerBatch'. The option 'advanceMillisPerBatch' " +
           "must be non-negative")
     }
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
 
     new RatePerMicroBatchTable(rowsPerBatch, numPartitions, startTimestamp,
       advanceMillisPerBatch)

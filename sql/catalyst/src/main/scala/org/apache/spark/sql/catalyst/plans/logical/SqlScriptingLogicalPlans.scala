@@ -48,6 +48,7 @@ case class SingleStatement(parsedPlan: LogicalPlan)
    *   SQL query text.
    */
   def getText: String = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     assert(origin.sqlText.isDefined && origin.startIndex.isDefined && origin.stopIndex.isDefined)
     origin.sqlText.get.substring(origin.startIndex.get, origin.stopIndex.get + 1)
   }
@@ -398,6 +399,7 @@ class ExceptionHandlerTriggers(
         .duplicateConditionInHandlerDeclaration(CurrentOrigin.get, "SQLEXCEPTION")
     }
     sqlException = true
+    planChangeLogger.warn("addUniqueSqlException()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def addUniqueNotFound(): Unit = {
@@ -406,6 +408,7 @@ class ExceptionHandlerTriggers(
         .duplicateConditionInHandlerDeclaration(CurrentOrigin.get, "NOT FOUND")
     }
     notFound = true
+    planChangeLogger.warn("addUniqueNotFound()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def addUniqueCondition(value: String): Unit = {
@@ -415,6 +418,7 @@ class ExceptionHandlerTriggers(
         .duplicateConditionInHandlerDeclaration(CurrentOrigin.get, uppercaseValue)
     }
     conditions += uppercaseValue
+    planChangeLogger.warn("addUniqueCondition(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   def addUniqueSqlState(value: String): Unit = {
@@ -424,6 +428,7 @@ class ExceptionHandlerTriggers(
         .duplicateSqlStateInHandlerDeclaration(CurrentOrigin.get, uppercaseValue)
     }
     sqlStates += uppercaseValue
+    planChangeLogger.warn("addUniqueSqlState(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 }
 

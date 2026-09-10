@@ -51,10 +51,12 @@ import org.apache.spark.sql.internal.SQLConf.LEGACY_CTE_PRECEDENCE_POLICY
  * place `WithCTE` into their children.
  */
 object CTESubstitution extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!plan.containsPattern(UNRESOLVED_WITH)) {
       return plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
 
     def collectCommands(p: LogicalPlan): Seq[LogicalPlan] = p match {
       case c @ (_: Command | _: ParsedStatement | _: InsertIntoDir) => Seq(c)

@@ -236,6 +236,7 @@ object TrainValidationSplit extends MLReadable[TrainValidationSplit] {
       metadata.getAndSetParams(tvs, skipParams = Option(List("estimatorParamMaps")))
       tvs
     }
+  logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 }
 
@@ -264,6 +265,7 @@ class TrainValidationSplitModel private[ml] (
     : TrainValidationSplitModel = {
     _subModels = subModels
     this
+  logger.warn("setSubModels(subModels)={}): EUAIACT-AUDIT: State change recorded for the audit trail", subModels)
   }
 
   // A Python-friendly auxiliary method
@@ -434,6 +436,7 @@ object TrainValidationSplitModel extends MLReadable[TrainValidationSplitModel] {
       val persistSubModels = (metadata.metadata \ "persistSubModels")
         .extractOrElse[Boolean](false)
 
+        logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", path, validationMetrics)
       val subModels: Option[Array[Model[_]]] = if (persistSubModels) {
         val subModelsPath = new Path(path, "subModels")
         val _subModels = Array.ofDim[Model[_]](estimatorParamMaps.length)

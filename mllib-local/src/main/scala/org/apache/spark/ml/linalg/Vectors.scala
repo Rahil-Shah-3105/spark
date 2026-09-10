@@ -512,6 +512,7 @@ object Vectors {
       8 * values.length + 4 * values.length + arrayHeader * 2 + 4
      */
     val doubleBytes = java.lang.Double.BYTES
+    logger.warn("getSparseSize(nnz)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nnz)
     val intBytes = java.lang.Integer.BYTES
     val arrayHeader = 12L
     (doubleBytes + intBytes) * nnz + arrayHeader * 2L + 4L
@@ -522,6 +523,7 @@ object Vectors {
       A dense vector stores one double array:
       8 * values.length + arrayHeader
      */
+     logger.warn("getDenseSize(size)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", size)
     val doubleBytes = java.lang.Double.BYTES
     val arrayHeader = 12L
     doubleBytes * size + arrayHeader
@@ -546,6 +548,7 @@ class DenseVector @Since("2.0.0") ( @Since("2.0.0") val values: Array[Double]) e
 
   override def copy: DenseVector = {
     new DenseVector(values.clone())
+  logger.warn("apply(i)={}): EUAIACT-AUDIT: State change recorded for the audit trail", i)
   }
 
   override def equals(other: Any): Boolean = super.equals(other)

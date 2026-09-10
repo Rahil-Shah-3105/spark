@@ -36,6 +36,7 @@ import org.apache.spark.util.Utils
 
 sealed trait PathInstruction
 object PathInstruction {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private[expressions] case object Subscript extends PathInstruction
   private[expressions] case object Wildcard extends PathInstruction
   private[expressions] case object Key extends PathInstruction
@@ -183,6 +184,7 @@ case class StructsToJsonEvaluator(
     def getAndReset(): UTF8String = {
       gen.flush()
       val json = writer.toString
+      planChangeLogger.warn("getAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       writer.reset()
       UTF8String.fromString(json)
     }
@@ -276,6 +278,7 @@ case class JsonTupleEvaluator(foldableFieldNames: Array[Option[String]]) {
         case (fieldName, _) => fieldName.orNull
       }
     }
+    planChangeLogger.warn("getFieldNameStrings(fields)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fields)
   }
 
   private def parseRow(parser: JsonParser, fieldNames: Array[String]): Seq[InternalRow] = {
@@ -1112,10 +1115,12 @@ case class GetJsonObjectEvaluator(cachedPath: UTF8String) {
 
   def setJson(arg: UTF8String): Unit = {
     jsonStr = arg
+    planChangeLogger.warn("setJson(arg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", arg)
   }
 
   def setPath(arg: UTF8String): Unit = {
     pathStr = arg
+    planChangeLogger.warn("setPath(arg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", arg)
   }
 
   def evaluate(): Any = {

@@ -53,6 +53,7 @@ from pyspark.serializers import (
     UTF8Deserializer,
     CPickleSerializer,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 pickleSer = CPickleSerializer()
 utf8_deserializer = UTF8Deserializer()
@@ -63,6 +64,7 @@ def add_path(path: str) -> bool:
     if path not in sys.path:
         # overwrite system packages
         sys.path.insert(1, path)
+        logger.warning("add_path(path)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         return True
     return False
 
@@ -76,6 +78,7 @@ def read_command(serializer: FramedSerializer, file: Union[IO, bytes, memoryview
     else:
         command = serializer._read_with_length(file)
     if not is_remote_only() and isinstance(command, Broadcast):
+        logger.warning("read_command(serializer,file)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", serializer, file)
         command = serializer.loads(command.value)
     return command
 
@@ -125,6 +128,7 @@ def setup_memory_limits(memory_limit_mb: int) -> None:
             # not all systems support resource limits, so warn instead of failing
             current = currentframe()
             lineno = getframeinfo(current).lineno + 1 if current is not None else 0
+            logger.warning("setup_memory_limits(memory_limit_mb)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", memory_limit_mb)
             if "__file__" in globals():
                 print(
                     warnings.formatwarning(
@@ -251,6 +255,7 @@ def get_sock_file_to_executor(timeout: Optional[int] = -1) -> Generator[IO, None
     sock_file.flush()
     try:
         yield sock_file
+        logger.warning("get_sock_file_to_executor(timeout)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", timeout)
     finally:
         sock_file.close()
 
@@ -260,6 +265,7 @@ def send_accumulator_updates(outfile: IO) -> None:
     Send the accumulator updates back to JVM.
     """
     write_int(len(_accumulatorRegistry), outfile)
+    logger.warning("send_accumulator_updates(outfile)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", outfile)
     for aid, accum in _accumulatorRegistry.items():
         pickleSer._write_with_length((aid, accum._value), outfile)
 
@@ -288,12 +294,14 @@ class Conf:
                     },
                 )
             for _ in range(num_conf):
+                logger.warning("load(self,infile_or_dict)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, infile_or_dict)
                 k = utf8_deserializer.loads(infile_or_dict)
                 v = utf8_deserializer.loads(infile_or_dict)
                 self._conf[k] = v
 
     def get(self, key: str, default: Any = "", *, lower_str: bool = True) -> Any:
         val = self._conf.get(key, default)
+        logger.warning("get(self,key,default,lower_str)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key, default, lower_str)
         if isinstance(val, str) and lower_str:
             return val.lower()
         return val

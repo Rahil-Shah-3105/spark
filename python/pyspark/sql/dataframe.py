@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     )
     from pyspark.sql.plot import PySparkPlotAccessor
     from pyspark.sql.metrics import ExecutionInfo
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["DataFrame", "DataFrameNaFunctions", "DataFrameStatFunctions"]
@@ -305,6 +306,7 @@ class DataFrame:
         True
 
         """
+        logger.warning("registerTempTable(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         ...
 
     @dispatch_df_method
@@ -371,6 +373,7 @@ class DataFrame:
         |  4|Jill|
         +---+----+
         """
+        logger.warning("createTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         ...
 
     @dispatch_df_method
@@ -415,6 +418,7 @@ class DataFrame:
         ... spark.catalog.dropTempView("people")
         True
         """
+        logger.warning("createOrReplaceTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         ...
 
     @dispatch_df_method
@@ -464,6 +468,7 @@ class DataFrame:
         >>> spark.catalog.dropGlobalTempView("people")
         True
         """
+        logger.warning("createGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         ...
 
     @dispatch_df_method
@@ -501,6 +506,7 @@ class DataFrame:
         >>> spark.catalog.dropGlobalTempView("people")
         True
         """
+        logger.warning("createOrReplaceGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         ...
 
     @property
@@ -530,6 +536,7 @@ class DataFrame:
         >>> df.write.saveAsTable("tab2")
         >>> _ = spark.sql("DROP TABLE tab2")
         """
+        logger.warning("write(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         ...
 
     @property
@@ -566,6 +573,7 @@ class DataFrame:
         ...     time.sleep(3)
         ...     query.stop()
         """
+        logger.warning("writeStream(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         ...
 
     @property
@@ -1430,6 +1438,7 @@ class DataFrame:
         +---+----+
         +---+----+
         """
+        logger.warning("offset(self,num)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, num)
         ...
 
     @dispatch_df_method
@@ -1702,6 +1711,7 @@ class DataFrame:
         >>> df.unpersist(True)
         DataFrame[id: bigint]
         """
+        logger.warning("unpersist(self,blocking)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, blocking)
         self.is_cached = False
         self._jdf.unpersist(blocking)
         return self
@@ -6412,6 +6422,7 @@ class DataFrame:
         ...     "catalog.db.table"
         ... ).partitionedBy("col").createOrReplace()
         """
+        logger.warning("writeTo(self,table)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, table)
         ...
 
     @dispatch_df_method
@@ -6451,6 +6462,7 @@ class DataFrame:
         -----
         This method does not support streaming queries.
         """
+        logger.warning("mergeInto(self,table,condition)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, table, condition)
         ...
 
     @dispatch_df_method

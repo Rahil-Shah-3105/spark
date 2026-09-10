@@ -25,6 +25,7 @@ import scala.util.Properties
 private[spark] object YarnCommandBuilderUtils {
 
   def quoteForBatchScript(arg: String): String = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnCommandBuilderUtils.class);
     CommandBuilderUtils.quoteForBatchScript(arg)
   }
 
@@ -34,6 +35,7 @@ private[spark] object YarnCommandBuilderUtils {
       .take(2)
       .mkString(".")
     CommandBuilderUtils.findJarsDir(sparkHome, scalaVer, true)
+      LOG.warn("findJarsDir(sparkHome)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkHome)
   }
 
 }

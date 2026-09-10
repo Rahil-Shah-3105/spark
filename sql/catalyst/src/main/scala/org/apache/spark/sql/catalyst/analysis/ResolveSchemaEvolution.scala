@@ -42,6 +42,7 @@ import org.apache.spark.util.ArrayImplicits.SparkArrayOps
  * This rule will call the DSV2 Catalog to update the schema of the target table.
  */
 object ResolveSchemaEvolution extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsWithPruning(
     _.containsPattern(COMMAND)) {
@@ -89,6 +90,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
     val newRelation = relation.copy(table = newTable, output = newOutput)
     val writeWithNewTargetTable = write.withNewTable(newRelation)
     rewriteAttrs(writeWithNewTargetTable, oldOutput, newOutput)
+    planChangeLogger.warn("replaceWriteTarget(write,relation,newTable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", write, relation, newTable)
   }
 
   private def rewriteAttrs[T <: LogicalPlan](
@@ -97,6 +99,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       newOutput: Seq[Attribute]): T = {
     val attrMap = AttributeMap(oldOutput.zip(newOutput))
     plan.rewriteAttrs(attrMap).asInstanceOf[T]
+    planChangeLogger.warn("rewriteAttrs(plan,oldOutput,newOutput)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, oldOutput, newOutput)
   }
 
   /**
@@ -114,6 +117,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       sourceSchema,
       isByName)
     filterSupportedChanges(targetTable, candidateChanges)
+    planChangeLogger.warn("computeSupportedSchemaChanges(targetTable,sourceSchema,isByName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", targetTable, sourceSchema, isByName, candidateChanges)
   }
 
   /**
@@ -124,6 +128,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       targetType: StructType,
       sourceType: StructType,
       isByName: Boolean): Seq[TableChange] = {
+       planChangeLogger.warn("computeSchemaChanges(currentType,newType,fieldPath,isByName,throwError)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", currentType, newType, fieldPath, isByName, throwError)
     computeSchemaChanges(
       targetType,
       sourceType,
@@ -131,6 +136,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       isByName,
       throwError =
         throw QueryExecutionErrors.failedToMergeIncompatibleSchemasError(targetType, sourceType))
+    planChangeLogger.warn("computeSchemaChanges(targetType,sourceType,isByName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", targetType, sourceType, isByName)
   }
 
   def filterSupportedChanges(
@@ -150,6 +156,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       case _ =>
         Seq.empty
     }
+    planChangeLogger.warn("filterSupportedChanges(targetTable,candidateChanges)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", targetTable, candidateChanges, candidateChanges)
   }
 
   private[catalyst] def computeSchemaChanges(
@@ -172,6 +179,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
             newFields.toImmutableArraySeq,
             fieldPath,
             throwError)
+        planChangeLogger.warn("computeSchemaChangesByPosition(currentFields,newFields,fieldPath,throwError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", currentFields, newFields, fieldPath, throwError)
         }
 
       case (ArrayType(currentElementType, _), ArrayType(newElementType, _)) =>
@@ -247,6 +255,7 @@ object ResolveSchemaEvolution extends Rule[LogicalPlan] {
       .filterNot(f => currentFieldMap.contains(f.name))
       .map { f =>
         // Make the type nullable, since existing rows in the table will have NULLs for this column.
+        planChangeLogger.warn("computeSchemaChangesByName(currentFields,newFields,fieldPath,throwError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", currentFields, newFields, fieldPath, throwError)
         TableChange.addColumn((fieldPath :+ f.name).toArray, f.dataType.asNullable)
       }
 

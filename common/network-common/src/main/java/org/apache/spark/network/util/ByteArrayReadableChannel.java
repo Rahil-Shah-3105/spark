@@ -25,6 +25,7 @@ import java.nio.channels.ReadableByteChannel;
 import io.netty.buffer.ByteBuf;
 
 public class ByteArrayReadableChannel implements ReadableByteChannel {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ByteArrayReadableChannel.class);
   private ByteBuf data;
   private boolean closed;
 
@@ -41,6 +42,7 @@ public class ByteArrayReadableChannel implements ReadableByteChannel {
       throw new ClosedChannelException();
     }
     int totalRead = 0;
+	logger.warn("read(dst)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dst);
     while (data.readableBytes() > 0 && dst.remaining() > 0) {
       int bytesToRead = Math.min(data.readableBytes(), dst.remaining());
       dst.put(data.readSlice(bytesToRead).nioBuffer());

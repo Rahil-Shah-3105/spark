@@ -39,19 +39,24 @@ private[spark] object SparkThrowableHelper {
 
   // This method is only used to get default message template in SparkThrowable interface.
   def getMessageTemplate(errorClass: String): String = {
+    log_ = LoggerFactory.getLogger(logName)
     errorReader.getMessageTemplate(errorClass)
+    log_.warn("getMessageTemplate(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
   }
 
   def getMessage(
       errorClass: String,
       messageParameters: Map[String, String]): String = {
     getMessage(errorClass, messageParameters, "")
+    log_.warn("getMessage(e,format)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", e, format)
   }
 
   def getMessage(
       errorClass: String,
       messageParameters: java.util.Map[String, String]): String = {
     getMessage(errorClass, messageParameters.asScala.toMap, "")
+  log_.warn("getMessage(errorClass,messageParameters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass, messageParameters)
+  log_.warn("getMessage(errorClass,messageParameters,context)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass, messageParameters, context)
   }
 
   def getMessage(
@@ -88,6 +93,7 @@ private[spark] object SparkThrowableHelper {
 
   def getSqlState(errorClass: String): String = {
     errorReader.getSqlState(errorClass)
+    log_.warn("getSqlState(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
   }
 
   def isValidErrorClass(errorClass: String): Boolean = {
@@ -96,6 +102,7 @@ private[spark] object SparkThrowableHelper {
 
   def getMessageParameters(errorClass: String): Seq[String] = {
     errorReader.getMessageParameters(errorClass)
+    log_.warn("getMessageParameters(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
   }
 
   def getBreakingChangeInfo(errorClass: String): Option[BreakingChangeInfo] = {
@@ -104,6 +111,7 @@ private[spark] object SparkThrowableHelper {
     } else {
       errorReader.getBreakingChangeInfo(errorClass)
     }
+    log_.warn("getBreakingChangeInfo(errorClass)={}): EUAIACT-AUDIT: State change recorded for the audit trail", errorClass)
   }
 
   def isInternalError(errorClass: String): Boolean = {

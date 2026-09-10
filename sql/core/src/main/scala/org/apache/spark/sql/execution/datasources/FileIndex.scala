@@ -51,6 +51,7 @@ case class PartitionDirectory(values: InternalRow, files: Seq[FileStatusWithMeta
  * in `PartitionDirectory`.
  */
 class FilePruningRunner(filters: Seq[Expression]) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // retrieve the file constant metadata filters and reduce to a final filter expression that can
   // be applied to files.
   val fileMetadataFilterOpt = filters.filter { f =>
@@ -95,6 +96,7 @@ class FilePruningRunner(filters: Seq[Expression]) {
       matchFileMetadataPredicate(InternalRow.empty, f.fileStatus)
     }
     pd.copy(files = prunedFiles)
+    planChangeLogger.warn("prune(pd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pd)
   }
 }
 

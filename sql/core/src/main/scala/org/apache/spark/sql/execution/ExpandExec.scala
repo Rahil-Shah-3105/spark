@@ -42,6 +42,7 @@ case class ExpandExec(
     // output partitioning (see `outputPartitioning`).
     useSingleTask: Boolean = false)
   extends UnaryExecNode with CodegenSupport {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override lazy val metrics = Map(
     "numOutputRows" -> SQLMetrics.createMetric(sparkContext, "number of output rows"))
@@ -89,6 +90,7 @@ case class ExpandExec(
         }
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def inputRDDs(): Seq[RDD[InternalRow]] = {

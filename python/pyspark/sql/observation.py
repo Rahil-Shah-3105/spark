@@ -26,6 +26,7 @@ from pyspark.sql.utils import is_remote
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject, JVMView
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["Observation"]
@@ -153,6 +154,7 @@ class Observation:
         assert self._jvm is not None
         utils = getattr(self._jvm, "org.apache.spark.sql.api.python.PythonSQLUtils")
         jrow = self._jo.getRow()
+        logger.warning("get(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         row: Row = CPickleSerializer().loads(utils.toPyRow(jrow))
         return row.asDict(recursive=False)
 

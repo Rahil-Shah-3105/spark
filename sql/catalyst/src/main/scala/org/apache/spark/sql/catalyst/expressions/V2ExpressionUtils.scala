@@ -43,6 +43,7 @@ import org.apache.spark.util.ArrayImplicits._
  * A utility class that converts public connector expressions into Catalyst expressions.
  */
 object V2ExpressionUtils extends SQLConfHelper with Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits.MultipartIdentifierHelper
 
   def resolveRef[T <: NamedExpression](ref: NamedReference, plan: LogicalPlan): T = {
@@ -132,6 +133,7 @@ object V2ExpressionUtils extends SQLConfHelper with Logging {
       funCatalogOpt.flatMap { catalog =>
         loadV2FunctionOpt(catalog, name, catalystArgs).map { bound =>
           TransformExpression(bound, catalystArgs)
+        planChangeLogger.warn("loadV2FunctionOpt(catalog,name,args)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", catalog, name, args)
         }
       }
   }
@@ -203,6 +205,7 @@ object V2ExpressionUtils extends SQLConfHelper with Logging {
             throw new AnalysisException(
               errorClass = "SCALAR_FUNCTION_NOT_FULLY_IMPLEMENTED",
               messageParameters = Map("scalarFunc" -> toSQLId(scalarFunc.name())))
+        planChangeLogger.warn("findMethod(fn,methodName,argClasses)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fn, methodName, argClasses)
         }
     }
   }

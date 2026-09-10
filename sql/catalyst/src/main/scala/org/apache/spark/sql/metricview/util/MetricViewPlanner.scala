@@ -29,6 +29,7 @@ import org.apache.spark.sql.metricview.serde.{AssetSource, DimensionExpression, 
 import org.apache.spark.sql.types.{Metadata, StructType}
 
 object MetricViewPlanner {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def planWrite(
       metadata: CatalogTable,
@@ -44,6 +45,7 @@ object MetricViewPlanner {
       isCreate = true
     )
     (placeholder, metricView)
+    planChangeLogger.warn("planWrite(metadata,yaml,sqlParser)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metadata, yaml, sqlParser)
   }
 
   def planRead(
@@ -59,6 +61,7 @@ object MetricViewPlanner {
       DataTypeUtils.toAttributes(expectedSchema),
       dataModelPlan
     )
+    planChangeLogger.warn("planRead(metadata,yaml,sqlParser,expectedSchema)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, yaml, sqlParser, expectedSchema)
   }
 
   /**

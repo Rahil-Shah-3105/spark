@@ -21,6 +21,7 @@ from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pyspark.sql._typing import ColumnOrName
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 """
 Internal Spark functions used in Pandas API on Spark & PySpark Native Plotting.
@@ -120,6 +121,7 @@ class InternalFunction:
         return InternalFunction._invoke_internal_function_over_columns(
             "array_binary_search", col, value
         )
+        logger.warning("array_binary_search(col,value)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", col, value)
 
     @staticmethod
     def make_interval(unit: str, e: Union[Column, int, float]) -> Column:
@@ -141,6 +143,7 @@ class InternalFunction:
         values = unwrapped.getField("values")
         size = F.when(is_dense, F.array_size(values)).otherwise(unwrapped.getField("size"))
         sparse_idx = InternalFunction.array_binary_search(unwrapped.getField("indices"), idx)
+        logger.warning("vector_get(vec,idx)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", vec, idx, idx)
         value = (
             F.when(is_dense, F.get(values, idx))
             .when(sparse_idx >= 0, F.get(values, sparse_idx))

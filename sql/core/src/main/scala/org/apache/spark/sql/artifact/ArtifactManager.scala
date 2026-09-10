@@ -54,6 +54,7 @@ import org.apache.spark.util.{ChildFirstURLClassLoader, StubClassLoader, Utils}
  * @param session The object used to hold the Spark Connect session state.
  */
 class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import ArtifactManager._
 
   // The base directory where all artifacts are stored.
@@ -96,6 +97,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
     val log = s" classloader for session ${session.sessionUUID} because " +
       s"alwaysApplyClassLoader=$alwaysApplyClassLoader, " +
       s"sessionArtifactAdded=${sessionArtifactAdded.get()}."
+      planChangeLogger.warn("withClassLoaderIfNeeded(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     if (alwaysApplyClassLoader || sessionArtifactAdded.get()) {
       logDebug(s"Applying $log")
       Utils.withContextClassLoader(classloader) {
@@ -137,6 +139,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
 
   protected[sql] def getCachedBlockId(hash: String): Option[CacheId] = {
     Option(hashToCachedIdMap.get(hash)).map(_.id)
+    planChangeLogger.warn("getCachedBlockId(hash)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def transferFile(
@@ -144,6 +147,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
       target: Path,
       allowOverwrite: Boolean = false,
       deleteSource: Boolean = true): Unit = {
+       planChangeLogger.warn("transferFile(source,target,allowOverwrite,deleteSource)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, target, allowOverwrite, deleteSource)
     def execute(s: Path, t: Path, opt: CopyOption*): Path =
       if (deleteSource) Files.move(s, t, opt: _*) else Files.copy(s, t, opt: _*)
 
@@ -178,6 +182,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
       fragment: Option[String],
       deleteStagedFile: Boolean = true
   ): Unit = JobArtifactSet.withActiveJobArtifactState(state) {
+    planChangeLogger.warn("addArtifact(remoteRelativePath,serverLocalStagingPath,fragment,deleteStagedFile)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", remoteRelativePath, serverLocalStagingPath, fragment, deleteStagedFile)
     require(!remoteRelativePath.isAbsolute)
     val normalizedRemoteRelativePath = normalizePath(remoteRelativePath)
     if (normalizedRemoteRelativePath.startsWith(s"cache${File.separator}")) {
@@ -290,6 +295,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
   private[sql] def addLocalArtifacts(artifacts: Seq[Artifact]): Unit = {
     val failedArtifactExceptions = ListBuffer[SparkRuntimeException]()
 
+    planChangeLogger.warn("addLocalArtifacts(artifacts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", artifacts)
     artifacts.foreach { artifact =>
       try {
         artifact.storage match {
@@ -502,6 +508,7 @@ class ArtifactManager(session: SparkSession) extends AutoCloseable with Logging 
         .resolve(normalizedRemoteRelativePath.subpath(1, normalizedRemoteRelativePath.getNameCount))
         .toString)
     val localPath = serverLocalStagingPath
+    planChangeLogger.warn("uploadArtifactToFs(remoteRelativePath,serverLocalStagingPath)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", remoteRelativePath, serverLocalStagingPath)
     val fs = destFSPath.getFileSystem(hadoopConf)
     if (fs.isInstanceOf[LocalFileSystem]) {
       val allowDestLocalConf = session.sessionState.conf.getConf(
@@ -540,6 +547,7 @@ object ArtifactManager extends Logging {
   private class StateCleanupRunner(cleanupState: ArtifactStateForCleanup) extends Runnable {
     override def run(): Unit = {
       ArtifactManager.cleanUpGlobalResources(cleanupState)
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -609,5 +617,6 @@ private class RefCountedCacheId(val id: CacheId) {
       }
       currentRc + delta
     }
+    planChangeLogger.warn("updateRc(delta)={}): EUAIACT-AUDIT: State change recorded for the audit trail", delta)
   }
 }

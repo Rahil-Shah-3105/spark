@@ -51,6 +51,7 @@ from pyspark.sql.types import (
 )
 from pyspark.util import PythonEvalType
 from pyspark.worker import main as worker_main
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # ---------------------------------------------------------------------------
@@ -70,6 +71,7 @@ class MockProtocolWriter:
 
     @classmethod
     def write_bool(cls, val: bool, buf: io.BytesIO) -> None:
+        logger.warning("write_bool(cls,val,buf)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, val, buf)
         buf.write(struct.pack("!?", val))
 
     @classmethod
@@ -126,6 +128,7 @@ class MockProtocolWriter:
             buf,
         )
         cls.write_utf8("/tmp", buf)  # spark_files_dir
+        logger.warning("write_preamble(cls,buf)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, buf)
         write_int(0, buf)  # num_python_includes
         cls.write_bool(False, buf)  # needs_broadcast_decryption_server
         write_int(0, buf)  # num_broadcast_variables
@@ -193,6 +196,7 @@ class MockProtocolWriter:
     @classmethod
     def write_utf8(cls, s: str, buf: io.BytesIO) -> None:
         """Write a length-prefixed UTF-8 string (matches ``UTF8Deserializer.loads``)."""
+        logger.warning("write_utf8(cls,s,buf)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, s, buf)
         encoded = s.encode("utf-8")
         write_int(len(encoded), buf)
         buf.write(encoded)
@@ -407,6 +411,7 @@ class MockUDFFactory:
         """Build arg_offsets: ``[total_len, num_keys, key_idx..., value_idx...]``."""
         key_idxs = list(range(num_key_cols))
         value_idxs = list(range(num_key_cols, num_key_cols + num_value_cols))
+        logger.warning("make_grouped_arg_offsets(cls,num_key_cols,num_value_cols)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, num_key_cols, num_value_cols)
         offsets = [num_key_cols] + key_idxs + value_idxs
         return [len(offsets)] + offsets
 
@@ -429,6 +434,7 @@ class _TimeBenchBase:
         buf = io.BytesIO()
         self._write_scenario(*args, buf)
         self._input = buf.getvalue()
+        logger.warning("setup(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
 
     def time_worker(self, *args):
         worker_main(io.BytesIO(self._input), io.BytesIO())
@@ -957,6 +963,7 @@ class _GroupedAggArrowBenchMixin:
         return_type = DoubleType()
 
         def write_udf(b):
+            logger.warning("write_udf(b)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", b)
             MockProtocolWriter.write_udf_payload(udf_func, return_type, arg_offsets, b)
 
         MockProtocolWriter.write_worker_input(
@@ -1828,6 +1835,7 @@ class _StubStateServer:
 
     @classmethod
     def get_port(cls) -> int:
+        logger.warning("get_port(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance.port

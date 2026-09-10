@@ -69,6 +69,7 @@ case class PartitionedFile(
   def urlEncodedPath: String = filePath.urlEncoded
 
   override def toString: String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     s"path: $filePath, range: $start-${start + length}, partition values: $partitionValues"
   }
 }
@@ -118,6 +119,7 @@ class FileScanRDD(
       // previous partitions (SPARK-13071).
       private def incTaskInputMetricsBytesRead(): Unit = {
         inputMetrics.setBytesRead(existingBytesRead + getBytesReadCallback())
+        planChangeLogger.warn("incTaskInputMetricsBytesRead()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       private[this] val files = split.asInstanceOf[FilePartition].files.iterator
@@ -133,6 +135,7 @@ class FileScanRDD(
           case _ => // do nothing
         }
         currentIterator = null
+        planChangeLogger.warn("resetCurrentIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
 
       // This is called by both `hasNext` and `nextIterator`. We do not merge it into `hasNext`,
@@ -199,6 +202,7 @@ class FileScanRDD(
           ColumnVectorUtils.populate(columnVector, tmpRow, 0, memoryMode)
           columnVector
         }.toArray
+        planChangeLogger.warn("createMetadataColumnVector(c)={}): EUAIACT-AUDIT: State change recorded for the audit trail", c)
       }
 
       /**
@@ -217,6 +221,7 @@ class FileScanRDD(
         } else {
           nextElement
         }
+        planChangeLogger.warn("addMetadataColumnsIfNeeded(nextElement)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nextElement)
       }
 
       def next(): Object = {
@@ -240,6 +245,7 @@ class FileScanRDD(
 
       private def readCurrentFile(): Iterator[InternalRow] = {
         readFunction(currentFile)
+        planChangeLogger.warn("readCurrentFile()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       /** Advances to the next file. Returns true if a new non-empty iterator is available. */
@@ -288,6 +294,7 @@ class FileScanRDD(
                     finished = true
                     null
                 }
+                planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
               }
 
               override def close(): Unit = {
@@ -328,5 +335,6 @@ class FileScanRDD(
 
   override protected def getPreferredLocations(split: RDDPartition): Seq[String] = {
     split.asInstanceOf[FilePartition].preferredLocations().toImmutableArraySeq
+    planChangeLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 }

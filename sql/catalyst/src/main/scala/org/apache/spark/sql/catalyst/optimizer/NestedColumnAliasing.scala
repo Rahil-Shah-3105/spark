@@ -83,6 +83,7 @@ import org.apache.spark.sql.types._
  * The schema of the datasource relation will be pruned in the [[SchemaPruning]] optimizer rule.
  */
 object NestedColumnAliasing {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def unapply(plan: LogicalPlan): Option[LogicalPlan] = plan match {
     /**
@@ -121,6 +122,7 @@ object NestedColumnAliasing {
     } else {
       Some(rewritePlanWithAliases(plan, attrToExtractValues))
     }
+    planChangeLogger.warn("rewritePlanIfSubsetFieldsUsed(plan,exprList,exclusiveAttrs)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, exprList, exclusiveAttrs)
   }
 
   /**
@@ -153,6 +155,7 @@ object NestedColumnAliasing {
     val attrToAliases =
       AttributeMap(attributeToExtractValuesAndAliases.transform((_, v) => v.map(_._2)))
 
+      planChangeLogger.warn("rewritePlanWithAliases(plan,attributeToExtractValues)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, attributeToExtractValues)
     plan match {
       case Project(projectList, child) =>
         Project(
@@ -175,6 +178,7 @@ object NestedColumnAliasing {
       case f: ExtractValue if nestedFieldToAlias.contains(f.canonicalized) =>
         nestedFieldToAlias(f.canonicalized).toAttribute
     }.asInstanceOf[NamedExpression])
+    planChangeLogger.warn("getNewProjectList(projectList,nestedFieldToAlias)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", projectList, nestedFieldToAlias)
   }
 
   /**
@@ -387,6 +391,7 @@ object GeneratorNestedColumnAliasing {
       // This function collects all GetStructField*(attribute) from the passed in expression.
       // GetStructField* means arbitrary levels of nesting.
       def collectNestedGetStructFields(e: Expression): Seq[Expression] = {
+        planChangeLogger.warn("collectNestedGetStructFields(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
         // The helper function returns a tuple of
         // (nested GetStructField including the current level, all other nested GetStructField)
         def helper(e: Expression): (Seq[Expression], Seq[Expression]) = e match {

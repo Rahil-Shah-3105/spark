@@ -52,6 +52,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.{FILTER, WINDOW}
  * }}}
  */
 object InferWindowGroupLimit extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Extract all the limit values from predicates.
@@ -134,5 +135,6 @@ object InferWindowGroupLimit extends Rule[LogicalPlan] with PredicateHelper {
           }
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

@@ -56,6 +56,7 @@ import org.apache.spark.util.ArrayImplicits._
 import org.apache.spark.util.SparkStringUtils
 
 class DataSourceV2Strategy(session: SparkSession) extends Strategy with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import DataSourceV2Implicits._
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
@@ -876,6 +877,7 @@ private object AppendWrite {
     case a: AppendData => Some((a.table, a.write, a.analyzedQuery))
     case m: InsertOnlyMerge => Some((m.table, m.write, m.analyzedQuery))
     case _ => None
+    planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 
@@ -999,6 +1001,7 @@ private[sql] object DataSourceV2Strategy extends Logging {
       case s: ExecScalarSubquery => s.toLiteral
     }
     translateFilterV2(literalized)
+    planChangeLogger.warn("translateScalarSubqueryFilterV2(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
   }
 
   /**

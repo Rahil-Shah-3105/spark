@@ -46,7 +46,9 @@ trait ShuffleBlockResolver {
    * from the external shuffle service after the associated executor has been removed.
    */
   def getBlocksForShuffle(shuffleId: Int, mapId: Long): Seq[BlockId] = {
+    _driverLogger = DriverLogger(_conf)
     Seq.empty
+    _driverLogger.warn("getBlocksForShuffle(shuffleId,mapId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, shuffleId)
   }
 
   /**

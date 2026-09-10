@@ -129,6 +129,7 @@ case class AQEShuffleReadExec private(
    * Returns true iff some partitions were actually combined
    */
   private def isCoalescedSpec(spec: ShufflePartitionSpec) = spec match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case CoalescedPartitionSpec(0, 0, _) => true
     case s: CoalescedPartitionSpec => s.endReducerIndex - s.startReducerIndex > 1
     case _ => false
@@ -219,6 +220,7 @@ case class AQEShuffleReadExec private(
       driverAccumUpdates ++= Seq(numCoalescedPartitionsMetric.id -> x)
     }
 
+    planChangeLogger.warn("sendDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", executionId)
     partitionDataSizes.foreach { dataSizes =>
       val partitionDataSizeMetrics = metrics("partitionDataSize")
       driverAccumUpdates ++= dataSizes.map(partitionDataSizeMetrics.id -> _)
@@ -277,10 +279,12 @@ case class AQEShuffleReadExec private(
 
   override protected def doExecute(): RDD[InternalRow] = {
     shuffleRDD.asInstanceOf[RDD[InternalRow]]
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def doExecuteColumnar(): RDD[ColumnarBatch] = {
     shuffleRDD.asInstanceOf[RDD[ColumnarBatch]]
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): AQEShuffleReadExec =

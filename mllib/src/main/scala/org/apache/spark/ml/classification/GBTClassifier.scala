@@ -117,6 +117,7 @@ class GBTClassifier @Since("1.4.0") (
   def setImpurity(value: String): this.type = {
     logWarning("GBTClassifier.setImpurity should NOT be used")
     this
+    logger.warn("setImpurity(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   // Parameters from TreeEnsembleParams:
@@ -154,6 +155,7 @@ class GBTClassifier @Since("1.4.0") (
   @Since("2.4.0")
   def setValidationIndicatorCol(value: String): this.type = {
     set(validationIndicatorCol, value)
+    logger.warn("setValidationIndicatorCol(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**
@@ -416,6 +418,7 @@ object GBTClassificationModel extends MLReadable[GBTClassificationModel] {
         numFeaturesKey -> instance.numFeatures,
         numTreesKey -> instance.getNumTrees)
       EnsembleModelReadWrite.saveImpl(instance, path, sparkSession, extraMetadata)
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 

@@ -53,6 +53,7 @@ private[spark] object BLAS extends Serializable with Logging {
     } else {
       nativeBLAS
     }
+    logger.warn("getBLAS(vectorSize)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", vectorSize)
   }
 
   /**

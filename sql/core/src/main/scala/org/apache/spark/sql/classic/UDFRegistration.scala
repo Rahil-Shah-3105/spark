@@ -47,7 +47,9 @@ import org.apache.spark.sql.types.DataType
 class UDFRegistration private[sql] (session: SparkSession, functionRegistry: FunctionRegistry)
   extends sql.UDFRegistration
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   protected[sql] def registerPython(name: String, udf: UserDefinedPythonFunction): Unit = {
+    planChangeLogger.warn("registerPython(name,udf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, udf)
     log.debug(
       s"""
         | Registering new PythonUDF:
@@ -81,6 +83,7 @@ class UDFRegistration private[sql] (session: SparkSession, functionRegistry: Fun
     def builder(children: Seq[Expression]) = ScalaUDAF(children, udaf, udafName = Some(name))
     functionRegistry.createOrReplaceTempFunction(name, builder, "scala_udf")
     udaf
+  planChangeLogger.warn("register(name,udf,source,validateParameterCount)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", name, udf, source, validateParameterCount, validateParameterCount)
   }
 
   override protected def register(
@@ -134,6 +137,7 @@ class UDFRegistration private[sql] (session: SparkSession, functionRegistry: Fun
       case _: InstantiationException | _: IllegalArgumentException =>
         throw QueryCompilationErrors.classWithoutPublicNonArgumentConstructorError(className)
     }
+    planChangeLogger.warn("registerJavaUDAF(name,className)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   // scalastyle:off line.size.limit
@@ -193,6 +197,7 @@ class UDFRegistration private[sql] (session: SparkSession, functionRegistry: Fun
     } catch {
       case _: ClassNotFoundException => throw QueryCompilationErrors.cannotLoadClassNotOnClassPathError(className)
     }
+    planChangeLogger.warn("registerJava(name,className,returnDataType)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, returnDataType)
   }
   // scalastyle:on line.size.limit
 }

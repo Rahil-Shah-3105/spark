@@ -42,6 +42,7 @@ case class UpdatingSessionsExec(
     groupingExpression: Seq[Attribute],
     sessionExpression: Attribute,
     child: SparkPlan) extends UnaryExecNode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val groupingWithoutSessionExpression = groupingExpression.filterNot {
     p => p.semanticEquals(sessionExpression)
@@ -52,6 +53,7 @@ case class UpdatingSessionsExec(
   override protected def doExecute(): RDD[InternalRow] = {
     val inMemoryThreshold = conf.sessionWindowBufferInMemoryThreshold
     val spillThreshold = conf.sessionWindowBufferSpillThreshold
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val spillSizeThreshold = conf.sessionWindowBufferSpillSizeThreshold
 
     child.execute().mapPartitions { iter =>

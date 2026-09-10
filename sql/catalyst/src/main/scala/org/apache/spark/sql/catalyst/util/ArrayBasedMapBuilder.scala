@@ -32,6 +32,7 @@ import org.apache.spark.unsafe.array.ByteArrayMethods
  * duplicated map keys w.r.t. the last wins policy.
  */
 class ArrayBasedMapBuilder(keyType: DataType, valueType: DataType) extends Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   assert(!keyType.existsRecursively(_.isInstanceOf[MapType]), "key of map cannot be/contain map")
 
   private lazy val keyToIndex = {
@@ -119,6 +120,7 @@ class ArrayBasedMapBuilder(keyType: DataType, valueType: DataType) extends Seria
     keyToIndex.clear()
     keys.clear()
     values.clear()
+    planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

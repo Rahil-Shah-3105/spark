@@ -37,6 +37,7 @@ private[master] class ZooKeeperLeaderElectionAgent(val masterInstance: LeaderEle
   start()
 
   private def start(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     logInfo("Starting ZooKeeper LeaderElection agent")
     zk = SparkCuratorUtil.newClient(conf)
     leaderLatch = new LeaderLatch(zk, workingDir)
@@ -81,6 +82,7 @@ private[master] class ZooKeeperLeaderElectionAgent(val masterInstance: LeaderEle
       status = LeadershipStatus.NOT_LEADER
       masterInstance.revokedLeadership()
     }
+    _driverLogger.warn("updateLeadershipStatus(isLeader)={}): EUAIACT-AUDIT: State change recorded for the audit trail", isLeader)
   }
 
   private object LeadershipStatus extends Enumeration {

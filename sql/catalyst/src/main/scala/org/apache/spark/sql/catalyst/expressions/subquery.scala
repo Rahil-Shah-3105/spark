@@ -33,6 +33,7 @@ import org.apache.spark.util.collection.BitSet
  * An interface for expressions that contain a [[QueryPlan]].
  */
 abstract class PlanExpression[T <: QueryPlan[_]] extends Expression {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // Override `treePatternBits` to propagate bits for its internal plan.
   override lazy val treePatternBits: BitSet = {
@@ -116,6 +117,7 @@ object SubqueryExpression {
       case ex: Exists => ex.isCorrelated
       case _ => false
     }
+    planChangeLogger.warn("hasInOrCorrelatedExistsSubquery(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   /**
@@ -128,6 +130,7 @@ object SubqueryExpression {
       case s: SubqueryExpression => s.isCorrelated
       case _ => false
     }
+    planChangeLogger.warn("hasCorrelatedSubquery(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   /**
@@ -138,6 +141,7 @@ object SubqueryExpression {
       case _: SubqueryExpression => true
       case _ => false
     }
+    planChangeLogger.warn("hasSubquery(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 }
 
@@ -241,6 +245,7 @@ object SubExprUtils extends PredicateHelper {
     }
     collectOutRefs(expr)
     outerExpressions.toSeq
+  planChangeLogger.warn("getOuterReferences(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   /**
@@ -264,6 +269,7 @@ object SubExprUtils extends PredicateHelper {
         case xs => xs
       }
     }
+    planChangeLogger.warn("getCorrelatedPredicates(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   /**
@@ -289,6 +295,7 @@ object SubExprUtils extends PredicateHelper {
     val allowConstants =
       SQLConf.get.getConf(SQLConf.SCALAR_SUBQUERY_ALLOW_GROUP_BY_COLUMN_EQUAL_TO_CONSTANT)
 
+      planChangeLogger.warn("getEquivalentToOuter(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
     expr match {
       case EqualTo(left, x)
         if ((allowConstants || containsOuter(x)) &&
@@ -373,6 +380,7 @@ object SubExprUtils extends PredicateHelper {
 
       case _ => ExpressionSet().empty
     }
+    planChangeLogger.warn("getCorrelatedEquivalentInnerExpressions(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   // Returns grouping expressions of 'aggNode' of a scalar subquery that do not have equivalent
@@ -452,6 +460,7 @@ object ScalarSubquery {
       case s: ScalarSubquery => s.isCorrelated
       case _ => false
     }
+    planChangeLogger.warn("hasCorrelatedScalarSubquery(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 }
 

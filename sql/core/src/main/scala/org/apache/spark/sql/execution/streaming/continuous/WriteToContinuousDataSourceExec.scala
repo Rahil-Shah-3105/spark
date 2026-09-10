@@ -34,6 +34,7 @@ import org.apache.spark.sql.execution.metric.SQLMetrics
 case class WriteToContinuousDataSourceExec(write: StreamingWrite, query: SparkPlan,
     customMetrics: Seq[CustomMetric])
   extends UnaryExecNode with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def child: SparkPlan = query
   override def output: Seq[Attribute] = Nil
@@ -55,6 +56,7 @@ case class WriteToContinuousDataSourceExec(write: StreamingWrite, query: SparkPl
       sparkContext.env)
       .askSync[Unit](SetWriterPartitions(rdd.getNumPartitions))
 
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     try {
       // Force the RDD to run so continuous processing starts; no data is actually being collected
       // to the driver, as ContinuousWriteRDD outputs nothing.

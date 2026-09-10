@@ -42,6 +42,7 @@ private[spark] class XORShiftRandom(init: Long) extends JavaRandom(init) {
   // we need to just override next - this will be called by nextInt, nextDouble,
   // nextGaussian, nextLong, etc.
   override protected def next(bits: Int): Int = {
+    _driverLogger = DriverLogger(_conf)
     var nextSeed = seed ^ (seed << 21)
     nextSeed ^= (nextSeed >>> 35)
     nextSeed ^= (nextSeed << 4)
@@ -51,6 +52,7 @@ private[spark] class XORShiftRandom(init: Long) extends JavaRandom(init) {
 
   override def setSeed(s: Long): Unit = {
     seed = XORShiftRandom.hashSeed(s)
+    _driverLogger.warn("setSeed(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
   }
 }
 

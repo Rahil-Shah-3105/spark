@@ -54,6 +54,7 @@ trait FileWrite extends Write {
   override def description(): String = formatName
 
   override def toBatch: BatchWrite = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val sparkSession = SparkSession.active
     validateInputs(sparkSession.sessionState.conf)
     val path = new Path(paths.head)
@@ -112,6 +113,7 @@ trait FileWrite extends Write {
     job.setOutputValueClass(classOf[InternalRow])
     FileOutputFormat.setOutputPath(job, path)
     job
+    planChangeLogger.warn("getJobInstance(hadoopConf,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hadoopConf, path)
   }
 
   private def createWriteJobDescription(
@@ -147,6 +149,7 @@ trait FileWrite extends Write {
         .getOrElse(sparkSession.sessionState.conf.sessionLocalTimeZone),
       statsTrackers = Seq(statsTracker)
     )
+    planChangeLogger.warn("createWriteJobDescription(sparkSession,hadoopConf,job,pathName,options)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, hadoopConf, job, pathName, options)
   }
 }
 

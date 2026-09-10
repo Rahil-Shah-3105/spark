@@ -57,6 +57,7 @@ private[spark] class SubtractedRDD[K: ClassTag, V: ClassTag, W: ClassTag](
   override def getDependencies: Seq[Dependency[_]] = {
     def rddDependency[T1: ClassTag, T2: ClassTag](rdd: RDD[_ <: Product2[T1, T2]])
       : Dependency[_] = {
+       _driverLogger = DriverLogger(_conf)
       if (rdd.partitioner == Some(part)) {
         logDebug("Adding one-to-one dependency with " + rdd)
         new OneToOneDependency(rdd)
@@ -98,6 +99,7 @@ private[spark] class SubtractedRDD[K: ClassTag, V: ClassTag, W: ClassTag](
         map.put(k, seq)
         seq
       }
+      _driverLogger.warn("getSeq(k)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", k)
     }
     def integrate(depNum: Int, op: Product2[K, V] => Unit): Unit = {
       dependencies(depNum) match {

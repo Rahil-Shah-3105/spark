@@ -30,5 +30,6 @@ private[r] object PrefixSpanWrapper {
       .setMaxPatternLength(maxPatternLength)
       .setMaxLocalProjDBSize(maxLocalProjDBSize.toLong)
       .setSequenceCol(sequenceCol)
+      logger.warn("getPrefixSpan(minSupport,maxPatternLength,maxLocalProjDBSize,sequenceCol)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", minSupport, maxPatternLength, maxLocalProjDBSize, sequenceCol)
   }
 }

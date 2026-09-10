@@ -142,6 +142,7 @@ private[connect] class MLCache(sessionHolder: SessionHolder) extends Logging {
     val path = offloadedModelsDir.resolve(refId)
     require(path.startsWith(offloadedModelsDir))
     path
+    logger.warn("getModelOffloadingPath(refId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", refId, refId)
   }
 
   /**

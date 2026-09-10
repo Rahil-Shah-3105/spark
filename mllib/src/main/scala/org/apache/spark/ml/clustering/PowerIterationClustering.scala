@@ -209,6 +209,7 @@ private[spark] class PowerIterationClusteringWrapper(override val uid: String)
   override def write: MLWriter = new MLWriter {
     override protected def saveImpl(path: String): Unit = {
       new PowerIterationClustering(uid).copy(paramMap).save(path)
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 }

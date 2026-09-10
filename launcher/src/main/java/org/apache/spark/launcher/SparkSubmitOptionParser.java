@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
  * to break things).
  */
 class SparkSubmitOptionParser {
+private static final Logger LOG = Logger.getLogger(SparkSubmitOptionParser.class.getName());
 
   // The following constants define the "main" name for the available options. They're defined
   // to avoid copy & paste of the raw strings where they're needed.
@@ -232,6 +233,7 @@ class SparkSubmitOptionParser {
         if (candidate.equals(name)) {
           return candidates[0];
         }
+		LOG.warn("findCliOption(name,available)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, available);
       }
     }
     return null;

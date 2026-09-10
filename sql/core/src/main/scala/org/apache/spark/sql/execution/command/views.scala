@@ -102,6 +102,7 @@ case class CreateViewCommand(
   override def childrenToAnalyze: Seq[LogicalPlan] = plan :: Nil
 
   def markAsAnalyzed(analysisContext: AnalysisContext): LogicalPlan = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     copy(
       isAnalyzed = true,
       // Collect the referred temporary functions from AnalysisContext
@@ -140,6 +141,7 @@ case class CreateViewCommand(
 
     SchemaUtils.checkIndeterminateCollationInSchema(plan.schema)
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     if (viewType == LocalTempView) {
       val aliasedPlan = aliasPlan(sparkSession, analyzedPlan, userSpecifiedColumns)
       val tableDefinition = createTemporaryViewRelation(
@@ -205,6 +207,7 @@ case class CreateViewCommand(
           viewSchemaMode, comment, collation), ignoreIfExists = allowExisting)
     }
     Seq.empty[Row]
+  planChangeLogger.warn("run(session)={}): EUAIACT-AUDIT: State change recorded for the audit trail", session)
   }
 
   override def withCTEDefs(cteDefs: Seq[CTERelationDef]): LogicalPlan = {
@@ -285,6 +288,7 @@ case class AlterViewAsCommand(
       aliasedPlan = analyzedPlan,
       referredTempFunctions)
     session.sessionState.catalog.alterTempViewDefinition(name, tableDefinition)
+    planChangeLogger.warn("alterTemporaryView(session,analyzedPlan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", session, analyzedPlan)
   }
 
   private def alterPermanentView(session: SparkSession, analyzedPlan: LogicalPlan): Unit = {
@@ -312,7 +316,9 @@ case class AlterViewAsCommand(
       viewOriginalText = Some(originalText),
       viewText = Some(originalText))
 
+    planChangeLogger.warn("alterPermanentView(session,analyzedPlan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, analyzedPlan, viewIdent)
     session.sessionState.catalog.alterTable(updatedViewMeta)
+  planChangeLogger.warn("checkCyclicViewReference(plan,path,viewIdent)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", plan, path, viewIdent, viewIdent)
   }
 
   override def withCTEDefs(cteDefs: Seq[CTERelationDef]): LogicalPlan = {
@@ -359,6 +365,7 @@ case class AlterViewSchemaBindingCommand(name: TableIdentifier, viewSchemaMode: 
       viewSchemaMode,
       captureNewPath = false)
 
+    planChangeLogger.warn("alterPermanentView(session,viewSchemaMode)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, viewSchemaMode, viewIdent)
     val updatedViewMeta = viewMeta.copy(properties = newProperties)
 
     session.sessionState.catalog.alterTable(updatedViewMeta)
@@ -409,6 +416,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
       }
     }
     props.toMap
+    planChangeLogger.warn("generateQueryColumnNames(columns)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columns)
   }
 
   /**
@@ -420,6 +428,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
     properties.filterNot { case (key, _) =>
       key.startsWith(VIEW_QUERY_OUTPUT_PREFIX)
     }
+    planChangeLogger.warn("removeQueryColumnNames(properties)={}): EUAIACT-AUDIT: State change recorded for the audit trail", properties)
   }
 
   /**
@@ -431,6 +440,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
     properties.filterNot { case (key, _) =>
       key.startsWith(VIEW_SQL_CONFIG_PREFIX)
     }
+    planChangeLogger.warn("removeSQLConfigs(properties)={}): EUAIACT-AUDIT: State change recorded for the audit trail", properties)
   }
 
   /**
@@ -445,6 +455,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
       props.put(VIEW_SCHEMA_MODE, viewSchemaMode.toString)
       props.toMap
     }
+    planChangeLogger.warn("viewSchemaModeToProps(viewSchemaMode)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewSchemaMode)
   }
 
   /**
@@ -472,6 +483,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
    */
   private def removeResolutionPath(properties: Map[String, String]): Map[String, String] = {
     properties.filterNot { case (key, _) => key == VIEW_RESOLUTION_PATH }
+    planChangeLogger.warn("removeResolutionPath(properties)={}): EUAIACT-AUDIT: State change recorded for the audit trail", properties)
   }
 
   /**
@@ -485,6 +497,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
         key.startsWith(VIEW_REFERRED_TEMP_FUNCTION_NAMES) ||
         key.startsWith(VIEW_REFERRED_TEMP_VARIABLE_NAMES)
     }
+    planChangeLogger.warn("removeReferredTempNames(properties)={}): EUAIACT-AUDIT: State change recorded for the audit trail", properties)
   }
 
 
@@ -559,6 +572,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
       referredTempNamesToProps(tempViewNames, tempFunctionNames, tempVariableNames) ++
       viewSchemaModeToProps(viewSchemaMode) ++
       resolutionPathProps
+      planChangeLogger.warn("generateViewProperties(properties,session,queryOutput,fieldNames,viewSchemaMode,tempViewNames,tempFunctionNames,tempVariableNames,stripSystemSessionFromStoredPath,captureNewPath)={},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", properties, session, queryOutput, fieldNames, viewSchemaMode, tempViewNames, tempFunctionNames, tempVariableNames, stripSystemSessionFromStoredPath, captureNewPath)
   }
 
   /**
@@ -663,6 +677,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
           case _ => Seq.empty
         })
       }.distinct
+      planChangeLogger.warn("collectTempViews(child)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", child)
     }
     collectTempViews(child)
   }
@@ -760,6 +775,7 @@ object ViewHelper extends SQLConfHelper with Logging with CapturesConfig {
           if r.catalog.isDefined && r.identifier.isDefined && r.timeTravelSpec.isEmpty =>
         V2TableReference.createForTempView(r, viewName.nameParts)
     }
+    planChangeLogger.warn("prepareTemporaryViewPlan(viewName,plan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", viewName, plan)
   }
 
   /**
@@ -949,6 +965,7 @@ object CheckViewReferences extends (LogicalPlan => Unit) {
     if (!catalog.isInstanceOf[ViewCatalog]) {
       throw QueryCompilationErrors.missingCatalogViewsAbilityError(catalog)
     }
+    planChangeLogger.warn("requireViewCatalog(resolved)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", resolved)
   }
 
   override def apply(plan: LogicalPlan): Unit = plan.foreach {

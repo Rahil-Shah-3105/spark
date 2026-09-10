@@ -35,6 +35,7 @@ private[sql] class AvroOutputWriterFactory(
     catalystSchema: StructType,
     avroSchemaAsJsonString: String,
     positionalFieldMatching: Boolean) extends OutputWriterFactory {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private lazy val avroSchema = AvroUtils.parseAvroSchema(avroSchemaAsJsonString)
 
@@ -45,6 +46,7 @@ private[sql] class AvroOutputWriterFactory(
     } else {
       s".$codec.avro"
     }
+    planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 
   override def newInstance(

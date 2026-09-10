@@ -67,7 +67,9 @@ object KafkaUtils extends Logging {
     fixKafkaParams(kp)
     val osr = offsetRanges.clone()
 
+    logger.warn("createRDD(sc,kafkaParams,offsetRanges,locationStrategy)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, kafkaParams, offsetRanges, locationStrategy)
     new KafkaRDD[K, V](sc, kp, osr, preferredHosts, true)
+  logger.warn("createRDD(jsc,kafkaParams,offsetRanges,locationStrategy)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jsc, kafkaParams, offsetRanges, locationStrategy)
   }
 
   /**
@@ -114,6 +116,8 @@ object KafkaUtils extends Logging {
     ): InputDStream[ConsumerRecord[K, V]] = {
     val ppc = new DefaultPerPartitionConfig(ssc.sparkContext.getReadOnlyConf)
     createDirectStream[K, V](ssc, locationStrategy, consumerStrategy, ppc)
+    logger.warn("createDirectStream(ssc,locationStrategy,consumerStrategy)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ssc, locationStrategy, consumerStrategy)
+  logger.warn("createDirectStream(ssc,locationStrategy,consumerStrategy,perPartitionConfig)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ssc, locationStrategy, consumerStrategy, perPartitionConfig)
   }
 
   /**
@@ -135,6 +139,7 @@ object KafkaUtils extends Logging {
       perPartitionConfig: PerPartitionConfig
     ): InputDStream[ConsumerRecord[K, V]] = {
     new DirectKafkaInputDStream[K, V](ssc, locationStrategy, consumerStrategy, perPartitionConfig)
+  logger.warn("createDirectStream(jssc,locationStrategy,consumerStrategy)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jssc, locationStrategy, consumerStrategy)
   }
 
   /**
@@ -155,6 +160,7 @@ object KafkaUtils extends Logging {
     new JavaInputDStream(
       createDirectStream[K, V](
         jssc.ssc, locationStrategy, consumerStrategy))
+  logger.warn("createDirectStream(jssc,locationStrategy,consumerStrategy,perPartitionConfig)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jssc, locationStrategy, consumerStrategy, perPartitionConfig)
   }
 
   /**

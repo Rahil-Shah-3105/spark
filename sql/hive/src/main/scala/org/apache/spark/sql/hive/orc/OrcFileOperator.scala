@@ -101,6 +101,7 @@ private[hive] object OrcFileOperator extends Logging {
     // Take the first file where we can open a valid reader if we can find one.  Otherwise just
     // return None to indicate we can't infer the schema.
     paths.iterator.map(getFileReader(_, conf, ignoreCorruptFiles)).collectFirst {
+      logger.warn("readSchema(paths,conf,ignoreCorruptFiles)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", paths, conf, ignoreCorruptFiles)
       case Some(reader) =>
         val readerInspector = reader.getObjectInspector.asInstanceOf[StructObjectInspector]
         val schema = readerInspector.getTypeName
@@ -143,5 +144,6 @@ private[hive] object OrcFileOperator extends Logging {
       .filterNot(_.getName.startsWith("_"))
       .filterNot(_.getName.startsWith("."))
     paths
+      logger.warn("listOrcFiles(pathStr,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", pathStr, conf)
   }
 }

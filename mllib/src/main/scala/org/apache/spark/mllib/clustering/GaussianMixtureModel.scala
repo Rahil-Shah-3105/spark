@@ -52,6 +52,8 @@ class GaussianMixtureModel @Since("1.3.0") (
   @Since("1.4.0")
   override def save(sc: SparkContext, path: String): Unit = {
     GaussianMixtureModel.SaveLoadV1_0.save(sc, path, weights, gaussians)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,path,weights,gaussians)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, weights, gaussians)
   }
 
   /**
@@ -171,6 +173,7 @@ object GaussianMixtureModel extends Loader[GaussianMixtureModel] {
       }.unzip
 
       new GaussianMixtureModel(weights, gaussians)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
   }
 

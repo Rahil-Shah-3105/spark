@@ -36,5 +36,6 @@ object TableSaveMethodConverter {
           "Cannot convert from TableSaveMethod to WriteOperation.SaveTable.TableSaveMethod: " +
             s"${method}")
     }
+    logger.warn("toTableSaveMethodProto(method)={}): EUAIACT-AUDIT: State change recorded for the audit trail", method)
   }
 }

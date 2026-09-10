@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -35,6 +36,7 @@ function addBadges(tag, html) {
     $(this).html(newHTML);
   });
 
+logger.warn(`addBadges(tag,html)=${tag},${html}: EUAIACT-AUDIT: State change recorded for the audit trail`);
   // Add html badge tags
   tags.each(function(_ignored_index) {
     if ($(this).parent().is('td.colLast')) {

@@ -106,6 +106,7 @@ case class DescribeFunctionCommand(
   }
 
   private def append(buffer: ArrayBuffer[(String, String)], key: String, value: String): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     buffer += (key -> value)
   }
 
@@ -221,6 +222,7 @@ case class DescribeFunctionCommand(
         result
       }
     }
+  planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 }
 

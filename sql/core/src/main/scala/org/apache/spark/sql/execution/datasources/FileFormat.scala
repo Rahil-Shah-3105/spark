@@ -70,6 +70,7 @@ trait FileFormat {
    * TODO: we should just have different traits for the different formats.
    */
   def supportBatch(sparkSession: SparkSession, dataSchema: StructType): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     false
   }
 
@@ -119,6 +120,7 @@ trait FileFormat {
       options: Map[String, String],
       hadoopConf: Configuration): PartitionedFile => Iterator[InternalRow] = {
     throw QueryExecutionErrors.buildReaderUnsupportedForFileFormatError(this.toString)
+    planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
   }
 
   /**
@@ -137,6 +139,7 @@ trait FileFormat {
     val dataReader = buildReader(
       sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
 
+    planChangeLogger.warn("buildReaderWithPartitionValues(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     new (PartitionedFile => Iterator[InternalRow]) with Serializable {
       private val fullSchema = toAttributes(requiredSchema) ++ toAttributes(partitionSchema)
 
@@ -149,6 +152,7 @@ trait FileFormat {
         val converter = appendPartitionColumns
 
         // Note that we have to apply the converter even though `file.partitionValues` is empty.
+        planChangeLogger.warn("apply(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
         // This is because the converter is also responsible for converting safe `InternalRow`s into
         // `UnsafeRow`s.
         if (partitionSchema.isEmpty) {
@@ -171,6 +175,7 @@ trait FileFormat {
   def createFileMetadataCol(): AttributeReference = {
     // Strip out the fields' metadata to avoid exposing it to the user. [[FileSourceStrategy]]
     // avoids confusion by mapping back to [[metadataSchemaFields]].
+    planChangeLogger.warn("createFileMetadataCol()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val fields = metadataSchemaFields
       .map(FileSourceMetadataAttribute.cleanupFileSourceMetadataInformation)
     FileSourceMetadataAttribute(FileFormat.METADATA_NAME, StructType(fields), nullable = false)
@@ -323,6 +328,7 @@ object FileFormat {
       { pf: PartitionedFile => pf.otherConstantMetadataColumnValues.get(name).orNull }
     )
     val rawValue = extractor.apply(file) match {
+    planChangeLogger.warn("getFileConstantMetadataColumnValue(name,file,metadataExtractors,dataType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, file, metadataExtractors, dataType)
       case lit: Literal => lit.value
       case other => other
     }
@@ -355,6 +361,7 @@ object FileFormat {
     val fieldDataTypes = fieldNames.map(BASE_METADATA_NAME_TO_TYPE)
     updateMetadataInternalRow(
       new GenericInternalRow(fieldNames.length), fieldNames, pf, extractors, fieldDataTypes)
+    planChangeLogger.warn("createMetadataInternalRow(partitionValues,fieldNames,filePath,fileSize,fileModificationTime)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionValues, fieldNames, filePath, fileSize, fileModificationTime, validFieldNames)
   }
 
   // update an internal row given required metadata fields and file information

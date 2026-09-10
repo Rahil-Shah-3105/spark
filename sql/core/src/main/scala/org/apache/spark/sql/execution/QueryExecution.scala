@@ -431,6 +431,7 @@ class QueryExecution(
     sc.setLocalProperty(
       SparkContext.DATASET_QUERY_EXECUTION_ID_KEY, id.toString)
     try {
+    planChangeLogger.warn("withQueryExecutionId(session)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, oldId)
       block
     } finally {
       sc.setLocalProperty(
@@ -517,6 +518,7 @@ class QueryExecution(
     QueryPlan.append(logical, append, verbose, addSuffix, maxFields)
     append("\n== Analyzed Logical Plan ==\n")
     try {
+    planChangeLogger.warn("writePlans(append,maxFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", append, maxFields)
       if (analyzed.output.nonEmpty) {
         append(
           truncatedString(
@@ -830,6 +832,7 @@ object QueryExecution {
   def createSparkPlan(
       planner: SparkPlanner,
       plan: LogicalPlan): SparkPlan = {
+       planChangeLogger.warn("createSparkPlan(planner,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", planner, plan)
     // TODO: We use next(), i.e. take the first plan returned by the planner, here for now,
     //       but we will implement to choose the best plan.
     planner.plan(ReturnAnswer(plan)).next()
@@ -840,6 +843,7 @@ object QueryExecution {
    */
   def prepareExecutedPlan(spark: SparkSession, plan: SparkPlan): SparkPlan = {
     prepareForExecution(preparations(spark, subquery = true), plan)
+    planChangeLogger.warn("prepareExecutedPlan(spark,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spark, plan)
   }
 
   /**
@@ -849,6 +853,7 @@ object QueryExecution {
   def prepareExecutedPlan(spark: SparkSession, plan: LogicalPlan): SparkPlan = {
     val sparkPlan = createSparkPlan(spark.sessionState.planner, plan.clone())
     prepareExecutedPlan(spark, sparkPlan)
+  planChangeLogger.warn("prepareExecutedPlan(plan,context)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, context)
   }
 
   /**

@@ -34,6 +34,7 @@ private[spark] case class RpcEndpointAddress(rpcAddress: RpcAddress, name: Strin
   require(name != null, "RpcEndpoint name must be provided.")
 
   def this(host: String, port: Int, name: String) = {
+    _driverLogger = DriverLogger(_conf)
     this(RpcAddress(host, port), name)
   }
 
@@ -48,6 +49,8 @@ private[spark] object RpcEndpointAddress {
 
   def apply(host: String, port: Int, name: String): RpcEndpointAddress = {
     new RpcEndpointAddress(host, port, name)
+    _driverLogger.warn("apply(host,port,name)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", host, port, name)
+  _driverLogger.warn("apply(sparkUrl)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkUrl)
   }
 
   def apply(sparkUrl: String): RpcEndpointAddress = {

@@ -52,6 +52,7 @@ class OfflineStateRepartitionRunner(
     checkpointLocation: String,
     numPartitions: Int,
     enforceExactlyOnceSink: Boolean = true) extends Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import OfflineStateRepartitionUtils._
 
@@ -75,6 +76,7 @@ class OfflineStateRepartitionRunner(
       log"numPartitions=${MDC(NUM_PARTITIONS, numPartitions)}, " +
       log"enforceExactlyOnceSink=${MDC(ENFORCE_EXACTLY_ONCE, enforceExactlyOnceSink)}")
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     try {
       val (repartitionBatchId, durationMs) = Utils.timeTakenMs {
         val lastCommittedBatchId = getLastCommittedBatchId()
@@ -127,6 +129,7 @@ class OfflineStateRepartitionRunner(
       // Needs at least 1 committed batch to repartition
       case None => throw OfflineStateRepartitionErrors.noCommittedBatchError(checkpointLocation)
     }
+    planChangeLogger.warn("getLastCommittedBatchId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def getLastBatchId(): Long = {
@@ -134,6 +137,7 @@ class OfflineStateRepartitionRunner(
       case Some(id) => id
       case None => throw OfflineStateRepartitionErrors.noBatchFoundError(checkpointLocation)
     }
+    planChangeLogger.warn("getLastBatchId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def createNewBatchIfNeeded(lastBatchId: Long, lastCommittedBatchId: Long): Long = {
@@ -179,6 +183,7 @@ class OfflineStateRepartitionRunner(
         }
       }
     }
+    planChangeLogger.warn("createNewBatchIfNeeded(lastBatchId,lastCommittedBatchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", lastBatchId, lastCommittedBatchId, lastBatchId)
   }
 
   private def skipUncommittedBatches(lastBatchId: Long, lastCommittedBatchId: Long): Unit = {
@@ -210,6 +215,7 @@ class OfflineStateRepartitionRunner(
       .getOrElse(throw OfflineStateRepartitionErrors
         .offsetSeqNotFoundError(checkpointLocation, lastCommittedBatchId))
 
+      planChangeLogger.warn("createNewBatchFromLastCommitted(lastBatchId,lastCommittedBatchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", lastBatchId, lastCommittedBatchId, lastBatchId)
     // Missing offset metadata not supported
     val lastCommittedMetadata = lastCommittedOffsetSeq.metadataOpt.getOrElse(
       throw OfflineStateRepartitionErrors.missingOffsetSeqMetadataError(
@@ -260,6 +266,7 @@ class OfflineStateRepartitionRunner(
     val stateRootLocation = new Path(
       resolvedCpLocation, StreamingCheckpointConstants.DIR_NAME_STATE).toString
 
+    planChangeLogger.warn("updateNumPartitionsInOperatorMetadata(newBatchId,readBatchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", newBatchId, readBatchId, newBatchId)
     allOperatorsMetadata.foreach { opMetadata =>
       opMetadata match {
         // We would only update shuffle partitions for v2 op metadata since it is versioned.

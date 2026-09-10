@@ -42,6 +42,7 @@ private[sql] class AvroOptions(
   import AvroOptions._
 
   private def parseBoolean(optionName: String, value: String): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     try {
       value.toBoolean
     } catch {
@@ -54,6 +55,7 @@ private[sql] class AvroOptions(
 
   private def getBoolean(optionName: String, defaultValue: => Boolean): Boolean = {
     parameters.get(optionName).map(v => parseBoolean(optionName, v)).getOrElse(defaultValue)
+    planChangeLogger.warn("getBoolean(optionName,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", optionName, defaultValue)
   }
 
   def this(parameters: Map[String, String], conf: Configuration) = {
@@ -198,6 +200,7 @@ private[sql] object AvroOptions extends DataSourceOptions {
       .map(_.sessionState.newHadoopConf())
       .getOrElse(new Configuration())
     new AvroOptions(CaseInsensitiveMap(parameters), hadoopConf)
+      planChangeLogger.warn("apply(parameters)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parameters)
   }
 
   val IGNORE_EXTENSION = newOption("ignoreExtension")

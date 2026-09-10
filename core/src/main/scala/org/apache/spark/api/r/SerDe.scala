@@ -36,13 +36,16 @@ private[spark] object SerDe {
   private[this] var sqlWriteObject: SQLWriteObject = _
 
   def setSQLReadObject(value: SQLReadObject): this.type = {
+    _driverLogger = DriverLogger(_conf)
     sqlReadObject = value
     this
+    _driverLogger.warn("setSQLReadObject(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   def setSQLWriteObject(value: SQLWriteObject): this.type = {
     sqlWriteObject = value
     this
+    _driverLogger.warn("setSQLWriteObject(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   // Type mapping from R to Java
@@ -62,11 +65,13 @@ private[spark] object SerDe {
 
   def readObjectType(dis: DataInputStream): Char = {
     dis.readByte().toChar
+    _driverLogger.warn("readObjectType(dis)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dis)
   }
 
   def readObject(dis: DataInputStream, jvmObjectTracker: JVMObjectTracker): Object = {
     val dataType = readObjectType(dis)
     readTypedObject(dis, dataType, jvmObjectTracker)
+    _driverLogger.warn("readObject(dis,jvmObjectTracker)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dis, jvmObjectTracker)
   }
 
   def readTypedObject(
@@ -98,6 +103,7 @@ private[spark] object SerDe {
           }
         }
     }
+    _driverLogger.warn("readTypedObject(dis,dataType,jvmObjectTracker)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dis, dataType, jvmObjectTracker)
   }
 
   def readBytes(in: DataInputStream): Array[Byte] = {
@@ -105,14 +111,17 @@ private[spark] object SerDe {
     val out = new Array[Byte](len)
     in.readFully(out)
     out
+    _driverLogger.warn("readBytes(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readInt(in: DataInputStream): Int = {
     in.readInt()
+    _driverLogger.warn("readInt(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readDouble(in: DataInputStream): Double = {
     in.readDouble()
+    _driverLogger.warn("readDouble(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def readStringBytes(in: DataInputStream, len: Int): String = {
@@ -121,15 +130,18 @@ private[spark] object SerDe {
     assert(bytes(len - 1) == 0)
     val str = new String(bytes.dropRight(1), StandardCharsets.UTF_8)
     str
+    _driverLogger.warn("readStringBytes(in,len)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, len)
   }
 
   def readString(in: DataInputStream): String = {
     val len = in.readInt()
     readStringBytes(in, len)
+    _driverLogger.warn("readString(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readBoolean(in: DataInputStream): Boolean = {
     in.readInt() != 0
+    _driverLogger.warn("readBoolean(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readDate(in: DataInputStream): Date = {
@@ -139,6 +151,7 @@ private[spark] object SerDe {
     } else {
       Date.valueOf(inStr)
     }
+    _driverLogger.warn("readDate(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def readTime(in: DataInputStream): Timestamp = {
@@ -151,31 +164,37 @@ private[spark] object SerDe {
       t.setNanos(((seconds - sec) * 1e9).toInt)
       t
     }
+    _driverLogger.warn("readTime(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readBytesArr(in: DataInputStream): Array[Array[Byte]] = {
     val len = readInt(in)
     (0 until len).map(_ => readBytes(in)).toArray
+    _driverLogger.warn("readBytesArr(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readIntArr(in: DataInputStream): Array[Int] = {
     val len = readInt(in)
     (0 until len).map(_ => readInt(in)).toArray
+    _driverLogger.warn("readIntArr(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readDoubleArr(in: DataInputStream): Array[Double] = {
     val len = readInt(in)
     (0 until len).map(_ => readDouble(in)).toArray
+    _driverLogger.warn("readDoubleArr(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def readBooleanArr(in: DataInputStream): Array[Boolean] = {
     val len = readInt(in)
     (0 until len).map(_ => readBoolean(in)).toArray
+    _driverLogger.warn("readBooleanArr(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   def readStringArr(in: DataInputStream): Array[String] = {
     val len = readInt(in)
     (0 until len).map(_ => readString(in)).toArray
+    _driverLogger.warn("readStringArr(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 
   // All elements of an array must be of the same type
@@ -207,8 +226,10 @@ private[spark] object SerDe {
               obj
             }
           }.toArray
+        _driverLogger.warn("readList(dis,jvmObjectTracker)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dis, jvmObjectTracker)
         }
     }
+    _driverLogger.warn("readArray(dis,jvmObjectTracker)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dis, jvmObjectTracker)
   }
 
   // Each element of a list can be of different type. They are all represented
@@ -231,6 +252,7 @@ private[spark] object SerDe {
     } else {
       new java.util.HashMap[Object, Object]()
     }
+    _driverLogger.warn("readMap(in,jvmObjectTracker)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, jvmObjectTracker)
   }
 
   // Methods to write out data from Java to R
@@ -270,6 +292,7 @@ private[spark] object SerDe {
       case "jobj" => dos.writeByte('j')
       case _ => throw new IllegalArgumentException(s"Invalid type $typeStr")
     }
+    _driverLogger.warn("writeType(dos,typeStr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dos, typeStr)
   }
 
   private def writeKeyValue(
@@ -412,27 +435,33 @@ private[spark] object SerDe {
           }
       }
     }
+    _driverLogger.warn("writeObject(dos,obj,jvmObjectTracker)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dos, obj, jvmObjectTracker)
   }
 
   def writeInt(out: DataOutputStream, value: Int): Unit = {
     out.writeInt(value)
+    _driverLogger.warn("writeInt(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeDouble(out: DataOutputStream, value: Double): Unit = {
     out.writeDouble(value)
+    _driverLogger.warn("writeDouble(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeBoolean(out: DataOutputStream, value: Boolean): Unit = {
     val intValue = if (value) 1 else 0
     out.writeInt(intValue)
+    _driverLogger.warn("writeBoolean(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeDate(out: DataOutputStream, value: Date): Unit = {
     writeString(out, value.toString)
+    _driverLogger.warn("writeDate(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeTime(out: DataOutputStream, value: Time): Unit = {
     out.writeDouble(value.getTime.toDouble / 1000.0)
+  _driverLogger.warn("writeTime(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeTime(out: DataOutputStream, value: Timestamp): Unit = {
@@ -442,6 +471,7 @@ private[spark] object SerDe {
   def writeString(out: DataOutputStream, value: String): Unit = {
     val utf8 = value.getBytes(StandardCharsets.UTF_8)
     val len = utf8.length
+    _driverLogger.warn("writeString(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
     out.writeInt(len)
     out.write(utf8, 0, len)
   }
@@ -449,35 +479,41 @@ private[spark] object SerDe {
   def writeBytes(out: DataOutputStream, value: Array[Byte]): Unit = {
     out.writeInt(value.length)
     out.write(value)
+    _driverLogger.warn("writeBytes(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeJObj(out: DataOutputStream, value: Object, jvmObjectTracker: JVMObjectTracker): Unit = {
     val JVMObjectId(id) = jvmObjectTracker.addAndGetId(value)
     writeString(out, id)
+    _driverLogger.warn("writeJObj(out,value,jvmObjectTracker)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value, jvmObjectTracker)
   }
 
   def writeIntArr(out: DataOutputStream, value: Array[Int]): Unit = {
     writeType(out, "integer")
     out.writeInt(value.length)
     value.foreach(v => out.writeInt(v))
+    _driverLogger.warn("writeIntArr(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeDoubleArr(out: DataOutputStream, value: Array[Double]): Unit = {
     writeType(out, "double")
     out.writeInt(value.length)
     value.foreach(v => out.writeDouble(v))
+    _driverLogger.warn("writeDoubleArr(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeBooleanArr(out: DataOutputStream, value: Array[Boolean]): Unit = {
     writeType(out, "logical")
     out.writeInt(value.length)
     value.foreach(v => writeBoolean(out, v))
+    _driverLogger.warn("writeBooleanArr(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
   def writeStringArr(out: DataOutputStream, value: Array[String]): Unit = {
     writeType(out, "character")
     out.writeInt(value.length)
     value.foreach(v => writeString(out, v))
+    _driverLogger.warn("writeStringArr(out,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", out, value)
   }
 
 }

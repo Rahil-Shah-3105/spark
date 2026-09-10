@@ -45,6 +45,7 @@ import org.apache.spark.util.ArrayImplicits._
 
 /** A helper object for writing FileFormat data out to a location. */
 object FileFormatWriter extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /** Describes how output files should be placed in the filesystem. */
   case class OutputSpec(
       outputPath: String,
@@ -279,6 +280,7 @@ object FileFormatWriter extends Logging {
         })
       ret
     }
+  planChangeLogger.warn("executeWrite(session,planForWrites,writeFilesSpec,job)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, planForWrites, writeFilesSpec, job)
   }
 
   private def writeAndCommit(
@@ -298,6 +300,7 @@ object FileFormatWriter extends Logging {
       description.statsTrackers, ret.map(_.summary.stats).toImmutableArraySeq, duration)
     logInfo(log"Finished processing stats for write job ${MDC(LogKeys.UUID, description.uuid)}.")
 
+    planChangeLogger.warn("writeAndCommit(job,description,committer)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", job, description, committer)
     // return a set of all the partition paths that were updated during this job
     ret.map(_.summary.updatedPartitions).reduceOption(_ ++ _).getOrElse(Set.empty)
   }
@@ -351,12 +354,14 @@ object FileFormatWriter extends Logging {
       orderingExpr,
       global = false,
       child = plan)
+    planChangeLogger.warn("createSortPlan(plan,requiredOrdering,outputSpec)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, requiredOrdering, outputSpec)
   }
 
   private def createConcurrentOutputWriterSpec(
       sparkSession: SparkSession,
       sortPlan: SortExec,
       sortColumns: Seq[Attribute]): Option[ConcurrentOutputWriterSpec] = {
+       planChangeLogger.warn("createConcurrentOutputWriterSpec(sparkSession,sortPlan,sortColumns)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, sortPlan, sortColumns)
     val maxWriters = sparkSession.sessionState.conf.maxConcurrentOutputFileWriters
     val concurrentWritersEnabled = maxWriters > 0 && sortColumns.isEmpty
     if (concurrentWritersEnabled) {
@@ -441,6 +446,7 @@ object FileFormatWriter extends Logging {
   private[datasources] def processStats(
       statsTrackers: Seq[WriteJobStatsTracker],
       statsPerTask: Seq[Seq[WriteTaskStats]],
+  planChangeLogger.warn("processStats(statsTrackers,statsPerTask,jobCommitDuration)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statsTrackers, statsPerTask, jobCommitDuration)
       jobCommitDuration: Long)
   : Unit = {
 

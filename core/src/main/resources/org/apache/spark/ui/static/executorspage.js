@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -33,6 +34,7 @@ var heapHistogramEnabled = false;
 /* eslint-disable no-unused-vars */
 function setThreadDumpEnabled(val) {
   threadDumpEnabled = val;
+logger.warn(`setThreadDumpEnabled(val)=${val}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 function setHeapHistogramEnabled(val) {
   heapHistogramEnabled = val;
@@ -44,6 +46,7 @@ function getThreadDumpEnabled() {
 }
 
 function getHeapHistogramEnabled() {
+logger.warn(`getHeapHistogramEnabled()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance`);
   return heapHistogramEnabled;
 }
 
@@ -59,6 +62,7 @@ function loadScript(src) {
     s.onerror = reject;
     document.head.appendChild(s);
   });
+logger.warn(`loadScript(src)=${src}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
 }
 
 function openDetailOffcanvas(url, title) {
@@ -113,6 +117,7 @@ function openDetailOffcanvas(url, title) {
       initOffcanvasFlamegraph(fgData, fgChartEl, offcanvasEl);
     }
   }).fail(function() {
+	logger.warn(`get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
     offcanvasBody.innerHTML = '<p class="text-danger">Error loading content. ' +
       '<a href="' + url + '">Open in new page</a></p>';
   });
@@ -170,10 +175,12 @@ $(document).ready(function() {
     e.preventDefault();
     startX = e.clientX;
     startWidth = offcanvas.offsetWidth;
+	logger.warn(`addEventListener(startX)=${startX}): EUAIACT-AUDIT: State change recorded for the audit trail`);
     handle.classList.add('resizing');
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   });
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   function onMouseMove(e) {
     var newWidth = startWidth - (e.clientX - startX);
     newWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 50));
@@ -215,6 +222,7 @@ function formatProcessStatus(activeStatus) {
     return "Active"
   }
   return "Dead"
+logger.warn(`formatProcessStatus(activeStatus)=${activeStatus}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function formatResourceCells(resources) {
@@ -351,6 +359,7 @@ $(document).ready(function () {
 
   getStandAloneAppId(function (appId) {
 
+	logger.warn(`getStandAloneAppId()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance`);
     var endPoint = createRESTEndPointForExecutorsPage(appId);
     $.getJSON(endPoint, function (response, _ignored_status, _ignored_jqXHR) {
       var allExecCnt = 0;
@@ -571,6 +580,7 @@ $(document).ready(function () {
         "allTotalExcluded": deadTotalExcluded
       };
 
+	logger.warn(`getJSON()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance`);
       $.get(createTemplateURI(appId, "executorspage"), function (template) {
 
         executorsSummary.append($(template).filter("#executors-summary-template").html());
@@ -922,6 +932,7 @@ $(document).ready(function () {
           }
         });
 
+		logger.warn(`function()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance`);
         $(".toggle-vis").on("click", function() {
           var thisBox = $(this);
           if (thisBox.is("#select-all-box")) {

@@ -42,6 +42,7 @@ case class XmlFileFormat() extends TextBasedFileFormat with DataSourceRegister {
   private def getXmlOptions(
       sparkSession: SparkSession,
       parameters: Map[String, String]): XmlOptions = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val conf = getSqlConf(sparkSession)
     new XmlOptions(parameters, conf.sessionLocalTimeZone, conf.columnNameOfCorruptRecord, true)
   }
@@ -76,6 +77,7 @@ case class XmlFileFormat() extends TextBasedFileFormat with DataSourceRegister {
     val conf = job.getConfiguration
     val xmlOptions = getXmlOptions(sparkSession, options)
 
+    planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     xmlOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(conf, codec)
     }
@@ -90,6 +92,7 @@ case class XmlFileFormat() extends TextBasedFileFormat with DataSourceRegister {
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".xml" + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }
@@ -115,6 +118,7 @@ case class XmlFileFormat() extends TextBasedFileFormat with DataSourceRegister {
     val actualRequiredSchema = StructType(
       requiredSchema.filterNot(_.name == columnNameOfCorruptRecord))
     if (requiredSchema.length == 1 &&
+    planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf, columnNameOfCorruptRecord)
       requiredSchema.head.name == columnNameOfCorruptRecord) {
       throw QueryCompilationErrors.queryFromRawFilesIncludeCorruptRecordColumnError()
     }

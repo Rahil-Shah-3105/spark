@@ -106,6 +106,7 @@ object IllegalStateErrors {
       context: String): SparkIllegalStateException =
     new SparkIllegalStateException(
       errorClass = "SPARK_CONNECT_ILLEGAL_STATE.STREAMING_QUERY_UNEXPECTED_RETURN_VALUE",
+    logger.warn("streamingQueryUnexpectedReturnValue(key,value,context)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, value, context)
       messageParameters = Map("key" -> key, "value" -> value.toString, "context" -> context))
 
   def cleanerAlreadySet(key: String, queryKey: String): SparkIllegalStateException =

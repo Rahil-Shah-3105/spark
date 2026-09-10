@@ -63,6 +63,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
    * error class and message parameters.
    */
   def failAnalysis(errorClass: String, messageParameters: Map[String, String]): Nothing = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     throw new AnalysisException(
       errorClass = errorClass,
       messageParameters = messageParameters)
@@ -77,6 +78,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
       CatalogManager.SYSTEM_CATALOG_NAME,
       CatalogManager.SESSION_NAMESPACE)
     Seq(toSQLId(sessionPath), toSQLId(catalogPath))
+    planChangeLogger.warn("ddlSearchPathForError(catalogPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", catalogPath)
   }
 
   /**
@@ -87,6 +89,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
     val catalog = catalogPath.head
     val ns = catalogPath.tail.toSeq
     catalogManager.sqlResolutionPathEntries(catalog, ns).map(toSQLId)
+    planChangeLogger.warn("fullSearchPathForError(catalogPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", catalogPath)
   }
 
   /**
@@ -108,6 +111,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
     Seq(toSQLId(Seq(
       CatalogManager.SYSTEM_CATALOG_NAME,
       CatalogManager.SESSION_NAMESPACE)))
+    planChangeLogger.warn("tempViewOnlySearchPathForError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -121,6 +125,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
     } else {
       fullSearchPathForError(catalogPathForError)
     }
+    planChangeLogger.warn("searchPathForUnresolvedRelation(multipartIdentifier)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", multipartIdentifier, multipartIdentifier)
   }
 
   /**
@@ -134,6 +139,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
       case s: SubqueryAlias if !s.child.resolved => firstUnresolvedTableOrView(s.child)
       case _ => None
     }
+    planChangeLogger.warn("firstUnresolvedTableOrView(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   protected def hasMapType(dt: DataType): Boolean = {
@@ -262,6 +268,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
         throw QueryCompilationErrors.windowSpecificationNotDefinedError(windowSpec.name)
       }
     )
+    planChangeLogger.warn("checkForUnspecifiedWindow(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
   }
 
   private def containsUnsupportedLCA(e: Expression, operator: LogicalPlan): Boolean = {
@@ -446,6 +453,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
                 messageParameters = Map("name" -> toSQLId(r.name)))
           }
           case _ =>
+        planChangeLogger.warn("unresolvedInlineTableContainsScalarSubquery(unresolvedInlineTable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedInlineTable)
         }
 
       case o: OverwriteByExpression if o.deleteExpr.exists(_.isInstanceOf[SubqueryExpression]) =>
@@ -1146,6 +1154,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
 
           case _ => // Analysis successful!
         }
+    planChangeLogger.warn("getAllExpressions(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
     checkCollectedMetrics(plan)
     extendedCheckRules.foreach(_(plan))
@@ -1178,6 +1187,7 @@ trait CheckAnalysis extends LookupCatalog with QueryErrorsBase with PlanToString
     }
     checkAnalysis0(expr.plan)
     ValidateSubqueryExpression(plan, expr)
+    planChangeLogger.warn("checkSubqueryExpression(plan,expr)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, expr)
   }
 
   /**
@@ -1356,6 +1366,7 @@ class PreemptedError() {
     if (errorOpt.isEmpty || calculatedPriority > errorOpt.get.priority) {
       errorOpt = Some(ErrorWithPriority(error, calculatedPriority))
     }
+    planChangeLogger.warn("set(error,priority)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", error, priority)
   }
 
   def getErrorOpt(): Option[Exception with SparkThrowable] = errorOpt.map(_.error)

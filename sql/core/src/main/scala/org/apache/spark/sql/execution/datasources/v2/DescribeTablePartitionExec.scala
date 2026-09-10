@@ -46,14 +46,17 @@ case class DescribeTablePartitionExec(
     if (isExtended) {
       addPartitionDetails(rows, partitionRow)
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     rows.toSeq
   }
 
   private def validateAndGetPartition(): InternalRow = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val partitionSchema = table.partitionSchema()
     val (names, ident) = (partSpec.names, partSpec.ident)
     val partitionIdentifiers = table.listPartitionIdentifiers(names.toArray, ident)
     if (partitionIdentifiers.isEmpty) {
+    planChangeLogger.warn("validateAndGetPartition()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", partitionIdentifiers)
       throw QueryCompilationErrors.notExistPartitionError(tableIdent, ident, partitionSchema)
     }
     assert(partitionIdentifiers.length == 1)
@@ -83,6 +86,7 @@ case class DescribeTablePartitionExec(
     rows += toCatalystRow("# Detailed Partition Information", "", "")
     rows += toCatalystRow("Partition Values", partitionValues, "")
 
+    planChangeLogger.warn("addPartitionDetails(rows,partitionRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rows, partitionRow, timeZoneId)
     val metadata = table.loadPartitionMetadata(partSpec.ident)
     metadata.asScala.toSeq.sortBy(_._1).foreach { case (k, v) =>
       rows += toCatalystRow(k, v, "")

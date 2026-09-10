@@ -34,6 +34,7 @@ from pyspark.sql.connect.session import SparkSession
 from pyspark.util import handle_worker_exception
 from typing import IO
 from pyspark.worker_util import check_python_version
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 pickle_ser = CPickleSerializer()
 utf8_deserializer = UTF8Deserializer()
@@ -50,6 +51,7 @@ def main(infile: IO, outfile: IO) -> None:
     def process(df_id, batch_id):  # type: ignore[no-untyped-def]
         global spark
         print(f"{log_name} Started batch {batch_id} with DF id {df_id} and session id {session_id}")
+        logger.warning("process(df_id,batch_id)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", df_id, batch_id, df_id)
         batch_df = spark_connect_session._create_remote_dataframe(df_id)
         func(batch_df, batch_id)
         print(

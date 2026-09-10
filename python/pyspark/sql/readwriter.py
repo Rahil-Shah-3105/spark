@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from pyspark.sql.session import SparkSession
     from pyspark.sql.dataframe import DataFrame
     from pyspark.sql.streaming import StreamingQuery
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["DataFrameReader", "DataFrameWriter", "DataFrameWriterV2"]
 
@@ -114,6 +115,7 @@ class DataFrameReader(OptionUtils):
         +---+------------+
         """
         self._jreader = self._jreader.format(source)
+        logger.warning("format(self,source)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, source)
         return self
 
     def schema(self, schema: Union[StructType, str]) -> "DataFrameReader":
@@ -208,6 +210,7 @@ class DataFrameReader(OptionUtils):
         if value is None:
             return self
         self._jreader = self._jreader.option(key, to_str(value))
+        logger.warning("option(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         return self
 
     def options(self, **options: "OptionalPrimitiveType") -> "DataFrameReader":
@@ -257,6 +260,7 @@ class DataFrameReader(OptionUtils):
         for k, v in options.items():
             if v is not None:
                 self._jreader = self._jreader.option(k, to_str(v))
+        logger.warning("options(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self
 
     def load(
@@ -589,6 +593,7 @@ class DataFrameReader(OptionUtils):
         ...     "endingVersion", "20"
         ... ).changes("my_table")  # doctest: +SKIP
         """
+        logger.warning("changes(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         return self._df(self._jreader.changes(tableName))
 
     def parquet(self, *paths: str, **options: "OptionalPrimitiveType") -> "DataFrame":
@@ -690,6 +695,7 @@ class DataFrameReader(OptionUtils):
         recursiveFileLookup = options.get("recursiveFileLookup", None)
         datetimeRebaseMode = options.get("datetimeRebaseMode", None)
         int96RebaseMode = options.get("int96RebaseMode", None)
+        logger.warning("parquet(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._set_opts(
             mergeSchema=mergeSchema,
             pathGlobFilter=pathGlobFilter,
@@ -1360,6 +1366,7 @@ class DataFrameWriter(OptionUtils):
         """
         # At the JVM side, the default value of mode is already set to "error".
         # So, if the given saveMode is None, we will not call JVM-side's mode method.
+        logger.warning("mode(self,saveMode)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, saveMode)
         if saveMode is not None:
             self._jwrite = self._jwrite.mode(saveMode)
         return self
@@ -1551,6 +1558,7 @@ class DataFrameWriter(OptionUtils):
         from pyspark.sql.classic.column import _to_seq
 
         if len(cols) == 1 and isinstance(cols[0], (list, tuple)):
+            logger.warning("partitionBy(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             cols = cols[0]  # type: ignore[assignment]
         self._jwrite = self._jwrite.partitionBy(
             _to_seq(self._spark._sc, cast(Iterable["ColumnOrName"], cols))
@@ -1773,6 +1781,7 @@ class DataFrameWriter(OptionUtils):
 
         if len(cols) == 1 and isinstance(cols[0], (list, tuple)):
             cols = cols[0]  # type: ignore[assignment]
+            logger.warning("clusterBy(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         assert len(cols) > 0, "clusterBy needs one or more clustering columns."
         self._jwrite = self._jwrite.clusterBy(cols[0], _to_seq(self._spark._sc, cols[1:]))
         return self
@@ -1890,6 +1899,7 @@ class DataFrameWriter(OptionUtils):
         +---+------------+
         >>> _ = spark.sql("DROP TABLE tblA")
         """
+        logger.warning("insertInto(self,tableName,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName, overwrite)
         if overwrite is not None:
             self.mode("overwrite" if overwrite else "append")
         self._jwrite.insertInto(tableName)
@@ -2556,6 +2566,7 @@ class DataFrameWriterV2:
 
         .. versionadded:: 3.1.0
         """
+        logger.warning("create(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._jwriter.create()
 
     def replace(self) -> None:
@@ -2580,6 +2591,7 @@ class DataFrameWriterV2:
 
         .. versionadded:: 3.1.0
         """
+        logger.warning("createOrReplace(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._jwriter.createOrReplace()
 
     def append(self) -> None:
@@ -2598,6 +2610,7 @@ class DataFrameWriterV2:
         .. versionadded:: 3.1.0
         """
         from pyspark.sql.classic.column import _to_java_column
+        logger.warning("overwrite(self,condition)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, condition)
 
         condition = _to_java_column(condition)
         self._jwriter.overwrite(condition)
@@ -2612,6 +2625,7 @@ class DataFrameWriterV2:
 
         .. versionadded:: 3.1.0
         """
+        logger.warning("overwritePartitions(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._jwriter.overwritePartitions()
 
 

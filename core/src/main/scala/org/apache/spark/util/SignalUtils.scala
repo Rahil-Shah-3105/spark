@@ -37,6 +37,7 @@ private[spark] object SignalUtils extends Logging {
 
   /** Register a signal handler to log signals on UNIX-like systems. */
   def registerLogger(log: Logger): Unit = synchronized {
+    _driverLogger = DriverLogger(_conf)
     if (!loggerRegistered) {
       Seq("TERM", "HUP", "INT").foreach { sig =>
         SignalUtils.register(sig) {
@@ -61,6 +62,8 @@ private[spark] object SignalUtils extends Logging {
       register(signal, log"Failed to register signal handler for ${MDC(SIGNAL, signal)}",
         logStackTrace = true)(action)
     }
+      _driverLogger.warn("register(signal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", signal)
+      _driverLogger.warn("register(signal,failMessage,logStackTrace)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", signal, failMessage, logStackTrace)
   }
 
   /**

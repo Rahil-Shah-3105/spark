@@ -30,6 +30,7 @@ case class RenamePartitionExec(
     from: ResolvedPartitionSpec,
     to: ResolvedPartitionSpec,
     refreshCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def output: Seq[Attribute] = Seq.empty
 
@@ -38,5 +39,6 @@ case class RenamePartitionExec(
       refreshCache()
     }
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

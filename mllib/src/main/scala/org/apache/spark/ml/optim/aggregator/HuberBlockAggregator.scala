@@ -153,6 +153,7 @@ private[ml] class HuberBlockAggregator(
       gradientSumArray(dim - 2) += multiplierSum
     }
 
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     gradientSumArray(dim - 1) += sigmaGradSum
 
     this

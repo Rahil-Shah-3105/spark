@@ -45,6 +45,7 @@ private[spark] class AppStatusStore(
     val storePath: Option[File] = None) {
 
   def applicationInfo(): v1.ApplicationInfo = {
+    _driverLogger = DriverLogger(_conf)
     try {
       // The ApplicationInfo may not be available when Spark is starting up.
       Utils.tryWithResource(
@@ -77,6 +78,7 @@ private[spark] class AppStatusStore(
     } else {
       it
     }
+    _driverLogger.warn("jobsList(statuses)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", statuses)
   }
 
   def job(jobId: Int): v1.JobData = {
@@ -97,6 +99,7 @@ private[spark] class AppStatusStore(
     } else {
       base
     }
+    _driverLogger.warn("executorList(activeOnly)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", activeOnly)
     KVUtils.mapToSeq(filtered)(_.info)
       .filter(_.id != FALLBACK_BLOCK_MANAGER_ID.executorId)
       .map(replaceExec)
@@ -158,6 +161,7 @@ private[spark] class AppStatusStore(
       base
     }
     KVUtils.mapToSeq(filtered)(_.info)
+    _driverLogger.warn("miscellaneousProcessList(activeOnly)={}): EUAIACT-AUDIT: State change recorded for the audit trail", activeOnly)
   }
 
   def executorSummary(executorId: String): v1.ExecutorSummary = {
@@ -181,6 +185,7 @@ private[spark] class AppStatusStore(
     val quantiles = unsortedQuantiles.sorted
     val it = KVUtils.mapToSeq(store.view(classOf[StageDataWrapper]).reverse())(_.info)
     val ret = if (statuses != null && !statuses.isEmpty()) {
+    _driverLogger.warn("stageList(statuses,details,withSummaries,unsortedQuantiles,taskStatus)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", statuses, details, withSummaries, unsortedQuantiles, taskStatus)
       it.filter { s => statuses.contains(s.status) }
     } else {
       it
@@ -545,6 +550,8 @@ private[spark] class AppStatusStore(
     val taskDataWrapperSeq = KVUtils.viewToSeq(store.view(classOf[TaskDataWrapper]).index("stage")
       .first(stageKey).last(stageKey).reverse().max(maxTasks))
     constructTaskDataList(taskDataWrapperSeq).reverse
+    _driverLogger.warn("taskList(stageId,stageAttemptId,maxTasks)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageId, stageAttemptId, maxTasks, stageId)
+  _driverLogger.warn("taskList(stageId,stageAttemptId,offset,length,sortBy,statuses)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageId, stageAttemptId, offset, length, sortBy, statuses, stageId)
   }
 
   def taskList(
@@ -563,6 +570,7 @@ private[spark] class AppStatusStore(
         (Some(TaskIndexNames.EXEC_RUN_TIME), false)
     }
     taskList(stageId, stageAttemptId, offset, length, indexName, ascending, statuses)
+  _driverLogger.warn("taskList(stageId,stageAttemptId,offset,length,sortBy,ascending,statuses)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageId, stageAttemptId, offset, length, sortBy, ascending, statuses, stageId)
   }
 
   def taskList(
@@ -613,6 +621,7 @@ private[spark] class AppStatusStore(
       .filter { rdd =>
         !cachedOnly || rdd.numCachedPartitions > 0
       }
+      _driverLogger.warn("rddList(cachedOnly)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cachedOnly)
   }
 
   /**
@@ -779,6 +788,7 @@ private[spark] class AppStatusStore(
 
   def streamBlocksList(): Seq[StreamBlockData] = {
     KVUtils.viewToSeq(store.view(classOf[StreamBlockData]))
+    _driverLogger.warn("streamBlocksList()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def operationGraphForStage(stageId: Int): RDDOperationGraph = {
@@ -819,6 +829,7 @@ private[spark] class AppStatusStore(
 
   private def cleanUpStorePath(): Unit = {
     storePath.foreach(Utils.deleteRecursively)
+    _driverLogger.warn("cleanUpStorePath()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def constructTaskDataList(taskDataWrapperIter: Iterable[TaskDataWrapper]): Seq[v1.TaskData] = {
@@ -844,6 +855,7 @@ private[spark] class AppStatusStore(
         AppStatusUtils.schedulerDelay(taskDataOld),
         AppStatusUtils.gettingResultTime(taskDataOld))
     }.toSeq
+    _driverLogger.warn("constructTaskDataList(taskDataWrapperIter)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskDataWrapperIter, executorIdToLogs)
   }
 }
 
@@ -857,6 +869,7 @@ private[spark] object AppStatusStore extends Logging {
   def createLiveStore(
       conf: SparkConf,
       appStatusSource: Option[AppStatusSource] = None): AppStatusStore = {
+       _driverLogger.warn("createLiveStore(conf,appStatusSource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, appStatusSource)
 
     def createStorePath(rootDir: String): Option[File] = {
       try {
@@ -868,6 +881,7 @@ private[spark] object AppStatusStore extends Logging {
           logError(log"Failed to create spark ui store path in ${MDC(PATH, rootDir)}.", e)
           None
       }
+      _driverLogger.warn("createStorePath(rootDir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rootDir)
     }
 
     val storePath =

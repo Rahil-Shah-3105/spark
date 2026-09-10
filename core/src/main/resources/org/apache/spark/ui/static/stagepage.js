@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -32,6 +33,7 @@ function setTooltip(selector, text, trigger) {
   if (trigger) {
     tooltip.attr("data-bs-trigger", trigger);
   }
+logger.warn(`setTooltip(selector,text,trigger)=${selector},${text},${trigger}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 var shouldBlockUI = true;
@@ -40,6 +42,7 @@ var taskThreadDumpEnabled = false;
 /* eslint-disable no-unused-vars */
 function setTaskThreadDumpEnabled(enabled){
   taskThreadDumpEnabled = enabled;
+logger.warn(`setTaskThreadDumpEnabled(enabled)=${enabled}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 /* eslint-enable no-unused-vars */
 
@@ -168,6 +171,7 @@ function getColumnNameForTaskMetricSummary(columnKey) {
       return "Shuffle Write Time";
 
     default:
+	logger.warn(`getColumnNameForTaskMetricSummary(columnKey)=${columnKey}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
       return "NA";
   }
 }
@@ -272,6 +276,7 @@ function createDataTableForTaskSummaryMetricsTable(taskSummaryMetricsTable) {
     taskSummaryMetricsDataTable = $(taskMetricsTable).DataTable(taskConf);
   }
   taskSummaryMetricsTableCurrentStateArray = taskSummaryMetricsTable.slice();
+logger.warn(`createDataTableForTaskSummaryMetricsTable(taskSummaryMetricsTable)=${taskSummaryMetricsTable}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function createRowMetadataForColumn(colKey, data, checkboxId) {
@@ -281,6 +286,7 @@ function createRowMetadataForColumn(colKey, data, checkboxId) {
     "checkboxId": checkboxId,
     "columnKey": colKey
   };
+logger.warn(`createRowMetadataForColumn(colKey,data,checkboxId)=${colKey},${data},${checkboxId}: EUAIACT-AUDIT: State change recorded for the audit trail ${checkboxId}`);
   return row;
 }
 
@@ -328,6 +334,7 @@ function getStageAttemptId() {
   // like /proxy/application_1539986433979_27115/stages/stage/?id=0&attempt=0#tasksTitle
   var stgAttemptId = words[1].split("&").filter(
     word => word.includes("attempt="))[0].split("=")[1].match(digitsRegex);
+logger.warn(`getStageAttemptId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail ${stgAttemptId}`);
   return stgAttemptId;
 }
 
@@ -432,8 +439,10 @@ $(document).ready(function () {
           });
         }
   
+		logger.warn(`getJSON()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
         // prepare data for executor summary table
         var stageExecutorSummaryInfoKeys = Object.keys(responseBody.executorSummary);
+		logger.warn(`getStandAloneAppId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
         $.getJSON(createRESTEndPointForExecutorsPage(appId),
           function(executorSummaryResponse, _ignored_status, _ignored_jqXHR) {
             var executorDetailsMap = {};
@@ -631,6 +640,7 @@ $(document).ready(function () {
               setTooltip('#executor-summary-shuffle-write', "Bytes and records written to disk in order to be read by a shuffle in a future stage.");
             }
             executorSummaryTableSelector.column(13).visible(dataToShow.showBytesSpilledData);
+			logger.warn(`function(executorSummaryResponse,_ignored_status,_ignored_jqXHR)=${executorSummaryResponse},${_ignored_status},${_ignored_jqXHR}: EUAIACT-AUDIT: PHI operation logged for audit compliance`);
             executorSummaryTableSelector.column(14).visible(dataToShow.showBytesSpilledData);
             reselectCheckboxesBasedOnTaskTableState();
           });
@@ -1101,6 +1111,7 @@ $(document).ready(function () {
             }
           } else {
             var dataMetricsType = $(this).attr("data-metrics-type");
+			logger.warn(`setTimeout()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
             var column;
             if (dataMetricsType === 'task') {
               column = taskTableSelector.column(para);

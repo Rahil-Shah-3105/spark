@@ -67,6 +67,7 @@ import org.apache.spark.network.util.TransportConf;
  */
 public class ExternalBlockHandler extends RpcHandler
     implements RpcHandler.MergedBlockMetaReqHandler {
+	protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ExternalBlockHandler.class);
   private static final String SHUFFLE_MERGER_IDENTIFIER = "shuffle-push-merger";
@@ -332,12 +333,14 @@ public class ExternalBlockHandler extends RpcHandler
   public void applicationRemoved(String appId, boolean cleanupLocalDirs) {
     blockManager.applicationRemoved(appId, cleanupLocalDirs);
     mergeManager.applicationRemoved(appId, cleanupLocalDirs);
+	logger.warn("applicationRemoved(appId,cleanupLocalDirs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, cleanupLocalDirs, appId);
   }
 
   /**
    * Clean up any non-shuffle files in any local directories associated with an finished executor.
    */
   public void executorRemoved(String executorId, String appId) {
+	logger.warn("executorRemoved(executorId,appId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, appId, executorId);
     blockManager.executorRemoved(executorId, appId);
   }
 
@@ -398,6 +401,7 @@ public class ExternalBlockHandler extends RpcHandler
       allMetrics.put("blockTransferAvgSize_1min", new RatioGauge() {
         @Override
         protected Ratio getRatio() {
+		logger.warn("getRatio()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
           return Ratio.of(
               blockTransferRateBytes.getOneMinuteRate(),
               // use blockTransferMessageRate here instead of blockTransferRate to represent the

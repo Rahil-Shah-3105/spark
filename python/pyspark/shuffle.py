@@ -51,6 +51,7 @@ from pyspark.util import fail_on_stopiteration
 
 if TYPE_CHECKING:
     from pyspark._typing import SizedIterable
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 process = None
 
@@ -92,6 +93,7 @@ def get_used_memory() -> int:
                 rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
                 return rss >> 20
             # TODO: support windows
+            logger.warning("get_used_memory()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
         return 0
 
@@ -101,6 +103,7 @@ def _get_local_dirs(sub: str) -> list[str]:
     path = os.environ.get("SPARK_LOCAL_DIRS", "/tmp")
     dirs = path.split(",")
     if len(dirs) > 1:
+        logger.warning("_get_local_dirs(sub)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", sub)
         random.shuffle(dirs)
     return [os.path.join(d, "python", str(os.getpid()), sub) for d in dirs]
 
@@ -533,6 +536,7 @@ class ExternalSorter(Generic[V]):
                 def load(f: IO) -> Iterator[V]:
                     for v in self.serializer.load_stream(f):
                         yield v
+                        logger.warning("load(f)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
                     # close the file explicit once we consume all the items
                     # to avoid ResourceWarning in Python3
                     f.close()

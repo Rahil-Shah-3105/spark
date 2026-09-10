@@ -63,8 +63,10 @@ case class OptimizeSkewedJoin(ensureRequirements: EnsureRequirements)
    * SKEW_JOIN_SKEWED_PARTITION_THRESHOLD. Thus we pick the larger one as the skew threshold.
    */
   def getSkewThreshold(medianSize: Long): Long = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     conf.getConf(SQLConf.SKEW_JOIN_SKEWED_PARTITION_THRESHOLD).max(
       (medianSize * conf.getConf(SQLConf.SKEW_JOIN_SKEWED_PARTITION_FACTOR)).toLong)
+    planChangeLogger.warn("getSkewThreshold(medianSize)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", medianSize)
   }
 
   /**
@@ -80,6 +82,7 @@ case class OptimizeSkewedJoin(ensureRequirements: EnsureRequirements)
     } else {
       math.max(advisorySize, nonSkewSizes.sum / nonSkewSizes.length)
     }
+    planChangeLogger.warn("targetSize(sizes,skewThreshold)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sizes, skewThreshold)
   }
 
   private def canSplitLeftSide(joinType: JoinType) = {
@@ -94,6 +97,7 @@ case class OptimizeSkewedJoin(ensureRequirements: EnsureRequirements)
   private def getSizeInfo(medianSize: Long, sizes: Array[Long]): String = {
     s"median size: $medianSize, max size: ${sizes.max}, min size: ${sizes.min}, avg size: " +
       sizes.sum / sizes.length
+      planChangeLogger.warn("getSizeInfo(medianSize,sizes)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", medianSize, sizes)
   }
 
   /*
@@ -264,6 +268,7 @@ case class OptimizeSkewedJoin(ensureRequirements: EnsureRequirements)
     // accept the extra shuffles if the force-apply config is true.
     // TODO: It's possible that only one skewed join in the query plan leads to extra shuffles and
     //       we only need to skip optimizing that join. We should make the strategy smarter here.
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val optimized = optimizeSkewJoin(plan)
     val requirementSatisfied = if (ensureRequirements.requiredDistribution.isDefined) {
       ValidateRequirements.validate(optimized, ensureRequirements.requiredDistribution.get)

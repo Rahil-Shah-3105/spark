@@ -29,6 +29,7 @@ import org.apache.spark.util.Clock
 
 /** In-memory implementation of ValueState. */
 class InMemoryValueState[T](clock: Clock, ttl: TTLConfig) extends ValueState[T] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private val keyToStateValue = mutable.Map[Any, T]()
 
   private def getValue: Option[T] = {
@@ -84,6 +85,7 @@ class InMemoryListState[T](clock: Clock, ttl: TTLConfig) extends ListState[T] {
       )
     }
     keyToStateValue(ImplicitGroupingKeyTracker.getImplicitKeyOption.get) ++= newState
+    planChangeLogger.warn("appendList(newState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newState)
   }
 
   override def clear(): Unit = {
@@ -102,6 +104,7 @@ class InMemoryMapState[K, V](clock: Clock, ttl: TTLConfig) extends MapState[K, V
 
   override def getValue(key: K): V = {
     getMap.flatMap(_.get(key)).getOrElse(null.asInstanceOf[V])
+    planChangeLogger.warn("getValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   override def containsKey(key: K): Boolean = {
@@ -117,6 +120,7 @@ class InMemoryMapState[K, V](clock: Clock, ttl: TTLConfig) extends MapState[K, V
     }
 
     keyToStateValue(ImplicitGroupingKeyTracker.getImplicitKeyOption.get) += (key -> value)
+    planChangeLogger.warn("updateValue(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   override def iterator(): Iterator[(K, V)] = {
@@ -133,6 +137,7 @@ class InMemoryMapState[K, V](clock: Clock, ttl: TTLConfig) extends MapState[K, V
 
   override def removeKey(key: K): Unit = {
     getMap.foreach(_.remove(key))
+    planChangeLogger.warn("removeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   override def clear(): Unit = {
@@ -152,6 +157,7 @@ class InMemoryTimers {
       timeToKeys.put(expiryTimestampMs, mutable.HashSet[Any]())
     }
     timeToKeys(expiryTimestampMs).add(groupingKey)
+  planChangeLogger.warn("registerTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   def deleteTimer(expiryTimestampMs: Long): Unit = {
@@ -162,11 +168,13 @@ class InMemoryTimers {
         timeToKeys.remove(expiryTimestampMs)
       }
     }
+    planChangeLogger.warn("deleteTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
   }
 
   def listTimers(): Iterator[Long] = {
     val groupingKey = ImplicitGroupingKeyTracker.getImplicitKeyOption.get
     timeToKeys.iterator.filter(_._2.contains(groupingKey)).map(_._1)
+    planChangeLogger.warn("listTimers()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // Lists pairs (expiryTimestampMs, key) for all timers such that expiryTimestampMs<=currentTimeMs.
@@ -177,6 +185,7 @@ class InMemoryTimers {
       .flatMap(entry => entry._2.map(key => (entry._1, key.asInstanceOf[K])))
       .toList
       .sortBy(_._1)
+      planChangeLogger.warn("listExpiredTimers(currentTimeMs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", currentTimeMs)
   }
 }
 
@@ -214,12 +223,14 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
   /** Updates the current watermark. Used by TwsTester to sync watermark state. */
   def setWatermark(watermarkMs: Long): Unit = {
     currentWatermarkMs = watermarkMs
+    planChangeLogger.warn("setWatermark(watermarkMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", watermarkMs)
   }
 
   override def getValueState[T](
       stateName: String,
       valEncoder: Encoder[T],
       ttlConfig: TTLConfig): ValueState[T] = {
+       planChangeLogger.warn("getValueState(stateName,valEncoder,ttlConfig)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, valEncoder, ttlConfig)
     states
       .getOrElseUpdate(stateName, new InMemoryValueState[T](clock, ttlConfig))
       .asInstanceOf[InMemoryValueState[T]]
@@ -232,6 +243,7 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
       stateName: String,
       valEncoder: Encoder[T],
       ttlConfig: TTLConfig): ListState[T] = {
+       planChangeLogger.warn("getListState(stateName,valEncoder,ttlConfig)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, valEncoder, ttlConfig)
     states
       .getOrElseUpdate(stateName, new InMemoryListState[T](clock, ttlConfig))
       .asInstanceOf[InMemoryListState[T]]
@@ -245,9 +257,11 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
       userKeyEnc: Encoder[K],
       valEncoder: Encoder[V],
       ttlConfig: TTLConfig): MapState[K, V] = {
+       planChangeLogger.warn("getMapState(stateName,userKeyEnc,valEncoder,ttlConfig)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, userKeyEnc, valEncoder, ttlConfig)
     states
       .getOrElseUpdate(stateName, new InMemoryMapState[K, V](clock, ttlConfig))
       .asInstanceOf[InMemoryMapState[K, V]]
+  planChangeLogger.warn("getMapState(stateName,ttlConfig)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlConfig)
   }
 
   override def getMapState[K: Encoder, V: Encoder](
@@ -284,6 +298,7 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
   def updateValueState[T](stateName: String, value: T): Unit = {
     require(states.contains(stateName), s"State $stateName has not been initialized.")
     states(stateName).asInstanceOf[InMemoryValueState[T]].update(value)
+    planChangeLogger.warn("updateValueState(stateName,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, value)
   }
 
   def peekValueState[T](stateName: String): Option[T] = {
@@ -294,16 +309,19 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
   def updateListState[T](stateName: String, value: List[T])(implicit ct: ClassTag[T]): Unit = {
     require(states.contains(stateName), s"State $stateName has not been initialized.")
     states(stateName).asInstanceOf[InMemoryListState[T]].put(value.toArray)
+    planChangeLogger.warn("updateListState(stateName,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, value)
   }
 
   def peekListState[T](stateName: String): List[T] = {
     require(states.contains(stateName), s"State $stateName has not been initialized.")
     states(stateName).asInstanceOf[InMemoryListState[T]].get().toList
+    planChangeLogger.warn("peekListState(stateName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", stateName)
   }
 
   def updateMapState[MK, MV](stateName: String, value: Map[MK, MV]): Unit = {
     require(states.contains(stateName), s"State $stateName has not been initialized.")
     val mapState = states(stateName).asInstanceOf[InMemoryMapState[MK, MV]]
+    planChangeLogger.warn("updateMapState(stateName,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, value)
     mapState.clear()
     value.foreach { case (k, v) => mapState.updateValue(k, v) }
   }
@@ -320,5 +338,6 @@ class InMemoryStatefulProcessorHandle(timeMode: TimeMode, clock: Clock)
       case s: InMemoryListState[_] => s.clear()
       case s: InMemoryMapState[_, _] => s.clear()
     }
+    planChangeLogger.warn("deleteState(stateName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stateName)
   }
 }

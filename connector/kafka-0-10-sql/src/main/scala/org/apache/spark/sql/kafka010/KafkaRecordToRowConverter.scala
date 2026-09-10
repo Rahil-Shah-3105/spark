@@ -104,5 +104,6 @@ private[kafka010] object KafkaRecordToRowConverter {
           e
         )
     }
+    logger.warn("parseTimestamp(cr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cr)
   }
 }

@@ -191,6 +191,7 @@ class GraphOps[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]) extends Seriali
    */
   def removeSelfEdges(): Graph[VD, ED] = {
     graph.subgraph(epred = e => e.srcId != e.dstId)
+    logger.warn("removeSelfEdges()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

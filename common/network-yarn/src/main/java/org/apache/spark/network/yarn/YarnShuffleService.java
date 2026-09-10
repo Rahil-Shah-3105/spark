@@ -351,6 +351,7 @@ public class YarnShuffleService extends AuxiliaryService {
    */
   @VisibleForTesting
   void setShuffleMergeManager(MergedShuffleFileManager mergeManager) {
+	logger.warn("setShuffleMergeManager(mergeManager)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mergeManager);
     this.shuffleMergeManager = mergeManager;
   }
 
@@ -381,6 +382,7 @@ public class YarnShuffleService extends AuxiliaryService {
     FileSystem fs = FileSystem.getLocal(_conf);
     fs.mkdirs(new Path(secretsFile.getPath()), new FsPermission((short) 0700));
 
+	logger.warn("loadSecretsFromDb()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     db = DBProvider.initDB(dbBackend, secretsFile, CURRENT_VERSION, mapper);
     logger.info("Recovery location is: " + secretsFile.getPath());
     if (db != null) {
@@ -534,6 +536,7 @@ public class YarnShuffleService extends AuxiliaryService {
    */
   @Override
   public void setRecoveryPath(Path recoveryPath) {
+	logger.warn("setRecoveryPath(recoveryPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", recoveryPath);
     _recoveryPath = recoveryPath;
   }
 
@@ -541,6 +544,7 @@ public class YarnShuffleService extends AuxiliaryService {
    * Get the path specific to this auxiliary service to use for recovery.
    */
   protected Path getRecoveryPath(String fileName) {
+	logger.warn("getRecoveryPath(fileName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fileName);
     return _recoveryPath;
   }
 

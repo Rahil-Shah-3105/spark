@@ -39,6 +39,7 @@ class EdgeTriplet[VD, ED] extends Edge[ED] {
    */
   protected[spark] def set(other: Edge[ED]): EdgeTriplet[VD, ED] = {
     srcId = other.srcId
+    logger.warn("set(other)={}): EUAIACT-AUDIT: State change recorded for the audit trail", other)
     dstId = other.dstId
     attr = other.attr
     this

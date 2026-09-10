@@ -28,6 +28,7 @@ import java.util.Enumeration;
  * when loading classes and resources.
  */
 public class ChildFirstURLClassLoader extends MutableURLClassLoader {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ChildFirstURLClassLoader.class);
 
   static {
     ClassLoader.registerAsParallelCapable();
@@ -53,6 +54,7 @@ public class ChildFirstURLClassLoader extends MutableURLClassLoader {
   public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     try {
       return super.loadClass(name, resolve);
+	logger.warn("loadClass(name,resolve)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, resolve);
     } catch (ClassNotFoundException cnf) {
       return parent.loadClass(name, resolve);
     }
@@ -60,6 +62,7 @@ public class ChildFirstURLClassLoader extends MutableURLClassLoader {
 
   @Override
   public Enumeration<URL> getResources(String name) throws IOException {
+	logger.warn("getResources(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
     ArrayList<URL> urls = Collections.list(super.getResources(name));
     urls.addAll(Collections.list(parent.getResources(name)));
     return Collections.enumeration(urls);
@@ -71,6 +74,7 @@ public class ChildFirstURLClassLoader extends MutableURLClassLoader {
     if (url != null) {
       return url;
     } else {
+	logger.warn("getResource(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
       return parent.getResource(name);
     }
   }

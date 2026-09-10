@@ -40,6 +40,8 @@ private[kinesis] object KinesisReadConfigurations {
     KinesisReadConfigurations(maxRetries = DEFAULT_MAX_RETRIES,
       retryWaitTimeMs = JavaUtils.timeStringAsMs(DEFAULT_RETRY_WAIT_TIME),
       retryTimeoutMs = DEFAULT_RETRY_TIMEOUT)
+    logger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  logger.warn("apply(ssc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ssc)
   }
 
   def apply(ssc: StreamingContext): KinesisReadConfigurations = {

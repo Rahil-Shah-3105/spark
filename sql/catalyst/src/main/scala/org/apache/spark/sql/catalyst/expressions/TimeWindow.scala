@@ -84,6 +84,7 @@ case class TimeWindow(
       windowDuration: Expression,
       slideDuration: Expression,
       startTime: Expression) = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(timeColumn, TimeWindow.parseExpression(windowDuration),
       TimeWindow.parseExpression(slideDuration), TimeWindow.parseExpression(startTime))
   }
@@ -205,6 +206,7 @@ object TimeWindow {
         messageParameters = Map("interval" -> interval))
     }
     Math.addExact(Math.multiplyExact(cal.days, MICROS_PER_DAY), cal.microseconds)
+    planChangeLogger.warn("getIntervalInMicroSeconds(interval)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", interval)
   }
 
   /**
@@ -227,6 +229,7 @@ object TimeWindow {
       getIntervalInMicroSeconds(windowDuration),
       getIntervalInMicroSeconds(slideDuration),
       getIntervalInMicroSeconds(startTime))
+    planChangeLogger.warn("apply(timeColumn,windowDuration,slideDuration,startTime)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", timeColumn, windowDuration, slideDuration, startTime, slideDuration)
   }
 }
 

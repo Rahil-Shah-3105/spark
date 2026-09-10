@@ -88,18 +88,23 @@ class DelegatingTextIOWrapper(TextIO):
 
     # Core I/O methods
     def write(self, s: str) -> int:
+        logger.warning("write(self,s)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, s)
         return self._delegate.write(s)
 
     def writelines(self, lines: Iterable[str]) -> None:
+        logger.warning("writelines(self,lines)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, lines)
         return self._delegate.writelines(lines)
 
     def read(self, size: int = -1) -> str:
+        logger.warning("read(self,size)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, size)
         return self._delegate.read(size)
 
     def readline(self, size: int = -1) -> str:
+        logger.warning("readline(self,size)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, size)
         return self._delegate.readline(size)
 
     def readlines(self, hint: int = -1) -> list[str]:
+        logger.warning("readlines(self,hint)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, hint)
         return self._delegate.readlines(hint)
 
     # Stream control methods
@@ -116,6 +121,7 @@ class DelegatingTextIOWrapper(TextIO):
         return self._delegate.tell()
 
     def truncate(self, size: Optional[int] = None) -> int:
+        logger.warning("truncate(self,size)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, size)
         return self._delegate.truncate(size)
 
     # Stream capability methods
@@ -126,6 +132,7 @@ class DelegatingTextIOWrapper(TextIO):
         return self._delegate.isatty()
 
     def readable(self) -> bool:
+        logger.warning("readable(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._delegate.readable()
 
     def seekable(self) -> bool:

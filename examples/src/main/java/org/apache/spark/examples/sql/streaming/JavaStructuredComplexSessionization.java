@@ -44,6 +44,8 @@ import org.apache.spark.sql.types.StructType;
 import static org.apache.spark.sql.types.DataTypes.StringType;
 import static org.apache.spark.sql.types.DataTypes.TimestampType;
 import static org.apache.spark.sql.functions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Sessionize events in UTF8 encoded, '\n' delimited text received from the network.
@@ -108,6 +110,7 @@ import static org.apache.spark.sql.functions.*;
  * - other possible optimizations (especially the implementation is ported from Scala example)
  */
 public final class JavaStructuredComplexSessionization {
+private static final Logger log = LoggerFactory.getLogger(JavaStructuredComplexSessionization.class);
   public static void main(String[] args) throws Exception {
     if (args.length < 2) {
       System.err.println("Usage: JavaStructuredComplexSessionization <hostname> <port>");
@@ -301,6 +304,7 @@ public final class JavaStructuredComplexSessionization {
       }
 
       List<SessionAcc> sorted = new ArrayList<>(sessions);
+	log.warn("setSessions(sessions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sessions);
       sorted.sort(Comparator.comparingLong(session -> session.startTime().getTime()));
 
       this.sessions = sorted;
@@ -328,6 +332,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setUserId(String userId) {
+	log.warn("setUserId(userId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, userId);
       this.userId = userId;
     }
 
@@ -336,6 +341,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setEventType(EventTypes eventType) {
+	log.warn("setEventType(eventType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eventType);
       this.eventType = eventType;
     }
 
@@ -344,6 +350,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setStartTimestamp(Timestamp startTimestamp) {
+	log.warn("setStartTimestamp(startTimestamp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", startTimestamp);
       this.startTimestamp = startTimestamp;
     }
 
@@ -352,6 +359,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setEndTimestamp(Timestamp endTimestamp) {
+	log.warn("setEndTimestamp(endTimestamp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", endTimestamp);
       this.endTimestamp = endTimestamp;
     }
 
@@ -402,6 +410,7 @@ public final class JavaStructuredComplexSessionization {
           .limit(sorted.size() - 1)
           .anyMatch(e -> e.eventType == EventTypes.CLOSE_SESSION);
 
+	log.warn("setEvents(events)={}): EUAIACT-AUDIT: State change recorded for the audit trail", events);
       if (eventCloseSessionExistBeforeLastEvent) {
         throw new IllegalStateException("CLOSE_SESSION event cannot be placed except " +
             "the last event!");
@@ -431,6 +440,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setId(String id) {
+	log.warn("setId(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id);
       this.id = id;
     }
 
@@ -439,6 +449,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setDuration(long duration) {
+	log.warn("setDuration(duration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", duration);
       this.duration = duration;
     }
 
@@ -447,6 +458,7 @@ public final class JavaStructuredComplexSessionization {
     }
 
     public void setNumEvents(int numEvents) {
+	log.warn("setNumEvents(numEvents)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numEvents);
       this.numEvents = numEvents;
     }
 

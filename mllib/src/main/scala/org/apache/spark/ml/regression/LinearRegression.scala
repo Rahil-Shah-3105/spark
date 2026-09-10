@@ -746,6 +746,7 @@ class LinearRegressionModel private[ml] (
         (copy(ParamMap.empty).setPredictionCol(predictionColName), predictionColName)
       case p => (this, p)
     }
+    logger.warn("findSummaryModelAndPredictionCol()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
 
@@ -798,6 +799,7 @@ class LinearRegressionModel private[ml] (
       summaryModel.numFeatures, summaryModel.getFitIntercept,
       diagInvAtWA, objectiveHistory, coefficientArray)
 
+    logger.warn("createSummary(dataset,diagInvAtWA,objectiveHistory,coefficientArray)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, diagInvAtWA, objectiveHistory, coefficientArray)
     setSummary(Some(trainingSummary))
   }
 
@@ -805,6 +807,7 @@ class LinearRegressionModel private[ml] (
     ReadWriteUtils.saveObjectToLocal[(Array[Double], Array[Double], Array[Double])](
       path, (summary.diagInvAtWA, summary.objectiveHistory, summary.coefficientArray),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         ReadWriteUtils.serializeDoubleArray(data._1, dos)
         ReadWriteUtils.serializeDoubleArray(data._2, dos)
         ReadWriteUtils.serializeDoubleArray(data._3, dos)
@@ -828,6 +831,7 @@ class LinearRegressionModel private[ml] (
       }
     )
     createSummary(dataset, diagInvAtWA, objectiveHistory, coefficientArray)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -866,6 +870,7 @@ private class InternalLinearRegressionModelWriter
     // Save model data: intercept, coefficients, scale
     val data = LinearModelData(instance.intercept, instance.coefficients, instance.scale)
     val dataPath = new Path(path, "data").toString
+    logger.warn("write(path,sparkSession,optionMap,stage)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, sparkSession, optionMap, stage)
     ReadWriteUtils.saveObject[LinearModelData](
       dataPath, data, sparkSession, LinearModelData.serializeData
     )

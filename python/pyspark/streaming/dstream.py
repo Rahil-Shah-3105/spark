@@ -46,6 +46,7 @@ from pyspark.resultiterable import ResultIterable
 if TYPE_CHECKING:
     from pyspark.serializers import Serializer
     from pyspark.streaming.context import StreamingContext
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["DStream"]
 
@@ -310,6 +311,7 @@ class DStream(Generic[T_co]):
         Persist the RDDs of this DStream with the given storage level
         """
         self.is_cached = True
+        logger.warning("persist(self,storageLevel)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, storageLevel)
         javaStorageLevel = self._sc._getJavaStorageLevel(storageLevel)
         self._jdstream.persist(javaStorageLevel)
         return self
@@ -350,6 +352,7 @@ class DStream(Generic[T_co]):
         Save each RDD in this DStream as at text file, using string
         representation of elements.
         """
+        logger.warning("saveAsTextFiles(self,prefix,suffix)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, prefix, suffix)
 
         def saveAsTextFile(t: Optional[datetime], rdd: RDD[T]) -> None:
             path = rddToFileName(prefix, suffix, t)
@@ -357,6 +360,7 @@ class DStream(Generic[T_co]):
                 rdd.saveAsTextFile(path)
             except Py4JJavaError as e:
                 # after recovered from checkpointing, the foreachRDD may
+                logger.warning("saveAsTextFile(t,rdd)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", t, rdd)
                 # be called twice
                 if "FileAlreadyExistsException" not in str(e):
                     raise

@@ -36,6 +36,7 @@ import org.apache.spark.network.util.JavaUtils;
  * The header must be a ByteBuf, while the body can be any InputStream or ChunkedStream
  */
 public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(EncryptedMessageWithHeader.class);
 
   @Nullable private final ManagedBuffer managedBuffer;
   private final ByteBuf header;
@@ -112,6 +113,7 @@ public class EncryptedMessageWithHeader implements ChunkedInput<ByteBuf> {
         throw new EOFException("Unable to read bytes from ChunkedStream");
       }
     } else {
+	logger.warn("readChunk(allocator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", allocator);
       return null;
     }
   }

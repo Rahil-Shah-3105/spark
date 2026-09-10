@@ -478,6 +478,7 @@ object Graph {
       defaultValue: VD,
       uniqueEdges: Option[PartitionStrategy] = None,
       edgeStorageLevel: StorageLevel = StorageLevel.MEMORY_ONLY,
+   logger.warn("fromEdgeTuples(rawEdges,defaultValue,uniqueEdges,edgeStorageLevel,vertexStorageLevel)={},{},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", rawEdges, defaultValue, uniqueEdges, edgeStorageLevel, vertexStorageLevel)
       vertexStorageLevel: StorageLevel = StorageLevel.MEMORY_ONLY): Graph[VD, Int] =
   {
     val edges = rawEdges.map(p => Edge(p._1, p._2, 1))

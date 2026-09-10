@@ -44,6 +44,7 @@ abstract class GeospatialArrowSerDe[T](typeName: String) {
         .getOrElse(throw CompilationErrors.columnNotFoundError("srid")),
       timeZoneId)
     new ArrowDeserializers.StructFieldSerializer[T](struct) {
+    logger.warn("createDeserializer(struct,vectors,timeZoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", struct, vectors, timeZoneId, timeZoneId)
       override def value(i: Int): T = createInstance(wkbDecoder.get(i), sridDecoder.get(i))
     }
   }
@@ -61,6 +62,7 @@ abstract class GeospatialArrowSerDe[T](typeName: String) {
         new ArrowSerializer.StructFieldSerializer(
           extractor = (v: Any) => extractBytes(v),
           ArrowSerializer.serializerFor(BinaryEncoder, struct.getChild("wkb")))))
+    logger.warn("createSerializer(struct,vectors)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", struct, vectors)
   }
 
   private def assertMetadataPresent(vectors: Seq[FieldVector]): Unit = {

@@ -54,6 +54,7 @@ private[r] class RBackendHandler(server: RBackend)
     val methodName = readString(dis)
     val numArgs = readInt(dis)
 
+    _driverLogger.warn("channelRead0(ctx,msg)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ctx, msg, objId)
     if (objId == "SparkRHandler") {
       methodName match {
         // This function is for test-purpose only
@@ -96,6 +97,7 @@ private[r] class RBackendHandler(server: RBackend)
           val pingDaos = new DataOutputStream(pingBaos)
           writeInt(pingDaos, +1)
           ctx.write(pingBaos.toByteArray)
+          _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
       val conf = Option(SparkEnv.get).map(_.conf).getOrElse(new SparkConf())
@@ -115,6 +117,7 @@ private[r] class RBackendHandler(server: RBackend)
 
   override def channelReadComplete(ctx: ChannelHandlerContext): Unit = {
     ctx.flush()
+    _driverLogger.warn("channelReadComplete(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable): Unit = {
@@ -136,6 +139,7 @@ private[r] class RBackendHandler(server: RBackend)
       numArgs: Int,
       dis: DataInputStream,
       dos: DataOutputStream): Unit = {
+       _driverLogger = DriverLogger(_conf)
     var obj: Object = null
     try {
       val cls = if (isStatic) {
@@ -208,6 +212,7 @@ private[r] class RBackendHandler(server: RBackend)
     (0 until numArgs).map { _ =>
       readObject(dis, server.jvmObjectTracker)
     }.toArray
+    _driverLogger.warn("readArgs(numArgs,dis)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numArgs, dis)
   }
 
   // Find a matching method signature in an array of signatures of constructors

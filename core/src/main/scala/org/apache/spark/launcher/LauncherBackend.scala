@@ -39,6 +39,7 @@ private[spark] abstract class LauncherBackend {
   protected def conf: SparkConf
 
   def connect(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val port = conf.getOption(LauncherProtocol.CONF_LAUNCHER_PORT)
       .orElse(sys.env.get(LauncherProtocol.ENV_LAUNCHER_PORT))
       .map(_.toInt)
@@ -70,6 +71,7 @@ private[spark] abstract class LauncherBackend {
     if (connection != null && isConnected()) {
       connection.send(new SetAppId(appId))
     }
+    _driverLogger.warn("setAppId(appId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId)
   }
 
   def setState(state: SparkAppHandle.State): Unit = {
@@ -77,6 +79,7 @@ private[spark] abstract class LauncherBackend {
       connection.send(new SetState(state))
       lastState = state
     }
+    _driverLogger.warn("setState(state)={}): EUAIACT-AUDIT: State change recorded for the audit trail", state)
   }
 
   /** Return whether the launcher handle is still connected to this backend. */

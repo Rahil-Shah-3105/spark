@@ -97,6 +97,7 @@ private class RandomForest (
     } else {
       treeStrategy.bootstrap = true
     }
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     val trees: Array[NewDTModel] =
       NewRandomForest.run(input, treeStrategy, numTrees, featureSubsetStrategy, seed.toLong)
     new RandomForestModel(strategy.algo, trees.map(_.toOld))

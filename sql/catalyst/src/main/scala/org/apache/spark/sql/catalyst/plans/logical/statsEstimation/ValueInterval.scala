@@ -29,6 +29,7 @@ trait ValueInterval {
 
 /** For simplicity we use double to unify operations of numeric intervals. */
 case class NumericValueInterval(min: Double, max: Double) extends ValueInterval {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def contains(l: Literal): Boolean = {
     val lit = EstimationUtils.toDouble(l.value, l.dataType)
     min <= lit && max >= lit
@@ -59,6 +60,7 @@ object ValueInterval {
       NumericValueInterval(
         min = EstimationUtils.toDouble(min.get, dataType),
         max = EstimationUtils.toDouble(max.get, dataType))
+      planChangeLogger.warn("apply(min,max,dataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", min, max, dataType)
   }
 
   def isIntersected(r1: ValueInterval, r2: ValueInterval): Boolean = (r1, r2) match {

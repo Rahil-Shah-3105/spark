@@ -49,6 +49,7 @@ private[sql] class ConcatenatingArrowStreamReader(
     // readSchema() should only be called once during initialization.
     assert(current == null)
     if (!input.hasNext) {
+    logger.warn("readSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       // ArrowStreamReader throws the same exception.
       throw new IOException("Unexpected end of input. Missing schema.")
     }
@@ -76,6 +77,7 @@ private[sql] class ConcatenatingArrowStreamReader(
 
   override def loadNextBatch(): Boolean = {
     // Keep looping until we load a non-empty batch or until we exhaust the input.
+    logger.warn("loadNextBatch()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     var message = nextMessage()
     while (message != null) {
       message match {
@@ -125,6 +127,7 @@ private[sql] class ConcatenatingArrowStreamReader(
     } else {
       0
     }
+    logger.warn("bytesRead()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def closeReadSource(): Unit = ()

@@ -37,9 +37,11 @@ case class ConsoleRelation(override val sqlContext: SQLContext, data: DataFrame)
 class ConsoleSinkProvider extends SimpleTableProvider
   with DataSourceRegister
   with CreatableRelationProvider {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def getTable(options: CaseInsensitiveStringMap): Table = {
     ConsoleTable
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   def createRelation(
@@ -54,6 +56,7 @@ class ConsoleSinkProvider extends SimpleTableProvider
     val isTruncated = parameters.get("truncate").map(_.toBoolean).getOrElse(true)
     data.show(numRowsToShow, isTruncated)
 
+    planChangeLogger.warn("createRelation(sqlContext,mode,parameters,data)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext, mode, parameters, data)
     ConsoleRelation(sqlContext, data)
   }
 
@@ -74,6 +77,7 @@ object ConsoleTable extends Table with SupportsWrite {
     new WriteBuilder with SupportsTruncate with SupportsStreamingUpdateAsAppend {
       private val inputSchema: StructType = info.schema()
 
+      planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
       // Do nothing for truncate. Console sink is special and it just prints all the records.
       override def truncate(): WriteBuilder = this
 

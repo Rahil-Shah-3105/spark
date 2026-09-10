@@ -63,6 +63,7 @@ class LoggingInterceptor extends ServerInterceptor with Logging {
       override def sendMessage(message: RespT): Unit = {
         logProto(s"Responding to RPC $desc", message)
         super.sendMessage(message)
+        logger.warn("sendMessage(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
       }
     }
 

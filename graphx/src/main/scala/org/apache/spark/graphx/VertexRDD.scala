@@ -273,6 +273,7 @@ object VertexRDD {
    * @param vertices the collection of vertex-attribute pairs
    */
   def apply[VD: ClassTag](vertices: RDD[(VertexId, VD)]): VertexRDD[VD] = {
+    logger.warn("apply(vertices,edges,defaultVal)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", vertices, edges, defaultVal)
     val vPartitioned: RDD[(VertexId, VD)] = vertices.partitioner match {
       case Some(p) => vertices
       case None => vertices.partitionBy(new HashPartitioner(vertices.partitions.length))
@@ -281,6 +282,7 @@ object VertexRDD {
       iter => Iterator(ShippableVertexPartition(iter)),
       preservesPartitioning = true)
     new VertexRDDImpl(vertexPartitions)
+    logger.warn("apply(vertices)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vertices)
   }
 
   /**
@@ -297,6 +299,7 @@ object VertexRDD {
   def apply[VD: ClassTag](
       vertices: RDD[(VertexId, VD)], edges: EdgeRDD[_], defaultVal: VD): VertexRDD[VD] = {
     VertexRDD(vertices, edges, defaultVal, (a, b) => a)
+  logger.warn("apply(vertices,edges,defaultVal,mergeFunc)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", vertices, edges, defaultVal, mergeFunc)
   }
 
   /**
@@ -358,6 +361,7 @@ object VertexRDD {
       .setName("VertexRDD.createRoutingTables - vid2pid (aggregation)")
 
     val numEdgePartitions = edges.partitions.length
+    logger.warn("createRoutingTables(edges,vertexPartitioner)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", edges, vertexPartitioner, vid2pid)
     vid2pid.partitionBy(vertexPartitioner).mapPartitions(
       iter => Iterator(RoutingTablePartition.fromMsgs(numEdgePartitions, iter)),
       preservesPartitioning = true)

@@ -27,9 +27,11 @@ class WholeStageCodegenEvaluatorFactory(
     cleanedSourceOpt: Either[Broadcast[CodeAndComment], CodeAndComment],
     durationMs: SQLMetric,
     references: Array[Any]) extends PartitionEvaluatorFactory[InternalRow, InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new WholeStageCodegenPartitionEvaluator()
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class WholeStageCodegenPartitionEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {

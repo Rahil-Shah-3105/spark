@@ -33,6 +33,7 @@ case class DescribeNamespaceExec(
     catalog: SupportsNamespaces,
     namespace: Seq[String],
     isExtended: Boolean) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     val rows = new ArrayBuffer[InternalRow]()
     val ns = namespace.toArray
@@ -44,6 +45,7 @@ case class DescribeNamespaceExec(
     CatalogV2Util.NAMESPACE_RESERVED_PROPERTIES.foreach { p =>
       rows ++= Option(metadata.get(p)).map(toCatalystRow(p.capitalize, _))
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     if (isExtended) {
       val properties = metadata.asScala.toMap -- CatalogV2Util.NAMESPACE_RESERVED_PROPERTIES

@@ -25,6 +25,7 @@ import json
 import os
 import shutil
 from typing import Any, Dict, List, Optional, Tuple
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class PoolDirectory:
@@ -229,3 +230,4 @@ class PoolDirectory:
     def remove_member_dir(self, uid: str) -> None:
         self._assert_locked()
         shutil.rmtree(self.member_dir(uid), ignore_errors=True)
+        logger.warning("remove_member_dir(self,uid)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", self, uid, uid)

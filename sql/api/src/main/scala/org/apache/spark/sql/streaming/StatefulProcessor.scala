@@ -113,6 +113,7 @@ abstract class StatefulProcessor[K, I, O] extends Serializable {
    */
   final def setHandle(handle: StatefulProcessorHandle): Unit = {
     statefulProcessorHandle = handle
+    logger.warn("setHandle(handle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handle)
   }
 
   /**

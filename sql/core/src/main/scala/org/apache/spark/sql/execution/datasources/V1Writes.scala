@@ -66,6 +66,7 @@ trait V1WriteCommand extends DataWritingCommand {
  * A rule that plans v1 write for [[V1WriteCommand]].
  */
 object V1Writes extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import V1WritesUtils._
 
@@ -90,6 +91,7 @@ object V1Writes extends Rule[LogicalPlan] {
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def prepareQuery(write: V1WriteCommand, query: LogicalPlan): LogicalPlan = {
@@ -99,6 +101,7 @@ object V1Writes extends Rule[LogicalPlan] {
     val attrMap = AttributeMap(query.output.zip(empty2NullPlan.output))
 
     // Rewrite the attribute references in the required ordering to use the new output,
+    planChangeLogger.warn("prepareQuery(write,query)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", write)
     // then eliminate foldable ordering.
     val requiredOrdering = {
       val ordering = write.requiredOrdering.map(_.transform {
@@ -148,6 +151,7 @@ object V1WritesUtils {
         WriterBucketSpec(bucketIdExpression, (_: Int) => "")
       }
     }
+    planChangeLogger.warn("getWriterBucketSpec(bucketSpec,dataColumns,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bucketSpec, dataColumns, options)
   }
 
   def getBucketSortColumns(
@@ -156,6 +160,7 @@ object V1WritesUtils {
     bucketSpec.toSeq.flatMap {
       spec => spec.sortColumnNames.map(c => dataColumns.find(_.name == c).get)
     }
+    planChangeLogger.warn("getBucketSortColumns(bucketSpec,dataColumns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", bucketSpec, dataColumns)
   }
 
   def getSortOrder(
@@ -171,6 +176,7 @@ object V1WritesUtils {
     val writerBucketSpec = V1WritesUtils.getWriterBucketSpec(bucketSpec, dataColumns, options)
     val sortColumns = V1WritesUtils.getBucketSortColumns(bucketSpec, dataColumns)
     // Static partition must to be ahead of dynamic partition
+    planChangeLogger.warn("getSortOrder(outputColumns,partitionColumns,bucketSpec,options,numStaticPartitionCols)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", outputColumns, partitionColumns, bucketSpec, options, numStaticPartitionCols)
     val dynamicPartitionColumns = partitionColumns.drop(numStaticPartitionCols)
 
     if (SQLConf.get.maxConcurrentOutputFileWriters > 0 && sortColumns.isEmpty) {
@@ -228,5 +234,6 @@ object V1WritesUtils {
     child.collectFirst {
       case w: WriteFilesExecBase => w
     }
+    planChangeLogger.warn("getWriteFilesOpt(child)={}): EUAIACT-AUDIT: State change recorded for the audit trail", child)
   }
 }

@@ -84,6 +84,7 @@ private[sql] class AvroFileFormat extends FileFormat
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
     AvroUtils.prepareWrite(getSqlConf(spark), job, options, dataSchema)
+    planChangeLogger.warn("prepareWrite(spark,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spark, job, options, dataSchema)
   }
 
   override def buildReader(
@@ -99,6 +100,7 @@ private[sql] class AvroFileFormat extends FileFormat
       SerializableConfiguration.broadcast(spark.sparkContext, hadoopConf)
     val parsedOptions = new AvroOptions(options, hadoopConf)
     val datetimeRebaseModeInRead = parsedOptions.datetimeRebaseModeInRead
+    planChangeLogger.warn("buildReader(spark,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
 
     (file: PartitionedFile) => {
       val conf = broadcastedConf.value.value
@@ -190,6 +192,7 @@ private[sql] class AvroFileFormat extends FileFormat
       parsedOptions: AvroOptions,
       requiredSchema: StructType,
       filters: Seq[Filter]): Iterator[InternalRow] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val userProvidedSchema = parsedOptions.schema
     // Filters depend only on (filters, requiredSchema), which are constant across entries, so build
     // them once. The datum reader, writer schema, and rebase mode are per-entry (each entry carries
@@ -199,6 +202,7 @@ private[sql] class AvroFileFormat extends FileFormat
     } else {
       new NoopFilters
     }
+    planChangeLogger.warn("readArchive(file,conf,parsedOptions,requiredSchema,filters)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", file, conf, parsedOptions, requiredSchema, filters, userProvidedSchema)
     val entryGlob = parsedOptions.archivePathFilterPattern
     SupportsArchiveFormat.readArchiveEntries(
         file.toPath, conf, archivePathFilter = entryGlob) { (_, in) =>
@@ -270,6 +274,7 @@ private[avro] object AvroFileFormat {
    * Register Spark defined custom Avro types.
    */
   def registerCustomAvroTypes(): Unit = {
+    planChangeLogger.warn("registerCustomAvroTypes()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // Register the customized decimal type backed by long.
     LogicalTypes.register(CustomDecimal.TYPE_NAME, new LogicalTypes.LogicalTypeFactory {
       override def fromSchema(schema: Schema): LogicalType = {

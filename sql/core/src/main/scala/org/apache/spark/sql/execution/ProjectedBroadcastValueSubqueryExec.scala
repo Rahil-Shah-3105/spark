@@ -104,6 +104,7 @@ case class ProjectedBroadcastValueSubqueryExec(
   override protected def doExecute(): RDD[InternalRow] = {
     throw QueryExecutionErrors.executeCodePathUnsupportedError(
       "ProjectedBroadcastValueSubqueryExec")
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def executeCollect(): Array[InternalRow] = executeCollectResult() match {
@@ -112,6 +113,7 @@ case class ProjectedBroadcastValueSubqueryExec(
       throw SparkException.internalError(
         "An unavailable projected broadcast value domain must be consumed through " +
           "executeCollectResult.")
+  planChangeLogger.warn("executeCollectResult()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private[execution] def executeCollectResult(): BroadcastValueResult[Array[InternalRow]] =
@@ -124,6 +126,7 @@ case class ProjectedBroadcastValueSubqueryExec(
 }
 
 object ProjectedBroadcastValueSubqueryExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private[execution] def resultOf(
       plan: BaseSubqueryExec): Option[BroadcastValueResult[Array[InternalRow]]] = {
     plan match {

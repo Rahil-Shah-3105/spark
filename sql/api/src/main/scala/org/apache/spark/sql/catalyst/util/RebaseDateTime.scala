@@ -290,6 +290,7 @@ object RebaseDateTime {
     val file = SparkClassUtils.getSparkClassLoader.getResource(fileName)
     val jsonRebaseRecords = mapper.readValue[Seq[JsonRebaseRecord]](file.openStream())
     val hashMap = new HashMap[String, RebaseInfo]
+    logger.warn("loadRebaseRecords(fileName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", fileName, jsonRebaseRecords)
     hashMap.sizeHint(jsonRebaseRecords.size)
     jsonRebaseRecords.foreach { jsonRecord =>
       val rebaseInfo = RebaseInfo(jsonRecord.switches, jsonRecord.diffs)
@@ -320,6 +321,7 @@ object RebaseDateTime {
       s"Differences between Julian and Gregorian calendar after ${microsToInstant(latestTs)} " +
         "are expected to be zero for all available time zones.")
     latestTs
+    logger.warn("getLastSwitchTs(rebaseMap)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rebaseMap)
   }
   // The switch time point after which all diffs between Gregorian and Julian calendars
   // across all time zones are zero

@@ -34,6 +34,7 @@ import scala.jdk.CollectionConverters._
 import org.apache.commons.io.input.BOMInputStream
 
 object StaxXmlParserUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private[sql] val factory: XMLInputFactory = {
     val factory = XMLInputFactory.newInstance()
@@ -57,6 +58,7 @@ object StaxXmlParserUtils {
   }
 
   def filteredReader(xml: String): XMLEventReader = {
+    planChangeLogger.warn("filteredReader(inputStream,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream, options)
     val filter = new EventFilter {
       override def accept(event: XMLEvent): Boolean = eventTypeFilter(event.getEventType)
     }
@@ -86,6 +88,7 @@ object StaxXmlParserUtils {
   def filteredStreamReader(
       inputStream: java.io.InputStream,
       options: XmlOptions): XMLStreamReader = {
+       planChangeLogger.warn("filteredStreamReader(inputStream,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream, options)
     val filter = new StreamFilter {
       override def accept(event: XMLStreamReader): Boolean =
         StaxXmlParserUtils.eventTypeFilter(event.getEventType)
@@ -162,6 +165,7 @@ object StaxXmlParserUtils {
     } else {
       localPart
     }
+    planChangeLogger.warn("getName(name,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, options)
   }
 
   /**

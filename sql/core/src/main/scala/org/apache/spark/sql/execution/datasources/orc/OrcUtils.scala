@@ -56,6 +56,7 @@ import org.apache.spark.util.{ThreadUtils, Utils}
 import org.apache.spark.util.ArrayImplicits._
 
 object OrcUtils extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // The extensions for ORC compression codecs
   val extensionsForCompressionCodecNames = Map(
@@ -78,6 +79,7 @@ object OrcUtils extends Logging {
       .filterNot(_.getName.startsWith("_"))
       .filterNot(_.getName.startsWith("."))
     paths
+      planChangeLogger.warn("listOrcFiles(pathStr,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", pathStr, conf)
   }
 
   def readSchema(file: Path, conf: Configuration, ignoreCorruptFiles: Boolean,
@@ -93,6 +95,7 @@ object OrcUtils extends Logging {
     // and orphan the stream, which later surfaces as
     // `DebugFilesystem.assertNoOpenStreams` "possibly leaked file streams" aborting an
     // unrelated ORC suite. Hold the reader explicitly and close it uninterruptibly so the
+    planChangeLogger.warn("readSchema(file,conf,ignoreCorruptFiles,ignoreMissingFiles)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, conf, ignoreCorruptFiles, ignoreMissingFiles)
     // handle is always released regardless of the enclosing task's interrupt state.
     var reader: Reader = null
     try {
@@ -132,6 +135,7 @@ object OrcUtils extends Logging {
         }
       }
     }
+  planChangeLogger.warn("readSchema(sparkSession,files,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, files, options)
   }
 
   def toCatalystSchema(schema: TypeDescription): StructType = {
@@ -421,6 +425,7 @@ object OrcUtils extends Logging {
    */
   def addSparkVersionMetadata(writer: Writer): Unit = {
     writer.addUserMetadata(SPARK_VERSION_METADATA_KEY, UTF_8.encode(SPARK_VERSION_SHORT))
+    planChangeLogger.warn("addSparkVersionMetadata(writer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writer)
   }
 
   /**
@@ -475,6 +480,7 @@ object OrcUtils extends Logging {
           Some(typeDesc)
         case _ => None
       }
+      planChangeLogger.warn("getInnerTypeDecription(dt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dt)
     }
 
     dt match {
@@ -558,6 +564,7 @@ object OrcUtils extends Logging {
           supportColumnarReads(valueType, nestedColumnEnabled)
       case _ => false
     }
+    planChangeLogger.warn("supportColumnarReads(dataType,nestedColumnEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataType, nestedColumnEnabled)
   }
 
   /**
@@ -578,6 +585,7 @@ object OrcUtils extends Logging {
       aggregation: Aggregation,
       aggSchema: StructType,
       partitionValues: InternalRow): InternalRow = {
+       planChangeLogger.warn("createAggInternalRowFromFooter(reader,filePath,dataSchema,partitionSchema,aggregation,aggSchema,partitionValues)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", reader, filePath, dataSchema, partitionSchema, aggregation, aggSchema, partitionValues)
     var columnsStatistics: OrcColumnStatistics = null
     try {
       columnsStatistics = OrcFooterReader.readStatistics(reader)
@@ -591,6 +599,7 @@ object OrcUtils extends Logging {
     def getColumnStatistics(columnName: String): ColumnStatistics = {
       val columnIndex = dataSchema.getFieldIndex(columnName).getOrElse(-1)
       columnsStatistics.get(columnIndex).getStatistics
+      planChangeLogger.warn("getColumnStatistics(columnName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnName)
     }
 
     // Get Min/Max statistics and store as ORC `WritableComparable` format.
@@ -599,6 +608,7 @@ object OrcUtils extends Logging {
         statistics: ColumnStatistics,
         dataType: DataType,
         isMax: Boolean): WritableComparable[_] = {
+         planChangeLogger.warn("getMinMaxFromColumnStatistics(statistics,dataType,isMax)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", statistics, dataType, isMax)
       if (statistics.getNumberOfValues == 0) {
         return null
       }

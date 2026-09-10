@@ -32,6 +32,7 @@ import org.apache.spark.sql.util.SchemaUtils
  * Type coercion helper that matches against expressions in order to apply collation type coercion.
  */
 object CollationTypeCoercion extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val COLLATION_CONTEXT_TAG = new TreeNodeTag[DataType]("collationContext")
 
@@ -125,6 +126,7 @@ object CollationTypeCoercion extends SQLConfHelper {
       case _ =>
         expr
     }
+    planChangeLogger.warn("changeType(expr,newType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, newType)
   }
 
   /**
@@ -134,6 +136,7 @@ object CollationTypeCoercion extends SQLConfHelper {
   private def changeTypeInSubquery(
       subqueryExpression: SubqueryExpression,
       newType: DataType): SubqueryExpression = {
+       planChangeLogger.warn("changeTypeInSubquery(subqueryExpression,newType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", subqueryExpression, newType)
 
     def transformNamedExpressions(ex: NamedExpression): NamedExpression = {
       changeType(ex, newType) match {
@@ -168,6 +171,7 @@ object CollationTypeCoercion extends SQLConfHelper {
     }
 
     outType
+    planChangeLogger.warn("mergeTypes(inType,castType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", inType, castType)
   }
 
   /**
@@ -249,6 +253,7 @@ object CollationTypeCoercion extends SQLConfHelper {
       // if there are no collated types we don't need to do anything
       return None
     }
+    planChangeLogger.warn("findLeastCommonStringType(expressions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expressions)
 
     val collationContextWinner = expressions.foldLeft(findCollationContext(expressions.head)) {
       case (Some(left), right) =>
@@ -328,6 +333,7 @@ object CollationTypeCoercion extends SQLConfHelper {
         val childContexts = expr.children.flatMap(findCollationContext)
         mergeWinners(expr.dataType, childContexts)
     }
+    planChangeLogger.warn("findCollationContext(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
 
     contextOpt.foreach(expr.setTagValue(COLLATION_CONTEXT_TAG, _))
     contextOpt
@@ -384,6 +390,7 @@ object CollationTypeCoercion extends SQLConfHelper {
     dt.transformRecursively {
       case st: StringType => StringTypeWithContext(st, strength)
     }
+    planChangeLogger.warn("addContextToStringType(dt,strength)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dt, strength)
   }
 
   /**
@@ -418,6 +425,7 @@ object CollationTypeCoercion extends SQLConfHelper {
   private def getWinningStringType(
       left: StringTypeWithContext,
       right: StringTypeWithContext): StringTypeWithContext = {
+       planChangeLogger.warn("getWinningStringType(left,right)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", left, right)
     def handleMismatch(): StringTypeWithContext = {
       if (left.strength == Explicit) {
         throw QueryCompilationErrors.explicitCollationMismatchError(

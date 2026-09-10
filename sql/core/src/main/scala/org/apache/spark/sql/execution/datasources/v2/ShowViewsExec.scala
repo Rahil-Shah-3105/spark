@@ -37,6 +37,7 @@ case class ShowViewsExec(
     catalog: ViewCatalog,
     namespace: Seq[String],
     pattern: Option[String]) extends V2CommandExec with LeafExecNode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     val rows = new ArrayBuffer[InternalRow]()
     catalog.listViews(namespace.toArray).foreach { ident =>
@@ -47,5 +48,6 @@ case class ShowViewsExec(
       }
     }
     rows.toSeq
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

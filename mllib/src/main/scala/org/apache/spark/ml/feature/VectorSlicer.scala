@@ -144,6 +144,7 @@ final class VectorSlicer @Since("1.5.0") (@Since("1.5.0") override val uid: Stri
       nameFeatures.zip($(names)).map { case (i, n) => s"$i:$n" }.mkString("[", ",", "]")
     require(nameFeatures.length + indFeatures.length == numDistinctFeatures, errMsg)
     indFeatures ++ nameFeatures
+      logger.warn("getSelectedFeatureIndices(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   @Since("1.5.0")

@@ -63,6 +63,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
     new SparkRuntimeException(
       errorClass = "STATE_STORE_HANDLE_NOT_INITIALIZED",
       messageParameters = Map.empty)
+    logger.warn("stateStoreHandleNotInitialized()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def failToRecognizePatternAfterUpgradeError(
@@ -182,6 +183,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
     new SparkUnsupportedOperationException(
       errorClass = "ENCODER_NOT_FOUND",
       messageParameters = Map("typeName" -> typeName, "docroot" -> SparkBuildInfo.spark_doc_root))
+    logger.warn("cannotFindEncoderForTypeError(typeName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", typeName)
   }
 
   def cannotHaveCircularReferencesInBeanClassError(
@@ -195,6 +197,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
     new SparkUnsupportedOperationException(
       errorClass = "_LEGACY_ERROR_TEMP_2144",
       messageParameters = Map("tpe" -> tpe))
+    logger.warn("cannotFindConstructorForTypeError(tpe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tpe)
   }
 
   def cannotHaveCircularReferencesInClassError(t: String): SparkUnsupportedOperationException = {
@@ -223,6 +226,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
     new SparkRuntimeException(
       errorClass = "_LEGACY_ERROR_TEMP_2154",
       messageParameters = Map("innerCls" -> innerCls.getName))
+    logger.warn("cannotGetOuterPointerForInnerClassError(innerCls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", innerCls)
   }
 
   def cannotUseKryoSerialization(): SparkRuntimeException = {
@@ -264,6 +268,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
       context = Array.empty,
       summary = "",
       cause = Some(e))
+    logger.warn("zoneOffsetError(timeZone,e)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timeZone, e)
   }
 }
 

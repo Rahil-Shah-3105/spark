@@ -76,6 +76,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
 
   class HDFSBackedReadStateStore(val version: Long, map: HDFSBackedStateStoreMap)
     extends ReadStateStore {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     override def id: StateStoreId = HDFSBackedStateStoreProvider.this.stateStoreId
 
@@ -83,11 +84,13 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
 
     override def multiGet(keys: Array[UnsafeRow], colFamilyName: String): Iterator[UnsafeRow] = {
       keys.iterator.map(key => get(key, colFamilyName))
+      planChangeLogger.warn("multiGet(keys,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys, colFamilyName)
     }
 
     override def iterator(colFamilyName: String): StateStoreIterator[UnsafeRowPair] = {
       val iter = map.iterator()
       new StateStoreIterator(iter)
+    planChangeLogger.warn("get(key,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, colFamilyName)
     }
 
     override def abort(): Unit = {}
@@ -165,6 +168,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
         useMultipleValuesPerKey: Boolean = false,
         isInternal: Boolean = false): Unit = {
       throw StateStoreErrors.multipleColumnFamiliesNotSupported(providerName)
+      planChangeLogger.warn("createColFamilyIfAbsent(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal)
     }
 
     override def allColumnFamilyNames: Set[String] =
@@ -212,6 +216,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
       verify(state == UPDATING, "Cannot remove after already committed or aborted")
       val prevValue = mapToUpdate.remove(key)
       if (prevValue != null) {
+      planChangeLogger.warn("remove(key,colFamilyName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, colFamilyName)
         val keyWrapper = if (storeConf.rowChecksumEnabled) {
           // Add checksum for only the removed key
           StateStoreRowWithChecksum(key, KeyValueChecksum.create(key, None))
@@ -323,6 +328,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
 
     override def removeColFamilyIfExists(colFamilyName: String): Boolean = {
       throw StateStoreErrors.removingColumnFamiliesNotSupported(providerName)
+      planChangeLogger.warn("removeColFamilyIfExists(colFamilyName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName)
     }
 
     override def valuesIterator(key: UnsafeRow, colFamilyName: String): Iterator[UnsafeRow] = {
@@ -331,6 +337,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
 
     override def putList(key: UnsafeRow, values: Array[UnsafeRow], colFamilyName: String): Unit = {
       throw StateStoreErrors.unsupportedOperationException("putList", providerName)
+      planChangeLogger.warn("putList(key,values,colFamilyName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, values, colFamilyName)
     }
 
     override def merge(key: UnsafeRow,
@@ -342,6 +349,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     override def mergeList(
         key: UnsafeRow, values: Array[UnsafeRow], colFamilyName: String): Unit = {
       throw StateStoreErrors.unsupportedOperationException("mergeList", providerName)
+      planChangeLogger.warn("mergeList(key,values,colFamilyName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, values, colFamilyName)
     }
 
     override def prefixScanWithMultiValues(
@@ -395,6 +403,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     logInfo(log"Retrieved version ${MDC(LogKeys.STATE_STORE_VERSION, version)} of " +
       log"${MDC(LogKeys.STATE_STORE_PROVIDER, HDFSBackedStateStoreProvider.this)} for readonly")
     new HDFSBackedReadStateStore(version, newMap)
+    planChangeLogger.warn("getReadStore(version,stateStoreCkptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, stateStoreCkptId, stateStoreCkptId)
   }
 
   private def getLoadedMapForStore(version: Long): HDFSBackedStateStoreMap = synchronized {
@@ -430,6 +439,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
       throw StateStoreErrors.multipleColumnFamiliesNotSupported(providerName)
     }
 
+    planChangeLogger.warn("runValidation(useColumnFamilies,useMultipleValuesPerKey,keyStateEncoderSpec)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", useColumnFamilies, useMultipleValuesPerKey, keyStateEncoderSpec)
     if (useMultipleValuesPerKey) {
       throw StateStoreErrors.unsupportedOperationException("multipleValuesPerKey", providerName)
     }
@@ -446,6 +456,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
       case _ => throw StateStoreErrors.unsupportedOperationException("Invalid key state encoder",
         providerName)
     }
+    planChangeLogger.warn("getNumColsPrefixKey(keyStateEncoderSpec)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keyStateEncoderSpec)
   }
 
   override def init(
@@ -566,6 +577,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
           throw e
       }
     }
+    planChangeLogger.warn("createBaseDirIfNotExists()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
   // Visible to state pkg for testing.
   private[state] lazy val fm = {
@@ -755,6 +767,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
       finalMap
     }
 
+    planChangeLogger.warn("loadMap(version)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", version)
     logDebug(s"Loading state for $version takes $elapsedMs ms.")
 
     result
@@ -767,6 +780,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     val storeIdStr = s"StateStoreId(opId=${stateStoreId_.operatorId}," +
       s"partId=${stateStoreId_.partitionId},name=${stateStoreId_.storeName})"
 
+      planChangeLogger.warn("loadSnapshot(versionToLoad)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", versionToLoad, storeIdStr)
     val snapshotLoader = new AutoSnapshotLoader(
       storeConf.autoSnapshotRepairEnabled,
       storeConf.autoSnapshotRepairNumFailuresBeforeActivating,
@@ -784,6 +798,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
           synchronized { Option(loadedMaps.get(snapshotVersion)) }
             .orElse(readSnapshotFile(snapshotVersion))
         }
+        planChangeLogger.warn("loadSnapshotFromCheckpoint(snapshotVersion,uniqueId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", snapshotVersion, uniqueId, uniqueId)
       }
 
       override protected def onLoadSnapshotFromCheckpointFailure(): Unit = {}
@@ -798,6 +813,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
           loadedMaps.keySet.asScala.toSeq
         }.filter(_ <= versionToLoad)
 
+        planChangeLogger.warn("getEligibleSnapshots(versionToLoad)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", versionToLoad)
         // Combine the two sets of versions, so we can check both during load
         (snapshotVersions ++ cachedVersions).distinct.map((_, None))
       }
@@ -825,6 +841,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     output.write(keyBytes)
     output.writeInt(valueBytes.size)
     output.write(valueBytes)
+    planChangeLogger.warn("writeUpdateToDeltaFile(output,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", output, key, value)
   }
 
   private def writeRemoveToDeltaFile(output: DataOutputStream, key: UnsafeRowWrapper): Unit = {
@@ -835,6 +852,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
           k.unsafeRow().getBytes(), k.checksum)
       case _ => key.unsafeRow().getBytes()
     }
+    planChangeLogger.warn("writeRemoveToDeltaFile(output,key)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", output, key)
     output.writeInt(keyBytes.size)
     output.write(keyBytes)
     output.writeInt(-1)
@@ -848,6 +866,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
   private def updateFromDeltaFile(version: Long, map: HDFSBackedStateStoreMap): Unit = {
     val fileToRead = deltaFile(version)
     var input: DataInputStream = null
+    planChangeLogger.warn("updateFromDeltaFile(version,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", version, map)
     val sourceStream = try {
       fm.open(fileToRead)
     } catch {
@@ -1015,6 +1034,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     val fileToRead = snapshotFile(version)
     val map = createHDFSBackedStateStoreMap()
     var input: DataInputStream = null
+    planChangeLogger.warn("readSnapshotFile(version)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", version)
 
     try {
       input = decompressStream(fm.open(fileToRead))
@@ -1222,6 +1242,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
     logDebug(s"Current set of files for $this: ${storeFiles.mkString(", ")}, " +
       s"checksum files: ${checksumFiles.mkString(", ")}")
 
+    planChangeLogger.warn("fetchFiles()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     (storeFiles, checksumFiles)
   }
 
@@ -1324,6 +1345,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
    * @param snapshotVersion checkpoint version of the snapshot to start with
    * @param endVersion   checkpoint version to end with
    */
+  planChangeLogger.warn("replayLoadedMapFromSnapshot(snapshotVersion,endVersion)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", snapshotVersion, endVersion)
   private def replayLoadedMapFromSnapshot(snapshotVersion: Long, endVersion: Long):
   HDFSBackedStateStoreMap = synchronized {
     try {
@@ -1383,6 +1405,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
       storeConf.rowChecksumEnabled,
       storeConf.rowChecksumReadVerificationRatio)
 
+    planChangeLogger.warn("createHDFSBackedStateStoreMap()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     HDFSBackedStateStoreMap.create(keySchema, numColsPrefixKey, readVerifier)
   }
 
@@ -1417,6 +1440,7 @@ private[sql] class HDFSBackedStateStoreProvider extends StateStoreProvider with 
         _.snapshotUploaded(stateStoreProviderId, version, currentTimestamp)
       )
     }
+    planChangeLogger.warn("reportSnapshotUploadToCoordinator(version)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", version)
   }
 }
 
@@ -1441,6 +1465,7 @@ class HDFSBackedStateStoreChangeDataReader(
     if (reader == null) {
       return null
     }
+    planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val (recordType, keyArray, valueArray) = reader.next()
     val keyRow = new UnsafeRow(keySchema.fields.length)
     if (valueArray == null) {

@@ -42,6 +42,7 @@ from pyspark.ml.param.shared import (
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 M = TypeVar("M", bound="Transformer")
 
@@ -313,6 +314,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         """
         Sets the value of :py:attr:`labelCol`.
         """
+        logger.warning("setLabelCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(labelCol=value)
 
     @since("3.5.0")
@@ -322,6 +324,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         """
         return self._set(featuresCol=value)
 
+    logger.warning("setFeaturesCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("3.5.0")
     def setPredictionCol(self, value: str) -> "Predictor":
         """
@@ -330,6 +333,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         return self._set(predictionCol=value)
 
 
+logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
 @inherit_doc
 class PredictionModel(Model, _PredictorParams, metaclass=ABCMeta):
     """

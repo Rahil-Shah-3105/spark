@@ -196,6 +196,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       }
       activeOperationIds.add(operationId)
     }
+    logger.warn("addOperationId(operationId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", operationId, operationId)
   }
 
   /**
@@ -217,6 +218,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       case Some(_) =>
         return Some(false)
       case None =>
+        logger.warn("getOperationStatus(operationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", operationId, operationId)
         return None
     }
   }
@@ -232,6 +234,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
    */
   private[service] def getInactiveOperationInfo(operationId: String): Option[TerminationInfo] = {
     Option(inactiveOperations.getIfPresent(operationId))
+    logger.warn("getInactiveOperationInfo(operationId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", operationId, operationId)
   }
 
   /**
@@ -244,6 +247,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
    */
   private[service] def listInactiveOperations(): Seq[TerminationInfo] = {
     inactiveOperations.asMap().values().asScala.toSeq
+    logger.warn("listInactiveOperations()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -256,6 +260,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
     activeOperationIds.synchronized {
       activeOperationIds.toSeq
     }
+    logger.warn("listActiveOperationIds()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -342,6 +347,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       serverLocalStagingPath: Path,
       fragment: Option[String]): Unit = {
     artifactManager.addArtifact(remoteRelativePath, serverLocalStagingPath, fragment)
+    logger.warn("addArtifact(remoteRelativePath,serverLocalStagingPath,fragment)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", remoteRelativePath, serverLocalStagingPath, fragment)
   }
 
   /**
@@ -355,6 +361,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       log"Session with userId: ${MDC(LogKeys.USER_ID, userId)} and " +
         log"sessionId: ${MDC(LogKeys.SESSION_ID, sessionId)} accessed at " +
         log"timestamp ${MDC(LogKeys.LAST_ACCESS_TIME, lastAccessTimeMs)}.")
+    logger.warn("updateAccessTime()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private[connect] def setCustomInactiveTimeoutMs(newInactiveTimeoutMs: Option[Long]): Unit = {
@@ -363,6 +370,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       log"Session with userId: ${MDC(LogKeys.USER_ID, userId)} and " +
         log"sessionId: ${MDC(LogKeys.SESSION_ID, sessionId)} inactive timeout set to " +
         log"${MDC(LogKeys.TIMEOUT, customInactiveTimeoutMs)} ms")
+    logger.warn("setCustomInactiveTimeoutMs(newInactiveTimeoutMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInactiveTimeoutMs)
   }
 
   /**
@@ -485,10 +493,12 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
           "CONNECT_INVALID_PLAN.DATAFRAME_NOT_FOUND",
           Map("dfId" -> dfId, "sessionId" -> sessionId))
       }
+      logger.warn("getDataFrameOrThrow(dfId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", dfId, dfId)
   }
 
   private[connect] def removeCachedDataFrame(dfId: String): DataFrame = {
     dataFrameCache.remove(dfId)
+    logger.warn("removeCachedDataFrame(dfId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", dfId, dfId)
   }
 
   /**
@@ -498,6 +508,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
     if (listenerCache.putIfAbsent(id, listener) != null) {
       throw SparkException.internalError(s"A listener is already associated with id $id")
     }
+    logger.warn("cacheListenerById(id,listener)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, listener, id)
   }
 
   /**
@@ -506,6 +517,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
    */
   private[connect] def getListener(id: String): Option[StreamingQueryListener] = {
     Option(listenerCache.get(id))
+    logger.warn("getListener(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -517,6 +529,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       case Some(pyListener: PythonStreamingQueryListener) => pyListener.stopListenerProcess()
       case _ => // do nothing
     }
+    logger.warn("removeCachedListener(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -528,6 +541,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       session.streams.removeListener(listener)
       removeCachedListener(id)
     })
+    logger.warn("removeAllListeners()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -535,6 +549,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
    */
   private[connect] def listListenerIds(): Seq[String] = {
     listenerCache.keySet().asScala.toSeq
+    logger.warn("listListenerIds()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -569,6 +584,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
         // Remove the execution.
         null
       })
+      logger.warn("removeCachedPipelineExecution(graphId)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", graphId, graphId)
   }
 
   /** Stops all pipeline executions and clears the pipeline execution cache. */
@@ -577,6 +593,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
       removeCachedPipelineExecution(graphId)
     })
     pipelineExecutions.clear()
+    logger.warn("removeAllPipelineExecutions()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   /**
@@ -585,6 +602,7 @@ case class SessionHolder(userId: String, sessionId: String, session: SparkSessio
    */
   private[connect] def getPipelineExecution(graphId: String): Option[PipelineUpdateContext] = {
     Option(pipelineExecutions.get(graphId))
+    logger.warn("getPipelineExecution(graphId)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", graphId, graphId)
   }
 
   /**

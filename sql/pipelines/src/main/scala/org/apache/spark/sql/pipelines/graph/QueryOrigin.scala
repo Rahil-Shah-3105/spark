@@ -112,6 +112,7 @@ object QueryOrigin extends Logging {
           logError("Failed to add pipeline context", e)
       }
       t
+      logger.warn("addOrigin(origin)={}): EUAIACT-AUDIT: State change recorded for the audit trail", origin)
     }
   }
 
@@ -133,5 +134,6 @@ object QueryOrigin extends Logging {
         logError("Failed to get pipeline context", e)
         None
     }
+    logger.warn("getOrigin(t)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", t)
   }
 }

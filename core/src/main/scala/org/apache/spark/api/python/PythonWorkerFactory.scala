@@ -46,6 +46,7 @@ case class PythonWorker(channel: SocketChannel) {
   def selectionKey: SelectionKey = selectionKeyOpt.orNull
 
   private def closeSelector(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     selectionKeyOpt.foreach(_.cancel())
     selectorOpt.foreach(_.close())
   }
@@ -178,6 +179,7 @@ private[spark] class PythonWorkerFactory(
     } else {
       createSimpleWorker(blockingMode = false)
     }
+    _driverLogger.warn("create()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -258,6 +260,7 @@ private[spark] class PythonWorkerFactory(
       authHelper.sockDir,
       s".${UUID.randomUUID()}.sock")
     try {
+    _driverLogger.warn("createSimpleWorker(blockingMode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockingMode)
       if (isUnixDomainSock) {
         serverSocketChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
         sockPath.deleteOnExit()
@@ -476,6 +479,7 @@ private[spark] class PythonWorkerFactory(
         }
         Thread.sleep(10000)
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

@@ -68,6 +68,7 @@ import org.apache.spark.sql.types.{ArrayType, IntegerType, MapType}
  *    not array elements), so it cannot be applied once to the whole array.
  */
 object ExtractPythonUDFFromLambda extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!conf.pythonUDFInHigherOrderFunctionEnabled) {
@@ -92,6 +93,7 @@ object ExtractPythonUDFFromLambda extends Rule[LogicalPlan] {
           }
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -210,6 +212,7 @@ object ExtractPythonUDFFromLambda extends Rule[LogicalPlan] {
     val indexedElement = indexed.dataType.asInstanceOf[ArrayType].elementType
 
     // Index the flat n*n results directly: cell (i, j) is at `i * n + j`. The cells and `n` live in
+    planChangeLogger.warn("rewritePairwiseComparator(sort)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sort, posIdx)
     // struct fields carried by every element, so the comparator only does field reads plus an
     // `element_at`, all O(1). `element_at` is 1-based.
     val cmpLeft = NamedLambdaVariable("a", indexedElement, nullable = false)
@@ -243,6 +246,7 @@ object ExtractPythonUDFFromLambda extends Rule[LogicalPlan] {
 
     // Desugar maps into arrays. `map_zip_with` visits the union of both key sets and looks each map
     // up per key, which yields null for a key missing from one side - exactly its own semantics.
+    planChangeLogger.warn("rewriteMapping(hof)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hof)
     val mapValued = hof.arguments.exists(_.dataType.isInstanceOf[MapType])
     val (arrays, rebuildResult): (Seq[Expression], Expression => Expression) =
       if (!mapValued) {
@@ -487,6 +491,7 @@ object ExtractPythonUDFFromLambda extends Rule[LogicalPlan] {
           val ordinal = fieldOfVar(v.exprId)
           GetStructField(base, ordinal, Some(carrierNames(ordinal)))
       }
+      planChangeLogger.warn("readerFor(v,udfOrdinal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", v, udfOrdinal)
     }
 
     val rewrittenBody = body.transformDown {

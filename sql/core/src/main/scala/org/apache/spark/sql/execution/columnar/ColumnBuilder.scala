@@ -52,6 +52,7 @@ private[columnar] class BasicColumnBuilder[JvmType](
     val columnStats: ColumnStats,
     val columnType: ColumnType[JvmType])
   extends ColumnBuilder {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected var columnName: String = _
 
@@ -212,6 +213,7 @@ private[columnar] object ColumnBuilder {
       case other =>
         throw QueryExecutionErrors.notSupportTypeError(other)
     }
+    planChangeLogger.warn("apply(dataType,initialSize,columnName,useCompression)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataType, initialSize, columnName, useCompression)
 
     builder.initialize(initialSize, columnName, useCompression)
     builder

@@ -102,6 +102,7 @@ from pyspark.pandas.exceptions import DataError
 
 if TYPE_CHECKING:
     from pyspark.pandas.window import RollingGroupby, ExpandingGroupby, ExponentialMovingGroupby
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -2035,6 +2036,7 @@ class GroupBy(Generic[FrameLike], metaclass=ABCMeta):
         else:
 
             def pandas_apply(pdf: pd.DataFrame, *a: Any, **k: Any) -> Any:
+                logger.warning("pandas_apply(pdf)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", pdf)
                 return f(pdf.drop(groupkey_names, axis=1), *a, **k)
 
         should_return_series = False
@@ -2136,6 +2138,7 @@ class GroupBy(Generic[FrameLike], metaclass=ABCMeta):
                     pdf_or_ser = pdf_or_ser.stack()
 
             if not isinstance(pdf_or_ser, pd.DataFrame):
+                logger.warning("pandas_groupby_apply(pdf)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", pdf)
                 return pd.DataFrame(pdf_or_ser)
             else:
                 return pdf_or_ser
@@ -3549,6 +3552,7 @@ class GroupBy(Generic[FrameLike], metaclass=ABCMeta):
         else:
             internal = self._psdf._internal.with_filter(cond)
         if internal.spark_frame.head() is None:
+            logger.warning("get_group(self,name)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, name)
             raise KeyError(name)
 
         return self._handle_output(DataFrame(internal))

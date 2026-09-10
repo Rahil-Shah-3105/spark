@@ -37,6 +37,7 @@ import org.apache.spark.network.util.JavaUtils;
  */
 
 public class MessageWithHeader extends AbstractFileRegion {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(MessageWithHeader.class);
 
   @Nullable private final ManagedBuffer managedBuffer;
   private final ByteBuf header;
@@ -93,6 +94,7 @@ public class MessageWithHeader extends AbstractFileRegion {
 
   @Override
   public long transferred() {
+	logger.warn("transferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return totalBytesTransferred;
   }
 
@@ -123,6 +125,7 @@ public class MessageWithHeader extends AbstractFileRegion {
     } else if (body instanceof ByteBuf byteBuf) {
       writtenBody = copyByteBuf(byteBuf, target);
     }
+	logger.warn("transferTo(target,position)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, position);
     totalBytesTransferred += writtenBody;
 
     return writtenHeader + writtenBody;

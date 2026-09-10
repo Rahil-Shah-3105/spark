@@ -169,6 +169,7 @@ class WriteAheadLogBackedBlockRDD[T: ClassTag](
           blockId,
           new ChunkedByteBuffer(dataRead).toInputStream())(elementClassTag)
         .asInstanceOf[Iterator[T]]
+        logger.warn("getBlockFromWriteAheadLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     if (partition.isBlockIdValid) {
@@ -185,6 +186,7 @@ class WriteAheadLogBackedBlockRDD[T: ClassTag](
    */
   override def getPreferredLocations(split: Partition): Seq[String] = {
     val partition = split.asInstanceOf[WriteAheadLogBackedBlockRDDPartition]
+    logger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
     val blockLocations = if (partition.isBlockIdValid) {
       getBlockIdLocations().get(partition.blockId)
     } else {

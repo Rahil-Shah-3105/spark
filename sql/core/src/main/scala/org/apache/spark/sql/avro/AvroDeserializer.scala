@@ -63,6 +63,7 @@ private[sql] class AvroDeserializer(
       useStableIdForUnionType: Boolean,
       stableIdPrefixForUnionType: String,
       recursiveFieldMaxDepth: Int) = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     this(
       rootAvroType,
       rootCatalystType,
@@ -136,6 +137,7 @@ private[sql] class AvroDeserializer(
       avroType, useStableIdForUnionType, stableIdPrefixForUnionType,
       recursiveFieldMaxDepth).dataType
 
+    planChangeLogger.warn("newWriter(avroType,catalystType,avroPath,catalystPath)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", avroType, catalystType, avroPath, catalystPath)
     (avroType.getType, catalystType) match {
       case (NULL, NullType) => (updater, ordinal, _) =>
         updater.setNullAt(ordinal)
@@ -450,6 +452,7 @@ private[sql] class AvroDeserializer(
       // Otherwise, resorts to an unscaled `BigInteger` instead.
       Decimal(decimal, precision, scale)
     }
+    planChangeLogger.warn("createDecimal(decimal,precision,scale)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", decimal, precision, scale)
   }
 
   private def getRecordWriter(
@@ -465,6 +468,7 @@ private[sql] class AvroDeserializer(
     avroSchemaHelper.validateNoExtraCatalystFields(ignoreNullable = true)
     // no need to validateNoExtraAvroFields since extra Avro fields are ignored
 
+    planChangeLogger.warn("getRecordWriter(avroType,catalystType,avroPath,catalystPath,applyFilters)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", avroType, catalystType, avroPath, catalystPath, applyFilters)
     val (validFieldIndexes, fieldWriters) = avroSchemaHelper.matchedFields.map {
       case AvroMatchedField(catalystField, ordinal, avroField) =>
         val baseWriter = newWriter(avroField.schema(), catalystField.dataType,

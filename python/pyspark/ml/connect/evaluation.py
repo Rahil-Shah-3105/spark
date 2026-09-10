@@ -25,6 +25,7 @@ from pyspark.ml.param.shared import HasLabelCol, HasPredictionCol, HasProbabilit
 from pyspark.ml.connect.base import Evaluator
 from pyspark.ml.connect.io_utils import ParamsReadWrite
 from pyspark.sql import DataFrame
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class _TorchMetricEvaluator(Evaluator):
@@ -43,6 +44,7 @@ class _TorchMetricEvaluator(Evaluator):
 
         .. deprecated:: 4.0.0
         """
+        logger.warning("getMetricName(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.metricName)
 
     def _get_torch_metric(self) -> Any:

@@ -30,6 +30,7 @@ import org.apache.spark.util.collection.SortDataFormat;
  */
 public final class UnsafeSortDataFormat
   extends SortDataFormat<RecordPointerAndKeyPrefix, LongArray> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeSortDataFormat.class);
 
   private final LongArray buffer;
 
@@ -40,6 +41,7 @@ public final class UnsafeSortDataFormat
   @Override
   public RecordPointerAndKeyPrefix getKey(LongArray data, int pos) {
     // Since we re-use keys, this method shouldn't be called.
+	logger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos);
     throw new UnsupportedOperationException();
   }
 
@@ -51,6 +53,7 @@ public final class UnsafeSortDataFormat
   @Override
   public RecordPointerAndKeyPrefix getKey(LongArray data, int pos,
                                           RecordPointerAndKeyPrefix reuse) {
+										logger.warn("getKey(data,pos,reuse)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos, reuse);
     reuse.recordPointer = data.get(pos * 2);
     reuse.keyPrefix = data.get(pos * 2 + 1);
     return reuse;

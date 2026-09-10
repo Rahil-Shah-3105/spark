@@ -67,6 +67,7 @@ from pyspark.sql.functions import (
 if TYPE_CHECKING:
     from pyspark.sql import SparkSession
     from pyspark.sql._typing import DataTypeOrString
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class AbstractTranspiler(object):
@@ -79,6 +80,7 @@ class AbstractTranspiler(object):
 
     @classmethod
     def register(cls) -> None:
+        logger.warning("register(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         AbstractTranspiler.varieties[cls.variety] = cls
 
     def _transpile_from_ast(

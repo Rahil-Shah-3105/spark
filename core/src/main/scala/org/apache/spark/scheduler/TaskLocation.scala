@@ -32,6 +32,7 @@ private[spark] sealed trait TaskLocation {
 private [spark]
 case class ExecutorCacheTaskLocation(override val host: String, executorId: String)
   extends TaskLocation {
+   _driverLogger = DriverLogger(_conf)
   override def toString: String = s"${TaskLocation.executorLocationTag}${host}_$executorId"
 }
 
@@ -59,6 +60,8 @@ private[spark] object TaskLocation {
   val executorLocationTag = "executor_"
 
   def apply(host: String, executorId: String): TaskLocation = {
+    _driverLogger.warn("apply(host,executorId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", host, executorId, executorId)
+    _driverLogger.warn("apply(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str)
     new ExecutorCacheTaskLocation(host, executorId)
   }
 

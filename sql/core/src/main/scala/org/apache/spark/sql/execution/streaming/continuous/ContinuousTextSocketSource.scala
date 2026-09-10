@@ -56,6 +56,7 @@ import org.apache.spark.util.RpcUtils
 class TextSocketContinuousStream(
     host: String, port: Int, numPartitions: Int, options: CaseInsensitiveStringMap)
   extends ContinuousStream with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   implicit val defaultFormats: DefaultFormats = DefaultFormats
 
@@ -88,16 +89,19 @@ class TextSocketContinuousStream(
       .sortBy(_.partitionId)
       .map(_.offset)
       .toList
+      planChangeLogger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
     TextSocketOffset(offs)
   }
 
   override def deserializeOffset(json: String): Offset = {
     TextSocketOffset(Serialization.read[List[Int]](json))
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def initialOffset(): Offset = {
     startOffset = TextSocketOffset(List.fill(numPartitions)(0))
     startOffset
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 
@@ -129,6 +133,7 @@ class TextSocketContinuousStream(
 
   override def createContinuousReaderFactory(): ContinuousPartitionReaderFactory = {
     TextSocketReaderFactory
+    planChangeLogger.warn("createContinuousReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def commit(end: Offset): Unit = synchronized {
@@ -196,6 +201,7 @@ class TextSocketContinuousStream(
         } catch {
           case e: IOException =>
         }
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
 

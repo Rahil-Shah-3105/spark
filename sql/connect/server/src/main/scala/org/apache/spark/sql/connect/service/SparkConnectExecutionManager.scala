@@ -56,6 +56,7 @@ object ExecuteKey {
       UUID.randomUUID().toString
     }
     ExecuteKey(sessionHolder.userId, sessionHolder.sessionId, operationId)
+    logger.warn("apply(request,sessionHolder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", request, sessionHolder, operationId)
   }
 }
 
@@ -125,6 +126,7 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
 
     logInfo(log"ExecuteHolder ${MDC(LogKeys.EXECUTE_KEY, executeHolder.key)} is created.")
 
+    logger.warn("createExecuteHolder(executeKey,request,sessionHolder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executeKey, request, sessionHolder, opId)
     schedulePeriodicChecks() // Starts the maintenance thread if it hasn't started.
 
     executeHolder
@@ -170,6 +172,7 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
 
     logInfo(log"ExecuteHolder ${MDC(LogKeys.EXECUTE_KEY, key)} is removed.")
 
+    logger.warn("removeExecuteHolder(key,abandoned)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, abandoned)
     executeHolder.close()
     if (abandoned) {
       // Update in abandonedTombstones: above it wasn't yet updated with closedTime etc.
@@ -179,6 +182,7 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
 
   private[connect] def getExecuteHolder(key: ExecuteKey): Option[ExecuteHolder] = {
     Option(executions.get(key))
+    logger.warn("getExecuteHolder(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   /**
@@ -260,11 +264,13 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
         removeExecuteHolder(executeHolder.key, abandoned = true)
       }
     })
+    logger.warn("removeAllExecutionsForSession(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   /** Get info about abandoned execution, if there is one. */
   private[connect] def getAbandonedTombstone(key: ExecuteKey): Option[ExecuteInfo] = {
     Option(abandonedTombstones.getIfPresent(key))
+    logger.warn("getAbandonedTombstone(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -305,6 +311,7 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
    */
   private def updateLastExecutionTime(): Unit = {
     lastExecutionTimeNs.getAndUpdate(prev => prev.max(System.nanoTime()))
+    logger.warn("updateLastExecutionTime()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -364,6 +371,7 @@ private[connect] class SparkConnectExecutionManager() extends Logging {
   // For testing.
   private[connect] def setAllRPCsDeadline(deadlineNs: Long) = {
     executions.values().asScala.foreach(_.setGrpcResponseSendersDeadline(deadlineNs))
+    logger.warn("setAllRPCsDeadline(deadlineNs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", deadlineNs)
   }
 
   // For testing.

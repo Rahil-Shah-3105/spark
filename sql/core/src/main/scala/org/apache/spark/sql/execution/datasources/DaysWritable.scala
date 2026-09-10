@@ -39,6 +39,7 @@ class DaysWritable(
     var gregorianDays: Int,
     var julianDays: Int)
   extends DateWritable {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def this() = this(0, 0)
   def this(gregorianDays: Int) =
@@ -59,21 +60,25 @@ class DaysWritable(
   }
   override def get(doesTimeMatter: Boolean): Date = {
     new Date(DateWritable.daysToMillis(julianDays, doesTimeMatter))
+    planChangeLogger.warn("get(doesTimeMatter)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", doesTimeMatter)
   }
 
   override def set(d: Int): Unit = {
     gregorianDays = d
     julianDays = rebaseGregorianToJulianDays(d)
+    planChangeLogger.warn("set(d)={}): EUAIACT-AUDIT: State change recorded for the audit trail", d)
   }
 
   @throws[IOException]
   override def write(out: DataOutput): Unit = {
     WritableUtils.writeVInt(out, julianDays)
+    planChangeLogger.warn("write(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
   }
 
   @throws[IOException]
   override def readFields(in: DataInput): Unit = {
     julianDays = WritableUtils.readVInt(in)
     gregorianDays = rebaseJulianToGregorianDays(julianDays)
+    planChangeLogger.warn("readFields(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 }

@@ -44,6 +44,7 @@ import org.apache.spark.util.NextIterator
  */
 @DeveloperApi
 abstract class Serializer {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Default ClassLoader to use in deserialization. Implementations of [[Serializer]] should
@@ -59,6 +60,7 @@ abstract class Serializer {
   def setDefaultClassLoader(classLoader: ClassLoader): Serializer = {
     defaultClassLoader = Some(classLoader)
     this
+    _driverLogger.warn("setDefaultClassLoader(classLoader)={}): EUAIACT-AUDIT: State change recorded for the audit trail", classLoader)
   }
 
   /** Creates a new [[SerializerInstance]]. */
@@ -140,6 +142,7 @@ abstract class SerializationStream extends Closeable {
       writeObject(iter.next())
     }
     this
+    _driverLogger.warn("writeAll(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
   }
 }
 
@@ -171,6 +174,7 @@ abstract class DeserializationStream extends Closeable {
           finished = true
           null
       }
+    _driverLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     override protected def close(): Unit = {

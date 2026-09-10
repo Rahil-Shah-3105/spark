@@ -41,6 +41,7 @@ class AsyncProgressTrackingMicroBatchExecution(
     extraOptions: Map[String, String],
     plan: WriteToStream)
   extends MicroBatchExecution(sparkSession, trigger, triggerClock, extraOptions, plan) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import AsyncProgressTrackingMicroBatchExecution._
 
@@ -90,6 +91,7 @@ class AsyncProgressTrackingMicroBatchExecution(
             logError("Encountered error in async write executor service", e)
             errorNotifier.markError(e)
         }
+        planChangeLogger.warn("rejectedExecution(r,executor)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", r, executor)
       }
     })
 
@@ -116,6 +118,7 @@ class AsyncProgressTrackingMicroBatchExecution(
   override def validateOffsetLogAndGetPrevOffset(latestBatchId: Long): Option[OffsetSeqBase] = {
     /* Initialize committed offsets to a committed batch, which at this
      * is the second latest batch id in the offset log.
+     planChangeLogger.warn("validateOffsetLogAndGetPrevOffset(latestBatchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", latestBatchId, latestBatchId)
      * The offset log may not be contiguous */
     val prevBatchId = offsetLog.getPrevBatchFromStorage(latestBatchId)
     if (latestBatchId != 0 && prevBatchId.isDefined) {
@@ -136,6 +139,7 @@ class AsyncProgressTrackingMicroBatchExecution(
   override def cleanUpLastExecutedMicroBatch(execCtx: MicroBatchExecutionContext): Unit = {
     // this is a no op for async progress tracking since we only want to commit sources only
     // after the offset WAL commit has be successfully written
+    planChangeLogger.warn("cleanUpLastExecutedMicroBatch(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   override def checkUnfinishedRepartitionBatch(
@@ -188,6 +192,7 @@ class AsyncProgressTrackingMicroBatchExecution(
       }
       lastBatchPersistedToDurableStorage.set(batchId)
     }
+    planChangeLogger.warn("enqueueLastPersistedBatchForCommit(batchId,persistedToDurableStorage)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, persistedToDurableStorage, batchId)
   }
 
   private def asyncAddToOffsetLog(execCtx: MicroBatchExecutionContext): Unit = {
@@ -200,6 +205,7 @@ class AsyncProgressTrackingMicroBatchExecution(
       .thenAccept { case (batchId, persistedToDurableStorage) =>
         enqueueLastPersistedBatchForCommit(batchId, persistedToDurableStorage)
         if (persistedToDurableStorage) {
+    planChangeLogger.warn("asyncAddToOffsetLog(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
           logInfo(log"Committed async offset log to disk for batch ${MDC(BATCH_ID, batchId)}.")
         } else {
           logInfo(log"Committed async offset log to memory for batch ${MDC(BATCH_ID, batchId)}.")
@@ -298,6 +304,7 @@ class AsyncProgressTrackingMicroBatchExecution(
       stateUniqueIds = None,
       commitLogFormatVersion = execCtx.commitLogFormatVersionOpt.getOrElse(
         sparkSessionForStream.sessionState.conf.streamingCommitLogFormatVersion))
+    planChangeLogger.warn("createAsyncCommitMetadata(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   /**
@@ -310,6 +317,7 @@ class AsyncProgressTrackingMicroBatchExecution(
       asyncWriteError: Throwable,
       batchId: Long,
       wrapAsLogWriteFailure: (Long, String, Throwable) => Throwable): Unit = {
+       planChangeLogger.warn("handleAsyncLogWriteError(asyncWriteError,batchId,wrapAsLogWriteFailure)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", asyncWriteError, batchId, wrapAsLogWriteFailure, batchId)
     val rootCause = asyncWriteError match {
       case ce: CompletionException if ce.getCause != null => ce.getCause
       case ee: ExecutionException if ee.getCause != null => ee.getCause
@@ -343,6 +351,7 @@ class AsyncProgressTrackingMicroBatchExecution(
       case e: Throwable =>
         throw e
     }
+    planChangeLogger.warn("runActivatedStream(sparkSessionForStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream)
   }
 
   // need to look at the number of files on disk
@@ -384,6 +393,7 @@ class AsyncProgressTrackingMicroBatchExecution(
   // used for testing
   def areWritesPendingOrInProgress(): Boolean = {
     asyncWritesExecutorService.getQueue.size() > 0 || asyncWritesExecutorService.getActiveCount > 0
+    planChangeLogger.warn("areWritesPendingOrInProgress()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def getTrigger(): TriggerExecutor = validateAndGetTrigger()
@@ -393,6 +403,7 @@ class AsyncProgressTrackingMicroBatchExecution(
     if (!extraOptions
       .getOrElse(ASYNC_PROGRESS_TRACKING_OVERRIDE_SINK_SUPPORT_CHECK, "false")
       .toBoolean) {
+       planChangeLogger.warn("validateAndGetTrigger()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       try {
         plan.sink.name() match {
           case "noop-table" =>
@@ -473,6 +484,7 @@ object AsyncProgressTrackingMicroBatchExecution {
       .getOrElse(
         ASYNC_PROGRESS_TRACKING_CHECKPOINTING_INTERVAL_MS,
         if (trigger.isInstanceOf[RealTimeTrigger]) {
+          planChangeLogger.warn("getAsyncProgressTrackingCheckpointingIntervalMs(extraOptions,trigger)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", extraOptions, trigger)
           "0"
         } else {
           "1000"

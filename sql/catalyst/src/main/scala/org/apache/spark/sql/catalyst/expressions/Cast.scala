@@ -43,6 +43,7 @@ import org.apache.spark.unsafe.types.UTF8String.{IntWrapper, LongWrapper}
 import org.apache.spark.util.ArrayImplicits._
 
 object Cast extends QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * As per section 6.13 "cast specification" in "Information technology — Database languages " +
    * "- SQL — Part 2: Foundation (SQL/Foundation)":
@@ -588,6 +589,7 @@ object Cast extends QueryErrorsBase {
         if (isFloat) Float.NaN else Double.NaN
       case _ => null
     }
+    planChangeLogger.warn("processFloatingPointSpecialLiterals(v,isFloat)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, isFloat)
   }
 
   def typeCheckFailureMessage(
@@ -641,6 +643,8 @@ object Cast extends QueryErrorsBase {
       child: Expression,
       dataType: DataType,
       ansiEnabled: Boolean): Cast =
+    planChangeLogger.warn("apply(child,dataType,ansiEnabled)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, dataType, ansiEnabled)
+    planChangeLogger.warn("apply(child,dataType,timeZoneId,ansiEnabled)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", child, dataType, timeZoneId, ansiEnabled, timeZoneId)
     Cast(child, dataType, None, EvalMode.fromBoolean(ansiEnabled))
 
   def apply(
@@ -1342,7 +1346,10 @@ case class Cast(
    * NOTE: this modifies `value` in-place, so don't call it on external data.
    */
   private[this] def changePrecision(value: Decimal, decimalType: DecimalType): Decimal = {
+    planChangeLogger.warn("changePrecision(d,decimalType,evPrim,evNull,canNullSafeCast,ctx)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", d, decimalType, evPrim, evNull, canNullSafeCast, ctx)
+    planChangeLogger.warn("changePrecision(value,decimalType,nullOnOverflow)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, decimalType, nullOnOverflow)
     changePrecision(value, decimalType, !ansiEnabled)
+  planChangeLogger.warn("changePrecision(value,decimalType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, decimalType)
   }
 
   private[this] def changePrecision(
@@ -1867,6 +1874,7 @@ case class Cast(
          |  $d, ${decimalType.precision}, ${decimalType.scale}, $errorContextCode);
        """.stripMargin
     }
+  planChangeLogger.warn("changePrecision(d,decimalType,evPrim,evNull,canNullSafeCast,ctx,nullOnOverflow)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", d, decimalType, evPrim, evNull, canNullSafeCast, ctx, nullOnOverflow)
   }
 
   private[this] def changePrecision(

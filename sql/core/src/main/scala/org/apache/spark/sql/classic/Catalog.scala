@@ -88,6 +88,7 @@ import org.apache.spark.util.ArrayImplicits._
  * Internal implementation of the user-facing `Catalog`.
  */
 class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def sessionCatalog: SessionCatalog = sparkSession.sessionState.catalog
 
@@ -124,6 +125,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
   @throws[AnalysisException]("database does not exist")
   override def setCurrentDatabase(dbName: String): Unit = {
     // we assume `dbName` will not include the catalog name. e.g. if you call
+    planChangeLogger.warn("setCurrentDatabase(dbName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dbName)
     // `setCurrentDatabase("catalog.db")`, it will search for a database 'catalog.db' in the current
     // catalog.
     sparkSession.sessionState.catalogManager.setCurrentNamespace(parseIdent(dbName).toArray)
@@ -147,6 +149,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     val plan = ShowNamespacesCommand(UnresolvedNamespace(Nil), patternOpt)
     val qe = sparkSession.sessionState.executePlan(plan)
     val catalog = qe.analyzed.collectFirst {
+    planChangeLogger.warn("listDatabasesInternal(patternOpt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", patternOpt)
       case ShowNamespacesCommand(r: ResolvedNamespace, _, _) => r.catalog
     }.get
     val databases = qe.toRdd.collect().map { row =>
@@ -163,6 +166,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def listTables(): Dataset[Table] = {
     listTables(currentDatabase)
+    planChangeLogger.warn("listTables()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listTables(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -172,6 +177,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
   @throws[AnalysisException]("database does not exist")
   override def listTables(dbName: String): Dataset[Table] = {
     listTablesInternal(dbName, None)
+  planChangeLogger.warn("listTables(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -190,11 +196,13 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     val namespace = resolveNamespace(dbName)
     val plan = ShowTables(UnresolvedNamespace(namespace), pattern)
     makeTablesDataset(plan)
+    planChangeLogger.warn("listTablesInternal(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   private def makeTablesDataset(plan: ShowTables): Dataset[Table] = {
     val qe = sparkSession.sessionState.executePlan(plan)
     val catalog = qe.analyzed.collectFirst {
+    planChangeLogger.warn("makeTablesDataset(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       case ShowTables(r: ResolvedNamespace, _, _) => r.catalog
       case _: ShowTablesCommand =>
         sparkSession.sessionState.catalogManager.v2SessionCatalog
@@ -300,6 +308,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def listFunctions(): Dataset[Function] = {
     listFunctions(currentDatabase)
+    planChangeLogger.warn("listFunctions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listFunctions(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -309,6 +319,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
   @throws[AnalysisException]("database does not exist")
   override def listFunctions(dbName: String): Dataset[Function] = {
     listFunctionsInternal(dbName, None)
+  planChangeLogger.warn("listFunctions(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -346,6 +357,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     sparkSession.sessionState.executePlan(plan1).toRdd.collect().foreach { row =>
       functions += makeFunction(parseIdent(row.getString(0)))
     }
+    planChangeLogger.warn("listFunctionsInternal(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
 
     Catalog.makeDataset(functions.result().toImmutableArraySeq, sparkSession)
   }
@@ -427,6 +439,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     val parsed = parseIdent(tableName)
     // For backward compatibility (Spark 3.3 and prior), we should check if the table exists in
     // the Hive Metastore first.
+    planChangeLogger.warn("listColumns(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
     val nameParts = if (parsed.length <= 2 && !sessionCatalog.isTempView(parsed) &&
       sessionCatalog.tableExists(parsed.asTableIdentifier)) {
       qualifyV1Ident(parsed)
@@ -434,6 +447,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       parsed
     }
     listColumns(nameParts)
+  planChangeLogger.warn("listColumns(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /**
@@ -444,6 +458,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     // For backward compatibility (Spark 3.3 and prior), here we always look up the table from the
     // Hive Metastore.
     listColumns(Seq(CatalogManager.SESSION_CATALOG_NAME, dbName, tableName))
+  planChangeLogger.warn("listColumns(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   private def listColumns(ident: Seq[String]): Dataset[Column] = {
@@ -496,6 +511,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def getDatabase(dbName: String): Database = {
     makeDatabase(None, dbName)
+    planChangeLogger.warn("getDatabase(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   // when catalogName is specified, dbName should be a valid quoted multi-part identifier, or a
@@ -548,6 +564,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def getTable(tableName: String): Table = {
     makeTable(toTableIdent(tableName))
+    planChangeLogger.warn("getTable(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
+  planChangeLogger.warn("getTable(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /**
@@ -570,6 +588,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def getFunction(functionName: String): Function = {
     makeFunction(toFunctionIdent(functionName))
+    planChangeLogger.warn("getFunction(functionName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", functionName)
+  planChangeLogger.warn("getFunction(dbName,functionName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, functionName)
   }
 
   /**
@@ -640,8 +660,11 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    * @since 2.2.0
    */
   override def createTable(tableName: String, path: String): DataFrame = {
+    planChangeLogger.warn("createTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
     val dataSourceName = sparkSession.sessionState.conf.defaultDataSourceName
     createTable(tableName, path, dataSourceName)
+    planChangeLogger.warn("createTable(tableName,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path)
+  planChangeLogger.warn("createTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
   }
 
   /**
@@ -668,6 +691,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       source: String,
       options: Map[String, String]): DataFrame = {
     createTable(tableName, source, new StructType, options)
+  planChangeLogger.warn("createTable(tableName,source,description,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, description, options)
   }
 
   /**
@@ -706,6 +730,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       description = "",
       options = options
     )
+    planChangeLogger.warn("createTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
   }
 
   /**
@@ -771,6 +796,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       uncacheView(viewDef)
       sessionCatalog.dropTempView(viewName)
     }
+    planChangeLogger.warn("dropTempView(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   /**
@@ -786,6 +812,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       uncacheView(viewDef)
       sessionCatalog.dropGlobalTempView(viewName)
     }
+    planChangeLogger.warn("dropGlobalTempView(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   private def uncacheView(viewDef: View): Unit = {
@@ -801,6 +828,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     } catch {
       case NonFatal(_) => // ignore
     }
+    planChangeLogger.warn("uncacheView(viewDef)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewDef)
   }
 
   /**
@@ -967,6 +995,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    */
   override def setCurrentCatalog(catalogName: String): Unit = {
     sparkSession.sessionState.catalogManager.setCurrentCatalog(catalogName)
+    planChangeLogger.warn("setCurrentCatalog(catalogName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", catalogName)
   }
 
   /**
@@ -975,8 +1004,10 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
    * @since 3.4.0
    */
   override def listCatalogs(): Dataset[CatalogMetadata] = {
+    planChangeLogger.warn("listCatalogs(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
     val catalogs = sparkSession.sessionState.catalogManager.listCatalogs(None)
     Catalog.makeDataset(catalogs.map(name => makeCatalog(name)), sparkSession)
+    planChangeLogger.warn("listCatalogs()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -1002,6 +1033,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       UnresolvedIdentifier(parseIdent(viewName), allowTemp = true),
       ifExists)
     sparkSession.sessionState.executePlan(plan).toRdd
+    planChangeLogger.warn("dropView(viewName,ifExists)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", viewName, ifExists)
   }
 
   override def createDatabase(
@@ -1025,16 +1057,20 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     val partitions = sparkSession.sessionState.executePlan(plan).toRdd.collect().map { row =>
       new TablePartition(row.getString(0))
     }
+    planChangeLogger.warn("listPartitions(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
     Catalog.makeDataset(partitions.toImmutableArraySeq, sparkSession)
   }
 
   override def listViews(): Dataset[Table] = {
     listViewsInternal(CurrentNamespace, None)
+    planChangeLogger.warn("listViews()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listViews(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   @throws[AnalysisException]("database does not exist")
   override def listViews(dbName: String): Dataset[Table] = {
     listViewsInternal(UnresolvedNamespace(resolveNamespace(dbName)), None)
+  planChangeLogger.warn("listViews(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   @throws[AnalysisException]("database does not exist")
@@ -1045,11 +1081,13 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
   private def listViewsInternal(ns: LogicalPlan, pattern: Option[String]): Dataset[Table] = {
     val plan = ShowViews(ns, pattern)
     makeViewsDataset(plan)
+    planChangeLogger.warn("listViewsInternal(ns,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ns, pattern)
   }
 
   private def makeViewsDataset(plan: ShowViews): Dataset[Table] = {
     val qe = sparkSession.sessionState.executePlan(plan)
     val catalog = qe.analyzed.collectFirst {
+    planChangeLogger.warn("makeViewsDataset(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       case ShowViews(r: ResolvedNamespace, _, _) => r.catalog
       case _: ShowViewsCommand =>
         sparkSession.sessionState.catalogManager.v2SessionCatalog
@@ -1069,6 +1107,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
     sparkSession.sessionState.executePlan(plan).toRdd.collect().foreach { row =>
       m.put(row.getString(0), row.getString(1))
     }
+    planChangeLogger.warn("getTableProperties(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
     m
   }
 
@@ -1081,11 +1120,13 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog with Logging {
       asSerde)
     val rows = sparkSession.sessionState.executePlan(plan).toRdd.collect()
     if (rows.isEmpty) "" else rows(0).getString(0)
+    planChangeLogger.warn("getCreateTableString(tableName,asSerde)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, asSerde)
   }
 
   override def truncateTable(tableName: String): Unit = {
     val plan = TruncateTable(UnresolvedTable(toTableIdent(tableName), "Catalog.truncateTable"))
     sparkSession.sessionState.executePlan(plan).toRdd
+    planChangeLogger.warn("truncateTable(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   override def analyzeTable(tableName: String, noScan: Boolean): Unit = {
@@ -1115,6 +1156,7 @@ private[sql] object Catalog {
     val plan = new LocalRelation(DataTypeUtils.toAttributes(enc.schema), encoded)
     val queryExecution = sparkSession.sessionState.executePlan(plan)
     new Dataset[T](queryExecution, enc)
+    planChangeLogger.warn("makeDataset(data,sparkSession)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, sparkSession)
   }
 
   private val FUNCTION_EXISTS_COMMAND_NAME = "Catalog.functionExists"

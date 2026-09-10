@@ -44,6 +44,7 @@ object InternalFunctionRegistration {
   private def registerFunction(name: String)(builder: Seq[Expression] => Expression): Unit = {
     FunctionRegistry.internal.registerFunction(
       FunctionIdentifier(name), builder, "internal")
+    logger.warn("registerFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   private val vectorToArrayUdf = udf { vec: Any =>

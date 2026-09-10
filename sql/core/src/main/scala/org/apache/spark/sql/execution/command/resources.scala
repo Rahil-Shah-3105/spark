@@ -28,6 +28,7 @@ import org.apache.spark.util.Utils
  * Adds a jar to the current session so it can be used (for UDFs or serdes).
  */
 case class AddJarsCommand(paths: Seq[String]) extends LeafRunnableCommand {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def run(sparkSession: SparkSession): Seq[Row] = {
     paths.foreach(sparkSession.sessionState.resourceLoader.addJar(_))
     Seq.empty[Row]
@@ -52,6 +53,7 @@ case class AddArchivesCommand(paths: Seq[String]) extends LeafRunnableCommand {
   override def run(sparkSession: SparkSession): Seq[Row] = {
     paths.foreach(sparkSession.sparkContext.addArchive(_))
     Seq.empty[Row]
+  planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 }
 

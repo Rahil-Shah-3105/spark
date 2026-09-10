@@ -46,6 +46,7 @@ class MapStateImpl[K, V](
     userKeyEnc: ExpressionEncoder[Any],
     valEncoder: ExpressionEncoder[Any],
     metrics: Map[String, SQLMetric] = Map.empty) extends MapState[K, V] with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Pack grouping key and user key together as a prefixed composite key
   private val schemaForCompositeKeyRow: StructType = {
@@ -72,6 +73,7 @@ class MapStateImpl[K, V](
     val encodedCompositeKey = stateTypesEncoder.encodeCompositeKey(key)
     val unsafeRowValue = store.get(encodedCompositeKey, stateName)
 
+    planChangeLogger.warn("getValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     if (unsafeRowValue == null) return null.asInstanceOf[V]
     stateTypesEncoder.decodeValue(unsafeRowValue).asInstanceOf[V]
   }
@@ -90,6 +92,7 @@ class MapStateImpl[K, V](
     val encodedCompositeKey = stateTypesEncoder.encodeCompositeKey(key)
     store.put(encodedCompositeKey, encodedValue, stateName)
     TWSMetricsUtils.incrementMetric(metrics, "numUpdatedStateRows")
+    planChangeLogger.warn("updateValue(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /** Get the map associated with grouping key */
@@ -119,6 +122,7 @@ class MapStateImpl[K, V](
     val compositeKey = stateTypesEncoder.encodeCompositeKey(key)
     store.remove(compositeKey, stateName)
     // Note that for mapState, the rows are flattened. So we count the number of rows removed
+    planChangeLogger.warn("removeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     // proportional to the number of keys in the map per grouping key.
     TWSMetricsUtils.incrementMetric(metrics, "numRemovedStateRows")
   }

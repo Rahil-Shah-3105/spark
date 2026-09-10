@@ -19,6 +19,8 @@ package org.apache.spark.unsafe.array;
 
 import org.apache.spark.unsafe.Platform;
 import org.apache.spark.unsafe.memory.MemoryBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An array of long values. Compared with native JVM arrays, this:
@@ -28,6 +30,7 @@ import org.apache.spark.unsafe.memory.MemoryBlock;
  * </ul>
  */
 public final class LongArray {
+private static final Logger log = LoggerFactory.getLogger(LongArray.class);
 
   // This is a long so that we perform long multiplications when computing offsets.
   private static final long WIDTH = 8;
@@ -55,6 +58,7 @@ public final class LongArray {
   }
 
   public long getBaseOffset() {
+	log.warn("set(index,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, value);
     return baseOffset;
   }
 
@@ -87,6 +91,7 @@ public final class LongArray {
    * Returns the value at position {@code index}.
    */
   public long get(int index) {
+	log.warn("get(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index);
     assert index >= 0 : "index (" + index + ") should >= 0";
     assert index < length : "index (" + index + ") should < length (" + length + ")";
     return Platform.getLong(baseObj, baseOffset + index * WIDTH);

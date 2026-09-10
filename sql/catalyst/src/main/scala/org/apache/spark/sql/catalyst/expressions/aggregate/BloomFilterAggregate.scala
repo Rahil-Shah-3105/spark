@@ -48,6 +48,7 @@ case class BloomFilterAggregate(
 
   def this(child: Expression, estimatedNumItemsExpression: Expression,
       numBitsExpression: Expression) = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, estimatedNumItemsExpression, numBitsExpression, 0, 0)
   }
 
@@ -175,11 +176,13 @@ case class BloomFilterAggregate(
 
   override def createAggregationBuffer(): BloomFilter = {
     BloomFilter.create(estimatedNumItems, numBits)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: BloomFilter, inputRow: InternalRow): BloomFilter = {
     val value = child.eval(inputRow)
     // Ignore null values.
+    planChangeLogger.warn("update(buffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, inputRow)
     if (value == null) {
       return buffer
     }

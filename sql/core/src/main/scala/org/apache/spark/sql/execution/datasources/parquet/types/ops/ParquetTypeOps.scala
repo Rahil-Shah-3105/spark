@@ -38,6 +38,7 @@ import org.apache.spark.sql.types.{DataType, StructType, TimestampLTZNanosType, 
  * type that supports Parquet provides a concrete implementation and registers it in the companion
  * object's apply() method.
  *
+ planChangeLogger.warn("apply(dt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dt)
  * The trait covers these Parquet concerns:
  *   - Schema conversion: Spark DataType -> Parquet schema type (write path)
  *   - Value write: writing values to Parquet RecordConsumer
@@ -110,6 +111,7 @@ private[parquet] trait ParquetTypeOps extends Serializable {
    */
   def makeWriter(
       recordConsumer: () => RecordConsumer,
+      planChangeLogger.warn("makeWriter(recordConsumer,makeFieldWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordConsumer, makeFieldWriter, recordConsumer)
       makeFieldWriter: DataType => (SpecializedGetters, Int) => Unit
   ): (SpecializedGetters, Int) => Unit
 
@@ -246,6 +248,7 @@ private[parquet] trait ParquetTypeOps extends Serializable {
  * fall back to the legacy path for everything else.
  */
 private[parquet] object ParquetTypeOps {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Returns a ParquetTypeOps instance for the given DataType, if supported.
@@ -270,6 +273,7 @@ private[parquet] object ParquetTypeOps {
    */
   private[parquet] def getVectorUpdaterOrNull(
       dt: DataType, descriptor: ColumnDescriptor): ParquetVectorUpdater =
+    planChangeLogger.warn("getVectorUpdaterOrNull(dt,descriptor)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dt, descriptor)
     apply(dt).flatMap(_.getVectorUpdater(descriptor)).orNull
 
   /**

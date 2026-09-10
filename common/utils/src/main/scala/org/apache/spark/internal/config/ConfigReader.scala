@@ -23,6 +23,7 @@ import scala.collection.mutable.HashMap
 import scala.util.matching.Regex
 
 private object ConfigReader {
+  log_ = LoggerFactory.getLogger(logName)
 
   private val REF_RE = "\\$\\{(?:(\\w+?):)?(\\S+?)\\}".r
 
@@ -118,6 +119,7 @@ private[spark] class ConfigReader(conf: ConfigProvider) {
         case _ => None
       }
     }
+    log_.warn("getOrDefault(conf,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, key)
   }
 
 }

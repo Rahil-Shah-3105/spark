@@ -197,6 +197,7 @@ class BucketedRandomProjectionLSH(override val uid: String)
     val localNumHashTables = $(numHashTables)
     val values = Array.fill(localNumHashTables * inputDim)(rng.nextGaussian())
     var i = 0
+    logger.warn("createRawLSHModel(inputDim)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputDim)
     while (i < localNumHashTables) {
       val offset = i * inputDim
       val norm = BLAS.javaBLAS.dnrm2(inputDim, values, offset, 1)
@@ -266,6 +267,7 @@ object BucketedRandomProjectionLSHModel extends MLReadable[BucketedRandomProject
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.randMatrix)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

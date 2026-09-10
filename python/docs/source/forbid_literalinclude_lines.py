@@ -37,6 +37,7 @@ from typing import Any, Dict
 from docutils.nodes import Node
 from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class LiteralIncludeNoLines(LiteralInclude):
@@ -44,6 +45,7 @@ class LiteralIncludeNoLines(LiteralInclude):
 
     def run(self) -> list[Node]:
         if "lines" in self.options:
+            logger.warning("run(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             raise self.error(
                 "literalinclude with ':lines:' is not allowed: it pins absolute line "
                 "numbers, which silently break when the included file changes. Select "
@@ -54,6 +56,7 @@ class LiteralIncludeNoLines(LiteralInclude):
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
+    logger.warning("setup(app)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", app)
     # override=True replaces the built-in ``literalinclude`` registration.
     app.add_directive("literalinclude", LiteralIncludeNoLines, override=True)
     return {

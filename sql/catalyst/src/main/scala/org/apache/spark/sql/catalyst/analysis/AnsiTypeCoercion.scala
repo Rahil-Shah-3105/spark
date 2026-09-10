@@ -74,6 +74,7 @@ import org.apache.spark.sql.types.UpCastRule.numericPrecedence
  *  rule and it is not from the ANSI SQL standard.
  */
 object AnsiTypeCoercion extends TypeCoercionBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def typeCoercionRules: List[Rule[LogicalPlan]] =
     UnpivotCoercion ::
     WidenSetOperationTypes ::
@@ -145,6 +146,7 @@ object AnsiTypeCoercion extends TypeCoercionBase {
       .orElse(findWiderTypeForDecimal(t1, t2))
       .orElse(AnsiStringPromotionTypeCoercion.findWiderTypeForString(t1, t2))
       .orElse(findTypeForComplex(t1, t2, findWiderTypeForTwo))
+      planChangeLogger.warn("findWiderTypeForTwo(t1,t2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t1, t2)
   }
 
   override def findWiderCommonType(types: Seq[DataType]): Option[DataType] = {
@@ -153,6 +155,7 @@ object AnsiTypeCoercion extends TypeCoercionBase {
         case Some(d) => findWiderTypeForTwo(d, c)
         case _ => None
       })
+      planChangeLogger.warn("findWiderCommonType(types)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", types)
   }
 
   override def implicitCast(e: Expression, expectedType: AbstractDataType): Option[Expression] = {

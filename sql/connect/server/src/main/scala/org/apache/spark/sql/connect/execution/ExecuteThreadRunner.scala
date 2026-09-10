@@ -182,6 +182,7 @@ private[connect] class ExecuteThreadRunner(executeHolder: ExecuteHolder) extends
         currentState = prevState
       }
     }
+    logger.warn("execute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Inner executeInternal is wrapped by execute() for error handling.
@@ -198,6 +199,7 @@ private[connect] class ExecuteThreadRunner(executeHolder: ExecuteHolder) extends
     // interrupted. This eliminates the race between postStarted() and interrupt().
     executeHolder.eventsManager.postStarted()
 
+    logger.warn("executeInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // `withSession` ensures that session-specific artifacts (such as JARs and class files) are
     // available during processing.
     executeHolder.sessionHolder.withSession { session =>
@@ -334,6 +336,7 @@ private[connect] class ExecuteThreadRunner(executeHolder: ExecuteHolder) extends
       .newBuilder()
       .setResultComplete(proto.ExecutePlanResponse.ResultComplete.newBuilder().build())
       .build()
+      logger.warn("createResultComplete()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private class ExecutionThread()

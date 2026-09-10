@@ -34,6 +34,7 @@ import org.apache.spark.util.collection.OpenHashMap
 
 private[aggregate] object ModeKeyNormalizer {
   def forType(dataType: DataType): Any => Any = dataType match {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     case DoubleType => NormalizeFloatingNumbers.DOUBLE_NORMALIZER
     case FloatType => NormalizeFloatingNumbers.FLOAT_NORMALIZER
     case dt if NormalizeFloatingNumbers.needNormalize(dt) =>
@@ -79,6 +80,7 @@ case class Mode(
       buffer.changeValue(keyNormalizer(key).asInstanceOf[AnyRef], 1L, _ + 1L)
     }
     buffer
+  planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   override def merge(
@@ -93,6 +95,7 @@ case class Mode(
   private def getCollationAwareBuffer(
       childDataType: DataType,
       buffer: OpenHashMap[AnyRef, Long]): Iterable[(AnyRef, Long)] = {
+       planChangeLogger.warn("getCollationAwareBuffer(childDataType,buffer)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", childDataType, buffer)
     def groupAndReduceBuffer(groupingFunction: AnyRef => _): Iterable[(AnyRef, Long)] = {
       buffer.groupMapReduce(t =>
         groupingFunction(t._1))(x => x)((x, y) => (x._1, x._2 + y._2)).values
@@ -130,6 +133,7 @@ case class Mode(
   private def processStructTypeWithBuffer(
       tuples: Seq[(Any, StructField)]): Seq[Any] = {
     tuples.map(t => collationAwareTransform(t._1.asInstanceOf[AnyRef], t._2.dataType))
+    planChangeLogger.warn("processStructTypeWithBuffer(tuples)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tuples)
   }
 
   private def processArrayTypeWithBuffer(
@@ -137,6 +141,7 @@ case class Mode(
       data: ArrayData): Seq[Any] = {
     (0 until data.numElements()).map(i =>
       collationAwareTransform(data.get(i, a.elementType), a.elementType))
+    planChangeLogger.warn("processArrayTypeWithBuffer(a,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", a, data)
   }
 
   private def processMapTypeWithBuffer(mt: MapType, data: MapData): Map[Any, Any] = {
@@ -147,6 +152,7 @@ case class Mode(
       collationAwareTransform(data.valueArray().get(i, mt.valueType), mt.valueType)
     }
     transformedKeys.zip(transformedValues).toMap
+    planChangeLogger.warn("processMapTypeWithBuffer(mt,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mt, data)
   }
 
   override def eval(buffer: OpenHashMap[AnyRef, Long]): Any = {

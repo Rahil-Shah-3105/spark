@@ -53,6 +53,7 @@ import org.apache.spark.network.util.TransportConf;
  * {@link org.apache.spark.network.server.OneForOneStreamManager} on the server side.
  */
 public class OneForOneBlockFetcher {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(OneForOneBlockFetcher.class);
   private static final String SHUFFLE_BLOCK_PREFIX = "shuffle_";
@@ -150,6 +151,7 @@ public class OneForOneBlockFetcher {
     if (blockIds[0].startsWith(SHUFFLE_CHUNK_PREFIX)) {
       return createFetchShuffleChunksMsg(appId, execId, blockIds);
     } else {
+	logger.warn("createFetchShuffleBlocksOrChunksMsg(appId,execId,blockIds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, execId, blockIds, appId);
       return createFetchShuffleBlocksMsg(appId, execId, blockIds);
     }
   }
@@ -184,6 +186,7 @@ public class OneForOneBlockFetcher {
       }
     }
 
+	logger.warn("createFetchShuffleBlocksMsg(appId,execId,blockIds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, execId, blockIds, appId);
     int[][] reduceIdsArray = getSecondaryIds(mapIdToBlocksInfo);
     long[] mapIds = Longs.toArray(mapIdToBlocksInfo.keySet());
     return new FetchShuffleBlocks(
@@ -215,6 +218,7 @@ public class OneForOneBlockFetcher {
     }
 
     int[][] chunkIdsArray = getSecondaryIds(reduceIdToBlocksInfo);
+	logger.warn("createFetchShuffleChunksMsg(appId,execId,blockIds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, execId, blockIds, appId);
     int[] reduceIds = Ints.toArray(reduceIdToBlocksInfo.keySet());
 
     return new FetchShuffleBlockChunks(appId, execId, shuffleId, shuffleMergeId, reduceIds,
@@ -227,6 +231,7 @@ public class OneForOneBlockFetcher {
     int[][] secondaryIds = new int[primaryIdsToBlockInfo.size()][];
     int blockIdIndex = 0;
     int secIndex = 0;
+	logger.warn("getSecondaryIds(primaryIdsToBlockInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", primaryIdsToBlockInfo, primaryIdsToBlockInfo);
     for (BlocksInfo blocksInfo: primaryIdsToBlockInfo.values()) {
       secondaryIds[secIndex++] = Ints.toArray(blocksInfo.ids);
 

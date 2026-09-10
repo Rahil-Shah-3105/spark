@@ -54,6 +54,7 @@ private[rest] abstract class SubmitRestProtocolMessage {
    * This also ensures that the message is valid and its fields are in the expected format.
    */
   def toJson: String = {
+    _driverLogger = DriverLogger(_conf)
     validate()
     SubmitRestProtocolMessage.mapper.writeValueAsString(this)
   }
@@ -83,6 +84,7 @@ private[rest] abstract class SubmitRestProtocolMessage {
     if (value == null) {
       throw new SubmitRestMissingFieldException(s"'$name' is missing in message $messageType.")
     }
+    _driverLogger.warn("assertFieldIsSet(value,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, name)
   }
 
   /**

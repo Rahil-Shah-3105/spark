@@ -36,6 +36,7 @@ import org.apache.spark.io.{CompressionCodec => SparkCompressionCodec}
  * non-standard file extensions like `.zstd` and `.gzip` for Zstandard and Gzip codecs.
  */
 object HadoopCodecStreams {
+  _driverLogger = DriverLogger(_conf)
   private val ZSTD_EXTENSIONS = Seq(".zstd", ".zst")
 
   // get codec based on file name extension
@@ -53,6 +54,7 @@ object HadoopCodecStreams {
         case _ => None
       }
     }
+    _driverLogger.warn("getDecompressionCodec(config,file)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", config, file)
   }
 
   def createZstdInputStream(
@@ -61,6 +63,7 @@ object HadoopCodecStreams {
     val sparkConf = Option(SparkEnv.get).map(_.conf).getOrElse(new SparkConf)
     val fileName = file.getName.toLowerCase(Locale.ROOT)
 
+    _driverLogger.warn("createZstdInputStream(file,inputStream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", file, inputStream)
     val isOpt = if (ZSTD_EXTENSIONS.exists(fileName.endsWith)) {
       Some(
         SparkCompressionCodec
@@ -79,6 +82,7 @@ object HadoopCodecStreams {
     val fs = file.getFileSystem(config)
     val inputStream: InputStream = fs.open(file)
 
+    _driverLogger.warn("createInputStream(config,file)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", config, file)
     getDecompressionCodec(config, file)
       .map { codec =>
         try {

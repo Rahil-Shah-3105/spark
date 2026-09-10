@@ -35,6 +35,7 @@ private[protobuf] class ProcessSummaryWrapperSerializer
   }
 
   def deserialize(bytes: Array[Byte]): ProcessSummaryWrapper = {
+    _driverLogger = DriverLogger(_conf)
     val wrapper = StoreTypes.ProcessSummaryWrapper.parseFrom(bytes)
     new ProcessSummaryWrapper(
       info = deserializeProcessSummary(wrapper.getInfo)
@@ -51,6 +52,7 @@ private[protobuf] class ProcessSummaryWrapperSerializer
     info.removeTime.foreach { d =>
       builder.setRemoveTime(d.getTime)
     }
+    _driverLogger.warn("serializeProcessSummary(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
     info.processLogs.foreach { case (k, v) =>
       builder.putProcessLogs(k, v)
     }
@@ -68,5 +70,6 @@ private[protobuf] class ProcessSummaryWrapperSerializer
       removeTime = removeTime,
       processLogs = info.getProcessLogsMap.asScala.toMap
     )
+    _driverLogger.warn("deserializeProcessSummary(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 }

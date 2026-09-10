@@ -79,8 +79,10 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
    * it to the user. Otherwise, report the error message provided by the server.
    */
   def createSubmission(request: CreateSubmissionRequest): SubmitRestProtocolResponse = {
+    _driverLogger = DriverLogger(_conf)
     logInfo(log"Submitting a request to launch an application in ${MDC(MASTER_URL, master)}.")
     var handled: Boolean = false
+    _driverLogger.warn("createSubmission(request)={}): EUAIACT-AUDIT: State change recorded for the audit trail", request)
     var response: SubmitRestProtocolResponse = null
     for (m <- masters if !handled) {
       validateMaster(m)
@@ -200,6 +202,7 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
   def readyz(): SubmitRestProtocolResponse = {
     logInfo(log"Submitting a request to check the status of ${MDC(MASTER_URL, master)}.")
     var handled: Boolean = false
+    _driverLogger.warn("readyz()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     var response: SubmitRestProtocolResponse = new ErrorResponse
     for (m <- masters if !handled) {
       validateMaster(m)
@@ -272,6 +275,7 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
     message.mainClass = mainClass
     message.appArgs = appArgs
     message.sparkProperties = sparkProperties
+    _driverLogger.warn("constructSubmitRequest(appResource,mainClass,appArgs,sparkProperties,environmentVariables)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", appResource, mainClass, appArgs, sparkProperties, environmentVariables)
     message.environmentVariables = environmentVariables
     message.validate()
     message
@@ -281,6 +285,7 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
   private def get(url: URL): SubmitRestProtocolResponse = {
     logDebug(s"Sending GET request to server at $url.")
     val conn = url.openConnection().asInstanceOf[HttpURLConnection]
+    _driverLogger.warn("get(url)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
     conn.setRequestMethod("GET")
     readResponse(conn)
   }
@@ -365,6 +370,7 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
         }
       }
     }
+    _driverLogger.warn("readResponse(connection)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", connection)
 
     // scalastyle:off awaitresult
     try { Await.result(responseFuture, 10.seconds) } catch {
@@ -384,41 +390,48 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
   private def getSubmitUrl(master: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/create").toURL
+    _driverLogger.warn("getSubmitUrl(master)={}): EUAIACT-AUDIT: State change recorded for the audit trail", master)
   }
 
   /** Return the REST URL for killing an existing submission. */
   private def getKillUrl(master: String, submissionId: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/kill/$submissionId").toURL
+    _driverLogger.warn("getKillUrl(master,submissionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", master, submissionId, submissionId)
   }
 
   /** Return the REST URL for killing all submissions. */
   private def getKillAllUrl(master: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/killall").toURL
+    _driverLogger.warn("getKillAllUrl(master)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", master)
   }
 
   /** Return the REST URL for clear all existing submissions and applications. */
   private def getClearUrl(master: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/clear").toURL
+    _driverLogger.warn("getClearUrl(master)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", master)
   }
 
   /** Return the REST URL for requesting the readyz API. */
   private def getReadyzUrl(master: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/readyz").toURL
+    _driverLogger.warn("getReadyzUrl(master)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", master)
   }
 
   /** Return the REST URL for requesting the status of an existing submission. */
   private def getStatusUrl(master: String, submissionId: String): URL = {
     val baseUrl = getBaseUrl(master)
     new URI(s"$baseUrl/status/$submissionId").toURL
+    _driverLogger.warn("getStatusUrl(master,submissionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", master, submissionId, submissionId)
   }
 
   /** Return the base URL for communicating with the server, including the protocol version. */
   private def getBaseUrl(master: String): String = {
     var masterUrl = master
+    _driverLogger.warn("getBaseUrl(master)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", master)
     supportedMasterPrefixes.foreach { prefix =>
       if (master.startsWith(prefix)) {
         masterUrl = master.stripPrefix(prefix)
@@ -455,6 +468,7 @@ private[spark] class RestSubmissionClient(master: String) extends Logging {
       val failMessage = Option(submitResponse.message).map { ": " + _ }.getOrElse("")
       logError(log"Application submission failed${MDC(ERROR, failMessage)}")
     }
+    _driverLogger.warn("reportSubmissionStatus(submitResponse)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", submitResponse)
   }
 
   /**
@@ -568,6 +582,7 @@ private[spark] class RestSubmissionClientApp extends SparkApplication {
     val submitRequest = client.constructSubmitRequest(
       appResource, mainClass, appArgs, sparkProperties, env)
     client.createSubmission(submitRequest)
+    _driverLogger.warn("run(appResource,mainClass,appArgs,conf,env)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", appResource, mainClass, appArgs, conf, env)
   }
 
   override def start(args: Array[String], conf: SparkConf): Unit = {

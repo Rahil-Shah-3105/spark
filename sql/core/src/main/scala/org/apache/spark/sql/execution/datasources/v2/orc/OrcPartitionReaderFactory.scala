@@ -70,9 +70,11 @@ case class OrcPartitionReaderFactory(
       !WholeStageCodegenExec.isTooManyFields(sqlConf, resultSchema) &&
       resultSchema.forall(s => OrcUtils.supportColumnarReads(
         s.dataType, sqlConf.orcVectorizedReaderNestedColumnEnabled))
+      planChangeLogger.warn("supportColumnarReads(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   private def pushDownPredicates(orcSchema: TypeDescription, conf: Configuration): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (orcFilterPushDown && filters.nonEmpty) {
       val fileSchema = OrcUtils.toCatalystSchema(orcSchema)
       OrcFilters.createFilter(fileSchema, filters.toImmutableArraySeq).foreach { f =>
@@ -93,6 +95,7 @@ case class OrcPartitionReaderFactory(
     val resultedColPruneInfo = OrcUtils.requestedColumnIds(
       isCaseSensitive, dataSchema, readDataSchema, orcSchema, conf)
 
+    planChangeLogger.warn("buildReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", file, resultedColPruneInfo)
     if (resultedColPruneInfo.isEmpty) {
       new EmptyPartitionReader[InternalRow]
     } else {
@@ -133,6 +136,7 @@ case class OrcPartitionReaderFactory(
     val resultedColPruneInfo = OrcUtils.requestedColumnIds(
       isCaseSensitive, dataSchema, readDataSchema, orcSchema, conf)
 
+    planChangeLogger.warn("buildColumnarReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", file, resultedColPruneInfo)
     if (resultedColPruneInfo.isEmpty) {
       new EmptyPartitionReader
     } else {
@@ -172,6 +176,7 @@ case class OrcPartitionReaderFactory(
     val readerOptions = OrcFile.readerOptions(conf).filesystem(fs)
     val reader = OrcFile.createReader(filePath, readerOptions)
     try {
+    planChangeLogger.warn("createORCReader(filePath,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", filePath, conf)
       pushDownPredicates(reader.getSchema, conf)
       (reader, readerOptions)
     } catch {

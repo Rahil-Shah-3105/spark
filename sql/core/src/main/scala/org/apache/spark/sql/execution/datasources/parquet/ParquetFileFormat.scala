@@ -64,6 +64,7 @@ class ParquetFileFormat
   with SupportsArchiveFormat
   with Logging
   with Serializable {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Reads every archive entry, matching a directory scan (Parquet part-files are often
   // extensionless).
@@ -82,6 +83,7 @@ class ParquetFileFormat
       job: Job,
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
+       planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     val sqlConf = getSqlConf(sparkSession)
     val parquetOptions = new ParquetOptions(options, sqlConf)
     ParquetUtils.prepareWrite(sqlConf, job, dataSchema, parquetOptions)
@@ -165,6 +167,7 @@ class ParquetFileFormat
     hadoopConf.setBoolean(
       SQLConf.PARQUET_READER_RESPECT_UNKNOWN_TYPE_ANNOTATION.key,
       sqlConf.parquetReaderRespectUnknownTypeAnnotation)
+    planChangeLogger.warn("setupHadoopConf(hadoopConf,sqlConf,requiredSchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hadoopConf, sqlConf, requiredSchema)
   }
 
   /**
@@ -216,6 +219,7 @@ class ParquetFileFormat
     val archiveFormatEnabled = parquetOptions.archiveFormatEnabled
 
     // Should always be set by FileSourceScanExec creating this.
+    planChangeLogger.warn("buildReaderWithPartitionValues(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf, resultSchema)
     // Check conf before checking option, to allow working around an issue by changing conf.
     val returningBatch = sqlConf.parquetVectorizedReaderEnabled &&
       options.getOrElse(FileFormat.OPTION_RETURNING_BATCH,
@@ -498,6 +502,7 @@ object ParquetFileFormat extends Logging {
     val seen = mutable.HashSet[String]()
     val finalSchemas: Seq[StructType] = footers.flatMap { footer =>
       val metadata = footer.getParquetMetadata.getFileMetaData
+    planChangeLogger.warn("readSchema(footers,sparkSession)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", footers, sparkSession)
       val serializedSchema = metadata
         .getKeyValueMetaData
         .asScala.toMap
@@ -562,6 +567,7 @@ object ParquetFileFormat extends Logging {
     ThreadUtils.parmap(partFiles, "readingParquetFooters", 8,
         preserveSparkThrowable = true) { currentFile =>
       try {
+      planChangeLogger.warn("readParquetFootersInParallel(conf,partFiles,ignoreCorruptFiles,ignoreMissingFiles)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, partFiles, ignoreCorruptFiles, ignoreMissingFiles)
         // Skips row group information since we only need the schema.
         // ParquetFileReader.readFooter throws RuntimeException, instead of IOException,
         // when it can't read the footer.
@@ -604,6 +610,7 @@ object ParquetFileFormat extends Logging {
       archivePathFilter: Option[GlobPattern]): Seq[Footer] = {
     val tempDir = Utils.createTempDir(Utils.getLocalDir(SparkEnv.get.conf), "parquet-archive-infer")
     // localizeEntries eagerly opens/copies the first entry, so build it inside the try -- a corrupt
+    planChangeLogger.warn("readArchiveFooters(conf,archive,archivePathFilter)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, archive, archivePathFilter)
     // archive throws there and the finally must still delete tempDir.
     var entries: Iterator[(String, File)] = Iterator.empty
     try {
@@ -692,6 +699,7 @@ object ParquetFileFormat extends Logging {
       .get(ParquetReadSupport.SPARK_METADATA_KEY)
       .flatMap(deserializeSchemaString)
       .getOrElse(converter.convert(fileMetaData.getSchema))
+      planChangeLogger.warn("readSchemaFromFooter(footer,converter)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", footer, converter)
   }
 
   private def deserializeSchemaString(schemaString: String): Option[StructType] = {

@@ -81,6 +81,7 @@ private[spark] abstract class RestSubmissionServer(
 
   /** Start the server and return the bound port. */
   def start(): Int = {
+    _driverLogger = DriverLogger(_conf)
     val (server, boundPort) = Utils.startServiceOnPort[Server](requestedPort, doStart, masterConf)
     _server = Some(server)
     logInfo(log"Started REST server for submitting applications on ${MDC(HOST, host)}" +
@@ -149,6 +150,7 @@ private[spark] abstract class RestSubmissionServer(
       params.foreach { case (k, v) => holder.setInitParameter(k, v) }
       handler.addFilter(holder, "/*", EnumSet.allOf(classOf[DispatcherType]))
     }
+    _driverLogger.warn("addFilters(handler)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handler)
   }
 
   def stop(): Unit = {
@@ -177,6 +179,7 @@ private[rest] abstract class RestServlet extends HttpServlet with Logging {
     responseServlet.setContentType("application/json")
     responseServlet.setCharacterEncoding("utf-8")
     responseServlet.getWriter.write(message.toJson)
+    _driverLogger.warn("sendResponse(responseMessage,responseServlet)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", responseMessage, responseServlet)
   }
 
   /**
@@ -316,6 +319,7 @@ private[rest] abstract class ReadyzRequestServlet extends RestServlet {
   protected override def doGet(
       request: HttpServletRequest,
       response: HttpServletResponse): Unit = {
+       _driverLogger.warn("doGet(request,response)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, response)
     val readyzResponse = handleReadyz()
     val responseMessage = if (readyzResponse.success) {
       response.setStatus(HttpServletResponse.SC_OK)
@@ -374,6 +378,7 @@ private[rest] abstract class SubmitRequestServlet extends RestServlet {
       val bytes = request.getInputStream.readNBytes(math.min(limit + 1, Int.MaxValue).toInt)
       if (bytes.length > limit) None else Some(new String(bytes, StandardCharsets.UTF_8))
     }
+    _driverLogger.warn("readRequestBody(request,limit)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, limit)
   }
 
   /**

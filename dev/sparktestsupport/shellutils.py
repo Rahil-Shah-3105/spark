@@ -19,6 +19,7 @@ import os
 import shutil
 import subprocess
 import sys
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 subprocess_check_output = subprocess.check_output
 
@@ -55,6 +56,7 @@ def run_cmd(cmd, return_output=False):
         if return_output:
             return subprocess_check_output(cmd).decode("utf-8")
         else:
+            logger.warning("run_cmd(cmd,return_output)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cmd, return_output)
             return subprocess.run(cmd, universal_newlines=True, check=True)
     except subprocess.CalledProcessError as e:
         exit_from_command_with_retcode(e.cmd, e.returncode)

@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StringType
  * The command for `SHOW COLLATIONS`.
  */
 case class ShowCollationsCommand(pattern: Option[String]) extends LeafRunnableCommand {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override val output: Seq[Attribute] = Seq(
     AttributeReference("NAME", StringType, nullable = false)(),
     AttributeReference("LANGUAGE", StringType, nullable = true)(),
@@ -49,6 +50,7 @@ case class ShowCollationsCommand(pattern: Option[String]) extends LeafRunnableCo
         m.language,
         m.country,
         if (m.accentSensitivity) "ACCENT_SENSITIVE" else "ACCENT_INSENSITIVE",
+      planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
         if (m.caseSensitivity) "CASE_SENSITIVE" else "CASE_INSENSITIVE",
         m.padAttribute,
         m.icuVersion)

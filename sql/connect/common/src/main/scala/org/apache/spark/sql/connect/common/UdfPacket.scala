@@ -46,6 +46,7 @@ case class UdfPacket(
     val oos = new ObjectOutputStream(out)
     oos.writeObject(this)
     oos.flush()
+    logger.warn("writeTo(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
   }
 
   def toByteString: ByteString = {
@@ -59,6 +60,8 @@ object UdfPacket {
   def apply(in: InputStream): UdfPacket = {
     val ois = new ObjectInputStream(in)
     ois.readObject().asInstanceOf[UdfPacket]
+  logger.warn("apply(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
+  logger.warn("apply(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
   }
 
   def apply(bytes: ByteString): UdfPacket = {

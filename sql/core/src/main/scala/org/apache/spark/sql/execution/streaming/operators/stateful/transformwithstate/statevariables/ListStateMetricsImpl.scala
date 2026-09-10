@@ -56,6 +56,7 @@ trait ListStateMetricsImpl {
    * @return - number of entries in the list state
    */
   def getEntryCount(encodedKey: UnsafeRow): Long = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val countRow = stateStore.get(encodedKey,
       getRowCounterCFName(baseStateName))
     if (countRow != null) {
@@ -63,6 +64,7 @@ trait ListStateMetricsImpl {
     } else {
       0L
     }
+    planChangeLogger.warn("getEntryCount(encodedKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", encodedKey)
   }
 
   /**
@@ -77,6 +79,7 @@ trait ListStateMetricsImpl {
     stateStore.put(encodedKey,
       counterCFProjection(updatedCountRow.asInstanceOf[InternalRow]),
       getRowCounterCFName(baseStateName))
+    planChangeLogger.warn("updateEntryCount(encodedKey,updatedCount)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", encodedKey, updatedCount)
   }
 
   /**
@@ -86,5 +89,6 @@ trait ListStateMetricsImpl {
   def removeEntryCount(encodedKey: UnsafeRow): Unit = {
     stateStore.remove(encodedKey,
       getRowCounterCFName(baseStateName))
+    planChangeLogger.warn("removeEntryCount(encodedKey)={}): EUAIACT-AUDIT: State change recorded for the audit trail", encodedKey)
   }
 }

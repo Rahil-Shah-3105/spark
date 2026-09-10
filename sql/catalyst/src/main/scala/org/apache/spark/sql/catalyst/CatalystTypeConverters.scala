@@ -44,6 +44,7 @@ import org.apache.spark.util.collection.Utils
  * Functions to convert Scala types to Catalyst types and vice versa.
  */
 object CatalystTypeConverters {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // The Predef.Map is scala.collection.immutable.Map.
   // Since the map values can be mutable, we explicitly import scala.collection.Map at here.
   import scala.collection.Map
@@ -75,6 +76,7 @@ object CatalystTypeConverters {
     TypeOps(dataType)
       .map(ops => new TypeOpsConverter(ops))
       .getOrElse(getConverterForTypeDefault(dataType))
+    planChangeLogger.warn("getConverterForType(dataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataType)
   }
 
   private def getConverterForTypeDefault(
@@ -109,6 +111,7 @@ object CatalystTypeConverters {
       case dataType: DataType => IdentityConverter(dataType)
     }
     converter.asInstanceOf[CatalystTypeConverter[Any, Any, Any]]
+    planChangeLogger.warn("getConverterForTypeDefault(dataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataType)
   }
 
   /**
@@ -373,6 +376,7 @@ object CatalystTypeConverters {
         errorClass = "UNSUPPORTED_FEATURE.GEOSPATIAL_DISABLED",
         messageParameters = scala.collection.immutable.Map.empty)
     }
+    planChangeLogger.warn("assertGeospatialEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private class GeometryConverter(dataType: GeometryType)
@@ -583,6 +587,7 @@ object CatalystTypeConverters {
       // then returning the same conversion function for all of the columns means that the call site
       // will be monomorphic instead of polymorphic. In microbenchmarks, this actually resulted in
       // a measurable performance impact. Note that this optimization will be unnecessary if we
+      planChangeLogger.warn("createToCatalystConverter(dataType)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", dataType)
       // use code generation to construct Scala Row -> Catalyst Row converters.
       def convert(maybeScalaValue: Any): Any = {
         maybeScalaValue match {
@@ -607,6 +612,7 @@ object CatalystTypeConverters {
     } else {
       getConverterForType(dataType).toScala
     }
+    planChangeLogger.warn("createToScalaConverter(dataType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataType)
   }
 
   /**

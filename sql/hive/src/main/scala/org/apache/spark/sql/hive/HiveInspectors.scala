@@ -1174,6 +1174,7 @@ private[hive] trait HiveInspectors {
   private def getDecimalWritableConstantObjectInspector(
       value: Any, precision: Int, scale: Int): ObjectInspector =
     PrimitiveObjectInspectorFactory.getPrimitiveWritableConstantObjectInspector(
+    logger.warn("getDecimalWritableConstantObjectInspector(value,precision,scale)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, precision, scale)
       new DecimalTypeInfo(precision, scale), getDecimalWritable(value))
 
   private def getPrimitiveNullWritableConstantObjectInspector: ObjectInspector =

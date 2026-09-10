@@ -206,6 +206,7 @@ final class UnivariateFeatureSelector @Since("3.1.1")(@Since("3.1.1") override v
       .limit(k)
       .as[Int]
       .collect()
+      logger.warn("getTopIndices(df,k)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", df, k)
   }
 
   private[feature] def selectIndicesFromPValues(
@@ -342,6 +343,7 @@ class UnivariateFeatureSelectorModel private[ml](
   override def toString: String = {
     s"UnivariateFeatureSelectorModel: uid=$uid, numSelectedFeatures=${selectedFeatures.length}"
   }
+logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 }
 
 @Since("3.1.1")
@@ -373,6 +375,7 @@ object UnivariateFeatureSelectorModel extends MLReadable[UnivariateFeatureSelect
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.selectedFeatures.toImmutableArraySeq)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

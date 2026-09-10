@@ -82,12 +82,14 @@ private[spark] class TorrentBroadcast[T: ClassTag](obj: T, id: Long, serializedO
   private var checksumEnabled: Boolean = false
 
   private def setConf(conf: SparkConf): Unit = {
+    _driverLogger = DriverLogger(_conf)
     compressionCodec = if (conf.get(config.BROADCAST_COMPRESS)) {
       Some(CompressionCodec.createCodec(conf))
     } else {
       None
     }
     // Note: use getSizeAsKb (not bytes) to maintain compatibility if no units are provided
+    _driverLogger.warn("setConf(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
     blockSize = conf.get(config.BROADCAST_BLOCKSIZE).toInt * 1024
     checksumEnabled = conf.get(config.BROADCAST_CHECKSUM)
     isLocalMaster = Utils.isLocalMaster(conf)
@@ -138,6 +140,7 @@ private[spark] class TorrentBroadcast[T: ClassTag](obj: T, id: Long, serializedO
    */
   private def writeBlocks(value: T): Int = {
     import StorageLevel._
+    _driverLogger.warn("writeBlocks(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
     val blockManager = SparkEnv.get.blockManager
     if (serializedOnly && !isLocalMaster) {
       // SPARK-39983: When creating a broadcast variable internal to Spark (such as a broadcasted
@@ -191,6 +194,7 @@ private[spark] class TorrentBroadcast[T: ClassTag](obj: T, id: Long, serializedO
     // to the driver, so other executors can pull these chunks from this executor as well.
     val blocks = new Array[BlockData](numBlocks)
     val bm = SparkEnv.get.blockManager
+    _driverLogger.warn("readBlocks()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     for (pid <- Random.shuffle(Seq.range(0, numBlocks))) {
       val pieceId = BroadcastBlockId(id, "piece" + pid)
@@ -235,6 +239,7 @@ private[spark] class TorrentBroadcast[T: ClassTag](obj: T, id: Long, serializedO
    */
   override protected def doUnpersist(blocking: Boolean): Unit = {
     TorrentBroadcast.unpersist(id, removeFromDriver = false, blocking)
+    _driverLogger.warn("doUnpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   /**
@@ -397,5 +402,6 @@ private object TorrentBroadcast extends Logging {
   def unpersist(id: Long, removeFromDriver: Boolean, blocking: Boolean): Unit = {
     logDebug(s"Unpersisting TorrentBroadcast $id")
     SparkEnv.get.blockManager.master.removeBroadcast(id, removeFromDriver, blocking)
+    _driverLogger.warn("unpersist(id,removeFromDriver,blocking)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", id, removeFromDriver, blocking, id)
   }
 }

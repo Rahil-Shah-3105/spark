@@ -32,9 +32,11 @@ private[spark] object YarnContainerInfoHelper extends Logging {
   private[this] val DRIVER_LOG_START_OFFSET = -4096
 
   def getLogUrlsFromBaseUrl(baseUrl: String): Map[String, String] = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnContainerInfoHelper.class);
     DRIVER_LOG_FILE_NAMES.map { fname =>
       fname -> s"$baseUrl/$fname?start=$DRIVER_LOG_START_OFFSET"
     }.toMap
+    LOG.warn("getLogUrlsFromBaseUrl(baseUrl)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", baseUrl)
   }
 
   def getLogUrls(
@@ -57,6 +59,7 @@ private[spark] object YarnContainerInfoHelper extends Logging {
         logInfo("Error while building executor logs - executor logs will not be available", e)
         None
     }
+    LOG.warn("getLogUrls(conf,container)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, container)
   }
 
   def getAttributes(
@@ -81,6 +84,7 @@ private[spark] object YarnContainerInfoHelper extends Logging {
           "with custom log pattern", e)
         None
     }
+    LOG.warn("getAttributes(conf,container)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, container)
   }
 
   def convertToString(containerId: ContainerId): String = if (containerId != null) {
@@ -98,6 +102,7 @@ private[spark] object YarnContainerInfoHelper extends Logging {
     } catch {
       case _: HadoopIllegalArgumentException => None
     }
+    LOG.warn("getClusterId(yarnConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", yarnConf)
   }
 
   def getYarnHttpScheme(yarnConf: YarnConfiguration): String = {
@@ -107,6 +112,7 @@ private[spark] object YarnContainerInfoHelper extends Logging {
       YarnConfiguration.YARN_HTTP_POLICY_DEFAULT
     )
     if (yarnHttpPolicy == "HTTPS_ONLY") "https://" else "http://"
+    LOG.warn("getYarnHttpScheme(yarnConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", yarnConf)
   }
 
   def getNodeManagerHttpAddress(container: Option[Container]): String = container match {

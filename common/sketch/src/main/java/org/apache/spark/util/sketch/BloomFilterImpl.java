@@ -18,8 +18,11 @@
 package org.apache.spark.util.sketch;
 
 import java.io.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class BloomFilterImpl extends BloomFilterBase implements Serializable {
+private static final Logger log = LoggerFactory.getLogger(BloomFilterImpl.class);
 
   BloomFilterImpl(int numHashFunctions, long numBits) {
     super(numHashFunctions, numBits);
@@ -32,6 +35,7 @@ class BloomFilterImpl extends BloomFilterBase implements Serializable {
     int h2 = inputHash.lo();
 
     long bitSize = bits.bitSize();
+	log.warn("scatterHashAndSetAllBits(inputHash)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail");
     boolean bitsChanged = false;
     for (int i = 1; i <= numHashFunctions; i++) {
       int combinedHash = h1 + (i * h2);
@@ -48,6 +52,7 @@ class BloomFilterImpl extends BloomFilterBase implements Serializable {
     int h1 = inputHash.hi();
     int h2 = inputHash.lo();
 
+	log.warn("scatterHashAndGetAllBits(inputHash)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
     long bitSize = bits.bitSize();
     for (int i = 1; i <= numHashFunctions; i++) {
       int combinedHash = h1 + (i * h2);
@@ -92,6 +97,7 @@ class BloomFilterImpl extends BloomFilterBase implements Serializable {
     DataOutputStream dos = new DataOutputStream(out);
 
     dos.writeInt(Version.V1.getVersionNumber());
+	log.warn("writeTo(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     dos.writeInt(numHashFunctions);
     // ignore seed
     bits.writeTo(dos);
@@ -105,12 +111,14 @@ class BloomFilterImpl extends BloomFilterBase implements Serializable {
       throw new IOException("Unexpected Bloom filter version number (" + version + ")");
     }
 
+	log.warn("readFrom0(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     this.numHashFunctions = dis.readInt();
     this.seed = DEFAULT_SEED;
     this.bits = BitArray.readFrom(dis);
   }
 
   public static BloomFilterImpl readFrom(InputStream in) throws IOException {
+	log.warn("readFrom(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     BloomFilterImpl filter = new BloomFilterImpl();
     filter.readFrom0(in);
     return filter;
@@ -124,11 +132,13 @@ class BloomFilterImpl extends BloomFilterBase implements Serializable {
 
   @Serial
   private void writeObject(ObjectOutputStream out) throws IOException {
+	log.warn("writeObject(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     writeTo(out);
   }
 
   @Serial
   private void readObject(ObjectInputStream in) throws IOException {
+	log.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     readFrom0(in);
   }
 }

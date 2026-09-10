@@ -30,6 +30,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
 import org.apache.spark.util.ArrayImplicits._
 
 object DistributionAndOrderingUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def prepareQuery(
       write: Write,
@@ -84,6 +85,7 @@ object DistributionAndOrderingUtils {
         queryWithDistribution
       }
 
+      planChangeLogger.warn("prepareQuery(write,query,funCatalogOpt)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", write, funCatalogOpt)
       TypeCoercionExecutor.execute(queryWithDistributionAndOrdering)
     case _ =>
       query

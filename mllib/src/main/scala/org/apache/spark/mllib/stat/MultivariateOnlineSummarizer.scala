@@ -113,6 +113,7 @@ class MultivariateOnlineSummarizer extends MultivariateStatisticalSummary with S
     }
 
     totalWeightSum += weight
+    logger.warn("add(instance,weight)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, weight)
     weightSquareSum += weight * weight
     totalCnt += 1
     this

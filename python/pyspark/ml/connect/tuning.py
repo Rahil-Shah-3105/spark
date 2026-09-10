@@ -48,6 +48,7 @@ from pyspark.sql.utils import is_remote
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class _ValidatorParams(HasSeed):
@@ -72,6 +73,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of estimator or its default value.
         """
+        logger.warning("getEstimator(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.estimator)
 
     @since("2.0.0")
@@ -79,6 +81,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of estimatorParamMaps or its default value.
         """
+        logger.warning("getEstimatorParamMaps(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.estimatorParamMaps)
 
     @since("2.0.0")
@@ -86,6 +89,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of evaluator or its default value.
         """
+        logger.warning("getEvaluator(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.evaluator)
 
 
@@ -125,6 +129,7 @@ class _CrossValidatorParams(_ValidatorParams):
         """
         Gets the value of numFolds or its default value.
         """
+        logger.warning("getNumFolds(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numFolds)
 
     @since("3.1.0")
@@ -132,6 +137,7 @@ class _CrossValidatorParams(_ValidatorParams):
         """
         Gets the value of foldCol or its default value.
         """
+        logger.warning("getFoldCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.foldCol)
 
 
@@ -175,6 +181,7 @@ def _parallelFitTasks(
         )
 
     def get_single_task(index: int, param_map: Any) -> Callable[[], Tuple[int, float]]:
+        logger.warning("get_single_task(index,param_map)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", index, param_map)
         def single_task() -> Tuple[int, float]:
             if not is_remote():
                 # Active session is thread-local variable, in background thread the active session
@@ -352,6 +359,7 @@ class CrossValidator(
         """
         Sets the value of :py:attr:`estimator`.
         """
+        logger.warning("setEstimator(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(estimator=value)
 
     @since("3.5.0")
@@ -359,6 +367,7 @@ class CrossValidator(
         """
         Sets the value of :py:attr:`estimatorParamMaps`.
         """
+        logger.warning("setEstimatorParamMaps(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(estimatorParamMaps=value)
 
     @since("3.5.0")
@@ -366,6 +375,7 @@ class CrossValidator(
         """
         Sets the value of :py:attr:`evaluator`.
         """
+        logger.warning("setEvaluator(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(evaluator=value)
 
     @since("3.5.0")
@@ -373,6 +383,7 @@ class CrossValidator(
         """
         Sets the value of :py:attr:`numFolds`.
         """
+        logger.warning("setNumFolds(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(numFolds=value)
 
     @since("3.5.0")
@@ -380,24 +391,28 @@ class CrossValidator(
         """
         Sets the value of :py:attr:`foldCol`.
         """
+        logger.warning("setFoldCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(foldCol=value)
 
     def setSeed(self, value: int) -> "CrossValidator":
         """
         Sets the value of :py:attr:`seed`.
         """
+        logger.warning("setSeed(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(seed=value)
 
     def setParallelism(self, value: int) -> "CrossValidator":
         """
         Sets the value of :py:attr:`parallelism`.
         """
+        logger.warning("setParallelism(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(parallelism=value)
 
     def setCollectSubModels(self, value: bool) -> "CrossValidator":
         """
         Sets the value of :py:attr:`collectSubModels`.
         """
+        logger.warning("setCollectSubModels(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(collectSubModels=value)
 
     @staticmethod

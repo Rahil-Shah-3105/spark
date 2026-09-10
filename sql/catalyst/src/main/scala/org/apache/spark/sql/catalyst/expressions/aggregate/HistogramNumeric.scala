@@ -73,6 +73,7 @@ case class HistogramNumeric(
   with BinaryLike[Expression] with QueryErrorsBase {
 
   def this(child: Expression, nBins: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, nBins, 0, 0)
   }
 
@@ -125,11 +126,13 @@ case class HistogramNumeric(
     val buffer = new NumericHistogram()
     buffer.allocate(nb.asInstanceOf[Int])
     buffer
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: NumericHistogram, inputRow: InternalRow): NumericHistogram = {
     val value = child.eval(inputRow)
     // Ignore empty rows, for example: histogram_numeric(null)
+    planChangeLogger.warn("update(buffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, inputRow)
     if (value != null) {
       // Convert the value to a double value
       val doubleValue = value match {

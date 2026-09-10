@@ -33,6 +33,7 @@ import org.apache.spark.util.Utils
  */
 private[deploy]
 object CommandUtils extends Logging {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Build a ProcessBuilder based on the given parameters.
@@ -52,6 +53,7 @@ object CommandUtils extends Logging {
     val builder = new ProcessBuilder(commandSeq: _*)
     val environment = builder.environment()
     for ((key, value) <- localCommand.environment) {
+    _driverLogger.warn("buildProcessBuilder(command,securityMgr,memory,sparkHome,substituteArguments,classPaths,env)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, securityMgr, memory, sparkHome, substituteArguments, classPaths, env)
       environment.put(key, value)
     }
     builder
@@ -123,6 +125,7 @@ object CommandUtils extends Logging {
             logInfo(log"Redirection to ${MDC(LogKeys.FILE_NAME, file)} closed: " +
               log"${MDC(LogKeys.ERROR, e.getMessage)}")
         }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }.start()
   }

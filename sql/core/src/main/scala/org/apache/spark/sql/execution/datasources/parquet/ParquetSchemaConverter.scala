@@ -67,6 +67,7 @@ class ParquetToSparkSchemaConverter(
       SQLConf.PARQUET_IGNORE_VARIANT_ANNOTATION.defaultValue.get,
     val respectUnknownTypeAnnotation: Boolean =
       SQLConf.PARQUET_READER_RESPECT_UNKNOWN_TYPE_ANNOTATION.defaultValue.get) {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def this(conf: SQLConf) = this(
     assumeBinaryIsString = conf.isParquetBinaryAsString,
@@ -412,6 +413,7 @@ class ParquetToSparkSchemaConverter(
     def getSparkTypeIfApplicable(
         sparkReadType: Option[DataType],
         converted: ParquetColumn): DataType = {
+         planChangeLogger.warn("getSparkTypeIfApplicable(sparkReadType,converted)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkReadType, converted)
       sparkReadType
         .filterNot(ParquetSchemaConverter.isComplexType)
         .getOrElse(converted.sparkType)

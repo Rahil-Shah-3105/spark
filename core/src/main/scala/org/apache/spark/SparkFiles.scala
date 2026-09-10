@@ -23,6 +23,7 @@ import java.io.File
  * Resolves paths to files added through `SparkContext.addFile()`.
  */
 object SparkFiles {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Get the absolute path of a file added through `SparkContext.addFile()`.
@@ -31,6 +32,7 @@ object SparkFiles {
     val jobArtifactUUID = JobArtifactSet
       .getCurrentJobArtifactState.map(_.uuid).getOrElse("default")
     val withUuid = if (jobArtifactUUID == "default") filename else s"$jobArtifactUUID/$filename"
+      _driverLogger.warn("get(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", filename, jobArtifactUUID)
     new File(getRootDirectory(), withUuid).getAbsolutePath
   }
 

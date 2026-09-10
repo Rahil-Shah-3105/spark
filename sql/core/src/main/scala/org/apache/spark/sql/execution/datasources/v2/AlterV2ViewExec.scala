@@ -78,6 +78,7 @@ case class AlterV2ViewExec(
     existingView: View,
     originalText: String,
     query: LogicalPlan) extends V2AlterViewPreparation {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     val info = buildViewInfo()
@@ -208,6 +209,7 @@ case class RenameV2ViewExec(
     catalog.invalidateView(oldIdent)
     catalog.renameView(oldIdent, qualifiedNewIdent)
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", qualifiedNewIdent)
     optStorageLevel.foreach { storageLevel =>
       val newQualified = (catalog.name() +: qualifiedNewIdent.asMultipartIdentifier).quoted
       session.catalog.cacheTable(newQualified, storageLevel)

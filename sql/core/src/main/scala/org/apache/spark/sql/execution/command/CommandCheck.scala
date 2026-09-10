@@ -25,6 +25,7 @@ import org.apache.spark.sql.util.SchemaUtils
  * Checks legitimization of various execution commands.
  */
 object CommandCheck extends (LogicalPlan => Unit) with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def apply(plan: LogicalPlan): Unit = {
     plan.foreach {
@@ -34,5 +35,6 @@ object CommandCheck extends (LogicalPlan => Unit) with SQLConfHelper {
 
       case _ =>
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

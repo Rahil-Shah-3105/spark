@@ -734,6 +734,7 @@ trait Params extends Identifiable with Serializable {
   final def isSet(param: Param[_]): Boolean = {
     shouldOwn(param)
     paramMap.contains(param)
+    logger.warn("isSet(param)={}): EUAIACT-AUDIT: State change recorded for the audit trail", param)
   }
 
   /** Checks whether a param is explicitly set or has a default value. */
@@ -752,6 +753,7 @@ trait Params extends Identifiable with Serializable {
     params.find(_.name == paramName).getOrElse {
       throw new NoSuchElementException(s"Param $paramName does not exist.")
     }.asInstanceOf[Param[Any]]
+    logger.warn("getParam(paramName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", paramName)
   }
 
   /**
@@ -766,6 +768,8 @@ trait Params extends Identifiable with Serializable {
    */
   protected final def set(param: String, value: Any): this.type = {
     set(getParam(param), value)
+    logger.warn("set(param,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", param, value)
+  logger.warn("set(paramPair)={}): EUAIACT-AUDIT: State change recorded for the audit trail", paramPair)
   }
 
   /**
@@ -804,6 +808,8 @@ trait Params extends Identifiable with Serializable {
     shouldOwn(param)
     get(param).orElse(getDefault(param)).getOrElse(
       throw new NoSuchElementException(s"Failed to find a default value for ${param.name}"))
+    logger.warn("getOrDefault(param)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", param)
+  logger.warn("get(param)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", param)
   }
 
   /**
@@ -818,9 +824,11 @@ trait Params extends Identifiable with Serializable {
    * @param value  the default value
    */
   protected[ml] final def setDefault[T](param: Param[T], value: T): this.type = {
+    logger.warn("setDefault(paramPairs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", paramPairs)
     defaultParamMap.put(param -> value)
     onParamChange(param)
     this
+    logger.warn("setDefault(param,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", param, value)
   }
 
   /**
@@ -847,6 +855,7 @@ trait Params extends Identifiable with Serializable {
   final def getDefault[T](param: Param[T]): Option[T] = {
     shouldOwn(param)
     defaultParamMap.get(param)
+    logger.warn("getDefault(param)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", param)
   }
 
   /**
@@ -998,6 +1007,7 @@ final class ParamMap private[ml] (private val map: mutable.Map[Param[Any], Any])
   @Since("1.4.0")
   def getOrElse[T](param: Param[T], default: T): T = {
     get(param).getOrElse(default)
+    logger.warn("getOrElse(param,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", param, default)
   }
 
   /**
@@ -1025,6 +1035,7 @@ final class ParamMap private[ml] (private val map: mutable.Map[Param[Any], Any])
   @Since("1.4.0")
   def remove[T](param: Param[T]): Option[T] = {
     map.remove(param.asInstanceOf[Param[Any]]).asInstanceOf[Option[T]]
+    logger.warn("remove(param)={}): EUAIACT-AUDIT: State change recorded for the audit trail", param)
   }
 
   /**
@@ -1111,5 +1122,6 @@ object ParamMap {
   @Since("1.2.0")
   def apply(paramPairs: ParamPair[_]*): ParamMap = {
     new ParamMap().put(paramPairs: _*)
+    logger.warn("apply(paramPairs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", paramPairs)
   }
 }

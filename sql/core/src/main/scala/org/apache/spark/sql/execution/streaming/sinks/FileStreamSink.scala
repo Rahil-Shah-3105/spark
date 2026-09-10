@@ -37,6 +37,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.util.{SerializableConfiguration, Utils}
 
 object FileStreamSink extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // The name of the subdirectory that is used to store metadata about which files are valid.
   val metadataDir = "_spark_metadata"
 
@@ -76,6 +77,7 @@ object FileStreamSink extends Logging {
     val metadataDir = new Path(path, FileStreamSink.metadataDir)
     FileStreamSink.checkEscapedMetadataPath(fs, metadataDir, sqlConf)
     metadataDir
+    planChangeLogger.warn("getMetadataLogPath(fs,path,sqlConf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fs, path, sqlConf)
   }
 
   def checkEscapedMetadataPath(fs: FileSystem, metadataPath: Path, sqlConf: SQLConf): Unit = {
@@ -187,6 +189,7 @@ class FileStreamSink(
         statsTrackers = Seq(basicWriteJobStatsTracker),
         options = options)
     }
+    planChangeLogger.warn("addBatch(batchId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, data, batchId)
   }
 
   override def toString: String = s"FileSink[$path]"

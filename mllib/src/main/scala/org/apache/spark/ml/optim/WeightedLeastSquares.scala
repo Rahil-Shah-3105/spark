@@ -321,6 +321,7 @@ private[ml] class WeightedLeastSquares(
     } else {
       new DenseVector(aaBar.clone())
     }
+    logger.warn("getAtA(aaBar,aBar)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", aaBar, aBar)
   }
 
   /** Construct A^T^ b (append bias if necessary). */
@@ -330,6 +331,7 @@ private[ml] class WeightedLeastSquares(
     } else {
       new DenseVector(abBar.clone())
     }
+    logger.warn("getAtB(abBar,bBar)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", abBar, bBar)
   }
 }
 
@@ -400,6 +402,7 @@ private[ml] object WeightedLeastSquares {
       BLAS.axpy(w * l, f, abSum)
       BLAS.spr(w, f, aaSum)
       this
+      logger.warn("add(instance)={}): EUAIACT-AUDIT: State change recorded for the audit trail", instance)
     }
 
     /**

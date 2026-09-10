@@ -18,21 +18,26 @@
 package org.apache.spark.sql.internal.types;
 
 import org.apache.spark.annotation.Unstable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for providing SRS mappings for geographic spatial reference systems.
  */
 @Unstable
 public class GeographicSpatialReferenceSystemMapper extends SpatialReferenceSystemMapper {
+private static final Logger log = LoggerFactory.getLogger(GeographicSpatialReferenceSystemMapper.class);
   // Returns the string ID corresponding to the input SRID. If not supported, returns `null`.
   public static String getStringId(int srid) {
     SpatialReferenceSystemInformation srsInfo = srsCache.getSrsInfo(srid);
+	log.warn("getStringId(srid)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", srid, srid);
     return srsInfo != null && srsInfo.isGeographic() ? srsInfo.stringId() : null;
   }
 
   // Returns the SRID corresponding to the input string ID. If not supported, returns `null`.
   public static Integer getSrid(String stringId) {
     SpatialReferenceSystemInformation srsInfo = srsCache.getSrsInfo(stringId);
+	log.warn("getSrid(stringId)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", stringId, stringId);
     return srsInfo != null && srsInfo.isGeographic() ? srsInfo.srid() : null;
   }
 }

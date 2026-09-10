@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict, Iterator, List, Tuple, Union, Optional
 from pyspark._globals import _NoValue, _NoValueType
 from pyspark.sql.session import SparkSession
 from pyspark.pandas.utils import default_session
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["get_option", "set_option", "reset_option", "options", "option_context"]
 
@@ -430,6 +431,7 @@ def set_option(key: str, value: Any, *, spark_session: Optional[SparkSession] = 
     _check_option(key)
     _options_dict[key].validate(value)
     spark_session = spark_session or default_session(check_ansi_mode=False)
+    logger.warning("set_option(key,value,spark_session)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", key, value, spark_session)
 
     spark_session.conf.set(_key_format(key), json.dumps(value))
 
@@ -453,6 +455,7 @@ def reset_option(key: str, *, spark_session: Optional[SparkSession] = None) -> N
     None
     """
     _check_option(key)
+    logger.warning("reset_option(key,spark_session)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", key, spark_session)
     spark_session = spark_session or default_session(check_ansi_mode=False)
     spark_session.conf.unset(_key_format(key))
 

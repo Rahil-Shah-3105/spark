@@ -38,6 +38,7 @@ abstract class Model[M <: Model[M]] extends Transformer { self =>
   def setParent(parent: Estimator[M]): M = {
     this.parent = parent
     this.asInstanceOf[M]
+    logger.warn("setParent(parent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parent)
   }
 
   /** Indicates whether this [[Model]] has a corresponding parent. */

@@ -30,6 +30,7 @@ import org.apache.spark.resource.ExecutorResourceRequest
 import org.apache.spark.util.Utils
 
 object YarnSparkHadoopUtil {
+  private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnSparkHadoopUtil.class);
 
   // Additional memory overhead for application masters in client mode.
   // 10% was arrived at experimentally. In the interest of minimizing memory waste while covering
@@ -54,6 +55,7 @@ object YarnSparkHadoopUtil {
         value
       }
     env.put(key, newValue)
+    LOG.warn("addPathToEnvironment(env,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, key, value)
   }
 
   /**
@@ -146,6 +148,7 @@ object YarnSparkHadoopUtil {
         javaOpts += "-XX:OnOutOfMemoryError='kill %p'"
       }
     }
+    LOG.warn("addOutOfMemoryErrorArgument(javaOpts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", javaOpts)
   }
 
   /**

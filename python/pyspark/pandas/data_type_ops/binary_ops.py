@@ -32,6 +32,7 @@ from pyspark.pandas.typedef import pandas_on_spark_type
 from pyspark.sql import functions as F
 from pyspark.sql.types import BinaryType, BooleanType, StringType
 from pyspark.sql.utils import pyspark_column_op
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class BinaryOps(DataTypeOps):
@@ -49,6 +50,7 @@ class BinaryOps(DataTypeOps):
         if isinstance(right, IndexOpsMixin) and isinstance(right.spark.data_type, BinaryType):
             return column_op(F.concat)(left, right)
         elif isinstance(right, bytes):
+            logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             return column_op(F.concat)(left, F.lit(right))
         else:
             raise TypeError(
@@ -59,6 +61,7 @@ class BinaryOps(DataTypeOps):
         _sanitize_list_like(right)
 
         if isinstance(right, bytes):
+            logger.warning("radd(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             return cast(
                 SeriesOrIndex, left._with_new_scol(F.concat(F.lit(right), left.spark.column))
             )

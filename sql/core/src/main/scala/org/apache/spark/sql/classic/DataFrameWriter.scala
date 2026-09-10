@@ -54,6 +54,7 @@ import org.apache.spark.util.ArrayImplicits._
  */
 @Stable
 final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFrameWriter[T] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   format(ds.sparkSession.sessionState.conf.defaultDataSourceName)
 
   private val df = ds.toDF()
@@ -115,6 +116,8 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     runCommand(df.sparkSession) {
       saveCommand(Some(path))
     }
+    planChangeLogger.warn("save(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
+  planChangeLogger.warn("save()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -259,6 +262,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     if (_withSchemaEvolution) {
       throw QueryCompilationErrors.schemaEvolutionNotSupportedForV1TableWriteError()
     }
+    planChangeLogger.warn("assertSchemaEvolutionNotEnabledForV1Write()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def getOptionsWithPath(path: Option[String]): CaseInsensitiveMap[String] = {
@@ -267,6 +271,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     } else {
       extraOptions + ("path" -> path.get)
     }
+    planChangeLogger.warn("getOptionsWithPath(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   private def saveToV1SourceCommand(path: Option[String]): LogicalPlan = {
@@ -289,6 +294,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
       className = source,
       partitionColumns = partitioningColumns.getOrElse(Nil),
       options = optionsWithPath.originalMap).planForWriting(curmode, df.logicalPlan)
+    planChangeLogger.warn("saveToV1SourceCommand(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -323,6 +329,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     runCommand(df.sparkSession) {
       insertIntoCommand(tableName)
     }
+    planChangeLogger.warn("insertInto(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   private[sql] def insertIntoCommand(tableName: String): LogicalPlan = {
@@ -336,6 +343,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     }
 
     val session = df.sparkSession
+    planChangeLogger.warn("insertIntoCommand(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
     val canUseV2 = lookupV2Provider().isDefined
 
     session.sessionState.sqlParser.parseMultipartIdentifier(tableName) match {
@@ -351,6 +359,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
       case other =>
         throw QueryCompilationErrors.cannotFindCatalogToHandleIdentifierError(other.quoted)
     }
+  planChangeLogger.warn("insertIntoCommand(catalog,ident)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, ident, ident)
   }
 
   private def insertIntoCommand(catalog: CatalogPlugin, ident: Identifier): LogicalPlan = {
@@ -380,6 +389,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
             table, df.logicalPlan, Literal(true), extraOptions.toMap, _withSchemaEvolution)
         }
     }
+  planChangeLogger.warn("insertIntoCommand(tableIdent)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdent, tableIdent)
   }
 
   private def insertIntoCommand(tableIdent: TableIdentifier): LogicalPlan = {
@@ -452,6 +462,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
     runCommand(df.sparkSession) {
       saveAsTableCommand(tableName)
     }
+    planChangeLogger.warn("saveAsTable(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   private[sql] def saveAsTableCommand(tableName: String): LogicalPlan = {
@@ -464,6 +475,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
         !df.sparkSession.sessionState.catalogManager.catalog(CatalogManager.SESSION_CATALOG_NAME)
           .isInstanceOf[CatalogExtension])
 
+    planChangeLogger.warn("saveAsTableCommand(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableName, v2ProviderOpt)
     session.sessionState.sqlParser.parseMultipartIdentifier(tableName) match {
       case nameParts @ NonSessionCatalogAndIdentifier(catalog, ident) =>
         saveAsTableCommand(catalog.asTableCatalog, v2ProviderOpt, ident, nameParts)
@@ -479,6 +491,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
       case other =>
         throw QueryCompilationErrors.cannotFindCatalogToHandleIdentifierError(other.quoted)
     }
+  planChangeLogger.warn("saveAsTableCommand(catalog,v2ProviderOpt,ident,nameParts)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, v2ProviderOpt, ident, nameParts, v2ProviderOpt)
   }
 
   private def saveAsTableCommand(
@@ -582,6 +595,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
       bucketSpec = getBucketSpec,
       properties = properties)
 
+    planChangeLogger.warn("saveAsV1TableCommand(tableIdent)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdent, tableIdent)
     SaveAsV1TableCommand(tableDesc, curmode, df.logicalPlan)
   }
 
@@ -620,6 +634,7 @@ final class DataFrameWriter[T] private[sql](ds: Dataset[T]) extends sql.DataFram
       shuffleCleanupModeOpt =
         Some(QueryExecution.determineShuffleCleanupMode(session.sessionState.conf)))
     qe.assertCommandExecuted()
+    planChangeLogger.warn("runCommand(session)={}): EUAIACT-AUDIT: State change recorded for the audit trail", session)
   }
 
   private def lookupV2Provider(): Option[TableProvider] = {

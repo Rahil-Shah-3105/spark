@@ -85,6 +85,7 @@ private[sql] class GroupStateImpl[S] private(
       throw new IllegalArgumentException("'null' is not a valid state value")
     }
     value = newValue
+    planChangeLogger.warn("update(newValue)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newValue)
     defined = true
     updated = true
     removed = false
@@ -94,6 +95,7 @@ private[sql] class GroupStateImpl[S] private(
     defined = false
     updated = false
     removed = true
+    planChangeLogger.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def setTimeoutDuration(durationMs: Long): Unit = {
@@ -104,6 +106,8 @@ private[sql] class GroupStateImpl[S] private(
       throw new IllegalArgumentException("Timeout duration must be positive")
     }
     timeoutTimestamp = durationMs + batchProcessingTimeMs
+    planChangeLogger.warn("setTimeoutDuration(durationMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", durationMs)
+  planChangeLogger.warn("setTimeoutDuration(duration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", duration)
   }
 
   override def setTimeoutDuration(duration: String): Unit = {
@@ -113,6 +117,7 @@ private[sql] class GroupStateImpl[S] private(
   override def setTimeoutTimestamp(timestampMs: Long): Unit = {
     checkTimeoutTimestampAllowed()
     if (timestampMs <= 0) {
+    planChangeLogger.warn("setTimeoutTimestamp(timestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", timestampMs)
       throw new IllegalArgumentException("Timeout timestamp must be positive")
     }
     if (eventTimeWatermarkMs != NO_TIMESTAMP && timestampMs < eventTimeWatermarkMs) {
@@ -121,16 +126,19 @@ private[sql] class GroupStateImpl[S] private(
           s"current watermark ($eventTimeWatermarkMs)")
     }
     timeoutTimestamp = timestampMs
+    planChangeLogger.warn("setTimeoutTimestamp(timestamp,additionalDuration)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timestamp, additionalDuration)
   }
 
   override def setTimeoutTimestamp(timestampMs: Long, additionalDuration: String): Unit = {
     checkTimeoutTimestampAllowed()
     setTimeoutTimestamp(parseDuration(additionalDuration) + timestampMs)
+  planChangeLogger.warn("setTimeoutTimestamp(timestampMs,additionalDuration)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timestampMs, additionalDuration)
   }
 
   override def setTimeoutTimestamp(timestamp: Date): Unit = {
     checkTimeoutTimestampAllowed()
     setTimeoutTimestamp(timestamp.getTime)
+  planChangeLogger.warn("setTimeoutTimestamp(timestamp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", timestamp)
   }
 
   override def setTimeoutTimestamp(timestamp: Date, additionalDuration: String): Unit = {
@@ -143,6 +151,7 @@ private[sql] class GroupStateImpl[S] private(
       throw QueryExecutionErrors.cannotGetEventTimeWatermarkError()
     }
     eventTimeWatermarkMs
+    planChangeLogger.warn("getCurrentWatermarkMs()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def getCurrentProcessingTimeMs(): Long = {
@@ -168,6 +177,7 @@ private[sql] class GroupStateImpl[S] private(
   }
 
   private def parseDuration(duration: String): Long = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val cal = IntervalUtils.stringToInterval(UTF8String.fromString(duration))
     if (IntervalUtils.isNegative(cal)) {
       throw new IllegalArgumentException(s"Provided duration ($duration) is negative")
@@ -221,6 +231,7 @@ private[sql] object GroupStateImpl {
       throw new SparkUnsupportedOperationException("MISSING_TIMEOUT_CONFIGURATION")
     }
 
+    planChangeLogger.warn("createForStreaming(optionalValue,batchProcessingTimeMs,eventTimeWatermarkMs,timeoutConf,hasTimedOut,watermarkPresent)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", optionalValue, batchProcessingTimeMs, eventTimeWatermarkMs, timeoutConf, hasTimedOut, watermarkPresent)
     new GroupStateImpl[S](
       optionalValue, batchProcessingTimeMs, eventTimeWatermarkMs,
       timeoutConf, hasTimedOut, watermarkPresent)
@@ -236,6 +247,7 @@ private[sql] object GroupStateImpl {
       timeoutConf,
       hasTimedOut = false,
       watermarkPresent)
+    planChangeLogger.warn("createForBatch(timeoutConf,watermarkPresent)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timeoutConf, watermarkPresent)
   }
 
   def groupStateTimeoutFromString(clazz: String): GroupStateTimeout = clazz match {

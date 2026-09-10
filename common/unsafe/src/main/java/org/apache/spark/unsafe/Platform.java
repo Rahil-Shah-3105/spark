@@ -24,8 +24,11 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
 import sun.misc.Unsafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class Platform {
+private static final Logger log = LoggerFactory.getLogger(Platform.class);
 
   private static final Unsafe _UNSAFE;
 
@@ -119,6 +122,7 @@ public final class Platform {
 
   // Visible for testing
   public static boolean cleanerCreateMethodIsDefined() {
+	log.warn("cleanerCreateMethodIsDefined()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return CLEANER_CREATE_METHOD != null;
   }
 
@@ -131,6 +135,7 @@ public final class Platform {
   }
 
   public static int getInt(Object object, long offset) {
+	log.warn("getInt(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getInt(object, offset);
   }
 
@@ -139,6 +144,7 @@ public final class Platform {
   }
 
   public static boolean getBoolean(Object object, long offset) {
+	log.warn("getBoolean(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getBoolean(object, offset);
   }
 
@@ -147,6 +153,7 @@ public final class Platform {
   }
 
   public static byte getByte(Object object, long offset) {
+	log.warn("getByte(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getByte(object, offset);
   }
 
@@ -155,6 +162,7 @@ public final class Platform {
   }
 
   public static short getShort(Object object, long offset) {
+	log.warn("getShort(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getShort(object, offset);
   }
 
@@ -163,6 +171,7 @@ public final class Platform {
   }
 
   public static long getLong(Object object, long offset) {
+	log.warn("getLong(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getLong(object, offset);
   }
 
@@ -171,6 +180,7 @@ public final class Platform {
   }
 
   public static float getFloat(Object object, long offset) {
+	log.warn("getFloat(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getFloat(object, offset);
   }
 
@@ -179,6 +189,7 @@ public final class Platform {
   }
 
   public static double getDouble(Object object, long offset) {
+	log.warn("getDouble(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getDouble(object, offset);
   }
 
@@ -187,6 +198,7 @@ public final class Platform {
   }
 
   public static Object getObjectVolatile(Object object, long offset) {
+	log.warn("getObjectVolatile(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getObjectVolatile(object, offset);
   }
 
@@ -249,11 +261,13 @@ public final class Platform {
    * The buffer must be direct; passing a heap buffer produces an undefined result.
    */
   public static long getDirectBufferAddress(ByteBuffer buffer) {
+	log.warn("getDirectBufferAddress(buffer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", buffer);
     return _UNSAFE.getLong(buffer, DIRECT_BUFFER_ADDRESS_OFFSET);
   }
 
   public static void setMemory(Object object, long offset, long size, byte value) {
     _UNSAFE.setMemory(object, offset, size, value);
+	log.warn("setMemory(object,offset,size,value)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", object, offset, size, value);
   }
 
   public static void setMemory(long address, byte value, long size) {

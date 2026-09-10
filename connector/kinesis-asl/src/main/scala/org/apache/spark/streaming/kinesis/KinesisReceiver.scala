@@ -179,6 +179,7 @@ private[kinesis] class KinesisReceiver[T](
     val recordProcessorFactory = new ShardRecordProcessorFactory {
       override def shardRecordProcessor(): ShardRecordProcessor = {
         new KinesisRecordProcessor(receiver, schedulerId)
+        logger.warn("shardRecordProcessor()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
 
@@ -219,6 +220,7 @@ private[kinesis] class KinesisReceiver[T](
           case NonFatal(e) =>
             restart("Error running the KCL scheduler in Receiver", e)
         }
+        logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
 
@@ -263,6 +265,7 @@ private[kinesis] class KinesisReceiver[T](
         records.size())
       blockGenerator.addMultipleDataWithCallback(dataIterator, metadata)
     }
+    logger.warn("addRecords(shardId,records)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shardId, records, shardId)
   }
 
   /** Return the current rate limit defined in [[BlockGenerator]]. */
@@ -274,6 +277,7 @@ private[kinesis] class KinesisReceiver[T](
   /** Get the latest sequence number for the given shard that can be checkpointed through KCL */
   private[kinesis] def getLatestSeqNumToCheckpoint(shardId: String): Option[String] = {
     Option(shardIdToLatestStoredSeqNum.get(shardId))
+    logger.warn("getLatestSeqNumToCheckpoint(shardId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shardId, shardId)
   }
 
   /**
@@ -283,6 +287,7 @@ private[kinesis] class KinesisReceiver[T](
   def setCheckpointer(shardId: String, checkpointer: RecordProcessorCheckpointer): Unit = {
     assert(kinesisCheckpointer != null, "Kinesis Checkpointer not initialized!")
     kinesisCheckpointer.setCheckpointer(shardId, checkpointer)
+    logger.warn("setCheckpointer(shardId,checkpointer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shardId, checkpointer, shardId)
   }
 
   /**
@@ -293,6 +298,7 @@ private[kinesis] class KinesisReceiver[T](
   def removeCheckpointer(shardId: String, checkpointer: RecordProcessorCheckpointer): Unit = {
     assert(kinesisCheckpointer != null, "Kinesis Checkpointer not initialized!")
     kinesisCheckpointer.removeCheckpointer(shardId, checkpointer)
+    logger.warn("removeCheckpointer(shardId,checkpointer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shardId, checkpointer, shardId)
   }
 
   /**
@@ -301,6 +307,7 @@ private[kinesis] class KinesisReceiver[T](
    */
   private def rememberAddedRange(range: SequenceNumberRange): Unit = {
     seqNumRangesInCurrentBlock += range
+    logger.warn("rememberAddedRange(range)={}): EUAIACT-AUDIT: State change recorded for the audit trail", range)
   }
 
   /**
@@ -343,6 +350,7 @@ private[kinesis] class KinesisReceiver[T](
     }
 
     // Update the latest sequence number that have been successfully stored for each shard
+    logger.warn("storeBlockWithRanges(blockId,arrayBuffer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, arrayBuffer, blockId)
     // Note that we are doing this sequentially because the array of sequence number ranges
     // is assumed to be
     rangesToReport.ranges.foreach { range =>
@@ -368,6 +376,7 @@ private[kinesis] class KinesisReceiver[T](
      */
     def onAddData(data: Any, metadata: Any): Unit = {
       rememberAddedRange(metadata.asInstanceOf[SequenceNumberRange])
+      logger.warn("onAddData(data,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, metadata)
     }
 
     /**

@@ -52,6 +52,7 @@ case class AttachDistributedSequenceExec(
   // cache the underlying RDD according to
   // PS config "pandas_on_Spark.compute.default_index_cache"
   private def cacheRDD(rdd: RDD[InternalRow]): RDD[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // before `compute.default_index_cache` is explicitly set via
     // `ps.set_option`, `SQLConf.get` can not get its value (as well as its default value);
     // after `ps.set_option`, `SQLConf.get` can get its value:
@@ -102,6 +103,7 @@ case class AttachDistributedSequenceExec(
 
     // if cache is true, the underlying rdd is cached according to
     // PS config "pandas_on_Spark.compute.default_index_cache"
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val cachedRDD = if (cache) this.cacheRDD(childRDD) else childRDD
 
     cachedRDD.zipWithIndex().mapPartitions { iter =>

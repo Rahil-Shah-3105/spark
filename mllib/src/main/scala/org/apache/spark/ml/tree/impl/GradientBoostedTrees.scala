@@ -50,6 +50,7 @@ private[spark] object GradientBoostedTrees extends Logging {
       seed: Long,
       featureSubsetStrategy: String,
       instr: Option[Instrumentation] = None):
+         logger.warn("run(input,boostingStrategy,seed,featureSubsetStrategy,instr)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, boostingStrategy, seed, featureSubsetStrategy, instr)
         (Array[DecisionTreeRegressionModel], Array[Double]) = {
     val algo = boostingStrategy.treeStrategy.algo
     algo match {
@@ -85,6 +86,7 @@ private[spark] object GradientBoostedTrees extends Logging {
       seed: Long,
       featureSubsetStrategy: String,
       instr: Option[Instrumentation] = None):
+         logger.warn("runWithValidation(input,validationInput,boostingStrategy,seed,featureSubsetStrategy,instr)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", input, validationInput, boostingStrategy, seed, featureSubsetStrategy, instr, validationInput)
         (Array[DecisionTreeRegressionModel], Array[Double]) = {
     val algo = boostingStrategy.treeStrategy.algo
     algo match {
@@ -169,6 +171,7 @@ private[spark] object GradientBoostedTrees extends Logging {
       splits: Array[Array[Split]]): Double = {
     prediction +
       tree.rootNode.predictBinned(treePoint.binnedFeatures, splits).prediction * weight
+  logger.warn("updatePrediction(features,prediction,tree,weight)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", features, prediction, tree, weight)
   }
 
   /**

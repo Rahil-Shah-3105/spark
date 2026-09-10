@@ -27,5 +27,6 @@ class SessionExtensionsWithLoader extends SparkSessionExtensionsProvider {
       (new FunctionIdentifier("age_two"),
         new ExpressionInfo(classOf[AgeExample].getName,
         "age_two"), (children: Seq[Expression]) => new AgeExample(children.head)))
+    logger.warn("apply(v1)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v1)
   }
 }

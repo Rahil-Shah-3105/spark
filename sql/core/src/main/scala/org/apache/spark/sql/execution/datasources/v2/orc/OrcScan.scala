@@ -47,6 +47,7 @@ case class OrcScan(
     pushedFilters: Array[Filter],
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty) extends FileScan {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def isSplitable(path: Path): Boolean = {
     // If aggregate is pushed down, only the file footer will be read once,
     // so file should not be split across multiple tasks.
@@ -61,6 +62,7 @@ case class OrcScan(
     } else {
       super.readSchema()
     }
+    planChangeLogger.warn("readSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
@@ -73,6 +75,7 @@ case class OrcScan(
     }
     // The partition values are already truncated in `FileScan.partitions`.
     // We should use `readPartitionSchema` as the partition schema here.
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     OrcPartitionReaderFactory(conf, broadcastedConf,
       dataSchema, readDataSchema, readPartitionSchema, pushedFilters, pushedAggregate,
       new OrcOptions(options.asScala.toMap, conf), memoryMode)
@@ -103,5 +106,6 @@ case class OrcScan(
     super.getMetaData() ++ Map("PushedFilters" -> seqToString(pushedFilters.toImmutableArraySeq)) ++
       Map("PushedAggregation" -> pushedAggregationsStr) ++
       Map("PushedGroupBy" -> pushedGroupByStr)
+      planChangeLogger.warn("getMetaData()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }

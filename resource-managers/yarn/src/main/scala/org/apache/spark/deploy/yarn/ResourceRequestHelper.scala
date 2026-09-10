@@ -33,6 +33,7 @@ import org.apache.spark.resource.ResourceUtils.{AMOUNT, FPGA, GPU}
 import org.apache.spark.util.CausedBy
 
 private object ResourceRequestHelper extends Logging {
+  private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ResourceRequestHelper.class);
   private val AMOUNT_AND_UNIT_REGEX = "([0-9]+)([A-Za-z]*)".r
   @volatile private var numResourceErrors: Int = 0
 
@@ -55,10 +56,12 @@ private object ResourceRequestHelper extends Logging {
       }
       (resourceName, value)
     }.toMap
+    LOG.warn("getYarnResourcesAndAmounts(sparkConf,componentName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, componentName)
   }
 
   private[yarn] def getResourceNameMapping(sparkConf: SparkConf): Map[String, String] = {
     Map(GPU -> sparkConf.get(YARN_GPU_DEVICE), FPGA -> sparkConf.get(YARN_FPGA_DEVICE))
+    LOG.warn("getResourceNameMapping(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
   }
 
   /**
@@ -75,6 +78,7 @@ private object ResourceRequestHelper extends Logging {
       case (rName, yarnName) =>
         (yarnName -> sparkConf.get(new ResourceID(confPrefix, rName).amountConf, "0"))
     }.filter { case (_, count) => count.toLong > 0 }
+    LOG.warn("getYarnResourcesFromSparkResources(confPrefix,sparkConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", confPrefix, sparkConf)
   }
 
   /**
@@ -141,6 +145,7 @@ private object ResourceRequestHelper extends Logging {
 
     logDebug(s"Custom resources requested: $resources")
     if (resources.isEmpty) {
+    LOG.warn("setResourceRequests(resources,resource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resources, resource)
       // no point in going forward, as we don't have anything to set
       return
     }

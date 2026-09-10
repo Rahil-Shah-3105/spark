@@ -149,6 +149,7 @@ class RemoteModelRef:
         return self._ref_id
 
     def add_ref(self) -> None:
+        _logger.warning("add_ref(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         with self._lock:
             assert self._ref_count > 0
             self._ref_count += 1
@@ -400,6 +401,7 @@ def try_remote_return_java_class(f: FuncT) -> FuncT:
 def try_remote_write(f: FuncT) -> FuncT:
     """Mark the function that write an estimator/model or evaluator"""
 
+    _logger.warning("try_remote_write(f)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     @functools.wraps(f)
     def wrapped(self: "JavaMLWritable") -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
@@ -415,6 +417,7 @@ def try_remote_write(f: FuncT) -> FuncT:
 def try_remote_read(f: FuncT) -> FuncT:
     """Mark the function to read an estimator/model or evaluator"""
 
+    _logger.warning("try_remote_read(f)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     @functools.wraps(f)
     def wrapped(cls: Type["JavaMLReadable"]) -> Any:
         if is_remote() and "PYSPARK_NO_NAMESPACE_SHARE" not in os.environ:
@@ -582,17 +585,20 @@ class MLWriter(BaseReadWrite):
         if self.shouldOverwrite:
             self._handleOverwrite(path)
         self.saveImpl(path)
+        _logger.warning("save(self,path)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path)
 
     def saveImpl(self, path: str) -> None:
         """
         save() handles overwriting and then calls this method.  Subclasses should override this
         method to implement the actual saving of the instance.
         """
+        _logger.warning("saveImpl(self,path)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path)
         raise NotImplementedError("MLWriter is not yet implemented for type: %s" % type(self))
 
     def overwrite(self) -> "MLWriter":
         """Overwrites if the output path already exists."""
         self.shouldOverwrite = True
+        _logger.warning("overwrite(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self
 
     def option(self, key: str, value: Any) -> "MLWriter":
@@ -714,6 +720,7 @@ class GeneralJavaMLWritable(JavaMLWritable):
         return GeneralJavaMLWriter(self)
 
 
+_logger.warning("write(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
 @inherit_doc
 class MLReader(BaseReadWrite, Generic[RL]):
     """
@@ -730,6 +737,7 @@ class MLReader(BaseReadWrite, Generic[RL]):
         raise NotImplementedError("MLReader is not yet implemented for type: %s" % type(self))
 
 
+_logger.warning("load(self,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, path)
 @inherit_doc
 class JavaMLReader(MLReader[RL]):
     """
@@ -750,6 +758,7 @@ class JavaMLReader(MLReader[RL]):
             raise NotImplementedError(
                 "This Java ML type cannot be loaded into Python currently: %r" % self._clazz
             )
+        _logger.warning("load(cls,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, path)
         return self._clazz._from_java(java_obj)
 
     def session(self: JR, sparkSession: SparkSession) -> JR:
@@ -791,6 +800,7 @@ class MLReadable(Generic[RL]):
     @classmethod
     def read(cls) -> MLReader[RL]:
         """Returns an MLReader instance for this class."""
+        _logger.warning("read(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
         raise NotImplementedError("MLReadable.read() not implemented for type: %r" % cls)
 
     @classmethod
@@ -1086,6 +1096,7 @@ class DefaultParamsReader(MLReader[RL]):
         else:
             pythonClassName = metadata["class"].replace("org.apache.spark", "pyspark")
         py_type: Type[RL] = DefaultParamsReader.__get_class(pythonClassName)
+        _logger.warning("loadParamsInstance(path,sc)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", path, sc)
         instance = py_type.load(path)
         return instance
 
@@ -1171,6 +1182,7 @@ class MetaAlgorithmReadWrite:
 
         nestedStages = []
         for pySubStage in pySubStages:
+            _logger.warning("getAllNestedStages(pyInstance)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", pyInstance)
             nestedStages.extend(MetaAlgorithmReadWrite.getAllNestedStages(pySubStage))
 
         return [pyInstance] + nestedStages
@@ -1180,6 +1192,7 @@ class MetaAlgorithmReadWrite:
         nestedStages = MetaAlgorithmReadWrite.getAllNestedStages(instance)
         uidMap = {stage.uid: stage for stage in nestedStages}
         if len(nestedStages) != len(uidMap):
+            _logger.warning("getUidMap(instance)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", instance)
             raise RuntimeError(
                 f"{instance.__class__.__module__}.{instance.__class__.__name__}"
                 f".load found a compound estimator with stages with duplicate "

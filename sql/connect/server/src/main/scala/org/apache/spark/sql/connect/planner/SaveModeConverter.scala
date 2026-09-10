@@ -33,6 +33,7 @@ object SaveModeConverter {
         throw new IllegalArgumentException(
           s"Cannot convert from WriteOperation.SaveMode to Spark SaveMode: ${mode.getNumber}")
     }
+    logger.warn("toSaveMode(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode)
   }
 
   def toSaveModeProto(mode: SaveMode): proto.WriteOperation.SaveMode = {
@@ -45,5 +46,6 @@ object SaveModeConverter {
         throw new IllegalArgumentException(
           s"Cannot convert from SaveMode to WriteOperation.SaveMode: ${mode.name()}")
     }
+    logger.warn("toSaveModeProto(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode)
   }
 }

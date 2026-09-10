@@ -112,6 +112,7 @@ object GradientBoostedTreesRunner {
 
     val randomSeed = Utils.random.nextInt()
     if (params.algo == "Classification") {
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
       val startTime = System.nanoTime()
       val model = GradientBoostedTrees.train(training, boostingStrategy)
       val elapsedTime = (System.nanoTime() - startTime) / 1e9

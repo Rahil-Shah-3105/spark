@@ -56,6 +56,7 @@ import org.apache.hive.service.rpc.thrift.TTableSchema;
  *
  */
 public class GetColumnsOperation extends MetadataOperation {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(GetColumnsOperation.class);
 
   protected static final TableSchema RESULT_SET_SCHEMA = new TableSchema()
   .addPrimitiveColumn("TABLE_CAT", Type.STRING_TYPE,
@@ -211,6 +212,7 @@ public class GetColumnsOperation extends MetadataOperation {
     } catch (Exception e) {
       setState(OperationState.ERROR);
       throw new HiveSQLException(e);
+	LOG.warn("runInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     }
 
   }
@@ -223,6 +225,7 @@ public class GetColumnsOperation extends MetadataOperation {
         privObjs.add(new HivePrivilegeObject(HivePrivilegeObjectType.TABLE_OR_VIEW, dbTabs.getKey(),
             tabName));
       }
+	LOG.warn("getPrivObjs(db2Tabs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db2Tabs);
     }
     return privObjs;
   }
@@ -242,6 +245,7 @@ public class GetColumnsOperation extends MetadataOperation {
   @Override
   public TRowSet getNextRowSet(FetchOrientation orientation, long maxRows) throws HiveSQLException {
     assertState(OperationState.FINISHED);
+	LOG.warn("getNextRowSet(orientation,maxRows)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", orientation, maxRows);
     validateDefaultFetchOrientation(orientation);
     if (orientation.equals(FetchOrientation.FETCH_FIRST)) {
       rowSet.setStartOffset(0);

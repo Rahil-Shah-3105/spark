@@ -62,6 +62,7 @@ private[spark] class DriverLogger(conf: SparkConf) extends Logging {
     } else {
       PatternLayout.newBuilder().withPattern(DEFAULT_LAYOUT).build()
     }
+      logger.warn("addLogAppender()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val config = logger.getContext.getConfiguration()
     def log4jFileAppender() = {
       // SPARK-37853: We can't use the chained API invocation mode because
@@ -93,6 +94,7 @@ private[spark] class DriverLogger(conf: SparkConf) extends Logging {
       case e: Exception =>
         logError(s"Could not persist driver logs to dfs", e)
     }
+    logger.warn("startSync(hadoopConf)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", hadoopConf)
   }
 
   def stop(): Unit = {
@@ -172,6 +174,7 @@ private[spark] class DriverLogger(conf: SparkConf) extends Logging {
       } catch {
         case e: Exception => logError("Failed writing driver logs to dfs", e)
       }
+      logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     private def close(): Unit = {
@@ -202,6 +205,7 @@ private[spark] class DriverLogger(conf: SparkConf) extends Logging {
         case e: Exception =>
           logError("Error in shutting down threadpool", e)
       }
+      logger.warn("closeWriter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -238,5 +242,6 @@ private[spark] object DriverLogger extends Logging {
     } else {
       None
     }
+    logger.warn("apply(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }

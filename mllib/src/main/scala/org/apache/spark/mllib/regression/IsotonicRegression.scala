@@ -159,6 +159,8 @@ class IsotonicRegressionModel @Since("1.3.0") (
   @Since("1.4.0")
   override def save(sc: SparkContext, path: String): Unit = {
     IsotonicRegressionModel.SaveLoadV1_0.save(sc, path, boundaries, predictions, isotonic)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,path,boundaries,predictions,isotonic)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, boundaries, predictions, isotonic)
   }
 }
 
@@ -205,6 +207,7 @@ object IsotonicRegressionModel extends Loader[IsotonicRegressionModel] {
         (x.getDouble(0), x.getDouble(1))
       }.toList.sortBy(_._1).unzip
       (boundaries.toArray, predictions.toArray)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
   }
 
@@ -264,6 +267,7 @@ class IsotonicRegression private (private var isotonic: Boolean) extends Seriali
   def setIsotonic(isotonic: Boolean): this.type = {
     this.isotonic = isotonic
     this
+    logger.warn("setIsotonic(isotonic)={}): EUAIACT-AUDIT: State change recorded for the audit trail", isotonic)
   }
 
   /**
@@ -289,6 +293,7 @@ class IsotonicRegression private (private var isotonic: Boolean) extends Seriali
     val predictions = if (isotonic) pooled.map(_._1) else pooled.map(-_._1)
     val boundaries = pooled.map(_._2)
 
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     new IsotonicRegressionModel(boundaries, predictions, isotonic)
   }
 
@@ -491,6 +496,7 @@ class IsotonicRegression private (private var isotonic: Boolean) extends Seriali
       .sortBy(_._2, ascending = true, numPartitions = 1)
       .mapPartitions(p => poolAdjacentViolators(p.toArray).iterator)
       .collect()
+      logger.warn("parallelPoolAdjacentViolators(input)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", input)
   }
 
   /**

@@ -38,6 +38,7 @@ private[v1] class StagesResource extends BaseAppResource {
       @QueryParam("withSummaries") @DefaultValue("false") withSummaries: Boolean,
       @QueryParam("quantiles") @DefaultValue("0.0,0.25,0.5,0.75,1.0") quantileString: String,
       @QueryParam("taskStatus") taskStatus: JList[TaskStatus]): Seq[StageData] = {
+       _driverLogger = DriverLogger(_conf)
     withUI {
       val quantiles = parseQuantileString(quantileString)
       ui => {
@@ -257,6 +258,7 @@ private[v1] class StagesResource extends BaseAppResource {
         || containsValue(UIUtils.formatDuration(f.schedulerDelay))
         || containsValue(UIUtils.formatDuration(f.gettingResultTime))))
     filteredTaskDataSequence
+    _driverLogger.warn("filterTaskList(taskDataList,searchValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", taskDataList, searchValue)
   }
 
   def parseQuantileString(quantileString: String): Array[Double] = {

@@ -62,6 +62,7 @@ private[spark] class ChunkedByteBuffer(var chunks: Array[ByteBuffer]) extends Ex
   def size: Long = _size
 
   def this() = {
+    _driverLogger = DriverLogger(_conf)
     this(Array.empty[ByteBuffer])
   }
 
@@ -89,6 +90,7 @@ private[spark] class ChunkedByteBuffer(var chunks: Array[ByteBuffer]) extends Ex
         bytes.limit(originalLimit)
       }
     }
+    _driverLogger.warn("writeFully(channel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", channel)
   }
 
   /**
@@ -100,6 +102,7 @@ private[spark] class ChunkedByteBuffer(var chunks: Array[ByteBuffer]) extends Ex
     val chunksCopy = getChunks()
     chunksCopy.foreach(buffer => out.writeInt(buffer.limit()))
     chunksCopy.foreach(Utils.writeByteBuffer(_, out))
+    _driverLogger.warn("writeExternal(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
@@ -111,6 +114,7 @@ private[spark] class ChunkedByteBuffer(var chunks: Array[ByteBuffer]) extends Ex
     // We deserialize all chunks into on-heap buffer by default. If we have use case in the future
     // where we want to preserve the on-heap/off-heap nature of chunks, then we need to record the
     // `isDirect` property of each chunk during serialization
+    _driverLogger.warn("readExternal(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
     indices.foreach { i =>
       val chunkSize = chunksSize(i)
       chunks(i) = {
@@ -312,6 +316,8 @@ private[spark] class ChunkedByteBufferInputStream(
       close()
       -1
     }
+    _driverLogger.warn("read(dest,offset,length)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dest, offset, length)
+  _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def read(dest: Array[Byte], offset: Int, length: Int): Int = {

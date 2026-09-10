@@ -133,6 +133,7 @@ class MultilabelClassificationEvaluator @Since("3.0.0") (@Since("3.0.0") overrid
         .rdd.map { row =>
         (row.getSeq[Double](0).toArray, row.getSeq[Double](1).toArray)
       }
+      logger.warn("getMetrics(dataset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataset)
     new MultilabelMetrics(predictionAndLabels)
   }
 

@@ -33,6 +33,7 @@ import org.apache.spark.internal.LogKeys._
  * Utilities for working with XSD validation.
  */
 object ValidatorUtil extends Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // Parsing XSDs may be slow, so cache them by path:
 
   private val cache = CacheBuilder.newBuilder().softValues().build(
@@ -45,6 +46,7 @@ object ValidatorUtil extends Logging {
         } finally {
           in.close()
         }
+        planChangeLogger.warn("load(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
       }
     })
 

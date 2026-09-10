@@ -50,6 +50,7 @@ object PipelinesErrors extends Logging {
       exceptionChain += lastException
       lastException = lastException.getCause
     }
+    logger.warn("getExceptionChain(originalErr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", originalErr)
     exceptionChain
   }
 
@@ -85,6 +86,7 @@ object PipelinesErrors extends Logging {
         cause.getMessage.contains("sources requested by the query. Cannot continue.")
       }
     )
+      logger.warn("streamingSourcesChanged(ex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ex)
   }
 
   /**

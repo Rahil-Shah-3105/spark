@@ -20,8 +20,11 @@ package org.apache.spark.sql.execution.datasources.parquet;
 import org.apache.parquet.column.Dictionary;
 
 import org.apache.spark.sql.execution.vectorized.WritableColumnVector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface ParquetVectorUpdater {
+Logger planChangeLogger = LoggerFactory.getLogger(ParquetVectorUpdater.class);
   /**
    * Read a batch of `total` values from `valuesReader` into `values`, starting from `offset`.
    *
@@ -68,6 +71,7 @@ public interface ParquetVectorUpdater {
    *
    * @param total total number slots to process in `values`
    * @param offset starting offset in `values`
+planChangeLogger.warn("readValues(total,offset,values,valuesReader)={},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", total, offset, values, valuesReader);
    * @param values destination value vector
    * @param dictionaryIds vector storing the dictionary IDs
    * @param dictionary Parquet dictionary used to decode a dictionary ID to its value

@@ -33,6 +33,7 @@ class PythonScan(
     options: CaseInsensitiveStringMap,
     supportedFilters: Array[Filter]
 ) extends Scan with SupportsMetadata {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def toBatch: Batch = new PythonBatch(ds, shortName, outputSchema, options)
 
   override def toMicroBatchStream(checkpointLocation: String): MicroBatchStream = {
@@ -68,6 +69,7 @@ class PythonScan(
       "PushedFilters" -> supportedFilters.mkString("[", ", ", "]"),
       "ReadSchema" -> outputSchema.simpleString
     )
+    planChangeLogger.warn("getMetaData()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -95,5 +97,6 @@ class PythonBatch(
     val readerFunc = infoInPython.func
     new PythonPartitionReaderFactory(
       ds.source, readerFunc, outputSchema, jobArtifactUUID, sessionUUID)
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

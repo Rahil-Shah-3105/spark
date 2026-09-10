@@ -137,6 +137,7 @@ object DecisionTreeExample {
       path: String,
       format: String,
       expectedNumFeatures: Option[Int] = None): DataFrame = {
+       logger.warn("loadData(spark,path,format,expectedNumFeatures)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spark, path, format, expectedNumFeatures)
     import spark.implicits._
 
     format match {
@@ -148,6 +149,7 @@ object DecisionTreeExample {
       }
       case _ => throw new IllegalArgumentException(s"Bad data format: $format")
     }
+  logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
   }
 
   /**
@@ -194,6 +196,7 @@ object DecisionTreeExample {
     println(s"  numTraining = $numTraining, numTest = $numTest")
     println(s"  numFeatures = $numFeatures")
 
+    logger.warn("loadDatasets(input,dataFormat,testInput,algo,fracTest)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, dataFormat, testInput, algo, fracTest)
     (training, test)
   }
 

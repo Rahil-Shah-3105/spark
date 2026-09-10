@@ -71,6 +71,7 @@ class StateRewriter(
     transformFunc: Option[DataFrame => DataFrame] = None,
     writeCheckpointMetadata: Option[StreamingQueryCheckpointMetadata] = None
 ) extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   require(readResolvedCheckpointLocation.isDefined || readBatchId < writeBatchId,
     s"Read batch id $readBatchId must be less than write batch id $writeBatchId " +
       "when reading and writing to the same checkpoint location")
@@ -105,6 +106,7 @@ class StateRewriter(
       runInternal()
     }
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     logInfo(log"State rewrite completed in ${MDC(DURATION, timeTakenMs)} ms for " +
       log"checkpointLocation=${MDC(CHECKPOINT_LOCATION, resolvedCheckpointLocation)}")
     checkpointIds
@@ -193,6 +195,7 @@ class StateRewriter(
           log"writeBatchId=${MDC(BATCH_ID, writeBatchId)}", e)
         throw e
     }
+    planChangeLogger.warn("runInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def rewriteStore(
@@ -272,6 +275,7 @@ class StateRewriter(
     val metadata = offsetSeq.get.metadataOpt
     require(metadata.isDefined, s"Metadata must be present for the new batch $writeBatchId")
 
+    planChangeLogger.warn("createConfsFromOffsetLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val clonedSqlConf = sparkSession.sessionState.conf.clone()
     OffsetSeqMetadata.setSessionConf(metadata.get, clonedSqlConf)
     (StateStoreConf(clonedSqlConf), clonedSqlConf)
@@ -291,6 +295,7 @@ class StateRewriter(
       }
       storeMetadata.storeName -> schemaFiles
     }.toMap
+    planChangeLogger.warn("getStoreToSchemaFilesMap(opMetadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail", opMetadata)
   }
 
   private def getWriterColFamilyInfoMap(
@@ -322,6 +327,7 @@ class StateRewriter(
       oldSchemaFilePaths = schemaFiles)
     // Read the latest state schema from the provided path for v2 or from the dedicated path
     // for v1
+    planChangeLogger.warn("getLatestColFamilyToSchemaMap(operatorId,storeMetadata,schemaFiles)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", operatorId, storeMetadata, schemaFiles, operatorId)
     manager
       .readSchemaFile()
       .map { schema =>
@@ -348,6 +354,7 @@ class StateRewriter(
         throw StateRewriterErrors.missingKeyEncoderSpecError(
           resolvedCheckpointLocation, colFamilySchema.colFamilyName)
     }
+    planChangeLogger.warn("createKeyEncoderSpecIfAbsent(colFamilySchema,storeMetadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilySchema, storeMetadata)
   }
 
   private def getStateVariablesIfTWS(
@@ -360,6 +367,7 @@ class StateRewriter(
     } else {
       Map.empty
     }
+    planChangeLogger.warn("getStateVariablesIfTWS(opMetadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", opMetadata)
   }
 
   // Needed only for schema evolution for TWS
@@ -412,6 +420,7 @@ private[state] object StateRewriterErrors {
   def unsupportedStateStoreMetadataVersionError(
       checkpointLocation: String): StateRewriterInvalidCheckpointError = {
     new StateRewriterUnsupportedStoreMetadataVersionError(checkpointLocation)
+    planChangeLogger.warn("unsupportedStateStoreMetadataVersionError(checkpointLocation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checkpointLocation)
   }
 
   def stateCheckpointFormatVersionMismatchError(

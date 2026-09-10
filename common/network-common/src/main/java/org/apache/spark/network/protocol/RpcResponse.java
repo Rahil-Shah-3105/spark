@@ -26,6 +26,7 @@ import org.apache.spark.network.buffer.NettyManagedBuffer;
 
 /** Response to {@link RpcRequest} for a successful RPC. */
 public final class RpcResponse extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(RpcResponse.class);
   public final long requestId;
 
   public RpcResponse(long requestId, ManagedBuffer message) {
@@ -53,6 +54,7 @@ public final class RpcResponse extends AbstractResponseMessage {
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.warn("createFailureResponse(error)={}): EUAIACT-AUDIT: State change recorded for the audit trail", error);
     return new RpcFailure(requestId, error);
   }
 

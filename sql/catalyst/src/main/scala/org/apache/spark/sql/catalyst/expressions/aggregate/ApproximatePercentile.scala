@@ -100,6 +100,7 @@ case class ApproximatePercentile(
   with TernaryLike[Expression] {
 
   def this(child: Expression, percentageExpression: Expression, accuracyExpression: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, percentageExpression, accuracyExpression, 0, 0)
   }
 
@@ -184,11 +185,13 @@ case class ApproximatePercentile(
   override def createAggregationBuffer(): PercentileDigest = {
     val relativeError = 1.0D / accuracy
     new PercentileDigest(relativeError)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: PercentileDigest, inputRow: InternalRow): PercentileDigest = {
     val value = child.eval(inputRow)
     // Ignore empty rows, for example: percentile_approx(null)
+    planChangeLogger.warn("update(buffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, inputRow)
     if (value != null) {
       // Convert the value to a double value
       val doubleValue = child.dataType match {
@@ -301,6 +304,7 @@ object ApproximatePercentile {
     /** Insert an observation value into the PercentileDigest data structure. */
     def add(value: Double): Unit = {
       summaries = summaries.insert(value)
+      planChangeLogger.warn("add(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
     }
 
     /** In-place merges in another PercentileDigest. */
@@ -326,6 +330,7 @@ object ApproximatePercentile {
       } else {
         summaries.query(percentages.toImmutableArraySeq).get
       }
+      planChangeLogger.warn("getPercentiles(percentages)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", percentages)
     }
 
     private final def compress(): Unit = {

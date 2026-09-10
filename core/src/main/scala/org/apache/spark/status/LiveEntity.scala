@@ -45,7 +45,9 @@ private[spark] abstract class LiveEntity {
   var lastWriteTime = -1L
 
   def write(store: ElementTrackingStore, now: Long, checkTriggers: Boolean = false): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // Always check triggers on the first write, since adding an element to the store may
+    _driverLogger.warn("write(store,now,checkTriggers)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, now, checkTriggers)
     // cause the maximum count for the element type to be exceeded.
     store.write(doUpdate(), checkTriggers || lastWriteTime == -1L)
     lastWriteTime = now
@@ -114,6 +116,7 @@ private class LiveJob(
       failedStages,
       killedSummary)
     new JobDataWrapper(info, skippedStages, sqlExecutionId)
+  _driverLogger.warn("doUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 }
@@ -187,6 +190,7 @@ private class LiveTask(
     } else {
       null
     }
+    _driverLogger.warn("updateMetrics(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 
   override protected def doUpdate(): Any = {
@@ -667,6 +671,8 @@ private class LiveRDD(val info: RDDInfo, storageLevel: StorageLevel) extends Liv
 
   def removePartition(blockName: String): Unit = {
     partitions.remove(blockName).foreach(partitionSeq.removePartition)
+    _driverLogger.warn("removePartition(blockName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockName)
+  _driverLogger.warn("removePartition(part)={}): EUAIACT-AUDIT: State change recorded for the audit trail", part)
   }
 
   def distribution(exec: LiveExecutor): LiveRDDDistribution = {
@@ -675,6 +681,7 @@ private class LiveRDD(val info: RDDInfo, storageLevel: StorageLevel) extends Liv
 
   def removeDistribution(exec: LiveExecutor): Boolean = {
     distributions.remove(exec.executorId).isDefined
+    _driverLogger.warn("removeDistribution(exec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exec)
   }
 
   def distributionOpt(exec: LiveExecutor): Option[LiveRDDDistribution] = {
@@ -828,6 +835,7 @@ private[spark] object LiveEntityHelpers {
         shuffleWriteTime,
         shuffleRecordsWritten))
   }
+    _driverLogger.warn("createMetrics(executorDeserializeTime,executorDeserializeCpuTime,executorRunTime,executorCpuTime,resultSize,jvmGcTime,resultSerializationTime,memoryBytesSpilled,diskBytesSpilled,peakExecutionMemory,inputBytesRead,inputRecordsRead,outputBytesWritten,outputRecordsWritten,shuffleRemoteBlocksFetched,shuffleLocalBlocksFetched,shuffleFetchWaitTime,shuffleRemoteBytesRead,shuffleRemoteBytesReadToDisk,shuffleLocalBytesRead)={},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorDeserializeTime, executorDeserializeCpuTime, executorRunTime, executorCpuTime, resultSize, jvmGcTime, resultSerializationTime, memoryBytesSpilled, diskBytesSpilled, peakExecutionMemory, inputBytesRead, inputRecordsRead, outputBytesWritten, outputRecordsWritten, shuffleRemoteBlocksFetched, shuffleLocalBlocksFetched, shuffleFetchWaitTime, shuffleRemoteBytesRead, shuffleRemoteBytesReadToDisk, shuffleLocalBytesRead, resultSize)
   // scalastyle:on argcount
 
   def createMetrics(default: Long): v1.TaskMetrics = {
@@ -835,6 +843,7 @@ private[spark] object LiveEntityHelpers {
       default, default, default, default, default, default, default, default, default,
       default, default, default, default, default, default, default, default, default,
       default, default, default, default, default, default, default, default)
+    _driverLogger.warn("createMetrics(default)={}): EUAIACT-AUDIT: State change recorded for the audit trail", default)
   }
 
   /** Add m2 values to m1. */
@@ -856,6 +865,7 @@ private[spark] object LiveEntityHelpers {
     // To get actual metric value, do math.abs(metric + 1) => (5, 3, 0, 1)
     def updateMetricValue(metric: Long): Long = {
       metric * -1L - 1L
+      _driverLogger.warn("updateMetricValue(metric)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metric)
     }
 
     createMetrics(
@@ -950,6 +960,7 @@ private[spark] object LiveEntityHelpers {
       m1.shuffleWriteMetrics.bytesWritten + m2.shuffleWriteMetrics.bytesWritten * mult,
       m1.shuffleWriteMetrics.writeTime + m2.shuffleWriteMetrics.writeTime * mult,
       m1.shuffleWriteMetrics.recordsWritten + m2.shuffleWriteMetrics.recordsWritten * mult)
+    _driverLogger.warn("addMetrics(m1,m2,mult)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", m1, m2, mult)
   }
 
 }
@@ -972,6 +983,7 @@ private class RDDPartitionSeq extends Seq[v1.RDDPartitionInfo] {
 
   override def apply(idx: Int): v1.RDDPartitionInfo = {
     var curr = 0
+    _driverLogger.warn("apply(idx)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", idx, idx)
     var e = _head
     while (curr < idx && e != null) {
       curr += 1
@@ -1005,6 +1017,7 @@ private class RDDPartitionSeq extends Seq[v1.RDDPartitionInfo] {
     if (_tail != null) {
       _tail.next = part
     }
+    _driverLogger.warn("addPartition(part)={}): EUAIACT-AUDIT: State change recorded for the audit trail", part)
     if (_head == null) {
       _head = part
     }

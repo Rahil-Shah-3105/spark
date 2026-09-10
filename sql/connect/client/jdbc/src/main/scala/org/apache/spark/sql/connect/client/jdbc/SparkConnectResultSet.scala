@@ -93,6 +93,7 @@ class SparkConnectResultSet(
     checkOpen()
     // the passed index value is 1-indexed, but the underlying array is 0-indexed
     val index = columnIndex - 1
+    logger.warn("getColumnValue(columnIndex,defaultVal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex, defaultVal)
     if (index < 0 || index >= currentRow.length) {
       throw new SQLException(s"The column index is out of range: $columnIndex, " +
         s"number of columns: ${currentRow.length}.")
@@ -115,6 +116,7 @@ class SparkConnectResultSet(
       case None =>
         throw new SQLException(s"Invalid column label: $columnLabel")
     }
+    logger.warn("findColumn(columnLabel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnLabel)
   }
 
   override def getString(columnIndex: Int): String = {
@@ -134,30 +136,37 @@ class SparkConnectResultSet(
 
   override def getBoolean(columnIndex: Int): Boolean = {
     getColumnValue(columnIndex, false) { idx => currentRow.getBoolean(idx) }
+    logger.warn("getBoolean(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getByte(columnIndex: Int): Byte = {
     getColumnValue(columnIndex, 0.toByte) { idx => currentRow.getByte(idx) }
+    logger.warn("getByte(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getShort(columnIndex: Int): Short = {
     getColumnValue(columnIndex, 0.toShort) { idx => currentRow.getShort(idx) }
+    logger.warn("getShort(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getInt(columnIndex: Int): Int = {
     getColumnValue(columnIndex, 0) { idx => currentRow.getInt(idx) }
+    logger.warn("getInt(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getLong(columnIndex: Int): Long = {
     getColumnValue(columnIndex, 0.toLong) { idx => currentRow.getLong(idx) }
+    logger.warn("getLong(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getFloat(columnIndex: Int): Float = {
     getColumnValue(columnIndex, 0.toFloat) { idx => currentRow.getFloat(idx) }
+    logger.warn("getFloat(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getDouble(columnIndex: Int): Double = {
     getColumnValue(columnIndex, 0.toDouble) { idx => currentRow.getDouble(idx) }
+    logger.warn("getDouble(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getBigDecimal(columnIndex: Int, scale: Int): java.math.BigDecimal =
@@ -167,10 +176,13 @@ class SparkConnectResultSet(
     getColumnValue(columnIndex, null: Array[Byte]) { idx =>
       currentRow.get(idx).asInstanceOf[Array[Byte]]
     }
+  logger.warn("getBigDecimal(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
   }
 
   override def getDate(columnIndex: Int): Date = {
     getColumnValue(columnIndex, null: Date) { idx => currentRow.getDate(idx) }
+    logger.warn("getDate(columnIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex)
+  logger.warn("getDate(columnIndex,cal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex, cal)
   }
 
   override def getTime(columnIndex: Int): Time = {
@@ -184,6 +196,7 @@ class SparkConnectResultSet(
       val millisSinceMidnight = ChronoUnit.MILLIS.between(LocalTime.MIDNIGHT, localTime)
       new Time(millisSinceMidnight)
     }
+  logger.warn("getTime(columnIndex,cal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex, cal)
   }
 
   override def getTimestamp(columnIndex: Int): Timestamp = {
@@ -206,6 +219,7 @@ class SparkConnectResultSet(
         }
       }
     }
+  logger.warn("getTimestamp(columnIndex,cal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", columnIndex, cal)
   }
 
   override def getAsciiStream(columnIndex: Int): InputStream =
@@ -348,6 +362,7 @@ class SparkConnectResultSet(
     checkOpen()
     assert(this.getType == ResultSet.TYPE_FORWARD_ONLY)
 
+    logger.warn("setFetchDirection(direction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", direction)
     if (direction != ResultSet.FETCH_FORWARD) {
       throw new SQLException(
         s"Fetch direction ${JdbcErrorUtils.stringifyFetchDirection(direction)} is not supported " +

@@ -64,6 +64,7 @@ case class CollectMetricsExec(
   def collectedMetrics: Row = toRowConverter(collectedMetricsRow)
 
   private def collectedMetricsRow: InternalRow = accumulator match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case acc: LastAttemptAggregatingAccumulator =>
       acc.lastAttemptValueForHighestRDDId().getOrElse(acc.value)
     case acc => acc.value
@@ -82,6 +83,7 @@ case class CollectMetricsExec(
       case _ =>
     }
     super.resetMetrics()
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def doExecute(): RDD[InternalRow] = {
@@ -107,6 +109,7 @@ case class CollectMetricsExec(
         r
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): CollectMetricsExec =

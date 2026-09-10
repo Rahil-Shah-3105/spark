@@ -39,6 +39,7 @@ trait EvictionIterator extends Iterator[UnsafeRowPair] {
 }
 
 object EvictionIterator {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Returns an [[EvictionIterator]] over the rows of `store` whose event time is older than
@@ -63,6 +64,7 @@ object EvictionIterator {
       evictionTimestamp).map { expr =>
       Predicate.create(expr, keyExpressions)
     }
+       planChangeLogger.warn("apply(store,storeIterator,keyExpressions,allowMultipleEventTimeColumns,evictionTimestamp)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, storeIterator, keyExpressions, allowMultipleEventTimeColumns, evictionTimestamp)
 
     new EvictionIterator {
       private var rowsRead = 0L

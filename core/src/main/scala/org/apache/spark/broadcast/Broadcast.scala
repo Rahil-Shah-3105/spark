@@ -55,6 +55,7 @@ import org.apache.spark.util.Utils
  * @tparam T Type of the data contained in the broadcast variable.
  */
 abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Logging {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Flag signifying whether the broadcast variable is valid
@@ -75,6 +76,8 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
    * If the broadcast is used after this is called, it will need to be re-sent to each executor.
    */
   def unpersist(): Unit = {
+    _driverLogger.warn("unpersist()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+    _driverLogger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
     unpersist(blocking = false)
   }
 

@@ -169,6 +169,8 @@ class NaiveBayesModel private[spark] (
   override def save(sc: SparkContext, path: String): Unit = {
     val data = NaiveBayesModel.SaveLoadV2_0.Data(labels, pi, theta, modelType)
     NaiveBayesModel.SaveLoadV2_0.save(sc, path, data)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,path,data)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, data)
   }
 }
 
@@ -262,6 +264,7 @@ object NaiveBayesModel extends Loader[NaiveBayesModel] {
       val pi = data.getAs[Seq[Double]](1).toArray
       val theta = data.getSeq[scala.collection.Seq[Double]](2).map(_.toArray).toArray
       new NaiveBayesModel(labels, pi, theta)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
   }
 
@@ -323,6 +326,7 @@ class NaiveBayes private (
     require(lambda >= 0,
       s"Smoothing parameter must be nonnegative but got $lambda")
     this.lambda = lambda
+    logger.warn("setLambda(lambda)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lambda)
     this
   }
 
@@ -339,6 +343,7 @@ class NaiveBayes private (
     require(NaiveBayes.supportedModelTypes.contains(modelType),
       s"NaiveBayes was created with an unknown modelType: $modelType.")
     this.modelType = modelType
+    logger.warn("setModelType(modelType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", modelType)
     this
   }
 
@@ -377,6 +382,7 @@ class NaiveBayes private (
         theta(i)(j) = v
     }
 
+    logger.warn("run(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
     assert(newModel.oldLabels != null,
       "The underlying ML NaiveBayes training does not produce labels.")
     new NaiveBayesModel(newModel.oldLabels, pi, theta, modelType)

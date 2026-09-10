@@ -98,6 +98,7 @@ private[feature] trait StringIndexerBase extends Params with HasHandleInvalid wi
         "The number of input columns does not match output columns")
       ($(inputCols), $(outputCols))
     }
+    logger.warn("getInOutCols()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def validateAndTransformField(
@@ -197,6 +198,7 @@ class StringIndexer @Since("1.4.0") (
         .otherwise(col)
         .cast(StringType)
     }
+    logger.warn("getSelectedCols(dataset,inputCols)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, inputCols)
   }
 
   private def sortByFreq(dataset: Dataset[_], ascending: Boolean): Array[Array[String]] = {
@@ -389,6 +391,7 @@ class StringIndexerModel (
         }
       }.asNondeterministic()
     }
+    logger.warn("getIndexer(labels,labelToIndex,keepInvalid)={},{},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail {}", labels, labelToIndex, keepInvalid)
   }
 
   @Since("2.0.0")
@@ -500,6 +503,7 @@ object StringIndexerModel extends MLReadable[StringIndexerModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.labelsArray.map(_.toImmutableArraySeq).toImmutableArraySeq)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -526,6 +530,7 @@ object StringIndexerModel extends MLReadable[StringIndexerModel] {
         val data = ReadWriteUtils.loadObject[Data](dataPath, sparkSession, deserializeData)
         data.labelsArray.map(_.toArray).toArray
       }
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = new StringIndexerModel(metadata.uid, labelsArray)
       metadata.getAndSetParams(model)
       model

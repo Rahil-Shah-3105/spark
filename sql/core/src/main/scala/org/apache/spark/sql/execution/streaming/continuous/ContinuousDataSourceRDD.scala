@@ -31,6 +31,7 @@ class ContinuousDataSourceRDDPartition(
     val index: Int,
     val inputPartition: InputPartition)
   extends Partition with Serializable {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // This is semantically a lazy val - it's initialized once the first time a call to
   // ContinuousDataSourceRDD.compute() needs to access it, so it can be shared across
@@ -107,6 +108,7 @@ class ContinuousDataSourceRDD(
             null
           case row => row
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def close(): Unit = {}
@@ -115,5 +117,6 @@ class ContinuousDataSourceRDD(
 
   override def getPreferredLocations(split: Partition): Seq[String] = {
     castPartition(split).inputPartition.preferredLocations().toImmutableArraySeq
+    planChangeLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 }

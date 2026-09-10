@@ -27,6 +27,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
  * representations showing context around the first mismatch.
  */
 object LogicalPlanDifference {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Generate truncated versions of two logical plans showing context around the first mismatch.
@@ -58,6 +59,7 @@ object LogicalPlanDifference {
     val lhsBuffer = new CircularBuffer(contextSize + 1)
     val rhsBuffer = new CircularBuffer(contextSize + 1)
 
+    planChangeLogger.warn("apply(lhsPlan,rhsPlan,contextSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", lhsPlan, rhsPlan, contextSize)
     var mismatchFound = false
 
     while (!mismatchFound && (lhsIterator.hasNext || rhsIterator.hasNext)) {
@@ -203,6 +205,7 @@ object LogicalPlanDifference {
         }
         buffer.addLast(linePosition)
       }
+      planChangeLogger.warn("add(linePosition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", linePosition)
     }
 
     /**

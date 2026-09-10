@@ -40,6 +40,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, SupervisingComm
 class NameParameterizedQueryResolver(
     operatorResolver: Resolver,
     expressionResolver: ExpressionResolver) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val operatorResolutionContextStack = operatorResolver.getOperatorResolutionContextStack
   private val scopes = operatorResolver.getNameScopes
 
@@ -102,6 +103,7 @@ class NameParameterizedQueryResolver(
       case supervisedPlan =>
         nameParameterizedQuery.copy(child = supervisedPlan)
     }
+    planChangeLogger.warn("pushParameterizedQueryBelowCommand(nameParameterizedQuery,command)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nameParameterizedQuery, command)
   }
 
   /**
@@ -140,6 +142,7 @@ class NameParameterizedQueryResolver(
       new LinkedHashMap[String, Expression]
     )
 
+    planChangeLogger.warn("resolveNameParameterizedQuery(nameParameterizedQuery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParameterizedQuery)
     parameterNames.zip(resolvedParameterValues).foreach {
       case (name, value) if isNotAllowed(value) =>
         value.failAnalysis(

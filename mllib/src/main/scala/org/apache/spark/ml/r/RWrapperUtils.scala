@@ -68,6 +68,7 @@ private[r] object RWrapperUtils extends Logging {
     val features = featureAttrs.map(_.name.get)
     val labelAttr = Attribute.fromStructField(schema(rFormulaModel.getLabelCol))
       .asInstanceOf[NominalAttribute]
+      logger.warn("getFeaturesAndLabels(rFormulaModel,data)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rFormulaModel, data)
     val labels = labelAttr.values.get
     (features, labels)
   }

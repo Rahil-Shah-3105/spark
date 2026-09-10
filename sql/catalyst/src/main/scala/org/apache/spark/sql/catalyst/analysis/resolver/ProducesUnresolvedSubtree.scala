@@ -51,6 +51,7 @@ trait ProducesUnresolvedSubtree extends ResolvesExpressionChildren {
   protected def withResolvedSubtree(
       expression: Expression,
       expressionResolver: Expression => Expression)(body: => Expression): Expression = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     expression.children.foreach {
       case _: Literal =>
       case child => child.setTagValue(ResolverTag.SINGLE_PASS_SUBTREE_BOUNDARY, ())
@@ -122,5 +123,6 @@ trait ProducesUnresolvedSubtree extends ResolvesExpressionChildren {
     } else {
       expression.mapChildren(child => unsetBoundaryTagsWithPruning(child.asInstanceOf[Expression]))
     }
+    planChangeLogger.warn("unsetBoundaryTagsWithPruning(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 }

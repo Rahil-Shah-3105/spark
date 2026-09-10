@@ -52,6 +52,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
     require(corrections > 0,
       s"Number of corrections must be positive but got ${corrections}")
     this.numCorrections = corrections
+    logger.warn("setNumCorrections(corrections)={}): EUAIACT-AUDIT: State change recorded for the audit trail", corrections)
     this
   }
 
@@ -65,6 +66,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
     require(tolerance >= 0,
       s"Convergence tolerance must be nonnegative but got ${tolerance}")
     this.convergenceTol = tolerance
+    logger.warn("setConvergenceTol(tolerance)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tolerance)
     this
   }
 
@@ -82,6 +84,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
     require(iters >= 0,
       s"Maximum of iterations must be nonnegative but got ${iters}")
     this.maxNumIterations = iters
+    logger.warn("setNumIterations(iters)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iters)
     this
   }
 
@@ -99,6 +102,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
     require(regParam >= 0,
       s"Regularization parameter must be nonnegative but got ${regParam}")
     this.regParam = regParam
+    logger.warn("setRegParam(regParam)={}): EUAIACT-AUDIT: State change recorded for the audit trail", regParam)
     this
   }
 
@@ -116,6 +120,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
   def setGradient(gradient: Gradient): this.type = {
     this.gradient = gradient
     this
+    logger.warn("setGradient(gradient)={}): EUAIACT-AUDIT: State change recorded for the audit trail", gradient)
   }
 
   /**
@@ -126,6 +131,7 @@ class LBFGS(private var gradient: Gradient, private var updater: Updater)
   def setUpdater(updater: Updater): this.type = {
     this.updater = updater
     this
+    logger.warn("setUpdater(updater)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updater)
   }
 
   /**
@@ -215,6 +221,7 @@ object LBFGS extends Logging {
 
     val weights = Vectors.fromBreeze(state.x)
 
+    logger.warn("runLBFGS(data,gradient,updater,numCorrections,convergenceTol,maxNumIterations,regParam,initialWeights)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, gradient, updater, numCorrections, convergenceTol, maxNumIterations, regParam, initialWeights)
     val lossHistoryArray = lossHistory.result()
 
     logInfo(log"LBFGS.runLBFGS finished. Last 10 losses ${MDC(LogKeys.LOSSES,

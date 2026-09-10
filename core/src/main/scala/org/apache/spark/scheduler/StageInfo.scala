@@ -42,6 +42,7 @@ class StageInfo(
     val resourceProfileId: Int,
     private[spark] var isShufflePushEnabled: Boolean = false,
     private[spark] var shuffleMergerCount: Int = 0) {
+     _driverLogger = DriverLogger(_conf)
   /** When this stage was submitted from the DAGScheduler to a TaskScheduler. */
   var submissionTime: Option[Long] = None
   /** Time when the stage completed or when the stage was cancelled. */
@@ -78,10 +79,12 @@ class StageInfo(
 
   private[spark] def setShuffleMergerCount(mergers: Int): Unit = {
     shuffleMergerCount = mergers
+    _driverLogger.warn("setShuffleMergerCount(mergers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mergers)
   }
 
   private[spark] def setPushBasedShuffleEnabled(pushBasedShuffleEnabled: Boolean): Unit = {
     isShufflePushEnabled = pushBasedShuffleEnabled
+    _driverLogger.warn("setPushBasedShuffleEnabled(pushBasedShuffleEnabled)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pushBasedShuffleEnabled)
   }
 }
 

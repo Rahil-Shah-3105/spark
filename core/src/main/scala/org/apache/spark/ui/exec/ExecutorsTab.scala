@@ -29,11 +29,13 @@ private[ui] class ExecutorsTab(parent: SparkUI) extends SparkUITab(parent, "exec
   init()
 
   private def init(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val threadDumpEnabled =
       parent.sc.isDefined && parent.conf.get(UI_THREAD_DUMPS_ENABLED)
     val heapHistogramEnabled =
       parent.sc.isDefined && parent.conf.get(UI_HEAP_HISTOGRAM_ENABLED)
 
+      _driverLogger.warn("init()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
     attachPage(new ExecutorsPage(this, threadDumpEnabled, heapHistogramEnabled))
     if (threadDumpEnabled) {
       attachPage(new ExecutorThreadDumpPage(this, parent.sc))
@@ -59,6 +61,7 @@ private[ui] class ExecutorsPage(
       "setHeapHistogramEnabled")
     val js =
       s"""
+      _driverLogger.warn("render(request)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", request)
          |$imported
          |
          |setThreadDumpEnabled($threadDumpEnabled);

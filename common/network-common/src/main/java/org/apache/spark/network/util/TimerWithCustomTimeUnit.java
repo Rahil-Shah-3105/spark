@@ -36,6 +36,7 @@ import com.codahale.metrics.Timer;
  * value is converted to the custom time unit.
  */
 public class TimerWithCustomTimeUnit extends Timer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TimerWithCustomTimeUnit.class);
 
   private final TimeUnit timeUnit;
   private final double nanosPerUnit;
@@ -74,12 +75,14 @@ public class TimerWithCustomTimeUnit extends Timer {
 
     @Override
     public double getValue(double v) {
+	logger.warn("getValue(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v);
       return toUnit(wrappedSnapshot.getValue(v));
     }
 
     @Override
     public long[] getValues() {
       long[] nanoValues = wrappedSnapshot.getValues();
+	logger.warn("getValues()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       long[] customUnitValues = new long[nanoValues.length];
       for (int i = 0; i < nanoValues.length; i++) {
         customUnitValues[i] = toUnit(nanoValues[i]);

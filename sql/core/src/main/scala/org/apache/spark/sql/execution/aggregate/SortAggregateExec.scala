@@ -92,6 +92,7 @@ case class SortAggregateExec(
         }
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def supportCodegen: Boolean = {
@@ -100,6 +101,7 @@ case class SortAggregateExec(
   }
 
   private def supportCodegenWithKeys: Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     conf.getConf(SQLConf.ENABLE_SORT_AGGREGATE_CODEGEN_WITH_KEYS) &&
       groupingExpressions.forall(e => UnsafeRowUtils.isBinaryStable(e.dataType))
   }

@@ -19,6 +19,7 @@ import sys
 import random
 import math
 from typing import Generic, Hashable, Iterable, Iterator, Optional, TypeVar
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 T = TypeVar("T")
@@ -40,6 +41,7 @@ class RDDSamplerBase:
 
     def getUniformSample(self) -> float:
         assert self._random is not None
+        logger.warning("getUniformSample(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._random.random()
 
     def getPoissonSample(self, mean: float) -> int:
@@ -59,6 +61,7 @@ class RDDSamplerBase:
             p = self._random.expovariate(mean)
             k = 0
             while p < 1.0:
+                logger.warning("getPoissonSample(self,mean)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, mean)
                 k += 1
                 p += self._random.expovariate(mean)
         return k

@@ -46,6 +46,7 @@ class TaskInfo(
     val host: String,
     val taskLocality: TaskLocality.TaskLocality,
     val speculative: Boolean) extends Cloneable {
+     _driverLogger = DriverLogger(_conf)
 
   /**
    * This api doesn't contains partitionId, please use the new api.
@@ -81,6 +82,7 @@ class TaskInfo(
 
   private[spark] def setAccumulables(newAccumulables: Seq[AccumulableInfo]): Unit = {
     _accumulables = newAccumulables
+    _driverLogger.warn("setAccumulables(newAccumulables)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newAccumulables)
   }
 
   override def clone(): TaskInfo = super.clone().asInstanceOf[TaskInfo]
@@ -105,6 +107,7 @@ class TaskInfo(
 
   private[spark] def markGettingResult(time: Long): Unit = {
     gettingResultTime = time
+    _driverLogger.warn("markGettingResult(time)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", time)
   }
 
   private[spark] def markFinished(state: TaskState, time: Long): Unit = {

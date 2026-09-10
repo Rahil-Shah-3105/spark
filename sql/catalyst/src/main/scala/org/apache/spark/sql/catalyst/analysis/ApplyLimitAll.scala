@@ -29,6 +29,7 @@ import org.apache.spark.sql.catalyst.rules.Rule
  * should be used to enable unlimited looping in recursive CTEs.
  */
 object ApplyLimitAll extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private def applyLimitAllToPlan(plan: LogicalPlan, isInLimitAll: Boolean = false): LogicalPlan = {
     plan match {
       case la: LimitAll =>
@@ -44,9 +45,11 @@ object ApplyLimitAll extends Rule[LogicalPlan] {
         other.withNewChildren(plan.children
           .map(child => applyLimitAllToPlan(child, isInLimitAll = false)))
     }
+    planChangeLogger.warn("applyLimitAllToPlan(plan,isInLimitAll)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, isInLimitAll)
   }
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     applyLimitAllToPlan(plan)
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

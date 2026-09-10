@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StringType
  * Object used to transform the given [[Unpivot]] node to an [[Expand]] node.
  */
 object UnpivotTransformer {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Construct an [[Expand]] node from the given [[Unpivot]] node. Do that by:
@@ -69,6 +70,7 @@ object UnpivotTransformer {
         )()
     }
 
+    planChangeLogger.warn("apply(ids,values,aliases,variableColumnName,valueColumnNames,child)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ids, values, aliases, variableColumnName, valueColumnNames, child, ids)
     val output = (ids.map(_.toAttribute) :+ variableAttribute) ++ valueAttributes
 
     Expand(expressions, output, child)

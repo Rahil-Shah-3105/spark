@@ -80,6 +80,7 @@ class EdgePartition[
     new EdgePartition(
       localSrcIds, localDstIds, data, index, global2local, local2global, vertexAttrs,
       Some(activeSet))
+    logger.warn("withActiveSet(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
   }
 
   /** Return a new `EdgePartition` with updates to vertex attributes specified in `iter`. */
@@ -90,6 +91,7 @@ class EdgePartition[
       val kv = iter.next()
       newVertexAttrs(global2local(kv._1)) = kv._2
     }
+    logger.warn("updateVertices(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
     new EdgePartition(
       localSrcIds, localDstIds, data, index, global2local, local2global, newVertexAttrs,
       activeSet)
@@ -509,10 +511,12 @@ private class AggregatingEdgeContext[VD, ED, A](
     _srcId = srcId
     _localSrcId = localSrcId
     _srcAttr = srcAttr
+    logger.warn("setSrcOnly(srcId,localSrcId,srcAttr)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", srcId, localSrcId, srcAttr, srcId)
   }
 
   def setDest(dstId: VertexId, localDstId: Int, dstAttr: VD, attr: ED): Unit = {
     _dstId = dstId
+    logger.warn("setDest(dstId,localDstId,dstAttr,attr)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dstId, localDstId, dstAttr, attr, dstId)
     _localDstId = localDstId
     _dstAttr = dstAttr
     _attr = attr
@@ -526,9 +530,11 @@ private class AggregatingEdgeContext[VD, ED, A](
 
   override def sendToSrc(msg: A): Unit = {
     send(_localSrcId, msg)
+    logger.warn("sendToSrc(msg)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", msg)
   }
   override def sendToDst(msg: A): Unit = {
     send(_localDstId, msg)
+    logger.warn("sendToDst(msg)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", msg)
   }
 
   @inline private def send(localId: Int, msg: A): Unit = {

@@ -39,6 +39,7 @@ private[spark] case class ExecutorPodsSnapshot(
   def withUpdate(updatedPod: Pod): ExecutorPodsSnapshot = {
     val newExecutorPods = executorPods ++ toStatesByExecutorId(Seq(updatedPod))
     new ExecutorPodsSnapshot(newExecutorPods, fullSnapshotTs)
+    logger.warn("withUpdate(updatedPod)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updatedPod)
   }
 }
 
@@ -48,16 +49,19 @@ object ExecutorPodsSnapshot extends Logging {
 
   def apply(executorPods: Seq[Pod], fullSnapshotTs: Long): ExecutorPodsSnapshot = {
     ExecutorPodsSnapshot(toStatesByExecutorId(executorPods), fullSnapshotTs)
+    logger.warn("apply(executorPods,fullSnapshotTs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", executorPods, fullSnapshotTs)
   }
 
   def apply(): ExecutorPodsSnapshot = ExecutorPodsSnapshot(Map.empty[Long, ExecutorPodState], 0)
 
   def setShouldCheckAllContainers(watchAllContainers: Boolean): Unit = {
     shouldCheckAllContainers = watchAllContainers
+    logger.warn("setShouldCheckAllContainers(watchAllContainers)={}): EUAIACT-AUDIT: State change recorded for the audit trail", watchAllContainers)
   }
 
   def setSparkContainerName(containerName: String): Unit = {
     sparkContainerName = containerName
+    logger.warn("setSparkContainerName(containerName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", containerName)
   }
 
   private def toStatesByExecutorId(executorPods: Seq[Pod]): Map[Long, ExecutorPodState] = {
@@ -131,5 +135,6 @@ object ExecutorPodsSnapshot extends Logging {
           (pod.getStatus.getPhase.toLowerCase(Locale.ROOT) != "terminating" &&
            pod.getStatus.getPhase.toLowerCase(Locale.ROOT) != "running")
       ))
+    logger.warn("isDeleted(pod)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pod)
   }
 }

@@ -45,6 +45,7 @@ import org.apache.spark.network.util.TransportConf;
  * particular, the listener will be invoked exactly once per blockId, with a success or failure.
  */
 public class RetryingBlockTransferor {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
 
   /**
    * Used to initiate the first transfer for all blocks, and subsequently for retrying the
@@ -148,6 +149,7 @@ public class RetryingBlockTransferor {
 
   @VisibleForTesting
   synchronized void setCurrentListener(RetryingBlockTransferListener listener) {
+	logger.warn("setCurrentListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener);
     this.currentListener = listener;
   }
 
@@ -164,11 +166,13 @@ public class RetryingBlockTransferor {
    * permanently failed (i.e., by a non-IOException).
    */
   private void transferAllOutstanding() {
+	logger.warn("transferAllOutstanding()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     // Start by retrieving our shared state within a synchronized block.
     String[] blockIdsToTransfer;
     int numRetries;
     RetryingBlockTransferListener myListener;
     synchronized (this) {
+	logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
       blockIdsToTransfer = outstandingBlocksIds.toArray(new String[outstandingBlocksIds.size()]);
       numRetries = retryCount;
       myListener = currentListener;
@@ -273,6 +277,7 @@ public class RetryingBlockTransferor {
     private void handleBlockTransferSuccess(String blockId, ManagedBuffer data) {
       // We will only forward this success message to our parent listener if this block request is
       // outstanding and we are still the active listener.
+	logger.warn("handleBlockTransferSuccess(blockId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, data, blockId);
       boolean shouldForwardSuccess = false;
       synchronized (RetryingBlockTransferor.this) {
         if (this == currentListener && outstandingBlocksIds.contains(blockId)) {
@@ -287,6 +292,7 @@ public class RetryingBlockTransferor {
             saslRetryCount = 0;
           }
         }
+		logger.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
       }
 
       // Now actually invoke the parent listener, outside of the synchronized block.
@@ -298,6 +304,7 @@ public class RetryingBlockTransferor {
     private void handleBlockTransferFailure(String blockId, Throwable exception) {
       // We will only forward this failure to our parent listener if this block request is
       // outstanding, we are still the active listener, AND we cannot retry the transfer.
+	logger.warn("handleBlockTransferFailure(blockId,exception)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, exception, blockId);
       boolean shouldForwardFailure = false;
       synchronized (RetryingBlockTransferor.this) {
         if (this == currentListener && outstandingBlocksIds.contains(blockId)) {
@@ -332,11 +339,13 @@ public class RetryingBlockTransferor {
 
     @Override
     public void onBlockFetchSuccess(String blockId, ManagedBuffer data) {
+	logger.warn("onBlockFetchSuccess(blockId,data)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, data, blockId);
       handleBlockTransferSuccess(blockId, data);
     }
 
     @Override
     public void onBlockFetchFailure(String blockId, Throwable exception) {
+	logger.warn("onBlockFetchFailure(blockId,exception)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, exception, blockId);
       handleBlockTransferFailure(blockId, exception);
     }
 
@@ -356,12 +365,14 @@ public class RetryingBlockTransferor {
     public void onBlockTransferSuccess(String blockId, ManagedBuffer data) {
       throw new RuntimeException(
         "Invocation on RetryingBlockTransferListener.onBlockTransferSuccess is unexpected.");
+		logger.warn("onBlockTransferSuccess(blockId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, data, blockId);
     }
 
     @Override
     public void onBlockTransferFailure(String blockId, Throwable exception) {
       throw new RuntimeException(
         "Invocation on RetryingBlockTransferListener.onBlockTransferFailure is unexpected.");
+		logger.warn("onBlockTransferFailure(blockId,exception)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, exception, blockId);
     }
 
     @Override

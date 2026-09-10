@@ -51,6 +51,7 @@ private[spark] abstract class BaseRRunner[IN, OUT](
   def compute(
       inputIterator: Iterator[IN],
       partitionIndex: Int): Iterator[OUT] = {
+       _driverLogger = DriverLogger(_conf)
     // Timing start
     bootTime = System.currentTimeMillis / 1000.0
 
@@ -210,6 +211,7 @@ private[spark] abstract class BaseRRunner[IN, OUT](
       } finally {
         Try(output.close())
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -276,6 +278,7 @@ private[r] object BaseRRunner {
     thread.setDaemon(true)
     thread.start()
     thread
+    _driverLogger.warn("startStdoutThread(proc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", proc)
   }
 
   private[r] def getROptions(rCommand: String): String = Try {
@@ -312,6 +315,7 @@ private[r] object BaseRRunner {
     pb.environment().put("SPARKR_IS_RUNNING_ON_WORKER", "TRUE")
     pb.environment().put("SPARKR_WORKER_SECRET", authHelper.secret)
     pb.redirectErrorStream(true)  // redirect stderr into stdout
+    _driverLogger.warn("createRProcess(port,script)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", port, script)
     val proc = pb.start()
     val errThread = startStdoutThread(proc)
     errThread
@@ -356,5 +360,6 @@ private[r] object BaseRRunner {
     } else {
       createRProcess(port, "worker.R")
     }
+    _driverLogger.warn("createRWorker(port)={}): EUAIACT-AUDIT: State change recorded for the audit trail", port)
   }
 }

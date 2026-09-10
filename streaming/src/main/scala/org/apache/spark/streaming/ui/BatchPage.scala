@@ -260,6 +260,7 @@ private[ui] class BatchPage(parent: StreamingTab) extends WebUIPage("batch") {
     } catch {
       case _: NoSuchElementException => None
     }
+    logger.warn("getJobData(sparkJobId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkJobId, sparkJobId)
   }
 
   private def getStageData(stageId: Int): Option[StageData] = {
@@ -268,6 +269,7 @@ private[ui] class BatchPage(parent: StreamingTab) extends WebUIPage("batch") {
     } catch {
       case _: NoSuchElementException => None
     }
+    logger.warn("getStageData(stageId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageId, stageId)
   }
 
   private def generateOutputOperationStatusForUI(failure: String): String = {

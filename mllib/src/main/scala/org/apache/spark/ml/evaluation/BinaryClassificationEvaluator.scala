@@ -131,6 +131,7 @@ class BinaryClassificationEvaluator @Since("1.4.0") (@Since("1.4.0") override va
         col($(labelCol)).cast(DoubleType),
         DatasetUtils.checkNonNegativeWeights(get(weightCol))
       ).rdd.map {
+        logger.warn("getMetrics(dataset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataset)
         case Row(rawPrediction: Vector, label: Double, weight: Double) =>
           (rawPrediction(1), label, weight)
         case Row(rawPrediction: Double, label: Double, weight: Double) =>

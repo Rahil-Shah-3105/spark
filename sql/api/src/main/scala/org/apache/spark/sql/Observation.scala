@@ -112,6 +112,7 @@ class Observation(val name: String) {
     if (!isRegistered.compareAndSet(false, true)) {
       throw new IllegalArgumentException("An Observation can be used with a Dataset only once")
     }
+    logger.warn("markRegistered()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -122,6 +123,7 @@ class Observation(val name: String) {
    */
   private[sql] def setMetricsAndNotify(metrics: Try[Row]): Boolean = {
     promise.tryComplete(metrics)
+    logger.warn("setMetricsAndNotify(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 
   /**

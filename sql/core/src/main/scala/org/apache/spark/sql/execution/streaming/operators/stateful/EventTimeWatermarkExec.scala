@@ -35,10 +35,13 @@ import org.apache.spark.util.AccumulatorV2
 /** Class for collecting event time stats with an accumulator */
 case class EventTimeStats(var max: Long, var min: Long, var avg: Double, var count: Long) {
   def add(eventTime: Long): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     this.max = math.max(this.max, eventTime)
     this.min = math.min(this.min, eventTime)
     this.count += 1
+    planChangeLogger.warn("add(eventTime)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eventTime)
     this.avg += (eventTime - avg) / count
+  planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   def merge(that: EventTimeStats): Unit = {
@@ -73,6 +76,7 @@ class EventTimeStatsAccum(protected var currentStats: EventTimeStats = EventTime
 
   override def reset(): Unit = {
     currentStats = EventTimeStats.zero
+    planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def add(v: Long): Unit = {
@@ -110,6 +114,7 @@ case class EventTimeWatermarkExec(
         row
       }
     }
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Update the metadata on the eventTime column to include the desired delay.

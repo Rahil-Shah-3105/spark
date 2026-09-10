@@ -38,6 +38,7 @@ import java.util.Objects;
  * but does not support buffering.
  */
 public final class NioBufferedFileInputStream extends InputStream {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NioBufferedFileInputStream.class);
 
   private static final Cleaner CLEANER = Cleaner.create();
   private static final int DEFAULT_BUFFER_SIZE_BYTES = 8192;
@@ -153,6 +154,7 @@ public final class NioBufferedFileInputStream extends InputStream {
       try {
         fileChannel.close();
       } catch (IOException e) {
+		logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         throw new UncheckedIOException(e);
       } finally {
         StorageUtils.dispose(byteBuffer);

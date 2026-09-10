@@ -18,6 +18,7 @@ import inspect
 import traceback
 from dataclasses import dataclass
 from typing import Optional
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ def get_caller_source_code_location(stacklevel: int) -> SourceCodeLocation:
     # Stack is ordered from the caller first to the callee last.
     stack = traceback.extract_stack(inspect.currentframe())
 
+    logger.warning("get_caller_source_code_location(stacklevel)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", stacklevel)
     frame = stack[-(stacklevel + 2)]
 
     return SourceCodeLocation(

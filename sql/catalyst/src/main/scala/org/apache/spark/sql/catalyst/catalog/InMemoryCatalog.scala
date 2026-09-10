@@ -48,6 +48,7 @@ class InMemoryCatalog(
     conf: SparkConf = new SparkConf,
     hadoopConfig: Configuration = new Configuration)
   extends ExternalCatalog {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   import CatalogTypes.TablePartitionSpec
 
@@ -198,6 +199,7 @@ class InMemoryCatalog(
       " is missing database name. " +
       "Cannot create table without a database specified.")
     val db = tableDefinition.identifier.database.get
+    planChangeLogger.warn("createTable(tableDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDefinition, ignoreIfExists)
     requireDbExists(db)
     val table = tableDefinition.identifier.table
     if (tableExists(db, table)) {
@@ -377,6 +379,7 @@ class InMemoryCatalog(
   override def getTablesByName(db: String, tables: Seq[String]): Seq[CatalogTable] = {
     requireDbExists(db)
     tables.flatMap(catalog(db).tables.get).map(_.table)
+    planChangeLogger.warn("getTablesByName(db,tables)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, tables)
   }
 
   override def tableExists(db: String, table: String): Boolean = synchronized {
@@ -575,6 +578,7 @@ class InMemoryCatalog(
       db: String,
       table: String,
       partSpec: TablePartitionSpec): CatalogTablePartition = synchronized {
+       planChangeLogger.warn("getPartition(db,table,partSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partSpec)
     val spec = toCatalogPartitionSpec(partSpec)
     requirePartitionsExist(db, table, Seq(spec))
     catalog(db).tables(table).partitions(spec)
@@ -614,6 +618,7 @@ class InMemoryCatalog(
       db: String,
       table: String,
       partialSpec: Option[TablePartitionSpec] = None): Seq[CatalogTablePartition] = synchronized {
+       planChangeLogger.warn("listPartitions(db,table,partialSpec)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, table, partialSpec)
     requireTableExists(db, table)
 
     partialSpec.map(toCatalogPartitionSpec) match {

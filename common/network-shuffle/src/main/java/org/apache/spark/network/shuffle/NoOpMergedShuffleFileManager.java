@@ -36,6 +36,7 @@ import org.apache.spark.network.util.TransportConf;
  * @since 3.1.0
  */
 public class NoOpMergedShuffleFileManager implements MergedShuffleFileManager {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
 
   // This constructor is needed because we use this constructor to instantiate an implementation
   // of MergedShuffleFileManager using reflection.
@@ -54,11 +55,13 @@ public class NoOpMergedShuffleFileManager implements MergedShuffleFileManager {
 
   @Override
   public void registerExecutor(String appId, ExecutorShuffleInfo executorInfo) {
+	logger.warn("registerExecutor(appId,executorInfo)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, executorInfo, appId);
     // No-Op. Do nothing.
   }
 
   @Override
   public void applicationRemoved(String appId, boolean cleanupLocalDirs) {
+	logger.warn("applicationRemoved(appId,cleanupLocalDirs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, cleanupLocalDirs, appId);
     // No-Op. Do nothing.
   }
 
@@ -69,6 +72,7 @@ public class NoOpMergedShuffleFileManager implements MergedShuffleFileManager {
       int shuffleMergeId,
       int reduceId,
       int chunkId) {
+	logger.warn("getMergedBlockData(appId,shuffleId,shuffleMergeId,reduceId,chunkId)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, chunkId, appId);
     throw new UnsupportedOperationException("Cannot handle shuffle block merge");
   }
 
@@ -78,16 +82,19 @@ public class NoOpMergedShuffleFileManager implements MergedShuffleFileManager {
       int shuffleId,
       int shuffleMergeId,
       int reduceId) {
+	logger.warn("getMergedBlockMeta(appId,shuffleId,shuffleMergeId,reduceId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, appId);
     throw new UnsupportedOperationException("Cannot handle shuffle block merge");
   }
 
   @Override
   public String[] getMergedBlockDirs(String appId) {
+	logger.warn("getMergedBlockDirs(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId);
     throw new UnsupportedOperationException("Cannot handle shuffle block merge");
   }
 
   @Override
   public void removeShuffleMerge(RemoveShuffleMerge removeShuffleMerge) {
+	logger.warn("removeShuffleMerge(removeShuffleMerge)={}): EUAIACT-AUDIT: State change recorded for the audit trail", removeShuffleMerge);
     throw new UnsupportedOperationException("Cannot handle merged shuffle remove");
   }
 }

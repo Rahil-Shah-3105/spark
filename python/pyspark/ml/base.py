@@ -51,6 +51,7 @@ from pyspark.sql.types import DataType, StructField, StructType
 
 if TYPE_CHECKING:
     from pyspark.ml._typing import ParamMap
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 T = TypeVar("T")
 M = TypeVar("M", bound="Transformer")
@@ -284,12 +285,14 @@ class UnaryTransformer(HasInputCol, HasOutputCol, Transformer):
         """
         Sets the value of :py:attr:`inputCol`.
         """
+        logger.warning("setInputCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(inputCol=value)
 
     def setOutputCol(self: P, value: str) -> P:
         """
         Sets the value of :py:attr:`outputCol`.
         """
+        logger.warning("setOutputCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(outputCol=value)
 
     @abstractmethod
@@ -299,6 +302,7 @@ class UnaryTransformer(HasInputCol, HasOutputCol, Transformer):
         account of the embedded param map. So the param values should be determined
         solely by the input param map.
         """
+        logger.warning("createTransformFunc(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         raise NotImplementedError()
 
     @abstractmethod
@@ -355,6 +359,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         """
         Sets the value of :py:attr:`labelCol`.
         """
+        logger.warning("setLabelCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(labelCol=value)
 
     @since("3.0.0")
@@ -362,6 +367,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         """
         Sets the value of :py:attr:`featuresCol`.
         """
+        logger.warning("setFeaturesCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(featuresCol=value)
 
     @since("3.0.0")
@@ -369,6 +375,7 @@ class Predictor(Estimator[M], _PredictorParams, metaclass=ABCMeta):
         """
         Sets the value of :py:attr:`predictionCol`.
         """
+        logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(predictionCol=value)
 
 

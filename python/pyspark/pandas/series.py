@@ -145,6 +145,7 @@ if TYPE_CHECKING:
     from pyspark.pandas.resample import SeriesResampler
     from pyspark.pandas.indexes import Index
     from pyspark.pandas.spark.accessors import SparkIndexOpsMethods
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # This regular expression pattern is compiled and defined here to avoid to compile the same
 # pattern every time it is used in _repr_ in Series.
@@ -565,6 +566,7 @@ class Series(Frame, IndexOpsMixin, Generic[T]):
                 scol = F.when(scol.isNull() | F.isnan(scol), fill_value).otherwise(scol)
                 self = self._with_new_scol(scol)
             else:
+                logger.warning("add(self,other,fill_value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, other, fill_value)
                 raise NotImplementedError(
                     "`fill_value` currently only works when type of `other` is in (int, str, float)"
                 )
@@ -586,6 +588,7 @@ class Series(Frame, IndexOpsMixin, Generic[T]):
                 scol = F.when(scol.isNull() | F.isnan(scol), fill_value).otherwise(scol)
                 self = self._with_new_scol(scol)
             else:
+                logger.warning("radd(self,other,fill_value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, other, fill_value)
                 raise NotImplementedError(
                     "`fill_value` currently only works when type of `other` is in (int, str, float)"
                 )
@@ -1784,6 +1787,7 @@ class Series(Frame, IndexOpsMixin, Generic[T]):
             to be small, as all the data is loaded into the driver's memory.
 
         """
+        logger.warning("to_list(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         log_advice(
             "`to_list` loads all data into the driver's memory. "
             "It should only be used if the resulting list is expected to be small."
@@ -3358,6 +3362,7 @@ class Series(Frame, IndexOpsMixin, Generic[T]):
         dtype: int64
         """
         assert isinstance(prefix, str)
+        logger.warning("add_prefix(self,prefix)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, prefix)
         internal = self._internal.resolved_copy
         sdf = internal.spark_frame.select(
             [
@@ -3413,6 +3418,7 @@ class Series(Frame, IndexOpsMixin, Generic[T]):
         dtype: int64
         """
         assert isinstance(suffix, str)
+        logger.warning("add_suffix(self,suffix)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, suffix)
         internal = self._internal.resolved_copy
         sdf = internal.spark_frame.select(
             [

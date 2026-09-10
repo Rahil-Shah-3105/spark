@@ -30,6 +30,7 @@ import org.apache.spark.util.Utils
  */
 @DeveloperApi
 abstract class TopologyMapper(conf: SparkConf) {
+  _driverLogger = DriverLogger(_conf)
   /**
    * Gets the topology information given the host name
    *
@@ -54,6 +55,7 @@ abstract class TopologyMapper(conf: SparkConf) {
 @DeveloperApi
 class DefaultTopologyMapper(conf: SparkConf) extends TopologyMapper(conf) with Logging {
   override def getTopologyForHost(hostname: String): Option[String] = {
+    _driverLogger.warn("getTopologyForHost(hostname)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hostname)
     logDebug(s"Got a request for $hostname")
     None
   }

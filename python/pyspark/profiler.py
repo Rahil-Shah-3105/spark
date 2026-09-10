@@ -40,6 +40,7 @@ from pyspark.errors import PySparkRuntimeError, PySparkValueError
 
 if TYPE_CHECKING:
     from pyspark.core.context import SparkContext
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 MemoryTuple = Tuple[float, float, int]
 LineProfile = Tuple[int, Optional[MemoryTuple]]
@@ -84,6 +85,7 @@ class ProfilerCollector:
             if self.profile_dump_path:
                 atexit.register(self.dump_profiles, self.profile_dump_path)
             else:
+                logger.warning("add_profiler(self,id,profiler)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", self, id, profiler, id)
                 atexit.register(self.show_profiles)
 
         self.profilers.append([id, profiler, False])

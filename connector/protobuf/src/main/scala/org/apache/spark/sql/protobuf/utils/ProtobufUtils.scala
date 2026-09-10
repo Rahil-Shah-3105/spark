@@ -146,6 +146,7 @@ private[sql] object ProtobufUtils extends Logging {
       // get candidates, ignoring case of field name
       val candidates = fieldMap.getOrElse(name.toLowerCase(Locale.ROOT), Seq.empty)
 
+      logger.warn("getFieldByName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", name, candidates)
       // search candidates, taking into account case sensitivity settings
       candidates.filter(f => SQLConf.get.resolver(f.getName(), name)) match {
         case Seq(protoField) => Some(protoField)
@@ -302,6 +303,7 @@ private[sql] object ProtobufUtils extends Logging {
       case e: UncheckedExecutionException if e.getCause != null => throw e.getCause
       case e: ExecutionException if e.getCause != null => throw e.getCause
       case e: ExecutionError if e.getCause != null => throw e.getCause
+    logger.warn("doParseFileDescriptorSet(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
     }
   }
 
@@ -367,6 +369,7 @@ private[sql] object ProtobufUtils extends Logging {
     fileDescriptorSet.getFileList().asScala.map { descriptorProto =>
       descriptorProto.getName() -> descriptorProto
     }.toMap[String, FileDescriptorProto]
+    logger.warn("createDescriptorProtoMap(fileDescriptorSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fileDescriptorSet)
   }
 
   /**
@@ -423,6 +426,7 @@ private[sql] object ProtobufUtils extends Logging {
       } else {
         registry.add(extField)
       }
+      logger.warn("addExtension(extField)={}): EUAIACT-AUDIT: State change recorded for the audit trail", extField)
       fullNameToExtensions
         .getOrElseUpdate(extendeeName, mutable.ArrayBuffer())
         .append(extField)

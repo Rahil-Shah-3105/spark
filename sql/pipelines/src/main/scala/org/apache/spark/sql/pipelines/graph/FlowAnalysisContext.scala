@@ -64,5 +64,6 @@ private[pipelines] case class FlowAnalysisContext(
    */
   def setConf(key: String, value: String): Unit = {
     flowConf.setConfString(key, value)
+    logger.warn("setConf(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 }

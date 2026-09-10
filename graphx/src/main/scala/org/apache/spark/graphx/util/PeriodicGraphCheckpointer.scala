@@ -96,11 +96,13 @@ private[spark] class PeriodicGraphCheckpointer[VD, ED](
     if (data.edges.getStorageLevel == StorageLevel.NONE) {
       data.edges.cache()
     }
+    logger.warn("persist(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   override protected def unpersist(data: Graph[VD, ED]): Unit = data.unpersist()
 
   override protected def getCheckpointFiles(data: Graph[VD, ED]): Iterable[String] = {
     data.getCheckpointFiles
+    logger.warn("getCheckpointFiles(data)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", data)
   }
 }

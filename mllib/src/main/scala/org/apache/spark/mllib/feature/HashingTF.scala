@@ -57,6 +57,7 @@ class HashingTF(val numFeatures: Int) extends Serializable {
   def setBinary(value: Boolean): this.type = {
     binary = value
     this
+    logger.warn("setBinary(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**
@@ -67,6 +68,7 @@ class HashingTF(val numFeatures: Int) extends Serializable {
   def setHashAlgorithm(value: String): this.type = {
     hashAlgorithm = value
     this
+    logger.warn("setHashAlgorithm(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**

@@ -67,6 +67,7 @@ case class UnaryMinus(
   private lazy val numeric = TypeUtils.getNumeric(dataType, failOnError)
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = dataType match {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     case _: DecimalType => defineCodeGen(ctx, ev, c => s"$c.unary_$$minus()")
     case ByteType | ShortType | IntegerType | LongType if failOnError =>
       val mathUtils = MathUtils.getClass.getCanonicalName.stripSuffix("$")
@@ -268,6 +269,7 @@ abstract class BinaryArithmetic extends BinaryOperator with SupportQueryContext 
     } else {
       None
     }
+    planChangeLogger.warn("initQueryContext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected def checkDecimalOverflow(value: Decimal, precision: Int, scale: Int): Decimal = {

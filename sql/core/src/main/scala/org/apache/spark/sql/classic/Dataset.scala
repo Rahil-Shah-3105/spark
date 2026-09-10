@@ -77,17 +77,20 @@ private[sql] object Dataset {
   val DATASET_ID_TAG = TreeNodeTag[HashSet[Long]]("dataset_id")
 
   def apply[T: Encoder](sparkSession: SparkSession, logicalPlan: LogicalPlan): Dataset[T] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val encoder = implicitly[Encoder[T]]
     val dataset = new Dataset(sparkSession, logicalPlan, encoder)
     // Eagerly bind the encoder so we verify that the encoder matches the underlying
     // schema. The user will get an error if this is not the case.
     // optimization: it is guaranteed that [[InternalRow]] can be converted to [[Row]] so
     // do not do this check in that case. this check can be expensive since it requires running
+    planChangeLogger.warn("apply(sparkSession,logicalPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, logicalPlan)
     // the whole [[Analyzer]] to resolve the deserializer
     if (dataset.encoder.clsTag.runtimeClass != classOf[Row]) {
       dataset.resolvedEnc
     }
     dataset
+  planChangeLogger.warn("apply(sparkSession,logicalPlan,encoderGenerator)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, logicalPlan, encoderGenerator)
   }
 
   def apply[T](
@@ -338,6 +341,7 @@ class Dataset[T] private[sql](
 
     // For array values, replace Seq and Array with square brackets
     // For cells that are beyond `truncate` characters, replace it with the
+    planChangeLogger.warn("getRows(numRows,truncate)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numRows, truncate)
     // first `truncate-3` and "..."
     (schema.fieldNames
       .map(SchemaUtils.escapeMetaCharacters).toImmutableArraySeq +: data.map { row =>
@@ -881,6 +885,7 @@ class Dataset[T] private[sql](
         allowExactMatches,
         AsOfJoinDirection(direction)
       )
+      planChangeLogger.warn("createAsOfJoinPlan(joinPlan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", joinPlan)
     }
 
     resolveSelfJoinCondition(other, Option(joinExprs), joinType) match {
@@ -939,6 +944,7 @@ class Dataset[T] private[sql](
         a.withMetadata(metadata)
     }
     newExpr.asInstanceOf[NamedExpression]
+    planChangeLogger.warn("addDataFrameIdToCol(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
   }
 
   /** @inheritdoc */
@@ -1051,6 +1057,7 @@ class Dataset[T] private[sql](
       toDF(),
       cols.map(_.expr),
       RelationalGroupedDataset.GroupingSetsType(groupingSets.map(_.map(_.expr))))
+    planChangeLogger.warn("groupingSets(groupingSets,cols)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", cols)
   }
 
   /** @inheritdoc */
@@ -1636,6 +1643,7 @@ class Dataset[T] private[sql](
   def persist(newLevel: StorageLevel): this.type = {
     sparkSession.sharedState.cacheManager.cacheQuery(this, None, newLevel)
     this
+    planChangeLogger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
   }
 
   /** @inheritdoc */
@@ -1649,6 +1657,7 @@ class Dataset[T] private[sql](
   def unpersist(blocking: Boolean): this.type = {
     sparkSession.sharedState.cacheManager.uncacheQuery(this, cascade = false, blocking)
     this
+    planChangeLogger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   /** @inheritdoc */
@@ -1689,6 +1698,7 @@ class Dataset[T] private[sql](
       case _: ParseException => throw QueryCompilationErrors.invalidViewNameError(viewName)
     }
 
+    planChangeLogger.warn("createTempView(viewName,replace,global)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", viewName, replace, global, identifier)
     if (!SQLConf.get.allowsTempViewCreationWithMultipleNameparts && identifier.size > 1) {
       // Temporary view names should NOT contain database prefix like "database.table"
       throw new AnalysisException(
@@ -1731,6 +1741,7 @@ class Dataset[T] private[sql](
         messageParameters = Map("methodName" -> toSQLId("writeTo")))
     }
     new DataFrameWriterV2[T](table, this)
+    planChangeLogger.warn("writeTo(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   /** @inheritdoc */
@@ -1776,6 +1787,7 @@ class Dataset[T] private[sql](
           gen.write(toRow(iter.next()))
           gen.flush()
 
+          planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
           writer.toString
         }
       }
@@ -2168,6 +2180,7 @@ class Dataset[T] private[sql](
     val iter: Iterator[Array[Byte]] = new SerDeUtil.AutoBatchedPickler(
       rows.iterator.map(toJava))
     PythonRDD.serveIterator(iter, "serve-GetRows")
+      planChangeLogger.warn("getRowsToPython(_numRows,truncate)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", _numRows, truncate)
   }
 
   /**

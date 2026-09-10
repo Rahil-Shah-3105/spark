@@ -54,6 +54,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def unexpectedRequiredParameter(
       routineName: String, parameters: Seq[InputParameter]): Throwable = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     val errorMessage = s"Routine ${toSQLId(routineName)} has an unexpected required argument for" +
       s" the provided routine signature ${parameters.mkString("[", ", ", "]")}." +
       s" All required arguments should come before optional arguments."
@@ -327,6 +328,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.BIN_BY",
       messageParameters = Map.empty)
+    planChangeLogger.warn("binByDisabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def binByRequiresTopLevelColumnError(reference: Expression): Throwable = {
@@ -405,6 +407,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "columnName" -> toSQLId(columnName),
         "columnType" -> toSQLType(columnType)))
+    planChangeLogger.warn("binByRangeTypeMismatchError(columnName,columnType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", columnName, columnType)
   }
 
   def unsupportedIfNotExistsError(tableName: String): Throwable = {
@@ -422,6 +425,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       ),
       origin = origin
     )
+    planChangeLogger.warn("unsupportedSetOperationOnMapType(mapCol,origin)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mapCol, origin)
   }
 
   def unsupportedSetOperationOnVariantType(variantCol: Attribute, origin: Origin): Throwable = {
@@ -433,6 +437,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       ),
       origin = origin
     )
+    planChangeLogger.warn("unsupportedSetOperationOnVariantType(variantCol,origin)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", variantCol, origin)
   }
 
   def nonPartitionColError(partitionName: String): Throwable = {
@@ -472,6 +477,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def legacyStoreAssignmentPolicyError(): Throwable = {
     val configKey = SQLConf.STORE_ASSIGNMENT_POLICY.key
+    planChangeLogger.warn("legacyStoreAssignmentPolicyError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1000",
       messageParameters = Map("configKey" -> configKey))
@@ -484,6 +490,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "functionName" -> toSQLId(functionName),
         "argument" -> toSQLId(argumentName))
     )
+    planChangeLogger.warn("namedArgumentsNotEnabledError(functionName,argumentName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", functionName, argumentName)
   }
 
   def collatedStringsInMapKeysNotSupportedError(): Throwable = {
@@ -497,6 +504,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "UNSUPPORTED_FEATURE.OBJECT_LEVEL_COLLATIONS",
       messageParameters = Map.empty
     )
+    planChangeLogger.warn("objectLevelCollationsNotEnabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def schemaLevelCollationsNotEnabledError(): Throwable = {
@@ -504,6 +512,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "UNSUPPORTED_FEATURE.SCHEMA_LEVEL_COLLATIONS",
       messageParameters = Map.empty
     )
+    planChangeLogger.warn("schemaLevelCollationsNotEnabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def trailingCommaInSelectError(origin: Origin): Throwable = {
@@ -620,6 +629,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "fieldName" -> toSQLId(fieldName),
         "fields" -> fields.mkString(", ")))
+    planChangeLogger.warn("referenceColNotFoundForAlterTableChangesError(fieldName,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fieldName, fields)
   }
 
   def windowSpecificationNotDefinedError(windowName: String): Throwable = {
@@ -643,6 +653,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_GROUPING_EXPRESSION",
       messageParameters = Map.empty)
+    planChangeLogger.warn("groupingMustWithGroupingSetsOrCubeOrRollupError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def pandasUDFAggregateNotSupportedInPivotError(): Throwable = {
@@ -661,12 +672,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "VIEW_WRITE_NOT_ALLOWED",
       messageParameters = Map("name" -> quoted))
+    planChangeLogger.warn("writeIntoTempViewNotAllowedError(quoted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", quoted)
   }
 
   def readNonStreamingTempViewError(quoted: String): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1008",
       messageParameters = Map("quoted" -> quoted))
+    planChangeLogger.warn("readNonStreamingTempViewError(quoted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", quoted)
   }
 
   def viewDepthExceedsMaxResolutionDepthError(
@@ -677,6 +690,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(viewNameParts),
         "maxNestedDepth" -> maxNestedDepth.toString),
       origin = t.origin)
+    planChangeLogger.warn("viewDepthExceedsMaxResolutionDepthError(viewNameParts,maxNestedDepth,t)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", viewNameParts, maxNestedDepth, t)
   }
 
   def insertIntoViewNotAllowedError(identifier: TableIdentifier, t: TreeNode[_]): Throwable = {
@@ -686,20 +700,24 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(identifier.nameParts),
         "operation" -> "INSERT"),
       origin = t.origin)
+    planChangeLogger.warn("insertIntoViewNotAllowedError(identifier,t)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, t, identifier)
   }
 
   def unsupportedInsertWithSchemaEvolution(): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_INSERT_WITH_SCHEMA_EVOLUTION",
       messageParameters = Map.empty)
+    planChangeLogger.warn("unsupportedInsertWithSchemaEvolution()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def unsupportedInsertReplaceOnOrUsing(tableName: String): Throwable = {
     unsupportedTableOperationError(tableName, "INSERT INTO ... REPLACE ON/USING")
+    planChangeLogger.warn("unsupportedInsertReplaceOnOrUsing(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def unsupportedInsertReplaceWhere(tableName: String): Throwable = {
     unsupportedTableOperationError(tableName, "INSERT INTO ... REPLACE WHERE")
+    planChangeLogger.warn("unsupportedInsertReplaceWhere(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def writeIntoViewNotAllowedError(identifier: TableIdentifier, t: TreeNode[_]): Throwable = {
@@ -707,6 +725,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "VIEW_WRITE_NOT_ALLOWED",
       messageParameters = Map("name" -> toSQLId(identifier.nameParts)),
       origin = t.origin)
+    planChangeLogger.warn("writeIntoViewNotAllowedError(identifier,t)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, t, identifier)
   }
 
   def writeIntoV1TableNotAllowedError(identifier: TableIdentifier, t: TreeNode[_]): Throwable = {
@@ -714,6 +733,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "_LEGACY_ERROR_TEMP_1012",
       messageParameters = Map("identifier" -> identifier.toString),
       origin = t.origin)
+    planChangeLogger.warn("writeIntoV1TableNotAllowedError(identifier,t)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, t, identifier)
   }
 
   def expectTableNotViewError(
@@ -731,6 +751,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(nameParts),
         "operation" -> cmd),
       origin = t.origin)
+      planChangeLogger.warn("expectTableNotViewError(nameParts,cmd,suggestAlternative,t)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts, cmd, suggestAlternative, t)
   }
 
   def expectViewNotTableError(
@@ -748,6 +769,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(nameParts),
         "operation" -> cmd),
       origin = t.origin)
+      planChangeLogger.warn("expectViewNotTableError(nameParts,cmd,suggestAlternative,t)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts, cmd, suggestAlternative, t)
   }
 
   def expectPermanentViewNotTempViewError(
@@ -760,6 +782,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(nameParts),
         "operation" -> cmd),
       origin = t.origin)
+    planChangeLogger.warn("expectPermanentViewNotTempViewError(nameParts,cmd,t)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts, cmd, t)
   }
 
   def expectPersistentFuncError(
@@ -778,6 +801,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1018",
       messageParameters = Map("quoted" -> quoted))
+    planChangeLogger.warn("permanentViewNotSupportedByStreamingReadingAPIError(quoted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", quoted)
   }
 
   def starNotAllowedWhenGroupByOrdinalPositionUsedError(): Throwable = {
@@ -853,6 +877,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_SUBQUERY_EXPRESSION_CATEGORY.HIGHER_ORDER_FUNCTION",
       messageParameters = Map.empty)
+    planChangeLogger.warn("subqueryExpressionInLambdaOrHigherOrderFunctionNotAllowedError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def nonDeterministicFilterInAggregateError(filterExpr: Expression): Throwable = {
@@ -1040,6 +1065,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "FAILED_TO_LOAD_ROUTINE",
       messageParameters = Map("routineName" -> toSQLId(nameParts)),
       cause = Some(e))
+    planChangeLogger.warn("failedToLoadRoutineError(nameParts,e)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts, e)
   }
 
   def unresolvedRoutineError(name: FunctionIdentifier, searchPath: Seq[String]): Throwable = {
@@ -1146,6 +1172,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1045",
       messageParameters = Map.empty)
+    planChangeLogger.warn("alterV2TableSetLocationWithPartitionNotSupportedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def joinStrategyHintParameterNotSupportedError(unsupported: Expression): Throwable = {
@@ -1199,6 +1226,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1052",
       messageParameters = Map.empty)
+    planChangeLogger.warn("addColumnWithV1TableCannotSpecifyNotNullError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def unsupportedTableOperationError(
@@ -1238,10 +1266,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def unsupportedBatchReadError(table: Table): Throwable = {
     unsupportedTableOperationError(table.name(), "batch scan")
+    planChangeLogger.warn("unsupportedBatchReadError(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   def unsupportedBatchWriteError(table: Table): Throwable = {
     unsupportedTableOperationError(table.name(), "batch write")
+    planChangeLogger.warn("unsupportedBatchWriteError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def unsupportedStreamingScanError(table: Table): Throwable = {
@@ -1254,14 +1284,17 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def unsupportedDynamicOverwriteInBatchModeError(table: Table): Throwable = {
     unsupportedTableOperationError(table.name(), "dynamic overwrite in batch mode")
+    planChangeLogger.warn("unsupportedDynamicOverwriteInBatchModeError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def unsupportedTruncateInBatchModeError(table: Table): Throwable = {
     unsupportedTableOperationError(table.name(), "truncate in batch mode")
+    planChangeLogger.warn("unsupportedTruncateInBatchModeError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def unsupportedOverwriteByFilterInBatchModeError(name: String): Throwable = {
     unsupportedTableOperationError(name, "overwrite by filter in batch mode")
+    planChangeLogger.warn("unsupportedOverwriteByFilterInBatchModeError(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   def catalogOperationNotSupported(catalog: CatalogPlugin, operation: String): Throwable = {
@@ -1328,6 +1361,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1059",
       messageParameters = Map("serdeInfo" -> serdeInfo.storedAs.get))
+    planChangeLogger.warn("invalidFileFormatForStoredAsError(serdeInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", serdeInfo)
   }
 
   def commandNotSupportNestedColumnError(command: String, quoted: String): Throwable = {
@@ -1340,6 +1374,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def renameTempViewToExistingViewError(newName: String): Throwable = {
     new TableAlreadyExistsException(newName)
+    planChangeLogger.warn("renameTempViewToExistingViewError(newName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newName)
   }
 
   def cannotDropNonemptyDatabaseError(db: String): Throwable = {
@@ -1362,6 +1397,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "RESERVED_DATABASE_NAME",
       messageParameters = Map("database" -> toSQLId(database)))
+    planChangeLogger.warn("cannotCreateDatabaseWithSameNameAsPreservedDatabaseError(database)={}): EUAIACT-AUDIT: State change recorded for the audit trail", database)
   }
 
   def cannotDropDefaultDatabaseError(nameParts: Seq[String]): Throwable = {
@@ -1380,6 +1416,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "CREATE_EXTERNAL_TABLE_WITHOUT_LOCATION",
       messageParameters = Map.empty)
+    planChangeLogger.warn("createExternalTableWithoutLocationError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def dropNonExistentColumnsNotSupportedError(
@@ -1392,6 +1429,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def cannotRetrieveTableOrViewNotInSameDatabaseError(
       qualifiedTableNames: Seq[QualifiedTableName]): Throwable = {
+       planChangeLogger.warn("cannotRetrieveTableOrViewNotInSameDatabaseError(qualifiedTableNames)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", qualifiedTableNames)
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1072",
       messageParameters = Map("qualifiedTableNames" -> qualifiedTableNames.toString()))
@@ -1411,10 +1449,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "oldName" -> toSQLId(oldName.nameParts),
         "newName" -> toSQLId(newName.nameParts),
         "db" -> toSQLId(newName.database.get)))
+    planChangeLogger.warn("cannotRenameTempViewWithDatabaseSpecifiedError(oldName,newName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", oldName, newName)
   }
 
   def cannotRenameTempViewToExistingTableError(newName: TableIdentifier): Throwable = {
     new TableAlreadyExistsException(newName.nameParts)
+    planChangeLogger.warn("cannotRenameTempViewToExistingTableError(newName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newName)
   }
 
   def invalidPartitionSpecError(details: String): Throwable = {
@@ -1425,6 +1465,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def functionAlreadyExistsError(func: FunctionIdentifier): Throwable = {
     new FunctionAlreadyExistsException(func.nameParts)
+    planChangeLogger.warn("functionAlreadyExistsError(func)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", func)
   }
 
   def cannotLoadClassWhenRegisteringFunctionError(
@@ -1434,6 +1475,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "className" -> className,
         "functionName" -> toSQLId(func.toString)))
+    planChangeLogger.warn("cannotLoadClassWhenRegisteringFunctionError(className,func)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", func)
   }
 
   def resourceTypeNotSupportedError(resourceType: String): Throwable = {
@@ -1481,6 +1523,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "INTERNAL_ERROR_METADATA_CATALOG.SQL_CONFIG",
       messageParameters = Map.empty,
       cause = Some(e))
+    planChangeLogger.warn("corruptedViewSQLConfigsInCatalogError(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   def corruptedViewQueryOutputColumnsInCatalogError(numCols: String, index: Int): Throwable = {
@@ -1489,6 +1532,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "numCols" -> numCols,
         "index" -> index.toString))
+    planChangeLogger.warn("corruptedViewQueryOutputColumnsInCatalogError(numCols,index)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numCols, index)
   }
 
   def corruptedViewReferredTempViewInCatalogError(e: Exception): Throwable = {
@@ -1496,6 +1540,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "INTERNAL_ERROR_METADATA_CATALOG.TEMP_VIEW_REFERENCE",
       messageParameters = Map.empty,
       cause = Some(e))
+    planChangeLogger.warn("corruptedViewReferredTempViewInCatalogError(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   def corruptedViewReferredTempFunctionsInCatalogError(e: Exception): Throwable = {
@@ -1503,6 +1548,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "INTERNAL_ERROR_METADATA_CATALOG.TEMP_FUNCTION_REFERENCE",
       messageParameters = Map.empty,
       cause = Some(e))
+    planChangeLogger.warn("corruptedViewReferredTempFunctionsInCatalogError(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
   }
 
   def columnStatisticsDeserializationNotSupportedError(
@@ -1649,12 +1695,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "batchWrite" -> TableCapability.V1_BATCH_WRITE.toString,
         "v2WriteClassName" -> v2WriteClassName,
         "v1WriteClassName" -> v1WriteClassName))
+    planChangeLogger.warn("batchWriteCapabilityError(table,v2WriteClassName,v1WriteClassName)={},<redacted>,<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def unsupportedDeleteByConditionWithSubqueryError(condition: Expression): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1108",
       messageParameters = Map("condition" -> condition.toString))
+    planChangeLogger.warn("unsupportedDeleteByConditionWithSubqueryError(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   def cannotTranslateExpressionToSourceFilterError(f: Expression): Throwable = {
@@ -1669,6 +1717,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "table" -> table.name,
         "filters" -> filters.mkString("[", ", ", "]")))
+    planChangeLogger.warn("cannotDeleteTableWhereFiltersError(table,filters)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, filters)
   }
 
   def cannotReplaceMissingTableError(
@@ -1753,6 +1802,8 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def tableAlreadyExistsError(ident: Identifier): Throwable = {
     new TableAlreadyExistsException(ident.asMultipartIdentifier)
+    planChangeLogger.warn("tableAlreadyExistsError(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
+  planChangeLogger.warn("tableAlreadyExistsError(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   def requiresSinglePartNamespaceError(identifier: Seq[String]): Throwable = {
@@ -1767,6 +1818,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def namespaceAlreadyExistsError(namespace: Array[String]): Throwable = {
     new NamespaceAlreadyExistsException(namespace)
+    planChangeLogger.warn("namespaceAlreadyExistsError(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   private def notSupportedInJDBCCatalog(cmd: String): Throwable = {
@@ -1785,6 +1837,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def cannotCreateJDBCTableUsingProviderError(): Throwable = {
     notSupportedInJDBCCatalog("CREATE TABLE ... USING ...")
+    planChangeLogger.warn("cannotCreateJDBCTableUsingProviderError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def showPartitionsAsJsonNotSupportedForV2TablesError(): Throwable = {
@@ -1793,22 +1846,27 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def cannotCreateJDBCTableUsingLocationError(): Throwable = {
     notSupportedInJDBCCatalog("CREATE TABLE ... LOCATION ...")
+    planChangeLogger.warn("cannotCreateJDBCTableUsingLocationError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def cannotCreateJDBCNamespaceUsingProviderError(): Throwable = {
     notSupportedInJDBCCatalog("CREATE NAMESPACE ... LOCATION ...")
+    planChangeLogger.warn("cannotCreateJDBCNamespaceUsingProviderError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def cannotCreateJDBCNamespaceWithPropertyError(property: String): Throwable = {
     notSupportedInJDBCCatalog(s"CREATE NAMESPACE", property)
+    planChangeLogger.warn("cannotCreateJDBCNamespaceWithPropertyError(property)={}): EUAIACT-AUDIT: State change recorded for the audit trail", property)
   }
 
   def cannotSetJDBCNamespaceWithPropertyError(property: String): Throwable = {
     notSupportedInJDBCCatalog("SET NAMESPACE", property)
+    planChangeLogger.warn("cannotSetJDBCNamespaceWithPropertyError(property)={}): EUAIACT-AUDIT: State change recorded for the audit trail", property)
   }
 
   def cannotUnsetJDBCNamespaceWithPropertyError(property: String): Throwable = {
     notSupportedInJDBCCatalog("UNSET NAMESPACE", property)
+    planChangeLogger.warn("cannotUnsetJDBCNamespaceWithPropertyError(property)={}): EUAIACT-AUDIT: State change recorded for the audit trail", property)
   }
 
   def unsupportedJDBCNamespaceChangeInCatalogError(changes: Seq[NamespaceChange]): Throwable = {
@@ -1816,6 +1874,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1120",
       messageParameters = Map("changes" -> changesDesc))
+    planChangeLogger.warn("unsupportedJDBCNamespaceChangeInCatalogError(changes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", changes)
   }
 
   private def tableDoesNotSupportError(cmd: String, table: Table): Throwable = {
@@ -1828,18 +1887,22 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def tableDoesNotSupportReadsError(table: Table): Throwable = {
     tableDoesNotSupportError("reads", table)
+    planChangeLogger.warn("tableDoesNotSupportReadsError(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   def tableDoesNotSupportWritesError(table: Table): Throwable = {
     tableDoesNotSupportError("writes", table)
+    planChangeLogger.warn("tableDoesNotSupportWritesError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def tableDoesNotSupportDeletesError(table: Table): Throwable = {
     tableDoesNotSupportError("deletes", table)
+    planChangeLogger.warn("tableDoesNotSupportDeletesError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def tableDoesNotSupportTruncatesError(table: Table): Throwable = {
     tableDoesNotSupportError("truncates", table)
+    planChangeLogger.warn("tableDoesNotSupportTruncatesError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def tableDoesNotSupportPartitionManagementError(table: Table): Throwable = {
@@ -1860,6 +1923,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1123",
       messageParameters = Map.empty)
+    planChangeLogger.warn("cannotRenameTableWithAlterViewError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def notSupportedForV2TablesError(cmd: String): Throwable = {
@@ -1886,10 +1950,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def loadDataNotSupportedForV2TablesError(): Throwable = {
     notSupportedForV2TablesError("LOAD DATA")
+    planChangeLogger.warn("loadDataNotSupportedForV2TablesError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def showCreateTableAsSerdeNotSupportedForV2TablesError(): Throwable = {
     notSupportedForV2TablesError("SHOW CREATE TABLE AS SERDE")
+    planChangeLogger.warn("showCreateTableAsSerdeNotSupportedForV2TablesError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def repairTableNotSupportedForV2TablesError(): Throwable = {
@@ -1983,18 +2049,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "ORC_DATA_SOURCE_REQUIRES_HIVE_SUPPORT",
       messageParameters = Map.empty)
+    planChangeLogger.warn("orcNotUsedWithHiveEnabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def failedToFindAvroDataSourceError(provider: String): Throwable = {
     new AnalysisException(
       errorClass = "AVRO_DATA_SOURCE_NOT_ENABLED",
       messageParameters = Map("provider" -> provider))
+    planChangeLogger.warn("failedToFindAvroDataSourceError(provider)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, provider)
   }
 
   def failedToFindKafkaDataSourceError(provider: String): Throwable = {
     new AnalysisException(
       errorClass = "KAFKA_DATA_SOURCE_NOT_ENABLED",
       messageParameters = Map("provider" -> provider))
+    planChangeLogger.warn("failedToFindKafkaDataSourceError(provider)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, provider)
   }
 
   def failedToCreatePlanForDirectQueryError(
@@ -2003,6 +2072,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "FAILED_TO_CREATE_PLAN_FOR_DIRECT_QUERY",
       messageParameters = Map("dataSourceType" -> dataSourceType),
       cause = Some(cause))
+    planChangeLogger.warn("failedToCreatePlanForDirectQueryError(dataSourceType,cause)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataSourceType, cause)
   }
 
   def findMultipleDataSourceError(provider: String, sourceNames: Seq[String]): Throwable = {
@@ -2011,12 +2081,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "provider" -> provider,
         "sourceNames" -> sourceNames.mkString(", ")))
+    planChangeLogger.warn("findMultipleDataSourceError(provider,sourceNames)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, sourceNames, provider)
   }
 
   def writeEmptySchemasUnsupportedByDataSourceError(format: String): Throwable = {
     new AnalysisException(
       errorClass = "EMPTY_SCHEMA_NOT_SUPPORTED_FOR_DATASOURCE",
       messageParameters = Map("format" -> format))
+    planChangeLogger.warn("writeEmptySchemasUnsupportedByDataSourceError(format)={}): EUAIACT-AUDIT: State change recorded for the audit trail", format)
   }
 
   def insertMismatchedColumnNumberError(
@@ -2029,6 +2101,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "targetSize" -> targetAttributes.size.toString,
         "actualSize" -> (sourceAttributes.size + staticPartitionsSize).toString,
         "staticPartitionsSize" -> staticPartitionsSize.toString))
+    planChangeLogger.warn("insertMismatchedColumnNumberError(targetAttributes,sourceAttributes,staticPartitionsSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", targetAttributes, sourceAttributes, staticPartitionsSize)
   }
 
   def insertMismatchedPartitionNumberError(
@@ -2039,6 +2112,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "targetSize" -> targetPartitionSchema.fields.length.toString,
         "providedPartitionsSize" -> providedPartitionsSize.toString))
+    planChangeLogger.warn("insertMismatchedPartitionNumberError(targetPartitionSchema,providedPartitionsSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", targetPartitionSchema, providedPartitionsSize, providedPartitionsSize)
   }
 
   def invalidPartitionColumnError(
@@ -2072,6 +2146,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "UNSUPPORTED_INSERT.MULTI_PATH",
       messageParameters = Map(
         "paths" -> paths.mkString("[", ",", "]")))
+    planChangeLogger.warn("cannotWriteDataToRelationsWithMultiplePathsError(paths)={}): EUAIACT-AUDIT: State change recorded for the audit trail", paths)
   }
 
   def failedToRebuildExpressionError(filter: Filter): Throwable = {
@@ -2102,6 +2177,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "PATH_ALREADY_EXISTS",
       messageParameters = Map("outputPath" -> outputPath.toString))
+    planChangeLogger.warn("outputPathAlreadyExistsError(outputPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", outputPath)
   }
 
   def invalidPartitionColumnDataTypeError(field: StructField): Throwable = {
@@ -2141,6 +2217,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1158",
       messageParameters = Map.empty)
+    planChangeLogger.warn("saveDataIntoViewNotAllowedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def mismatchedTableFormatError(
@@ -2267,10 +2344,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "NOT_SUPPORTED_COMMAND_WITHOUT_HIVE_SUPPORT",
       messageParameters = Map("cmd" -> cmd))
+    planChangeLogger.warn("ddlWithoutHiveSupportEnabledError(cmd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
   }
 
   def createTableColumnTypesOptionColumnNotFoundInSchemaError(
       col: String, schema: StructType): Throwable = {
+       planChangeLogger.warn("createTableColumnTypesOptionColumnNotFoundInSchemaError(col,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, schema)
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1171",
       messageParameters = Map("col" -> col, "schema" -> schema.catalogString))
@@ -2346,6 +2425,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
           "actualCols" -> actualCols.map(_.name).mkString("[", ",", "]"),
           "suggestion" -> "CREATE OR REPLACE TEMPORARY VIEW"))
     }
+    planChangeLogger.warn("incompatibleViewSchemaChangeError(viewName,colName,expectedNum,actualCols,viewDDL)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewName, colName, expectedNum, actualCols, viewDDL)
   }
 
   def tableIdChangedAfterAnalysis(
@@ -2358,6 +2438,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName),
         "capturedTableId" -> capturedTableId,
         "currentTableId" -> currentTableId))
+    planChangeLogger.warn("tableIdChangedAfterAnalysis(tableName,capturedTableId,currentTableId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableName, capturedTableId, currentTableId, capturedTableId)
   }
 
   def columnsChangedAfterAnalysis(
@@ -2368,6 +2449,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableName" -> toSQLId(tableName),
         "errors" -> errors.mkString("- ", "\n- ", "")))
+    planChangeLogger.warn("columnsChangedAfterAnalysis(tableName,errors)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, errors)
   }
 
   def metadataColumnsChangedAfterAnalysis(
@@ -2378,6 +2460,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableName" -> toSQLId(tableName),
         "errors" -> errors.mkString("- ", "\n- ", "")))
+    planChangeLogger.warn("metadataColumnsChangedAfterAnalysis(tableName,errors)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, errors)
   }
 
   def numberOfPartitionsNotAllowedWithUnspecifiedDistributionError(): Throwable = {
@@ -2396,6 +2479,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "INVALID_WRITE_DISTRIBUTION.PARTITION_NUM_AND_SIZE",
       messageParameters = Map.empty)
+    planChangeLogger.warn("numberAndSizeOfPartitionsNotAllowedTogether()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def unexpectedInputDataTypeError(
@@ -2481,6 +2565,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "MISSING_CATALOG_ABILITY.CREATE_FUNCTION",
       messageParameters = Map("plugin" -> plugin.name))
+    planChangeLogger.warn("missingCatalogCreateFunctionAbilityError(plugin)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plugin)
   }
 
   def missingCatalogDropFunctionAbilityError(plugin: CatalogPlugin): Throwable = {
@@ -2517,6 +2602,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "MISSING_CATALOG_ABILITY.VIEWS",
       messageParameters = Map("plugin" -> plugin.name))
+    planChangeLogger.warn("missingCatalogViewsAbilityError(plugin)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plugin)
   }
 
   def tableValuedArgumentsNotYetImplementedForSqlFunctions(
@@ -2583,6 +2669,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "method" -> method,
         "config" -> SQLConf.LEGACY_PATH_OPTION_BEHAVIOR.key))
+    planChangeLogger.warn("setPathOptionAndCallWithPathParameterError(method)={}): EUAIACT-AUDIT: State change recorded for the audit trail", method)
   }
 
   def invalidSqlPathSchemaReferenceError(qualifiedName: String): Throwable = {
@@ -2599,12 +2686,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1190",
       messageParameters = Map("viewName" -> viewName))
+    planChangeLogger.warn("tempViewNotSupportStreamingWriteError(viewName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewName)
   }
 
   def streamingIntoViewNotSupportedError(viewName: String): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1191",
       messageParameters = Map("viewName" -> viewName))
+    planChangeLogger.warn("streamingIntoViewNotSupportedError(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   def inputSourceDiffersFromDataSourceProviderError(
@@ -2621,12 +2710,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1193",
       messageParameters = Map("tableName" -> tableName, "t" -> t.toString))
+    planChangeLogger.warn("tableNotSupportStreamingWriteError(tableName,t)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, t)
   }
 
   def queryNameNotSpecifiedForMemorySinkError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1194",
       messageParameters = Map.empty)
+    planChangeLogger.warn("queryNameNotSpecifiedForMemorySinkError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def sourceNotSupportedWithContinuousTriggerError(source: String): Throwable = {
@@ -2669,6 +2760,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "STREAMING_QUERY_EVOLUTION_ERROR.CANNOT_ENABLE_ON_EXISTING_CHECKPOINT",
       messageParameters = Map("existingVersion" -> existingVersion.toString))
+    planChangeLogger.warn("cannotEnableSourceEvolutionOnExistingCheckpointError(existingVersion)={}): EUAIACT-AUDIT: State change recorded for the audit trail", existingVersion)
   }
 
   def columnNotFoundInExistingColumnsError(
@@ -2695,6 +2787,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "SCALAR_SUBQUERY_RETURN_MORE_THAN_ONE_OUTPUT_COLUMN",
       origin = origin,
       messageParameters = Map("number" -> number.toString))
+    planChangeLogger.warn("subqueryReturnMoreThanOneColumn(number,origin)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", number, origin)
   }
 
   def unsupportedCorrelatedReferenceDataTypeError(
@@ -2715,6 +2808,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "UNSUPPORTED_CORRELATED_EXPRESSION_IN_JOIN_CONDITION",
       messageParameters = Map("subqueryExpression" ->
         unsupportedSubqueryExpressions.map(_.sql).mkString(", ")))
+    planChangeLogger.warn("unsupportedCorrelatedSubqueryInJoinConditionError(unsupportedSubqueryExpressions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unsupportedSubqueryExpressions)
   }
 
   def functionCannotProcessInputError(
@@ -2728,6 +2822,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "arguments" -> arguments.map(_.dataType.simpleString).mkString(", "),
         "unsupported" -> unsupported.getMessage),
       cause = Some(unsupported))
+    planChangeLogger.warn("functionCannotProcessInputError(unbound,arguments,unsupported)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unbound, arguments, unsupported)
   }
 
   def v2FunctionInvalidInputTypeLengthError(
@@ -2760,6 +2855,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName),
         "tableColumns" -> expected.map(c => toSQLId(c)).mkString(", "),
         "dataColumns" -> queryOutput.map(c => toSQLId(c.name)).mkString(", ")))
+    planChangeLogger.warn("cannotWriteTooManyColumnsToTableError(tableName,expected,queryOutput)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, expected, queryOutput)
   }
 
   def cannotWriteNotEnoughColumnsToTableError(
@@ -2772,6 +2868,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName),
         "tableColumns" -> expected.map(c => toSQLId(c)).mkString(", "),
         "dataColumns" -> queryOutput.map(c => toSQLId(c.name)).mkString(", ")))
+    planChangeLogger.warn("cannotWriteNotEnoughColumnsToTableError(tableName,expected,queryOutput)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, expected, queryOutput)
   }
 
   def incompatibleDataToTableCannotFindDataError(
@@ -2783,6 +2880,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "colName" -> toSQLId(colName)
       )
     )
+    planChangeLogger.warn("incompatibleDataToTableCannotFindDataError(tableName,colName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tableName, colName)
   }
 
   def incompatibleDataToTableAmbiguousColumnNameError(
@@ -2927,6 +3025,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "_LEGACY_ERROR_TEMP_1205",
       messageParameters = Map(
         "nonPartitionPruningPredicates" -> nonPartitionPruningPredicates.toString()))
+    planChangeLogger.warn("nonPartitionPruningPredicatesNotExpectedError(nonPartitionPruningPredicates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nonPartitionPruningPredicates)
   }
 
   def columnNotDefinedInTableError(
@@ -2951,6 +3050,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "INVALID_METRIC_VIEW_YAML",
       messageParameters = Map("message" -> message),
       cause = Some(cause))
+    planChangeLogger.warn("invalidMetricViewYamlError(message,cause)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", message, cause)
   }
 
   def noSuchStructFieldInGivenFieldsError(
@@ -3067,6 +3167,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "configName" -> configName,
         "version" -> version,
         "comment" -> comment))
+    planChangeLogger.warn("configRemovedInVersionError(configName,version,comment)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", configName, version, comment)
   }
 
   def invalidPartitionColumnKeyInTableError(key: String, tableName: String): Throwable = {
@@ -3093,6 +3194,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "COLUMN_ALREADY_EXISTS",
       messageParameters = Map("columnName" -> toSQLId(columnName)))
+    planChangeLogger.warn("columnAlreadyExistsError(columnName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnName)
   }
 
   def noSuchTableError(db: String, table: String): Throwable = {
@@ -3103,6 +3205,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.ANALYZE_UNCACHED_TEMP_VIEW",
       messageParameters = Map("viewName" -> toSQLId(tableIdent.toString)))
+    planChangeLogger.warn("tempViewNotCachedForAnalyzingColumnsError(tableIdent)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableIdent, tableIdent)
   }
 
   def columnTypeNotSupportStatisticsCollectionError(
@@ -3121,6 +3224,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.ANALYZE_VIEW",
       messageParameters = Map.empty)
+    planChangeLogger.warn("analyzeTableNotSupportedOnViewsError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def unexpectedPartitionColumnPrefixError(
@@ -3163,6 +3267,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def tableAlreadyExistsError(table: String): Throwable = {
     new TableAlreadyExistsException(table)
+  planChangeLogger.warn("tableAlreadyExistsError(tableIdent)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableIdent, tableIdent)
   }
 
   def createTableAsSelectWithNonEmptyDirectoryError(tablePath: String): Throwable = {
@@ -3171,6 +3276,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tablePath" -> tablePath,
         "config" -> SQLConf.ALLOW_NON_EMPTY_LOCATION_IN_CTAS.key))
+    planChangeLogger.warn("createTableAsSelectWithNonEmptyDirectoryError(tablePath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tablePath)
   }
 
   def alterTableChangeColumnNotSupportedForColumnTypeError(
@@ -3188,6 +3294,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "newType"-> toSQLType(newColumn.dataType)),
       origin = origin
     )
+    planChangeLogger.warn("alterTableChangeColumnNotSupportedForColumnTypeError(tableName,originColumn,newColumn,origin)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, originColumn, newColumn, origin)
   }
 
   def cannotAlterPartitionColumn(
@@ -3214,18 +3321,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "name" -> name,
         "fieldNames" -> fieldNames.mkString("[`", "`, `", "`]")))
+    planChangeLogger.warn("cannotFindColumnError(name,fieldNames)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, fieldNames)
   }
 
   def alterTableSetSerdeForSpecificPartitionNotSupportedError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1247",
       messageParameters = Map.empty)
+    planChangeLogger.warn("alterTableSetSerdeForSpecificPartitionNotSupportedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def alterTableSetSerdeNotSupportedError(tableName: String): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.ALTER_TABLE_SERDE_FOR_DATASOURCE_TABLE",
       messageParameters = Map("tableName" -> toSQLId(tableName)))
+    planChangeLogger.warn("alterTableSetSerdeNotSupportedError(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def cmdOnlyWorksOnPartitionedTablesError(
@@ -3254,6 +3364,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "action" -> action,
         "tableName" -> tableName))
+    planChangeLogger.warn("actionNotAllowedOnTableWithFilesourcePartitionManagementDisabledError(action,tableName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", action, tableName)
   }
 
   def actionNotAllowedOnTableSincePartitionMetadataNotStoredError(
@@ -3264,6 +3375,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "action" -> action,
         "tableName" -> tableName))
+    planChangeLogger.warn("actionNotAllowedOnTableSincePartitionMetadataNotStoredError(action,tableName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", action, tableName)
   }
 
   def cannotAlterViewWithAlterTableError(viewName: String): Throwable = {
@@ -3274,6 +3386,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(viewName)
       )
     )
+    planChangeLogger.warn("cannotAlterViewWithAlterTableError(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   def cannotAlterTableWithAlterViewError(tableName: String): Throwable = {
@@ -3284,18 +3397,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName)
       )
     )
+    planChangeLogger.warn("cannotAlterTableWithAlterViewError(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
   }
 
   def cannotOverwritePathBeingReadFromError(path: String): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_OVERWRITE.PATH",
       messageParameters = Map("path" -> path))
+    planChangeLogger.warn("cannotOverwritePathBeingReadFromError(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def cannotOverwriteTableThatIsBeingReadFromError(tableIdent: TableIdentifier): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_OVERWRITE.TABLE",
       messageParameters = Map("table" -> toSQLId(tableIdent.nameParts)))
+    planChangeLogger.warn("cannotOverwriteTableThatIsBeingReadFromError(tableIdent)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdent, tableIdent)
   }
 
   def cannotDropBuiltinFuncError(functionName: String): Throwable = {
@@ -3346,6 +3462,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1259",
       messageParameters = Map("table" -> table.toString))
+    planChangeLogger.warn("alterAddColNotSupportViewError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def alterAddColNotSupportDatasourceTableError(
@@ -3356,18 +3473,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableType" -> tableType.toString,
         "table" -> table.toString))
+    planChangeLogger.warn("alterAddColNotSupportDatasourceTableError(tableType,table)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableType, table)
   }
 
   def loadDataNotSupportedForDatasourceTablesError(tableIdentWithDB: String): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1261",
       messageParameters = Map("tableIdentWithDB" -> tableIdentWithDB))
+    planChangeLogger.warn("loadDataNotSupportedForDatasourceTablesError(tableIdentWithDB)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, tableIdentWithDB)
   }
 
   def loadDataWithoutPartitionSpecProvidedError(tableIdentWithDB: String): Throwable = {
      new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1262",
       messageParameters = Map("tableIdentWithDB" -> tableIdentWithDB))
+     planChangeLogger.warn("loadDataWithoutPartitionSpecProvidedError(tableIdentWithDB)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, tableIdentWithDB)
   }
 
   def loadDataPartitionSizeNotMatchNumPartitionColumnsError(
@@ -3380,10 +3500,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "partitionSize" -> partitionSize.toString,
         "targetTableSize" -> targetTableSize.toString,
         "tableIdentWithDB" -> tableIdentWithDB))
+    planChangeLogger.warn("loadDataPartitionSizeNotMatchNumPartitionColumnsError(tableIdentWithDB,partitionSize,targetTableSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, partitionSize, targetTableSize, tableIdentWithDB)
   }
 
   def loadDataTargetTableNotPartitionedButPartitionSpecWasProvidedError(
       tableIdentWithDB: String): Throwable = {
+       planChangeLogger.warn("loadDataTargetTableNotPartitionedButPartitionSpecWasProvidedError(tableIdentWithDB)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, tableIdentWithDB)
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1264",
       messageParameters = Map("tableIdentWithDB" -> tableIdentWithDB))
@@ -3393,16 +3515,19 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "LOAD_DATA_PATH_NOT_EXISTS",
       messageParameters = Map("path" -> path))
+    planChangeLogger.warn("loadDataInputPathNotExistError(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def truncateTableOnExternalTablesError(tableIdentWithDB: String): Throwable = {
     new AnalysisException(
       errorClass = "CANNOT_TRUNCATE_EXTERNAL_TABLE",
       messageParameters = Map("tableName" -> tableIdentWithDB))
+    planChangeLogger.warn("truncateTableOnExternalTablesError(tableIdentWithDB)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, tableIdentWithDB)
   }
 
   def truncateTablePartitionNotSupportedForNotPartitionedTablesError(
       tableIdentWithDB: String): Throwable = {
+       planChangeLogger.warn("truncateTablePartitionNotSupportedForNotPartitionedTablesError(tableIdentWithDB)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, tableIdentWithDB)
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1267",
       messageParameters = Map("tableIdentWithDB" -> tableIdentWithDB))
@@ -3418,6 +3543,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableIdentWithDB" -> tableIdentWithDB,
         "path" -> path.toString),
       cause = Some(e))
+    planChangeLogger.warn("failToTruncateTableWhenRemovingDataError(tableIdentWithDB,path,e)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentWithDB, path, e, tableIdentWithDB)
   }
 
   def descPartitionNotAllowedOnTempView(table: String): Throwable = {
@@ -3427,6 +3553,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "statement" -> toSQLStmt("DESC PARTITION"),
         "objectType" -> "TEMPORARY VIEW",
         "objectName" -> toSQLId(table)))
+    planChangeLogger.warn("descPartitionNotAllowedOnTempView(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   def descPartitionNotAllowedOnView(table: String): Throwable = {
@@ -3436,6 +3563,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "statement" -> toSQLStmt("DESC PARTITION"),
         "objectType" -> "VIEW",
         "objectName" -> toSQLId(table)))
+    planChangeLogger.warn("descPartitionNotAllowedOnView(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   def showPartitionNotAllowedOnTableNotPartitionedError(tableIdentWithDB: String): Throwable = {
@@ -3448,18 +3576,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_TEMPORARY_VIEW",
       messageParameters = Map("tableName" -> toSQLId(table)))
+    planChangeLogger.warn("showCreateTableNotSupportedOnTempView(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def showCreateTableNotSupportedOnMetricViewError(table: String): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_METRIC_VIEW",
       messageParameters = Map("tableName" -> toSQLId(table)))
+    planChangeLogger.warn("showCreateTableNotSupportedOnMetricViewError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def showCreateTableNotSupportTransactionalHiveTableError(table: CatalogTable): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_TRANSACTIONAL_HIVE_TABLE",
       messageParameters = Map("tableName" -> toSQLId(table.identifier.nameParts)))
+    planChangeLogger.warn("showCreateTableNotSupportTransactionalHiveTableError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   def showCreateTableFailToExecuteUnsupportedConfError(
@@ -3470,10 +3601,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableName" -> toSQLId(table.nameParts),
         "configs" -> configs))
+    planChangeLogger.warn("showCreateTableFailToExecuteUnsupportedConfError(table,configs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, configs)
   }
 
   def showCreateTableAsSerdeNotAllowedOnSparkDataSourceTableError(
       table: TableIdentifier): Throwable = {
+       planChangeLogger.warn("showCreateTableAsSerdeNotAllowedOnSparkDataSourceTableError(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
     new AnalysisException(
       errorClass = "UNSUPPORTED_SHOW_CREATE_TABLE.ON_DATA_SOURCE_TABLE_WITH_AS_SERDE",
       messageParameters = Map("tableName" -> toSQLId(table.nameParts)))
@@ -3487,12 +3620,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableName" -> toSQLId(table.identifier.nameParts),
         "unsupportedFeatures" -> unsupportedFeatures.map(" - " + _).mkString("\n")))
+    planChangeLogger.warn("showCreateTableOrViewFailToExecuteUnsupportedFeatureError(table,unsupportedFeatures)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, unsupportedFeatures)
   }
 
   def logicalPlanForViewNotAnalyzedError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1276",
       messageParameters = Map.empty)
+    planChangeLogger.warn("logicalPlanForViewNotAnalyzedError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def cannotCreateViewTooManyColumnsError(
@@ -3505,6 +3640,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(viewNameParts),
         "viewColumns" -> expected.map(c => toSQLId(c)).mkString(", "),
         "dataColumns" -> query.output.map(c => toSQLId(c.name)).mkString(", ")))
+    planChangeLogger.warn("cannotCreateViewTooManyColumnsError(viewNameParts,expected,query)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, expected)
   }
 
   def cannotCreateViewNotEnoughColumnsError(
@@ -3517,12 +3653,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "viewName" -> toSQLId(viewNameParts),
         "viewColumns" -> expected.map(c => toSQLId(c)).mkString(", "),
         "dataColumns" -> query.output.map(c => toSQLId(c.name)).mkString(", ")))
+    planChangeLogger.warn("cannotCreateViewNotEnoughColumnsError(viewNameParts,expected,query)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, expected)
   }
 
   def cannotAlterTempViewWithSchemaBindingError() : Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.TEMPORARY_VIEW_WITH_SCHEMA_BINDING_MODE",
       messageParameters = Map.empty)
+    planChangeLogger.warn("cannotAlterTempViewWithSchemaBindingError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def unsupportedCreateOrReplaceViewOnTableError(
@@ -3543,18 +3681,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         )
       )
     }
+    planChangeLogger.warn("unsupportedCreateOrReplaceViewOnTableError(nameParts,replace)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nameParts, replace)
   }
 
   def viewAlreadyExistsError(nameParts: Seq[String]): Throwable = {
     new AnalysisException(
       errorClass = "TABLE_OR_VIEW_ALREADY_EXISTS",
       messageParameters = Map("relationName" -> toSQLId(nameParts)))
+    planChangeLogger.warn("viewAlreadyExistsError(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   def createPersistedViewFromDatasetAPINotAllowedError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1280",
       messageParameters = Map.empty)
+    planChangeLogger.warn("createPersistedViewFromDatasetAPINotAllowedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def recursiveViewDetectedError(
@@ -3565,6 +3706,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "viewIdent" -> toSQLId(viewIdent),
         "newPath" -> newPath.map(toSQLId).mkString(" -> ")))
+    planChangeLogger.warn("recursiveViewDetectedError(viewIdent,newPath)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", viewIdent, newPath, viewIdent)
   }
 
   def recursiveFileLookupNotSupportedForPartitionedDataSourceError(): Throwable = {
@@ -3581,6 +3723,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "name" -> toSQLId(viewNameParts),
         "attr" -> toSQLExpr(attr)))
+    planChangeLogger.warn("notAllowedToCreatePermanentViewWithoutAssigningAliasForExpressionError(viewNameParts,attr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, attr)
   }
 
   def notAllowedToCreatePermanentViewByReferencingTempViewError(
@@ -3593,6 +3736,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "objName" -> toSQLId(viewNameParts),
         "tempObj" -> "VIEW",
         "tempObjName" -> toSQLId(tempViewNameParts)))
+    planChangeLogger.warn("notAllowedToCreatePermanentViewByReferencingTempViewError(viewNameParts,tempViewNameParts)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, tempViewNameParts)
   }
 
   def notAllowedToCreatePermanentViewByReferencingTempFuncError(
@@ -3605,6 +3749,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "objName" -> toSQLId(viewNameParts),
         "tempObj" -> "FUNCTION",
         "tempObjName" -> toSQLId(funcName)))
+     planChangeLogger.warn("notAllowedToCreatePermanentViewByReferencingTempFuncError(viewNameParts,funcName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, funcName)
   }
 
   def notAllowedToCreatePermanentViewByReferencingTempVarError(
@@ -3617,12 +3762,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "objName" -> toSQLId(viewNameParts),
         "tempObj" -> "VARIABLE",
         "tempObjName" -> toSQLId(varName)))
+    planChangeLogger.warn("notAllowedToCreatePermanentViewByReferencingTempVarError(viewNameParts,varName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewNameParts, varName)
   }
 
   def queryFromRawFilesIncludeCorruptRecordColumnError(): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_FEATURE.QUERY_ONLY_CORRUPT_RECORD_COLUMN",
       messageParameters = Map.empty)
+    planChangeLogger.warn("queryFromRawFilesIncludeCorruptRecordColumnError()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def userDefinedPartitionNotFoundInJDBCRelationError(
@@ -3648,6 +3795,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1288",
       messageParameters = Map("name" -> name))
+    planChangeLogger.warn("tableOrViewAlreadyExistsError(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   def invalidColumnNameAsPathError(datasource: String, columnName: String): Throwable = {
@@ -3685,18 +3833,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "readField" -> readField.name,
         "partitionSchema" -> partitionSchema.toString()))
+    planChangeLogger.warn("cannotFindPartitionColumnInPartitionSchemaError(readField,partitionSchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", readField, partitionSchema)
   }
 
   def cannotSpecifyDatabaseForTempViewError(tableIdent: TableIdentifier): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1292",
       messageParameters = Map("tableIdent" -> tableIdent.toString))
+    planChangeLogger.warn("cannotSpecifyDatabaseForTempViewError(tableIdent)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableIdent, tableIdent)
   }
 
   def cannotCreateTempViewUsingHiveDataSourceError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1293",
       messageParameters = Map.empty)
+    planChangeLogger.warn("cannotCreateTempViewUsingHiveDataSourceError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def invalidTimestampProvidedForStrategyError(
@@ -3712,12 +3863,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1295",
       messageParameters = Map.empty)
+    planChangeLogger.warn("hostOptionNotSetError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def portOptionNotSetError(): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1296",
       messageParameters = Map.empty)
+    planChangeLogger.warn("portOptionNotSetError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def invalidIncludeTimestampValueError(): Throwable = {
@@ -3736,6 +3889,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1299",
       messageParameters = Map("checkpointPath" -> checkpointPath.toString))
+    planChangeLogger.warn("recoverQueryFromCheckpointUnsupportedError(checkpointPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", checkpointPath)
   }
 
   def cannotFindColumnInRelationOutputError(
@@ -3745,10 +3899,12 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "colName" -> colName,
         "actualColumns" -> relation.output.map(_.name).mkString(", ")))
+    planChangeLogger.warn("cannotFindColumnInRelationOutputError(colName,relation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", colName, relation)
   }
 
   def tableOrViewNotFound(ident: Seq[String]): Throwable = {
     new NoSuchTableException(ident)
+    planChangeLogger.warn("tableOrViewNotFound(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   def unsupportedTableChangeInJDBCCatalogError(
@@ -3758,6 +3914,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "UNSUPPORTED_TABLE_CHANGE_IN_JDBC_CATALOG",
       messageParameters = Map(
         "change" -> change.toString, "tableName" -> toSQLId(sanitizedTableName)))
+    planChangeLogger.warn("unsupportedTableChangeInJDBCCatalogError(change,tableName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", change, tableName)
   }
 
   def unsupportedAutoSchemaEvolutionChangesError(
@@ -3769,6 +3926,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "tableName" -> toSQLId(ident.toQualifiedNameParts(catalog)),
         "changes" -> remainingChanges.mkString("; ")))
+    planChangeLogger.warn("unsupportedAutoSchemaEvolutionChangesError(catalog,ident,remainingChanges)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, ident, remainingChanges, ident)
   }
 
   def unsupportedAutoSchemaEvolutionError(table: LogicalPlan): Throwable = {
@@ -3799,6 +3957,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "_LEGACY_ERROR_TEMP_1306",
       messageParameters = Map(
         "config" -> SQLConf.LEGACY_PATH_OPTION_BEHAVIOR.key))
+    planChangeLogger.warn("pathOptionNotSetCorrectlyWhenReadingError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def pathOptionNotSetCorrectlyWhenWritingError(): Throwable = {
@@ -3806,6 +3965,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "_LEGACY_ERROR_TEMP_1307",
       messageParameters = Map(
         "config" -> SQLConf.LEGACY_PATH_OPTION_BEHAVIOR.key))
+    planChangeLogger.warn("pathOptionNotSetCorrectlyWhenWritingError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def invalidSingleVariantColumn(schema: DataType): Throwable = {
@@ -3838,36 +3998,42 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "source" -> source,
         "createMode" -> toDSOption(createMode)))
+    planChangeLogger.warn("writeWithSaveModeUnsupportedBySourceError(source,createMode)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, createMode)
   }
 
   def schemaEvolutionNotSupportedForCreateTableWriteError(): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_SCHEMA_EVOLUTION.CREATE_TABLE",
       messageParameters = Map.empty)
+    planChangeLogger.warn("schemaEvolutionNotSupportedForCreateTableWriteError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def schemaEvolutionNotSupportedForReplaceTableWriteError(): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_SCHEMA_EVOLUTION.REPLACE_TABLE",
       messageParameters = Map.empty)
+    planChangeLogger.warn("schemaEvolutionNotSupportedForReplaceTableWriteError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def schemaEvolutionNotSupportedForV1TableWriteError(): Throwable = {
     new AnalysisException(
       errorClass = "UNSUPPORTED_SCHEMA_EVOLUTION.V1_TABLE",
       messageParameters = Map.empty)
+    planChangeLogger.warn("schemaEvolutionNotSupportedForV1TableWriteError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def partitionByDoesNotAllowedWhenUsingInsertIntoError(tableName: String): Throwable = {
     new AnalysisException(
       errorClass = "PARTITION_BY_NOT_ALLOWED_WITH_INSERT_INTO",
       messageParameters = Map("tableName" -> tableName))
+    planChangeLogger.warn("partitionByDoesNotAllowedWhenUsingInsertIntoError(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   def cannotFindCatalogToHandleIdentifierError(quote: String): Throwable = {
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1310",
       messageParameters = Map("quote" -> quote))
+    planChangeLogger.warn("cannotFindCatalogToHandleIdentifierError(quote)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", quote)
   }
 
   def tableAlreadyExistsError(tableIdent: TableIdentifier): Throwable = {
@@ -3924,6 +4090,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1321",
       messageParameters = Map("viewName" -> viewName))
+    planChangeLogger.warn("invalidViewNameError(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   def invalidBucketsNumberError(numBuckets: String, e: String): Throwable = {
@@ -3952,6 +4119,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1327",
       messageParameters = Map("runner" -> runner))
+    planChangeLogger.warn("commandExecutionInRunnerUnsupportedError(runner)={}): EUAIACT-AUDIT: State change recorded for the audit trail", runner)
   }
 
   def udfClassDoesNotImplementAnyUDFInterfaceError(className: String): Throwable = {
@@ -3982,6 +4150,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1329",
       messageParameters = Map("className" -> className))
+    planChangeLogger.warn("cannotLoadClassNotOnClassPathError(className)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def classDoesNotImplementUserDefinedAggregateFunctionError(className: String): Throwable = {
@@ -4049,6 +4218,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
 
   def cdcUpdateDetectionRequiresCarryOverRemoval(
       changelogName: String): AnalysisException = {
+       planChangeLogger.warn("cdcUpdateDetectionRequiresCarryOverRemoval(changelogName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", changelogName)
     new AnalysisException(
       errorClass = "INVALID_CDC_OPTION.UPDATE_DETECTION_REQUIRES_CARRY_OVER_REMOVAL",
       messageParameters = Map("changelogName" -> changelogName))
@@ -4061,6 +4231,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "changelogName" -> changelogName,
         "columnName" -> columnName))
+    planChangeLogger.warn("changelogMissingColumnError(changelogName,columnName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", changelogName, columnName)
   }
 
   def changelogInvalidColumnTypeError(
@@ -4075,18 +4246,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "columnName" -> columnName,
         "expectedType" -> expectedType,
         "actualType" -> actualType))
+    planChangeLogger.warn("changelogInvalidColumnTypeError(changelogName,columnName,expectedType,actualType)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", changelogName, columnName, expectedType, actualType)
   }
 
   def changelogMissingRowIdError(changelogName: String): AnalysisException = {
     new AnalysisException(
       errorClass = "INVALID_CHANGELOG_SCHEMA.MISSING_ROW_ID",
       messageParameters = Map("changelogName" -> changelogName))
+    planChangeLogger.warn("changelogMissingRowIdError(changelogName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", changelogName)
   }
 
   def invalidCdcOptionConflictingRangeTypes(): Throwable = {
     new AnalysisException(
       errorClass = "INVALID_CDC_OPTION.CONFLICTING_RANGE_TYPES",
       messageParameters = Map.empty[String, String])
+    planChangeLogger.warn("invalidCdcOptionConflictingRangeTypes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def invalidCdcOptionInvalidDeduplicationMode(mode: String): Throwable = {
@@ -4123,6 +4297,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "_LEGACY_ERROR_TEMP_1338",
       messageParameters = Map.empty)
+    planChangeLogger.warn("writeDistributionAndOrderingNotSupportedInContinuousExecution()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Return a more descriptive error message if the user tries to nest a DEFAULT column reference
@@ -4132,6 +4307,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "DEFAULT_PLACEMENT_INVALID",
       messageParameters = Map.empty)
+    planChangeLogger.warn("defaultReferencesNotAllowedInComplexExpressionsInInsertValuesList()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Return a descriptive error message in the presence of INSERT INTO commands with explicit
@@ -4140,12 +4316,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "DEFAULT_PLACEMENT_INVALID",
       messageParameters = Map.empty)
+    planChangeLogger.warn("defaultReferencesNotAllowedInComplexExpressionsInUpdateSetClause()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def defaultReferencesNotAllowedInComplexExpressionsInMergeInsertsOrUpdates(): Throwable = {
     new AnalysisException(
       errorClass = "DEFAULT_PLACEMENT_INVALID",
       messageParameters = Map.empty)
+    planChangeLogger.warn("defaultReferencesNotAllowedInComplexExpressionsInMergeInsertsOrUpdates()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def nonDeterministicMergeCondition(condName: String, cond: Expression): Throwable = {
@@ -4162,6 +4340,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "condName" -> condName,
         "cond" -> toSQLExpr(cond)))
+    planChangeLogger.warn("subqueryNotAllowedInMergeCondition(condName,cond)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", condName, cond)
   }
 
   def aggregationNotAllowedInMergeCondition(condName: String, cond: Expression): Throwable = {
@@ -4188,6 +4367,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "statementType" -> toSQLStmt(statementType),
         "dataSource" -> dataSource))
+    planChangeLogger.warn("addNewDefaultColumnToExistingTableNotAllowed(statementType,dataSource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statementType, dataSource)
   }
 
   def defaultValuesDataTypeError(
@@ -4231,6 +4411,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "statement" -> toSQLStmt(statement),
         "colName" -> toSQLId(colName),
         "defaultValue" -> defaultValue))
+    planChangeLogger.warn("defaultValuesMayNotContainSubQueryExpressions(statement,colName,defaultValue)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", statement, colName, defaultValue)
   }
 
   def defaultValueNotConstantError(
@@ -4382,18 +4563,21 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "descriptorName" -> descriptorName,
         "containingType" -> containingType))
+    planChangeLogger.warn("unknownProtobufMessageTypeError(descriptorName,containingType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", descriptorName, containingType)
   }
 
   def cannotFindCatalystTypeInProtobufSchemaError(catalystFieldPath: String): Throwable = {
     new AnalysisException(
       errorClass = "NO_SQL_TYPE_IN_PROTOBUF_SCHEMA",
       messageParameters = Map("catalystFieldPath" -> catalystFieldPath))
+    planChangeLogger.warn("cannotFindCatalystTypeInProtobufSchemaError(catalystFieldPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", catalystFieldPath)
   }
 
   def cannotFindProtobufFieldInCatalystError(field: String): Throwable = {
     new AnalysisException(
       errorClass = "PROTOBUF_FIELD_MISSING_IN_SQL_SCHEMA",
       messageParameters = Map("field" -> field))
+    planChangeLogger.warn("cannotFindProtobufFieldInCatalystError(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   def protobufFieldMatchError(field: String,
@@ -4438,6 +4622,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "explanation" -> explanation
       ),
       cause = Option(cause))
+    planChangeLogger.warn("protobufClassLoadError(protobufClassName,explanation,cause)=<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", explanation, cause)
   }
 
   def protobufDescriptorDependencyError(dependencyName: String): Throwable = {
@@ -4546,6 +4731,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new SparkUnsupportedOperationException(
       errorClass = "UNSUPPORTED_FEATURE.CREATE_FLOW_QUERY_EXECUTION"
     )
+    planChangeLogger.warn("unsupportedCreatePipelineFlowQueryExecutionError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def unsupportedCreatePipelineDatasetQueryExecutionError(
@@ -4554,6 +4740,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "UNSUPPORTED_FEATURE.CREATE_PIPELINE_DATASET_QUERY_EXECUTION",
       messageParameters = Map("pipelineDatasetType" -> pipelineDatasetType)
     )
+    planChangeLogger.warn("unsupportedCreatePipelineDatasetQueryExecutionError(pipelineDatasetType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pipelineDatasetType)
   }
 
   def avroIncompatibleReadError(
@@ -4570,6 +4757,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "sqlType" -> toSQLType(sqlType)
       )
     )
+    planChangeLogger.warn("avroIncompatibleReadError(avroPath,sqlPath,avroType,sqlType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", avroPath, sqlPath, avroType, sqlType)
   }
 
   def optionMustBeLiteralString(key: String): Throwable = {
@@ -4615,6 +4803,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "DATA_SOURCE_ALREADY_EXISTS",
       messageParameters = Map("provider" -> name))
+    planChangeLogger.warn("dataSourceAlreadyExists(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   def dataSourceDoesNotExist(name: String): Throwable = {
@@ -4674,36 +4863,42 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "ALL_PARAMETERS_MUST_BE_NAMED",
       messageParameters = Map("exprs" -> expr.map(e => toSQLExpr(e)).mkString(", ")))
+    planChangeLogger.warn("invalidQueryAllParametersMustBeNamed(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
   }
 
   def invalidQueryMixedQueryParameters(): Throwable = {
     throw new AnalysisException(
       errorClass = "INVALID_QUERY_MIXED_QUERY_PARAMETERS",
       messageParameters = Map.empty)
+    planChangeLogger.warn("invalidQueryMixedQueryParameters()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def invalidExecuteImmediateExpressionType(dataType: DataType): Throwable = {
     throw new AnalysisException(
       errorClass = "INVALID_EXPR_TYPE_FOR_QUERY_EXECUTE_IMMEDIATE",
       messageParameters = Map("exprType" -> toSQLType(dataType)))
+    planChangeLogger.warn("invalidExecuteImmediateExpressionType(dataType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataType)
   }
 
   def nullSQLStringExecuteImmediate(varName: String): Throwable = {
     throw new AnalysisException(
       errorClass = "NULL_QUERY_STRING_EXECUTE_IMMEDIATE",
       messageParameters = Map("varName" -> toSQLId(varName)))
+    planChangeLogger.warn("nullSQLStringExecuteImmediate(varName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", varName)
   }
 
   def invalidStatementForExecuteInto(queryString: String): Throwable = {
     throw new AnalysisException(
       errorClass = "INVALID_STATEMENT_FOR_EXECUTE_INTO",
       messageParameters = Map("sqlString" -> toSQLStmt(queryString)))
+    planChangeLogger.warn("invalidStatementForExecuteInto(queryString)={}): EUAIACT-AUDIT: State change recorded for the audit trail", queryString)
   }
 
   def sqlScriptInExecuteImmediate(sqlScriptString: String): Throwable = {
     throw new AnalysisException(
       errorClass = "SQL_SCRIPT_IN_EXECUTE_IMMEDIATE",
       messageParameters = Map("sqlString" -> toSQLStmt(sqlScriptString)))
+    planChangeLogger.warn("sqlScriptInExecuteImmediate(sqlScriptString)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sqlScriptString)
   }
 
   def dataSourceTableSchemaMismatchError(
@@ -4739,6 +4934,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
   def createTableDeprecatedError(): Throwable = {
     callDeprecatedMethodError("createTable(..., StructType, ...)",
       "createTable(..., Array[Column], ...)")
+    planChangeLogger.warn("createTableDeprecatedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def mustOverrideOneMethodError(methodName: String): RuntimeException = {
@@ -4881,6 +5077,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "AVRO_NOT_LOADED_SQL_FUNCTIONS_UNUSABLE",
       messageParameters = Map("functionName" -> functionName)
     )
+    planChangeLogger.warn("avroNotLoadedSqlFunctionsUnusable(functionName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", functionName)
   }
 
   def avroOptionsException(optionName: String, message: String): Throwable = {
@@ -4895,6 +5092,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       errorClass = "PROTOBUF_NOT_LOADED_SQL_FUNCTIONS_UNUSABLE",
       messageParameters = Map("functionName" -> functionName)
     )
+    planChangeLogger.warn("protobufNotLoadedSqlFunctionsUnusable(functionName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", functionName)
   }
 
   def pipeOperatorAggregateExpressionContainsNoAggregateFunction(expr: Expression): Throwable = {
@@ -4920,6 +5118,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map.empty,
       origin = inlineTable.origin
     )
+    planChangeLogger.warn("inlineTableContainsScalarSubquery(inlineTable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inlineTable)
   }
 
   def ordinalOutOfBoundsError(
@@ -4984,6 +5183,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "configValue" -> "true"
       )
     )
+    planChangeLogger.warn("pythonWorkerLoggingNotEnabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def columnsChangedAfterViewWithPlanCreation(
@@ -4997,6 +5197,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName),
         "colType" -> "data",
         "errors" -> errors.mkString("- ", "\n- ", "")))
+    planChangeLogger.warn("columnsChangedAfterViewWithPlanCreation(viewName,tableName,errors)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewName, tableName, errors)
   }
 
   def metadataColumnsChangedAfterViewWithPlanCreation(
@@ -5010,6 +5211,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
         "tableName" -> toSQLId(tableName),
         "colType" -> "metadata",
         "errors" -> errors.mkString("- ", "\n- ", "")))
+    planChangeLogger.warn("metadataColumnsChangedAfterViewWithPlanCreation(viewName,tableName,errors)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewName, tableName, errors)
   }
 
   def unsupportedTimeTypeError(): Throwable = {
@@ -5039,6 +5241,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "NOT_STREAMING_DATASET",
       messageParameters = Map("operator" -> operator))
+    planChangeLogger.warn("notStreamingDatasetError(operator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operator)
   }
 
   def statefulChildrenNotSupportedInSequentialStreamingUnionError(): Throwable = {

@@ -159,6 +159,7 @@ object KubernetesClientUtils extends Logging {
       conf.getOption("spark.home").map(dir => s"$dir/conf"))
     val maxSize = conf.get(Config.CONFIG_MAP_MAXSIZE)
     if (confDir.isDefined) {
+    logger.warn("loadSparkConfDirFiles(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
       val confFiles: Seq[File] = listConfFiles(confDir.get, maxSize)
       val orderedConfFiles = orderFilesBySize(confFiles)
       var truncatedMapSize: Long = 0
@@ -199,6 +200,7 @@ object KubernetesClientUtils extends Logging {
   }
 
   private def listConfFiles(confDir: String, maxSize: Long): Seq[File] = {
+    logger.warn("listConfFiles(confDir,maxSize)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", confDir, maxSize)
     // At the moment configmaps do not support storing binary content (i.e. skip jar,tar,gzip,zip),
     // and configMaps do not allow for size greater than 1.5 MiB(configurable).
     // https://etcd.io/docs/v3.4.0/dev-guide/limit/

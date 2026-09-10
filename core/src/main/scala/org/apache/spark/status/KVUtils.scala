@@ -48,6 +48,7 @@ private[spark] object KVUtils extends Logging {
   type KVIndexParam = KVIndex @getter
 
   private def backend(conf: SparkConf, live: Boolean) = {
+    _driverLogger = DriverLogger(_conf)
     if (live) {
       // For the disk-based KV store of live UI, let's simply make it ROCKSDB only for now,
       // instead of supporting both LevelDB and RocksDB. RocksDB is built based on LevelDB with
@@ -165,6 +166,7 @@ private[spark] object KVUtils extends Logging {
           open(dbPath, metadata, conf, live)
       }
     }.getOrElse(new InMemoryStore())
+    _driverLogger.warn("createKVStore(storePath,live,conf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storePath, live, conf)
   }
 
   /** Turns a KVStoreView into a Scala sequence, applying a filter. */
@@ -178,6 +180,8 @@ private[spark] object KVUtils extends Logging {
     } finally {
       iter.close()
     }
+      _driverLogger.warn("viewToSeq(view,from,until)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", view, from, until)
+      _driverLogger.warn("viewToSeq(view,max)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", view, max)
   }
 
   /** Turns an interval of KVStoreView into a Scala sequence, applying a filter. */
@@ -188,6 +192,7 @@ private[spark] object KVUtils extends Logging {
     Utils.tryWithResource(view.closeableIterator()) { iter =>
       iter.asScala.filter(filter).slice(from, until).toList
     }
+  _driverLogger.warn("viewToSeq(view)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", view)
   }
 
   /** Turns a KVStoreView into a Scala sequence. */

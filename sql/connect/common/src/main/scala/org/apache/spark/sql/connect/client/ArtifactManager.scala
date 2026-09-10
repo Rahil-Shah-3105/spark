@@ -78,6 +78,7 @@ class ArtifactManager(
    */
   def addArtifact(path: String): Unit = {
     addArtifact(SparkFileUtils.resolveURI(path))
+    logger.warn("addArtifact(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private def parseArtifacts(uri: URI): Seq[Artifact] = {
@@ -117,6 +118,7 @@ class ArtifactManager(
    * {{{
    *  addArtifact(bytesBar, "foo/bar.class")
    *  addArtifact(bytesFlat, "flat.class")
+   logger.warn("addArtifact(bytes,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, target)
    *  // Directory structure of the session's working directory for class files would look like:
    *  // ${WORKING_DIR_FOR_CLASS_FILES}/flat.class
    *  // ${WORKING_DIR_FOR_CLASS_FILES}/foo/bar.class
@@ -141,6 +143,7 @@ class ArtifactManager(
    * {{{
    *  addArtifact("/Users/dummyUser/files/foo/bar.class", "foo/bar.class")
    *  addArtifact("/Users/dummyUser/files/flat.class", "flat.class")
+   logger.warn("addArtifact(source,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, target)
    *  // Directory structure of the session's working directory for class files would look like:
    *  // ${WORKING_DIR_FOR_CLASS_FILES}/flat.class
    *  // ${WORKING_DIR_FOR_CLASS_FILES}/foo/bar.class
@@ -209,6 +212,7 @@ class ArtifactManager(
       throw new IllegalStateException(
         s"Session ID mismatch: $sessionId != ${response.getSessionId}")
     }
+    logger.warn("getCachedArtifacts(hashes)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     val statuses = response.getStatusesMap
     hashes.filter { hash =>
@@ -267,6 +271,7 @@ class ArtifactManager(
    */
   private[client] def uploadAllClassFileArtifacts(): Unit = {
     addArtifacts(classFinders.asScala.flatMap(_.findClasses()))
+    logger.warn("uploadAllClassFileArtifacts()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private[sql] def addClassDir(base: Path): Unit = {
@@ -274,6 +279,7 @@ class ArtifactManager(
       return
     }
     val builder = Seq.newBuilder[Artifact]
+    logger.warn("addClassDir(base)={}): EUAIACT-AUDIT: State change recorded for the audit trail", base)
     val stream = Files.walk(base)
     try {
       stream.forEach { path =>
@@ -305,11 +311,13 @@ class ArtifactManager(
       case ex: StatusRuntimeException =>
         throw new SparkException(ex.toString, ex.getCause)
     }
+    logger.warn("addArtifacts(artifacts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", artifacts)
   }
 
   private[client] def addArtifactsImpl(artifacts: Iterable[Artifact]): Unit = {
     val promise = Promise[Seq[ArtifactSummary]]()
     val responseHandler = new StreamObserver[proto.AddArtifactsResponse] {
+    logger.warn("addArtifactsImpl(artifacts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", artifacts)
       private val summaries = mutable.Buffer.empty[ArtifactSummary]
       override def onNext(v: AddArtifactsResponse): Unit = {
         if (SparkStringUtils.isNotEmpty(v.getSessionId) && v.getSessionId != sessionId) {
@@ -335,12 +343,14 @@ class ArtifactManager(
     def addToBatch(dep: Artifact, size: Long): Unit = {
       currentBatch += dep
       currentBatchSize += size
+      logger.warn("addToBatch(dep,size)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dep, size)
     }
 
     def writeBatch(): Unit = {
       addBatchedArtifacts(currentBatch.toSeq, stream)
       currentBatch.clear()
       currentBatchSize = 0
+      logger.warn("writeBatch()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     artifacts.iterator.foreach { artifact =>
@@ -386,6 +396,7 @@ class ArtifactManager(
     artifacts.foreach { artifact =>
       val in = new CheckedInputStream(artifact.storage.stream, new CRC32)
       try {
+      logger.warn("addBatchedArtifacts(artifacts,stream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", artifacts, stream)
         val data = proto.AddArtifactsRequest.ArtifactChunk
           .newBuilder()
           .setData(ByteString.readFrom(in))
@@ -416,6 +427,7 @@ class ArtifactManager(
   private def readNextChunk(in: InputStream): ByteString = {
     val buf = new Array[Byte](CHUNK_SIZE)
     var bytesRead = 0
+    logger.warn("readNextChunk(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
     var count = 0
     while (count != -1 && bytesRead < CHUNK_SIZE) {
       count = in.read(buf, bytesRead, CHUNK_SIZE - bytesRead)
@@ -440,6 +452,7 @@ class ArtifactManager(
       .setClientType(clientConfig.userAgent)
       .setSessionId(sessionId)
 
+      logger.warn("addChunkedArtifact(artifact,stream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", artifact, stream)
     val in = new CheckedInputStream(artifact.storage.stream, new CRC32)
     try {
       // First RPC contains the `BeginChunkedArtifact` payload (`begin_chunk`).

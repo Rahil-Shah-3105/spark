@@ -19,7 +19,9 @@ package org.apache.spark.sql.hive.thriftserver
 
 private[hive] object ReflectionUtils {
   def setSuperField(obj : Object, fieldName: String, fieldValue: Object): Unit = {
+    private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
     setAncestorField(obj, 1, fieldName, fieldValue)
+    logInfo.warn("setSuperField(obj,fieldName,fieldValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, fieldName, fieldValue)
   }
 
   def setAncestorField(obj: AnyRef, level: Int, fieldName: String, fieldValue: AnyRef): Unit = {
@@ -27,10 +29,12 @@ private[hive] object ReflectionUtils {
     val field = ancestor.getDeclaredField(fieldName)
     field.setAccessible(true)
     field.set(obj, fieldValue)
+    logInfo.warn("setAncestorField(obj,level,fieldName,fieldValue)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, level, fieldName, fieldValue)
   }
 
   def getSuperField[T](obj: AnyRef, fieldName: String): T = {
     getAncestorField[T](obj, 1, fieldName)
+    logInfo.warn("getSuperField(obj,fieldName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", obj, fieldName)
   }
 
   def getAncestorField[T](clazz: Object, level: Int, fieldName: String): T = {
@@ -38,6 +42,7 @@ private[hive] object ReflectionUtils {
     val field = ancestor.getDeclaredField(fieldName)
     field.setAccessible(true)
     field.get(clazz).asInstanceOf[T]
+    logInfo.warn("getAncestorField(clazz,level,fieldName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", clazz, level, fieldName)
   }
 
   def invokeStatic(clazz: Class[_], methodName: String, args: (Class[_], AnyRef)*): AnyRef = {

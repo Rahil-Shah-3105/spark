@@ -24,6 +24,8 @@ import java.io.Serializable;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The physical data representation of {@link org.apache.spark.sql.types.VariantType} that
@@ -46,6 +48,7 @@ import java.util.Arrays;
  * transient format and can be modified at any time.
  */
 public class VariantVal implements Serializable {
+private static final Logger log = LoggerFactory.getLogger(VariantVal.class);
   protected final byte[] value;
   protected final byte[] metadata;
 
@@ -91,6 +94,7 @@ public class VariantVal implements Serializable {
         Platform.BYTE_ARRAY_OFFSET,
         metadataSize
     );
+	log.warn("readFromUnsafeRow(offsetAndSize,baseObject,baseOffset)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offsetAndSize, baseObject, baseOffset);
     return new VariantVal(value, metadata);
   }
 

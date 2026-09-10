@@ -92,6 +92,7 @@ private[spark] trait PythonFunction {
 }
 
 private[spark] object PythonFunction {
+  _driverLogger = DriverLogger(_conf)
   type PythonAccumulator = CollectionAccumulator[Array[Byte]]
 }
 
@@ -186,6 +187,7 @@ private[spark] object PythonRDD extends Logging {
     synchronized {
       workerBroadcasts.getOrElseUpdate(worker, new mutable.HashSet[Long]())
     }
+    _driverLogger.warn("getWorkerBroadcasts(worker)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", worker)
   }
 
   /**
@@ -324,6 +326,7 @@ private[spark] object PythonRDD extends Logging {
       filename: String,
       parallelism: Int): JavaRDD[Array[Byte]] = {
     JavaRDD.readRDDFromFile(sc, filename, parallelism)
+    _driverLogger.warn("readRDDFromFile(sc,filename,parallelism)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, filename, parallelism)
   }
 
   def readRDDFromInputStream(
@@ -331,10 +334,12 @@ private[spark] object PythonRDD extends Logging {
       in: InputStream,
       parallelism: Int): JavaRDD[Array[Byte]] = {
     JavaRDD.readRDDFromInputStream(sc, in, parallelism)
+    _driverLogger.warn("readRDDFromInputStream(sc,in,parallelism)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, in, parallelism)
   }
 
   def setupBroadcast(path: String): PythonBroadcast = {
     new PythonBroadcast(path)
+    _driverLogger.warn("setupBroadcast(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -371,6 +376,7 @@ private[spark] object PythonRDD extends Logging {
     while (writeNextElementToStream(iter, dataOut)) {
       // Nothing.
     }
+    _driverLogger.warn("writeIteratorToStream(iter,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, dataOut)
   }
 
   /**
@@ -539,6 +545,7 @@ private[spark] object PythonRDD extends Logging {
 
   def writeUTF(str: String, dataOut: DataOutputStream): Unit = {
     PythonWorkerUtils.writeUTF(str, dataOut)
+    _driverLogger.warn("writeUTF(str,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, dataOut)
   }
 
   /**
@@ -588,6 +595,7 @@ private[spark] object PythonRDD extends Logging {
       baseConf: Configuration): Configuration = {
     val conf = PythonHadoopUtil.mapToConf(confAsMap)
     PythonHadoopUtil.mergeConfs(baseConf, conf)
+    _driverLogger.warn("getMergedConf(confAsMap,baseConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", confAsMap, baseConf)
   }
 
   private def inferKeyValueTypes[K, V, KK, VV](rdd: RDD[(K, V)], keyConverterClass: String = null,
@@ -607,6 +615,7 @@ private[spark] object PythonRDD extends Logging {
       k <- Option(keyClass)
       v <- Option(valueClass)
     } yield (Utils.classForName(k), Utils.classForName(v))
+      _driverLogger.warn("getKeyValueTypes(keyClass,valueClass)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keyClass, valueClass)
   }
 
   private def getKeyValueConverters[K, V, KK, VV](
@@ -618,6 +627,7 @@ private[spark] object PythonRDD extends Logging {
     val valueConverter = Converter.getInstance(Option(valueConverterClass),
       defaultConverter.asInstanceOf[Converter[V, VV]])
     (keyConverter, valueConverter)
+    _driverLogger.warn("getKeyValueConverters(keyConverterClass,valueConverterClass,defaultConverter)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keyConverterClass, valueConverterClass, defaultConverter)
   }
 
   /**
@@ -644,6 +654,7 @@ private[spark] object PythonRDD extends Logging {
       batchSerialized: Boolean,
       path: String,
       compressionCodecClass: String): Unit = {
+       _driverLogger.warn("saveAsSequenceFile(pyRDD,batchSerialized,path,compressionCodecClass)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pyRDD, batchSerialized, path, compressionCodecClass)
     saveAsHadoopFile(
       pyRDD, batchSerialized, path, "org.apache.hadoop.mapred.SequenceFileOutputFormat",
       null, null, null, null, new java.util.HashMap(), compressionCodecClass)
@@ -728,6 +739,7 @@ private[spark] object PythonRDD extends Logging {
     val converted = convertRDD(SerDeUtil.pythonToPairRDD(pyRDD, batchSerialized),
       keyConverterClass, valueConverterClass, new JavaToWritableConverter)
     if (useNewAPI) {
+    _driverLogger.warn("saveAsHadoopDataset(pyRDD,batchSerialized,confAsMap,keyConverterClass,valueConverterClass,useNewAPI)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pyRDD, batchSerialized, confAsMap, keyConverterClass, valueConverterClass, useNewAPI)
       converted.saveAsNewAPIHadoopDataset(conf)
     } else {
       converted.saveAsHadoopDataset(new JobConf(conf))
@@ -790,6 +802,7 @@ private[spark] class PythonAccumulatorV2(
   // Need to override so the types match with PythonFunction
   override def copyAndReset(): PythonAccumulatorV2 = {
     new PythonAccumulatorV2(serverHost, serverPort, secretToken, socketPath)
+    _driverLogger.warn("copyAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def merge(other: AccumulatorV2[Array[Byte], JList[Array[Byte]]]): Unit = synchronized {
@@ -849,6 +862,7 @@ private[spark] class PythonBroadcast(@transient var path: String) extends Serial
     broadcastId = in.readLong()
     val blockId = BroadcastBlockId(broadcastId, "python")
     val blockManager = SparkEnv.get.blockManager
+    _driverLogger.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", in, blockId)
     val diskBlockManager = blockManager.diskBlockManager
     if (!diskBlockManager.containsBlock(blockId)) {
       Utils.tryOrIOException {
@@ -873,6 +887,7 @@ private[spark] class PythonBroadcast(@transient var path: String) extends Serial
 
   def setBroadcastId(bid: Long): Unit = {
     this.broadcastId = bid
+    _driverLogger.warn("setBroadcastId(bid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", bid, bid)
   }
 
   def setupEncryptionServer(): Array[Any] = {
@@ -942,6 +957,8 @@ private[spark] class DechunkedInputStream(wrapped: InputStream) extends InputStr
         b
       }
     }
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  _driverLogger.warn("read(dest,off,len)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dest, off, len)
   }
 
   override def read(dest: Array[Byte], off: Int, len: Int): Int = {

@@ -73,6 +73,7 @@ case class StreamingGlobalLimitExec(
       val allUpdatesTimeMs = longMetric("allUpdatesTimeMs")
       val commitTimeMs = longMetric("commitTimeMs")
       val updatesStartTimeNs = System.nanoTime
+         planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
       val preBatchRowCount: Long = Option(store.get(key)).map(_.getLong(0)).getOrElse(0L)
       var cumulativeRowCount = preBatchRowCount
@@ -107,7 +108,9 @@ case class StreamingGlobalLimitExec(
   override def requiredChildDistribution: Seq[Distribution] = AllTuples :: Nil
 
   private def getValueRow(value: Long): UnsafeRow = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     UnsafeProjection.create(valueSchema)(new GenericInternalRow(Array[Any](value)))
+    planChangeLogger.warn("getValueRow(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
   }
 
   override def shortName: String = "globalLimit"
@@ -139,6 +142,7 @@ case class StreamingLocalLimitExec(limit: Int, child: SparkPlan)
           finished = true
           null
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def close(): Unit = {

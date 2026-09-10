@@ -41,6 +41,7 @@ import org.apache.spark.util.collection.Sorter;
  * random memory accesses improves cache hit rates.
  */
 public final class UnsafeInMemorySorter {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeInMemorySorter.class);
 
   private static final class SortComparator implements Comparator<RecordPointerAndKeyPrefix> {
 
@@ -156,6 +157,7 @@ public final class UnsafeInMemorySorter {
   }
 
   private int getUsableCapacity() {
+	logger.warn("getUsableCapacity()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     // Radix sort requires same amount of used memory as buffer, Tim sort requires
     // half of the used memory as buffer.
     return (int) (array.size() / (radixSortSupport != null ? 2 : 1.5));
@@ -203,6 +205,7 @@ public final class UnsafeInMemorySorter {
   public long getMemoryUsage() {
     if (array == null) {
       return 0L;
+	logger.warn("getMemoryUsage()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
 
     return array.size() * 8;
@@ -257,6 +260,7 @@ public final class UnsafeInMemorySorter {
       array.set(pos, recordPointer);
       pos++;
       array.set(pos, keyPrefix);
+	logger.warn("insertRecord(recordPointer,keyPrefix,prefixIsNull)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordPointer, keyPrefix, prefixIsNull, recordPointer);
       pos++;
     }
   }
@@ -318,6 +322,7 @@ public final class UnsafeInMemorySorter {
       baseObject = memoryManager.getPage(recordPointer);
       // Skip over record length
       baseOffset = memoryManager.getOffsetInPage(recordPointer) + uaoSize;
+	logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", recordPointer);
       recordLength = UnsafeAlignedOffset.getSize(baseObject, baseOffset - uaoSize);
       keyPrefix = array.get(offset + position + 1);
       position += 2;
@@ -353,6 +358,7 @@ public final class UnsafeInMemorySorter {
 
     int offset = 0;
     long start = System.nanoTime();
+	logger.warn("getSortedIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     if (sortComparator != null) {
       if (this.radixSortSupport != null) {
         offset = RadixSort.sortKeyPrefixArray(

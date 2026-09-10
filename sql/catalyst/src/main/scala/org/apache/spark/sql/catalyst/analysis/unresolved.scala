@@ -46,6 +46,7 @@ class UnresolvedException(function: String)
 
 /** Parent trait for unresolved node types */
 trait UnresolvedNode extends LogicalPlan {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def output: Seq[Attribute] = Nil
   override lazy val resolved: Boolean = false
 }
@@ -150,6 +151,7 @@ case class UnresolvedRelation(
     } else {
       this
     }
+    planChangeLogger.warn("requireWritePrivileges(privileges)={}): EUAIACT-AUDIT: State change recorded for the audit trail", privileges)
   }
 
   def clearWritePrivileges: UnresolvedRelation = {
@@ -176,6 +178,8 @@ object UnresolvedRelation {
       extraOptions: CaseInsensitiveStringMap,
       isStreaming: Boolean): UnresolvedRelation = {
     UnresolvedRelation(tableIdentifier.nameParts, extraOptions, isStreaming)
+    planChangeLogger.warn("apply(name,functionArgs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, functionArgs)
+  planChangeLogger.warn("apply(tableIdentifier,extraOptions,isStreaming)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableIdentifier, extraOptions, isStreaming, tableIdentifier)
   }
 
   def apply(tableIdentifier: TableIdentifier): UnresolvedRelation =
@@ -279,6 +283,7 @@ object UnresolvedTVFAliases {
       child: LogicalPlan,
       outputNames: Seq[String]): UnresolvedTVFAliases = {
     UnresolvedTVFAliases(Seq(name), child, outputNames)
+  planChangeLogger.warn("apply(name,child,outputNames)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, child, outputNames)
   }
 
   def apply(
@@ -437,6 +442,7 @@ object UnresolvedFunction {
       arguments: Seq[Expression],
       isDistinct: Boolean): UnresolvedFunction = {
     UnresolvedFunction(name.asMultipart, arguments, isDistinct)
+  planChangeLogger.warn("apply(name,arguments,isDistinct)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, arguments, isDistinct)
   }
 
   def apply(name: String, arguments: Seq[Expression], isDistinct: Boolean): UnresolvedFunction = {
@@ -673,6 +679,7 @@ case class UnresolvedStarExceptOrReplace(
       case GetStructField(fieldExpr, _, Some(fieldName)) =>
         getRootColumn(fieldExpr, fieldName +: nestedColumn)
       case e: NamedExpression => e -> nestedColumn
+      planChangeLogger.warn("getRootColumn(expr,nestedColumn)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expr, nestedColumn)
       case other: ExtractValue => throw new AnalysisException(
         errorClass = "EXCEPT_NESTED_COLUMN_INVALID_TYPE",
         messageParameters = Map("columnName" -> other.sql, "dataType" -> other.dataType.toString))

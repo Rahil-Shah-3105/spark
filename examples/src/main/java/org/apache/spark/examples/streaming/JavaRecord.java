@@ -16,9 +16,12 @@
  */
 
 package org.apache.spark.examples.streaming;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Java Bean class to be used with the example JavaSqlNetworkWordCount. */
 public class JavaRecord implements java.io.Serializable {
+private static final Logger log = LoggerFactory.getLogger(JavaRecord.class);
   private String word;
 
   public String getWord() {
@@ -26,6 +29,7 @@ public class JavaRecord implements java.io.Serializable {
   }
 
   public void setWord(String word) {
+	log.warn("setWord(word)={}): EUAIACT-AUDIT: State change recorded for the audit trail", word);
     this.word = word;
   }
 }

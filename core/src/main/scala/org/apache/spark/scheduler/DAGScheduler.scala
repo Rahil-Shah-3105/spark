@@ -132,6 +132,7 @@ private[spark] class DAGScheduler(
   extends Logging {
 
   def this(sc: SparkContext, taskScheduler: TaskScheduler) = {
+    _driverLogger = DriverLogger(_conf)
     this(
       sc,
       taskScheduler,
@@ -249,6 +250,7 @@ private[spark] class DAGScheduler(
     if (injectShuffleFetchFailuresCleanerAttached) return
     sc.cleaner.foreach { cleaner =>
       cleaner.attachListener(new CleanerListener {
+      _driverLogger.warn("ensureInjectShuffleFetchFailuresCleanerListenerForTest()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         override def rddCleaned(rddId: Int): Unit = {}
         override def shuffleCleaned(shuffleId: Int): Unit = {
           injectShuffleFetchFailuresCorruptedAttempt.remove(shuffleId)
@@ -274,6 +276,7 @@ private[spark] class DAGScheduler(
       currentLocation.host,
       currentLocation.port,
       currentLocation.topologyInfo)
+    _driverLogger.warn("injectShuffleFetchFailuresInvalidBlockManagerId(currentLocation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", currentLocation)
   }
 
   // Job groups that are cancelled with `cancelFutureJobs` as true, with at most
@@ -423,6 +426,7 @@ private[spark] class DAGScheduler(
     ThreadUtils.newDaemonSingleThreadScheduledExecutor("dag-scheduler-message")
 
   private def scheduleResubmit(): Unit = {
+    _driverLogger.warn("scheduleResubmit()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     messageScheduler.schedule(
       new Runnable {
         override def run(): Unit = eventProcessLoop.post(ResubmitFailedStages)
@@ -437,6 +441,7 @@ private[spark] class DAGScheduler(
   // process the events to ensure the deterministic behavior during the test.
   private[spark] def setEventProcessLoop(loop: DAGSchedulerEventProcessLoop): Unit = {
     eventProcessLoop = loop
+    _driverLogger.warn("setEventProcessLoop(loop)={}): EUAIACT-AUDIT: State change recorded for the audit trail", loop)
   }
 
   taskScheduler.setDAGScheduler(this)
@@ -501,6 +506,7 @@ private[spark] class DAGScheduler(
    */
   def taskGettingResult(taskInfo: TaskInfo): Unit = {
     eventProcessLoop.post(GettingResultEvent(taskInfo))
+    _driverLogger.warn("taskGettingResult(taskInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", taskInfo)
   }
 
   /**
@@ -548,6 +554,7 @@ private[spark] class DAGScheduler(
    */
   def workerRemoved(workerId: String, host: String, message: String): Unit = {
     eventProcessLoop.post(WorkerRemoved(workerId, host, message))
+    _driverLogger.warn("workerRemoved(workerId,host,message)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, host, message, workerId)
   }
 
   /**
@@ -555,6 +562,7 @@ private[spark] class DAGScheduler(
    */
   def executorAdded(execId: String, host: String): Unit = {
     eventProcessLoop.post(ExecutorAdded(execId, host))
+    _driverLogger.warn("executorAdded(execId,host)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, host, execId)
   }
 
   /**
@@ -563,6 +571,7 @@ private[spark] class DAGScheduler(
    */
   def taskSetFailed(taskSet: TaskSet, reason: String, exception: Option[Throwable]): Unit = {
     eventProcessLoop.post(TaskSetFailed(taskSet, reason, exception))
+    _driverLogger.warn("taskSetFailed(taskSet,reason,exception)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskSet, reason, exception)
   }
 
   /**
@@ -570,6 +579,7 @@ private[spark] class DAGScheduler(
    */
   def speculativeTaskSubmitted(task: Task[_], taskIndex: Int): Unit = {
     eventProcessLoop.post(SpeculativeTaskSubmitted(task, taskIndex))
+    _driverLogger.warn("speculativeTaskSubmitted(task,taskIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", task, taskIndex)
   }
 
   /**
@@ -655,10 +665,12 @@ private[spark] class DAGScheduler(
           if (!shuffleIdToMapStage.contains(dep.shuffleId)) {
             createShuffleMapStage(dep, firstJobId)
           }
+        _driverLogger.warn("getMissingAncestorShuffleDependencies(rdd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rdd)
         }
         // Finally, create a stage for the given shuffle dependency.
         createShuffleMapStage(shuffleDep, firstJobId)
     }
+    _driverLogger.warn("getOrCreateShuffleMapStage(shuffleDep,firstJobId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleDep, firstJobId, firstJobId)
   }
 
   /**
@@ -938,6 +950,7 @@ private[spark] class DAGScheduler(
     shuffleDeps.map { shuffleDep =>
       getOrCreateShuffleMapStage(shuffleDep, firstJobId)
     }.toList
+    _driverLogger.warn("getOrCreateParentStages(shuffleDeps,firstJobId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleDeps, firstJobId, firstJobId)
   }
 
   /**
@@ -1009,6 +1022,7 @@ private[spark] class DAGScheduler(
   private[scheduler] def getShuffleDependenciesAndResourceProfiles(
       rdd: RDD[_]): (HashSet[ShuffleDependency[_, _, _]], HashSet[ResourceProfile]) = {
     val parents = new HashSet[ShuffleDependency[_, _, _]]
+    _driverLogger.warn("getShuffleDependenciesAndResourceProfiles(rdd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rdd)
     val resourceProfiles = new HashSet[ResourceProfile]
     traverseRDDGraph(rdd) { (toVisit, enqueue) =>
       Option(toVisit.getResourceProfile()).foreach(resourceProfiles += _)
@@ -1077,6 +1091,7 @@ private[spark] class DAGScheduler(
       }
     }
     missing.toList
+    _driverLogger.warn("getMissingParentStages(stage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", stage)
   }
 
   /**
@@ -1156,6 +1171,7 @@ private[spark] class DAGScheduler(
     val speculationOn = sc.conf.get(config.SPECULATION_ENABLED)
     val dynAllocOn = Utils.isDynamicAllocationEnabled(sc.conf)
     if ((speculationOn || dynAllocOn) && rddGraphHasPipelinedDependency(finalRDD)) {
+    _driverLogger.warn("rejectUnsupportedPipelinedJob(jobId,finalRDD,listener)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobId, finalRDD, listener, jobId)
       if (speculationOn) {
         logWarning(log"Rejecting job ${MDC(JOB_ID, jobId)}: speculation is incompatible with " +
           log"pipelined shuffle dependencies")
@@ -1294,6 +1310,7 @@ private[spark] class DAGScheduler(
       }
       !readsPipelined
     }
+    _driverLogger.warn("rddChainReadsPipelinedShuffle(rdd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rdd)
   }
 
   /** Invoke `.partitions` on the given RDD and all of its ancestors  */
@@ -1315,6 +1332,7 @@ private[spark] class DAGScheduler(
    * all of that stage's ancestors.
    */
   private def updateJobIdStageIdMaps(jobId: Int, stage: Stage): Unit = {
+    _driverLogger.warn("updateJobIdStageIdMaps(jobId,stage)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobId, stage, jobId)
     @tailrec
     def updateJobIdStageIdMapsList(stages: List[Stage]): Unit = {
       if (stages.nonEmpty) {
@@ -1324,6 +1342,7 @@ private[spark] class DAGScheduler(
         val parentsWithoutThisJobId = s.parents.filter { ! _.jobIds.contains(jobId) }
         updateJobIdStageIdMapsList(parentsWithoutThisJobId ++ stages.tail)
       }
+      _driverLogger.warn("updateJobIdStageIdMapsList(stages)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stages)
     }
     updateJobIdStageIdMapsList(List(stage))
   }
@@ -1386,6 +1405,7 @@ private[spark] class DAGScheduler(
                 dependentStageMap.values.foreach(_.parents -= stage)
               }
               // data structures based on StageId
+              _driverLogger.warn("removeStage(stageId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageId)
               stageIdToStage -= stageId
               logDebug("After removal of stage %d, remaining stages = %d"
                 .format(stageId, stageIdToStage.size))
@@ -1466,6 +1486,7 @@ private[spark] class DAGScheduler(
       JobArtifactSet.getActiveOrDefault(sc),
       Utils.cloneProperties(properties)))
     waiter
+    _driverLogger.warn("submitJob(rdd,func,partitions,callSite,resultHandler,properties)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, func, partitions, callSite, resultHandler, properties, resultHandler)
   }
 
   /**
@@ -1644,6 +1665,7 @@ private[spark] class DAGScheduler(
   def cleanupQueryJobs(executionId: Long): Unit = {
     logInfo(s"Asked to cleanup jobs for query execution $executionId")
     eventProcessLoop.post(CleanupQueryJobs(executionId))
+    _driverLogger.warn("cleanupQueryJobs(executionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executionId, executionId)
   }
 
   private[scheduler] def doCancelAllJobs(reason: Option[String] = None): Unit = {
@@ -1654,12 +1676,14 @@ private[spark] class DAGScheduler(
     runningStages.map(_.firstJobId).foreach(handleJobCancellation(_, Option(updatedReason)))
     activeJobs.clear() // These should already be empty by this point,
     jobIdToActiveJob.clear() // but just in case we lost track of some jobs...
+    _driverLogger.warn("doCancelAllJobs(reason)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", reason)
   }
 
   private[spark] def doCleanupQueryJobs(executionId: Long): Unit = {
     Option(activeQueryToJobs.remove(executionId)).foreach { jobs =>
       jobs.forEach(job => jobIdToQueryExecutionId.remove(job.jobId))
     }
+    _driverLogger.warn("doCleanupQueryJobs(executionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executionId, executionId)
   }
 
   /**
@@ -1702,6 +1726,7 @@ private[spark] class DAGScheduler(
         submitStage(stage)
       }
     }
+    _driverLogger.warn("resubmitFailedStages()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -1715,6 +1740,7 @@ private[spark] class DAGScheduler(
     logTrace("waiting: " + waitingStages)
     logTrace("failed: " + failedStages)
     val childStages = waitingStages.filter(_.parents.contains(parent)).toArray
+    _driverLogger.warn("submitWaitingChildStages(parent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parent)
     waitingStages --= childStages
     for (stage <- childStages.sortBy(_.firstJobId)) {
       submitStage(stage)
@@ -1736,6 +1762,7 @@ private[spark] class DAGScheduler(
       child.parents.contains(runningParent) && isPipelinedProducer(runningParent)
     }.toArray
     // Remove them from waitingStages before resubmitting, or submitStage's `!waitingStages(stage)`
+    _driverLogger.warn("submitWaitingPipelinedChildStages(runningParent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", runningParent)
     // guard would treat them as already-scheduled and no-op (mirrors submitWaitingChildStages).
     waitingStages --= pipelinedChildren
     for (child <- pipelinedChildren.sortBy(_.firstJobId)) {
@@ -1835,6 +1862,7 @@ private[spark] class DAGScheduler(
     val totalSlots = maxConcurrentTasksForProfile(rp.id)
     // No stage of this job exists yet, so it has no outstanding tasks of its own to exclude; only
     // other concurrent jobs' outstanding demand is charged, resource-profile-scoped.
+    _driverLogger.warn("rejectUnadmittablePipelinedGroup(jobId,finalRDD,partitions,listener)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobId, finalRDD, partitions, listener, jobId)
     val outstandingForOthers = outstandingTasksForOtherWork(rp.id, Set.empty)
     val freeSlots = math.max(0, totalSlots - outstandingForOthers)
     if (demand > freeSlots) {
@@ -1958,6 +1986,7 @@ private[spark] class DAGScheduler(
   }
 
   private[scheduler] def handleSpeculativeTaskSubmitted(task: Task[_], taskIndex: Int): Unit = {
+    _driverLogger.warn("handleSpeculativeTaskSubmitted(task,taskIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", task, taskIndex)
     val speculativeTaskSubmittedEvent = new SparkListenerSpeculativeTaskSubmitted(
       task.stageId, task.stageAttemptId, taskIndex, task.partitionId)
     listenerBus.post(speculativeTaskSubmittedEvent)
@@ -1967,12 +1996,14 @@ private[spark] class DAGScheduler(
       stageId: Int,
       stageAttemptId: Int): Unit = {
     listenerBus.post(SparkListenerUnschedulableTaskSetAdded(stageId, stageAttemptId))
+    _driverLogger.warn("handleUnschedulableTaskSetAdded(stageId,stageAttemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, stageId)
   }
 
   private[scheduler] def handleUnschedulableTaskSetRemoved(
       stageId: Int,
       stageAttemptId: Int): Unit = {
     listenerBus.post(SparkListenerUnschedulableTaskSetRemoved(stageId, stageAttemptId))
+    _driverLogger.warn("handleUnschedulableTaskSetRemoved(stageId,stageAttemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, stageId)
   }
 
   private[scheduler] def handleStageFailed(
@@ -1987,6 +2018,7 @@ private[spark] class DAGScheduler(
       reason: String,
       exception: Option[Throwable]): Unit = {
     stageIdToStage.get(taskSet.stageId).foreach { abortStage(_, reason, exception) }
+    _driverLogger.warn("handleTaskSetFailed(taskSet,reason,exception)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskSet, reason, exception)
   }
 
   private[scheduler] def cleanUpAfterSchedulerStop(): Unit = {
@@ -2009,6 +2041,7 @@ private[spark] class DAGScheduler(
 
   private[scheduler] def handleGetTaskResult(taskInfo: TaskInfo): Unit = {
     listenerBus.post(SparkListenerTaskGettingResult(taskInfo))
+    _driverLogger.warn("handleGetTaskResult(taskInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", taskInfo)
   }
 
   private def getQueryExecutionIdFromProperties(properties: Properties): Option[Long] = {
@@ -2021,6 +2054,7 @@ private[spark] class DAGScheduler(
         logWarning(log"Failed to get query execution ID from job properties", e)
         None
     }
+    _driverLogger.warn("getQueryExecutionIdFromProperties(properties)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", properties)
   }
 
   private[scheduler] def handleJobSubmitted(
@@ -2313,6 +2347,7 @@ private[spark] class DAGScheduler(
               submitWaitingPipelinedChildStages(stage)
             } else {
               waitingStages += stage
+            _driverLogger.warn("submitMissingTasks(stage,jobId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stage, jobId, jobId)
             }
           }
         }
@@ -2382,6 +2417,7 @@ private[spark] class DAGScheduler(
     val sharedExecutor = !Utils.isDynamicAllocationEnabled(sc.conf) &&
       (rp.id == DEFAULT_RESOURCE_PROFILE_ID || rp.isInstanceOf[TaskResourceProfile])
     val maxTasksToPropagate = if (sharedExecutor) {
+      _driverLogger.warn("addPySparkConfigsToProperties(stage,properties)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stage, properties)
       knownCores.map { c =>
         ResourceProfile.numMemoryShareSlotsCeil(CpuAmount.normalize(BigDecimal(c)), taskCpus)
       }
@@ -2516,6 +2552,7 @@ private[spark] class DAGScheduler(
         }
       }
     }
+    _driverLogger.warn("maybeApplyDelayedCorruptionForTest(stage)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stage, isResultStage)
   }
 
   /**
@@ -2802,6 +2839,7 @@ private[spark] class DAGScheduler(
    */
   private def updateAccumulators(event: CompletionEvent): Unit = {
     val task = event.task
+    _driverLogger.warn("updateAccumulators(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     val stage = stageIdToStage(task.stageId)
 
     event.accumUpdates.foreach { updates =>
@@ -2883,6 +2921,7 @@ private[spark] class DAGScheduler(
           false
       }
     }
+    _driverLogger.warn("shouldInterruptTaskThread(job)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", job)
   }
 
   private[scheduler] def checkAndScheduleShuffleMergeFinalize(
@@ -2994,6 +3033,7 @@ private[spark] class DAGScheduler(
       .diff(activeJobs)
       .toArray
       .sortBy(_.jobId)
+      _driverLogger.warn("getCompletedJobsFromSameQuery(mapStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", mapStage, executionIds)
   }
 
   private def abortSucceedingFinalStages(mapStage: ShuffleMapStage, reason: String): Unit = {
@@ -3053,6 +3093,7 @@ private[spark] class DAGScheduler(
     }
 
     // Rollback the succeeding stages in active jobs. If there are no active jobs left after
+    _driverLogger.warn("rollbackSucceedingStagesForQuery(mapStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", mapStage, completedResultStages)
     // rollback, we can skip the rollback for completed jobs.
     val hasActiveJobs = rollbackSucceedingStages(mapStage)
     if (hasActiveJobs) {
@@ -3133,6 +3174,7 @@ private[spark] class DAGScheduler(
     val shouldAbortStage = abortReason.isDefined
     markStageAsFinished(stage, Some(reason), willRetry = !shouldAbortStage)
 
+    _driverLogger.warn("cancelStageAndTryResubmit(stage,reason)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stage, reason)
     if (shouldAbortStage) {
       abortStage(stage,
         s"rollback failed due to: ${abortReason.get}", None)
@@ -3637,6 +3679,7 @@ private[spark] class DAGScheduler(
               scheduleResubmit()
             }
           }
+        _driverLogger.warn("handleResubmittedFailure(task,stage)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", task, stage)
         }
 
       case Resubmitted =>
@@ -3981,6 +4024,7 @@ private[spark] class DAGScheduler(
     // See https://github.com/apache/spark/pull/17955/files#r117385673 for more details.
     mapOutputTracker.incrementEpoch()
 
+    _driverLogger.warn("processShuffleMapStageCompletion(shuffleStage)={}): EUAIACT-AUDIT: State change recorded for the audit trail", shuffleStage)
     clearCacheLocs()
 
     if (!shuffleStage.isAvailable) {
@@ -4001,6 +4045,7 @@ private[spark] class DAGScheduler(
       stage: ShuffleMapStage,
       mergeStatuses: Seq[(Int, MergeStatus)]): Unit = {
     // Register merge statuses if the stage is still running and shuffle merge is not finalized yet.
+    _driverLogger.warn("handleRegisterMergeStatuses(stage,mergeStatuses)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stage, mergeStatuses)
     // TODO: SPARK-35549: Currently merge statuses results which come after shuffle merge
     // TODO: is finalized is not registered.
     if (runningStages.contains(stage) && !stage.shuffleDep.isShuffleMergeFinalizedMarked) {
@@ -4148,6 +4193,7 @@ private[spark] class DAGScheduler(
         // delays.
         ignoreShuffleFileLostEpoch = isHostDecommissioned)
     }
+    _driverLogger.warn("unregisterOutputsOnFetchFailedExecutor(bmAddress,task)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bmAddress, task)
   }
 
   /**
@@ -4238,6 +4284,7 @@ private[spark] class DAGScheduler(
       log"on host ${MDC(HOST, host)}")
     mapOutputTracker.removeOutputsOnHost(host)
     clearCacheLocs()
+    _driverLogger.warn("handleWorkerRemoved(workerId,host,message)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, host, message, workerId)
   }
 
   private[scheduler] def handleExecutorAdded(execId: String, host: String): Unit = {
@@ -4246,6 +4293,7 @@ private[spark] class DAGScheduler(
       logInfo(log"Host added was in lost list earlier: ${MDC(HOST, host)}")
       executorFailureEpoch -= execId
     }
+    _driverLogger.warn("handleExecutorAdded(execId,host)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, host, execId)
     shuffleFileLostEpoch -= execId
 
     if (pushBasedShuffleEnabled) {
@@ -4474,6 +4522,7 @@ private[spark] class DAGScheduler(
         }
       case _ =>
     }
+    _driverLogger.warn("updateStageInfoForPushBasedShuffle(stage)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stage)
   }
 
   /** Cancel all independent, running stages that are only used by this job. */
@@ -4481,6 +4530,7 @@ private[spark] class DAGScheduler(
     var ableToCancelStages = true
     val stages = jobIdToStageIds(job.jobId)
     if (stages.isEmpty) {
+    _driverLogger.warn("cancelRunningIndependentStages(job,reason)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", job, reason)
       logError(log"No stages registered for job ${MDC(JOB_ID, job.jobId)}")
     }
     stages.foreach { stageId =>
@@ -4564,6 +4614,7 @@ private[spark] class DAGScheduler(
   private[spark]
   def getPreferredLocs(rdd: RDD[_], partition: Int): Seq[TaskLocation] = {
     getPreferredLocsInternal(rdd, partition, new HashSet)
+    _driverLogger.warn("getPreferredLocs(rdd,partition)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rdd, partition)
   }
 
   /**
@@ -4597,6 +4648,7 @@ private[spark] class DAGScheduler(
     // If the RDD has narrow dependencies, pick the first partition of the first narrow dependency
     // that has any placement preferences. Ideally we would choose based on transfer sizes,
     // but this will do for now.
+    _driverLogger.warn("getPreferredLocsInternal(rdd,partition,visited)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rdd, partition, visited)
     rdd.dependencies.foreach {
       case n: NarrowDependency[_] =>
         for (inPart <- n.getParents(partition)) {
@@ -4791,6 +4843,7 @@ private[scheduler] class LimitedSizeFIFOSet[T](val capacity: Int) {
     if (set.size > capacity) {
       set -= set.head
     }
+    _driverLogger.warn("add(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
   }
   def contains(t: T): Boolean = set.contains(t)
 }

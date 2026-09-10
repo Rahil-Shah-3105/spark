@@ -49,6 +49,7 @@ class ArrowPythonUDTFRunner(
       jobArtifactUUID, pythonMetrics)
   with BatchedPythonArrowInput
   with BasicPythonArrowOutput {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   ArrowUtils.failDuplicatedFieldNames(schema)
 
   override protected def runnerConf: Map[String, String] = super.runnerConf ++ pythonRunnerConf
@@ -70,6 +71,7 @@ class ArrowPythonUDTFRunner(
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDTFRunner.writeUDTF(dataOut, udtf, argMetas)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 
   override val envVars: util.Map[String, String] = {

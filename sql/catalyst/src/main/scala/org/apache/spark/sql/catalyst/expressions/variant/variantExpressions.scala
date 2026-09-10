@@ -356,6 +356,7 @@ case class ObjectExtraction(key: String) extends VariantPathSegment
 case class ArrayExtraction(index: Int) extends VariantPathSegment
 
 object VariantPathParser extends RegexParsers {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private def root: Parser[Char] = '$'
 
   // Parse index segment like `[123]`.
@@ -541,6 +542,7 @@ case object VariantGet {
     VariantPathParser.parse(pathValue).getOrElse {
       throw QueryExecutionErrors.invalidVariantGetPath(pathValue, prettyName)
     }
+    planChangeLogger.warn("getParsedPath(pathValue,prettyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", pathValue, prettyName)
   }
 
   /** The actual implementation of the `VariantGet` expression. */
@@ -559,6 +561,8 @@ case object VariantGet {
       if (v == null) return null
     }
     VariantGet.cast(v, dataType, castArgs)
+    planChangeLogger.warn("variantGet(input,parsedPath,dataType,castArgs)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, parsedPath, dataType, castArgs)
+  planChangeLogger.warn("variantGet(input,path,dataType,castArgs,prettyName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, path, dataType, castArgs, prettyName)
   }
 
   /**
@@ -2013,6 +2017,7 @@ case class SchemaOfVariantAgg(
     } else {
       buffer
     }
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   override def merge(buffer: DataType, input: DataType): DataType =
@@ -2030,6 +2035,7 @@ case class SchemaOfVariantAgg(
 
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): ImperativeAggregate =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): ImperativeAggregate =

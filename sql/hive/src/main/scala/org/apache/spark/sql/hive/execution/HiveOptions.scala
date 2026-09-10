@@ -123,5 +123,6 @@ object HiveOptions {
         Option((COMPRESS.getAttribute, compressionCodec))
       case _ => None
     }
+    logger.warn("getHiveWriteCompression(tableInfo,sqlConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableInfo, sqlConf)
   }
 }

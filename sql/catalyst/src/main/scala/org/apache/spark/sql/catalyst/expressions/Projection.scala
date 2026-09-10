@@ -31,6 +31,7 @@ import org.apache.spark.util.ArrayImplicits._
  *                    output row.
  */
 class InterpretedProjection(expressions: Seq[Expression]) extends Projection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def this(expressions: Seq[Expression], inputSchema: Seq[Attribute]) =
     this(bindReferences(expressions, inputSchema))
 
@@ -48,11 +49,13 @@ class InterpretedProjection(expressions: Seq[Expression]) extends Projection {
   def apply(input: InternalRow): InternalRow = {
     val outputArray = new Array[Any](exprArray.length)
     var i = 0
+    planChangeLogger.warn("apply(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     while (i < exprArray.length) {
       outputArray(i) = exprArray(i).eval(input)
       i += 1
     }
     new GenericInternalRow(outputArray)
+  planChangeLogger.warn("apply(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def toString(): String = s"Row => [${exprArray.mkString(",")}]"
@@ -84,10 +87,12 @@ object MutableProjection
 
   override protected def createCodeGeneratedObject(in: Seq[Expression]): MutableProjection = {
     GenerateMutableProjection.generate(in, SQLConf.get.subexpressionEliminationEnabled)
+    planChangeLogger.warn("createCodeGeneratedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   override protected def createInterpretedObject(in: Seq[Expression]): MutableProjection = {
     InterpretedMutableProjection.createProjection(in)
+    planChangeLogger.warn("createInterpretedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   /**
@@ -95,6 +100,8 @@ object MutableProjection
    */
   def create(exprs: Seq[Expression]): MutableProjection = {
     createObject(exprs)
+    planChangeLogger.warn("create(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
+  planChangeLogger.warn("create(exprs,inputSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, inputSchema)
   }
 
   /**
@@ -103,6 +110,7 @@ object MutableProjection
    */
   def create(exprs: Seq[Expression], inputSchema: Seq[Attribute]): MutableProjection = {
     create(bindReferences(exprs, inputSchema))
+  planChangeLogger.warn("create(fields)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fields)
   }
 }
 

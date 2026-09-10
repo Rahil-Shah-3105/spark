@@ -45,6 +45,7 @@ private[spark] abstract class StreamFileInputFormat[T]
    * which is set through setMaxSplitSize
    */
   def setMinPartitions(sc: SparkContext, context: JobContext, minPartitions: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val defaultMaxSplitBytes = sc.conf.get(config.FILES_MAX_PARTITION_BYTES)
     val openCostInBytes = sc.conf.get(config.FILES_OPEN_COST_IN_BYTES)
     val defaultParallelism = Math.max(sc.defaultParallelism, minPartitions)
@@ -58,6 +59,7 @@ private[spark] abstract class StreamFileInputFormat[T]
     val minSplitSizePerNode = jobConfig.getLong(CombineFileInputFormat.SPLIT_MINSIZE_PERNODE, 0L)
     val minSplitSizePerRack = jobConfig.getLong(CombineFileInputFormat.SPLIT_MINSIZE_PERRACK, 0L)
 
+    _driverLogger.warn("setMinPartitions(sc,context,minPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, context, minPartitions)
     if (maxSplitSize < minSplitSizePerNode) {
       super.setMinSplitSizeNode(maxSplitSize)
     }
@@ -86,6 +88,7 @@ private[spark] abstract class StreamBasedRecordReader[T](
 
   private var key = ""
   private var value: T = null.asInstanceOf[T]
+  _driverLogger.warn("createRecordReader(split,taContext)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", split, taContext)
 
   override def initialize(split: InputSplit, context: TaskAttemptContext): Unit = {}
   override def close(): Unit = {}

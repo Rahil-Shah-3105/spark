@@ -35,6 +35,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{BinaryView, UTF8String, VariantVal}
 
 object EvaluatePython {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Wrapper class for byte arrays that should be pickled as Python bytes instead of bytearray.
@@ -314,6 +315,7 @@ object EvaluatePython {
 
     def register(): Unit = {
       Pickler.registerCustomPickler(cls, this)
+      planChangeLogger.warn("register()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def pickle(obj: Object, out: OutputStream, pickler: Pickler): Unit = {
@@ -413,6 +415,7 @@ object EvaluatePython {
         registered = true
       }
     }
+    planChangeLogger.warn("registerPicklers()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

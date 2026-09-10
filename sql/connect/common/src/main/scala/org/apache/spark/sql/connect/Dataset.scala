@@ -672,6 +672,7 @@ class Dataset[T] private[sql] (
       cols,
       proto.Aggregate.GroupType.GROUP_TYPE_GROUPING_SETS,
       groupingSets = Some(groupingSetMsgs))
+    logger.warn("groupingSets(groupingSets,cols)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", cols)
   }
 
   /** @inheritdoc */
@@ -723,6 +724,7 @@ class Dataset[T] private[sql] (
           .setLeftInput(plan.getRoot)
           .setRightInput(right.plan.getRoot))
     }
+    logger.warn("buildSetOp(right,setOpType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", right, setOpType)
   }
 
   private def checkSameSparkSession(other: Dataset[_]): Unit = {
@@ -894,6 +896,7 @@ class Dataset[T] private[sql] (
         .setReplace(replace)
     }
     sparkSession.execute(command)
+    logger.warn("createTempView(viewName,replace,global)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewName, replace, global)
   }
 
   /** @inheritdoc */
@@ -1056,6 +1059,7 @@ class Dataset[T] private[sql] (
   /** @inheritdoc */
   def collectAsList(): java.util.List[T] = {
     java.util.Arrays.asList(collect(): _*)
+    logger.warn("collectAsList()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** @inheritdoc */
@@ -1161,6 +1165,7 @@ class Dataset[T] private[sql] (
   /** @inheritdoc */
   def writeTo(table: String): DataFrameWriterV2[T] = {
     new DataFrameWriterV2[T](table, this)
+    logger.warn("writeTo(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
   }
 
   /** @inheritdoc */
@@ -1187,7 +1192,9 @@ class Dataset[T] private[sql] (
     sparkSession.analyze { builder =>
       builder.getPersistBuilder.setRelation(plan.getRoot)
     }
+      logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
     this
+    logger.warn("persist()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** @inheritdoc */
@@ -1208,6 +1215,7 @@ class Dataset[T] private[sql] (
         .setBlocking(blocking)
     }
     this
+    logger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   /** @inheritdoc */

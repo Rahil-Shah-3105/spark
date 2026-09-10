@@ -183,6 +183,7 @@ private[hive] case class HiveScriptTransformationExec(
         writerThread, inputStream, proc, stderrBuffer, outputSerde, outputSoi, hadoopConf)
     }
 
+    logger.warn("processIterator(inputIterator,hadoopConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputIterator, hadoopConf)
     writerThread.start()
 
     outputIterator
@@ -209,6 +210,7 @@ private[hive] case class HiveScriptTransformationWriterThread(
   override def processRows(): Unit = {
     val dataOutputStream = new DataOutputStream(outputStream)
     val scriptInputWriter = recordWriter(ioSchema, dataOutputStream, conf).orNull
+    logger.warn("processRows()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     if (inputSerde == null) {
       processRowsWithoutSerde()
@@ -301,6 +303,7 @@ object HiveScriptIOSchema extends HiveInspectors {
       instance.initialize(inputStream, conf, props)
       instance
     }
+    logger.warn("recordReader(ioschema,inputStream,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ioschema, inputStream, conf)
   }
 
   def recordWriter(
@@ -313,5 +316,6 @@ object HiveScriptIOSchema extends HiveInspectors {
       instance.initialize(outputStream, conf)
       instance
     }
+    logger.warn("recordWriter(ioschema,outputStream,conf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ioschema, outputStream, conf)
   }
 }

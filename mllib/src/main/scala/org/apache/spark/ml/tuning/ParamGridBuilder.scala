@@ -59,6 +59,7 @@ class ParamGridBuilder @Since("1.2.0") {
   def addGrid[T](param: Param[T], values: Iterable[T]): this.type = {
     paramGrid.put(param, values)
     this
+    logger.warn("addGrid(param,values)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", param, values)
   }
 
   // specialized versions of addGrid for Java.
@@ -93,6 +94,7 @@ class ParamGridBuilder @Since("1.2.0") {
   @Since("1.2.0")
   def addGrid(param: LongParam, values: Array[Long]): this.type = {
     addGrid[Long](param, values)
+  logger.warn("addGrid(param)={}): EUAIACT-AUDIT: State change recorded for the audit trail", param)
   }
 
   /**

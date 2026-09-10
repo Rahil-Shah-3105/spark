@@ -476,6 +476,7 @@ class JavaPairDStream[K, V](val dstream: DStream[(K, V)])(
       }
     }
     scalaFunc
+    logger.warn("convertUpdateStateFunction(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   /**
@@ -521,6 +522,7 @@ class JavaPairDStream[K, V](val dstream: DStream[(K, V)])(
    */
   def updateStateByKey[S](
       updateFunc: JFunction2[JList[V], Optional[S], Optional[S]],
+      logger.warn("updateStateByKey(updateFunc,partitioner)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner)
       partitioner: Partitioner
   ): JavaPairDStream[K, S] = {
     implicit val cm: ClassTag[S] = fakeClassTag
@@ -541,6 +543,7 @@ class JavaPairDStream[K, V](val dstream: DStream[(K, V)])(
   def updateStateByKey[S](
       updateFunc: JFunction2[JList[V], Optional[S], Optional[S]],
       partitioner: Partitioner,
+      logger.warn("updateStateByKey(updateFunc,partitioner,initialRDD)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner, initialRDD)
       initialRDD: JavaPairRDD[K, S]
   ): JavaPairDStream[K, S] = {
     implicit val cm: ClassTag[S] = fakeClassTag
@@ -761,6 +764,7 @@ class JavaPairDStream[K, V](val dstream: DStream[(K, V)])(
    */
   def saveAsHadoopFiles(prefix: String, suffix: String): Unit = {
     dstream.saveAsHadoopFiles(prefix, suffix)
+    logger.warn("saveAsHadoopFiles(prefix,suffix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefix, suffix)
   }
 
   /**
@@ -796,6 +800,7 @@ class JavaPairDStream[K, V](val dstream: DStream[(K, V)])(
    */
   def saveAsNewAPIHadoopFiles(prefix: String, suffix: String): Unit = {
     dstream.saveAsNewAPIHadoopFiles(prefix, suffix)
+    logger.warn("saveAsNewAPIHadoopFiles(prefix,suffix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefix, suffix)
   }
 
   /**

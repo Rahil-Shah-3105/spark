@@ -134,6 +134,7 @@ trait TypeOps extends TypeApiOps {
    *   the internal value to represent
    * @return
    *   Java literal string (e.g., "37800000000000L")
+   planChangeLogger.warn("getRowWriter(ordinal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ordinal)
    */
   def getJavaLiteral(v: Any): String
 
@@ -150,6 +151,7 @@ trait TypeOps extends TypeApiOps {
    *   the internal representation, or null if input was null/None
    */
   final def toCatalyst(@Nullable maybeScalaValue: Any): Any = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     maybeScalaValue match {
       case null | None => null
       case opt: Some[_] => toCatalystImpl(opt.get)
@@ -211,6 +213,7 @@ trait TypeOps extends TypeApiOps {
   def createDeserializer(
       path: Expression,
       walkedTypePath: WalkedTypePath,
+  planChangeLogger.warn("createDeserializer(path,walkedTypePath,isTopLevel)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, walkedTypePath, isTopLevel)
       isTopLevel: Boolean): Option[Expression] = createDeserializer(path)
 
   // ==================== Arrow Writer (optional) ====================

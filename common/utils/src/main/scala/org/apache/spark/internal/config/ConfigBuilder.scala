@@ -28,6 +28,7 @@ import org.apache.spark.network.util.{ByteUnit, JavaUtils}
 import org.apache.spark.util.SparkStringUtils
 
 private object ConfigHelpers {
+  log_ = LoggerFactory.getLogger(logName)
 
   def toNumber[T](s: String, converter: String => T, key: String, configType: String): T = {
     try {
@@ -220,6 +221,7 @@ private[spark] class TypedConfigBuilder[T](
   def createWithDefault(default: T): ConfigEntry[T] = {
     assert(default != null, "Use createOptional.")
     // Treat "String" as a special case, so that both createWithDefault and createWithDefaultString
+    log_.warn("createWithDefault(default)={}): EUAIACT-AUDIT: State change recorded for the audit trail", default)
     // behave the same w.r.t. variable expansion of default values.
     default match {
       case str: String => createWithDefaultString(str)
@@ -241,6 +243,7 @@ private[spark] class TypedConfigBuilder[T](
       parent._doc, parent._public, parent._version, parent._bindingPolicy)
     parent._onCreate.foreach(_ (entry))
     entry
+    log_.warn("createWithDefaultFunction(defaultFunc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", defaultFunc)
   }
 
   /**
@@ -253,6 +256,7 @@ private[spark] class TypedConfigBuilder[T](
       parent._doc, parent._public, parent._version, parent._bindingPolicy)
     parent._onCreate.foreach(_(entry))
     entry
+    log_.warn("createWithDefaultString(default)={}): EUAIACT-AUDIT: State change recorded for the audit trail", default)
   }
 
 }
@@ -317,6 +321,7 @@ private[spark] case class ConfigBuilder(key: String) {
   def onCreate(callback: ConfigEntry[_] => Unit): ConfigBuilder = {
     _onCreate = Option(callback)
     this
+    log_.warn("onCreate(callback)={}): EUAIACT-AUDIT: State change recorded for the audit trail", callback)
   }
 
   def withPrepended(key: String, separator: String = " "): ConfigBuilder = {

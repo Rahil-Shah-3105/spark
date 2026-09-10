@@ -35,6 +35,7 @@ import org.apache.spark.sql.execution.streaming.state.{StateStoreCheckpointInfo,
  * Helper object for [[StreamingSymmetricHashJoinExec]]. See that object for more details.
  */
 object StreamingSymmetricHashJoinHelper extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   sealed trait JoinSide
   case object LeftSide extends JoinSide { override def toString(): String = "left" }
@@ -126,6 +127,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
       // Note that we treat nondeterministic conjuncts as though they require both left and right
       // input. To maintain their semantics, they need to be evaluated exactly once per joined row.
       val (leftCondition, rightCondition, joinedCondition) = {
+        planChangeLogger.warn("apply(condition,left,right)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, left, right)
         if (condition.isEmpty) {
           (None, None, None)
         } else {
@@ -173,6 +175,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
     WatermarkSupport.findEventTimeColumn(rightAttributes,
       allowMultipleEventTimeColumns = allowMultipleEventTimeColumns)
 
+    planChangeLogger.warn("getStateWatermark(leftAttributes,rightAttributes,leftKeys,rightKeys,condition,eventTimeWatermarkForEviction,allowMultipleEventTimeColumns)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftAttributes, rightAttributes, leftKeys, rightKeys, condition, eventTimeWatermarkForEviction, allowMultipleEventTimeColumns)
     val joinKeyOrdinalForWatermark: Option[Int] = findJoinKeyOrdinalForWatermark(
       leftKeys, rightKeys)
 
@@ -181,6 +184,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
         otherSideInputAttributes: Seq[Attribute]): Option[Long] = {
       val isWatermarkDefinedOnInput = oneSideInputAttributes.exists(_.metadata.contains(delayKey))
       val isWatermarkDefinedOnJoinKey = joinKeyOrdinalForWatermark.isDefined
+      planChangeLogger.warn("getOneSideStateWatermark(oneSideInputAttributes,otherSideInputAttributes)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", oneSideInputAttributes, otherSideInputAttributes, oneSideInputAttributes)
 
       if (isWatermarkDefinedOnJoinKey) { // case 1 and 3 in the StreamingSymmetricHashJoinExec docs
         eventTimeWatermarkForEviction
@@ -221,6 +225,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
     WatermarkSupport.findEventTimeColumn(rightAttributes,
       allowMultipleEventTimeColumns = useFirstEventTimeColumn)
 
+    planChangeLogger.warn("getStateWatermarkPredicates(leftAttributes,rightAttributes,leftKeys,rightKeys,condition,eventTimeWatermarkForEviction,eventTimeWatermarkForLateEvents,useFirstEventTimeColumn)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftAttributes, rightAttributes, leftKeys, rightKeys, condition, eventTimeWatermarkForEviction, eventTimeWatermarkForLateEvents, useFirstEventTimeColumn)
     val joinKeyOrdinalForWatermark: Option[Int] = findJoinKeyOrdinalForWatermark(
       leftKeys, rightKeys)
 
@@ -230,6 +235,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
         otherSideInputAttributes: Seq[Attribute]): Option[JoinStateWatermarkPredicate] = {
       val isWatermarkDefinedOnInput = oneSideInputAttributes.exists(_.metadata.contains(delayKey))
       val isWatermarkDefinedOnJoinKey = joinKeyOrdinalForWatermark.isDefined
+      planChangeLogger.warn("getOneSideStateWatermarkPredicate(oneSideInputAttributes,oneSideJoinKeys,otherSideInputAttributes)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", oneSideInputAttributes, oneSideJoinKeys, otherSideInputAttributes, oneSideInputAttributes)
 
       if (isWatermarkDefinedOnJoinKey) { // case 1 and 3 in the StreamingSymmetricHashJoinExec docs
         val keyExprWithWatermark = BoundReference(
@@ -288,6 +294,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
     // timestamp < watermark will not match will not match with left side data, as the left side get
     // filtered with the explicitly defined watermark. So, the watermark in timestamp column in
     // left side keys effectively causes the timestamp on the right side to have a watermark.
+    planChangeLogger.warn("findJoinKeyOrdinalForWatermark(leftKeys,rightKeys)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftKeys, rightKeys)
     // We will use the ordinal of the left timestamp in the left keys to find the corresponding
     // right timestamp in the right keys.
     leftKeys.zipWithIndex.collectFirst {
@@ -324,6 +331,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
         val stateStoreProviderId = StateStoreProviderId(stateInfo, partition.index, storeName)
         storeCoordinator.flatMap(_.getLocation(stateStoreProviderId))
       }.distinct
+      planChangeLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
     }
 
     override def compute(s: Partition, context: TaskContext): Iterator[V] = {
@@ -360,6 +368,7 @@ object StreamingSymmetricHashJoinHelper extends Logging {
       )(f: (Int, Iterator[T], Iterator[U]) => Iterator[V]): RDD[V] = {
       new StateStoreAwareZipPartitionsRDD(
         dataRDD.sparkContext, f, dataRDD, dataRDD2, stateInfo, storeNames, Some(storeCoordinator))
+      planChangeLogger.warn("stateStoreAwareZipPartitions(dataRDD2,stateInfo,storeNames,storeCoordinator)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataRDD2, stateInfo, storeNames, storeCoordinator)
     }
   }
 

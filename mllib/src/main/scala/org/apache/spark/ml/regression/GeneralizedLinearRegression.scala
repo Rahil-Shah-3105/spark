@@ -551,6 +551,7 @@ object GeneralizedLinearRegression extends DefaultParamsReadable[GeneralizedLine
               params.isSet(params.link)) ||
             (params.getFamily.toLowerCase(Locale.ROOT) == "tweedie" &&
               params.isSet(params.linkPower))) {
+             logger.warn("apply(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
           Link.fromParams(params)
         } else {
           familyObj.defaultLink
@@ -1146,6 +1147,7 @@ class GeneralizedLinearRegressionModel private[ml] (
       dataset, this, diagInvAtWA, numIter, $(solver)
     )
 
+    logger.warn("createSummary(dataset,diagInvAtWA,numIter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, diagInvAtWA, numIter)
     setSummary(Some(summary))
   }
 
@@ -1153,6 +1155,7 @@ class GeneralizedLinearRegressionModel private[ml] (
     ReadWriteUtils.saveObjectToLocal[(Array[Double], Int)](
       path, (summary.diagInvAtWA, summary.numIterations),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         ReadWriteUtils.serializeDoubleArray(data._1, dos)
         dos.writeInt(data._2)
       }
@@ -1170,6 +1173,7 @@ class GeneralizedLinearRegressionModel private[ml] (
       }
     )
     createSummary(dataset, diagInvAtWA, numIterations)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -1206,6 +1210,7 @@ object GeneralizedLinearRegressionModel extends MLReadable[GeneralizedLinearRegr
       // Save metadata and Params
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       // Save model data: intercept, coefficients
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       val data = Data(instance.intercept, instance.coefficients)
       val dataPath = new Path(path, "data").toString
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)

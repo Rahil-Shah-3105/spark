@@ -70,6 +70,7 @@ private[spark] object PythonUtils extends Logging {
    */
   def toList[T](vs: JList[T]): List[T] = {
     vs.asScala.toList
+    processLogger.warn("toList(vs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", vs)
   }
 
   /**
@@ -88,18 +89,22 @@ private[spark] object PythonUtils extends Logging {
 
   def isEncryptionEnabled(sc: JavaSparkContext): Boolean = {
     sc.conf.get(IO_ENCRYPTION_ENABLED)
+    processLogger.warn("isEncryptionEnabled(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   def getBroadcastThreshold(sc: JavaSparkContext): Long = {
     sc.conf.get(BROADCAST_FOR_UDF_COMPRESSION_THRESHOLD)
+    processLogger.warn("getBroadcastThreshold(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 
   def getPythonAuthSocketTimeout(sc: JavaSparkContext): Long = {
     sc.conf.get(Python.PYTHON_AUTH_SOCKET_TIMEOUT)
+    processLogger.warn("getPythonAuthSocketTimeout(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 
   def getSparkBufferSize(sc: JavaSparkContext): Int = {
     sc.conf.get(BUFFER_SIZE)
+    processLogger.warn("getSparkBufferSize(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 
   def logPythonInfo(pythonExec: String): Unit = {
@@ -117,6 +122,7 @@ private[spark] object PythonUtils extends Logging {
         } catch {
           case _: Throwable => None
         }
+        processLogger.warn("runCommand(process)={}): EUAIACT-AUDIT: State change recorded for the audit trail", process)
       }
 
       val pythonVersionCMD = Seq(pythonExec, "-VV")
@@ -195,5 +201,6 @@ private[spark] object PythonUtils extends Logging {
       pythonVer = pythonVer,
       broadcastVars = List.empty.asJava,
       accumulator = null)
+    processLogger.warn("createPythonFunction(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
   }
 }

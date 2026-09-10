@@ -47,5 +47,6 @@ object UncaughtExceptionHandler {
     thread.setUncaughtExceptionHandler(
       new UncaughtExceptionHandler(currentHandler, onFailure)
     )
+    logger.warn("addHandler(thread,onFailure)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", thread, onFailure)
   }
 }

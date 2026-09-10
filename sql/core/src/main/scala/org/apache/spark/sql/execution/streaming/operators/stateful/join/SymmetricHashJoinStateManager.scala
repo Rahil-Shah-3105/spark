@@ -75,6 +75,7 @@ trait SymmetricHashJoinStateManager {
    * @param timestampRange Optional optimization hint as (minTimestamp, maxTimestamp), both
    *   inclusive. Derived classes may use it to reduce scan scope but are free to ignore it.
    *   The predicate must produce correct output regardless of whether this hint is leveraged.
+   planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
    */
   def getJoinedRows(
       key: UnsafeRow,
@@ -140,6 +141,7 @@ trait SymmetricHashJoinStateManager {
  * with existing tests which look up the state store with key with index.
  */
 trait SupportsIndexedKeys {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def getInternalRowOfKeyWithIndex(currentKey: UnsafeRow): InternalRow
 
   protected[streaming] def updateNumValuesTestOnly(key: UnsafeRow, numValues: Long): Unit
@@ -153,6 +155,7 @@ trait SupportsIndexedKeys {
 trait SupportsEvictByCondition { self: SymmetricHashJoinStateManager =>
   import SymmetricHashJoinStateManager._
 
+  planChangeLogger.warn("updateNumValuesTestOnly(key,numValues)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, numValues)
   /** Evict the state via condition on the key. Returns the number of values evicted. */
   def evictByKeyCondition(removalCondition: UnsafeRow => Boolean): Long
 
@@ -459,6 +462,7 @@ class SymmetricHashJoinStateManagerV4(
       new NextIterator[JoinedRow] {
         private var currentIndex = 0
 
+        planChangeLogger.warn("getJoinedRowsFromTsAndValues(ts,valuesAndMatched)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ts, valuesAndMatched)
         private var shouldUpdateValuesIntoStateStore = false
 
         override protected def getNext(): JoinedRow = {
@@ -705,6 +709,7 @@ class SymmetricHashJoinStateManagerV4(
     private def createKeyRow(key: UnsafeRow, timestamp: Long): UnsafeRow = {
       TimestampKeyStateEncoder.attachTimestamp(
         attachTimestampProjection, keySchemaWithTimestamp, key, timestamp)
+      planChangeLogger.warn("createKeyRow(key,timestamp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, timestamp)
     }
 
     def append(key: UnsafeRow, timestamp: Long, value: UnsafeRow, matched: Boolean): Unit = {
@@ -729,17 +734,20 @@ class SymmetricHashJoinStateManagerV4(
       readStateStore.valuesIterator(createKeyRow(key, timestamp), colFamilyName).map { valueRow =>
         valueRowConverter.convertValue(valueRow)
       }
+      planChangeLogger.warn("get(key,timestamp)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, timestamp)
     }
 
     // NOTE: We do not have a case where we only remove a part of values. Even if that is needed
     // we handle it via put() with writing a new array.
     def remove(key: UnsafeRow, timestamp: Long): Unit = {
       stateStore.remove(createKeyRow(key, timestamp), colFamilyName)
+      planChangeLogger.warn("remove(key,timestamp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, timestamp)
     }
 
     // NOTE: This assumes we consume the whole iterator to trigger completion.
     def getValues(key: UnsafeRow): Iterator[GetValuesResult] = {
       getValuesInRange(key, Long.MinValue, Long.MaxValue)
+      planChangeLogger.warn("getValues(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     }
 
     /**
@@ -755,6 +763,7 @@ class SymmetricHashJoinStateManagerV4(
       val reusableGetValuesResult = new GetValuesResult()
       // Only use rangeScan when maxTs < Long.MaxValue, since rangeScan requires
       // an exclusive end key (maxTs + 1) which would overflow at Long.MaxValue.
+      planChangeLogger.warn("getValuesInRange(key,minTs,maxTs)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", key, minTs, maxTs, reusableGetValuesResult)
       val useRangeScan = maxTs < Long.MaxValue
 
       new NextIterator[GetValuesResult] {
@@ -823,6 +832,7 @@ class SymmetricHashJoinStateManagerV4(
               reusableGetValuesResult.withNew(prevTs, prevValues)
             }
           }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
 
         override protected def close(): Unit = iter.close()
@@ -886,10 +896,12 @@ class SymmetricHashJoinStateManagerV4(
 
     def add(timestamp: Long, key: UnsafeRow): Unit = {
       stateStore.merge(createKeyRow(key, timestamp), EMPTY_ROW, colFamilyName)
+      planChangeLogger.warn("add(timestamp,key)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timestamp, key)
     }
 
     def remove(key: UnsafeRow, timestamp: Long): Unit = {
       stateStore.remove(createKeyRow(key, timestamp), colFamilyName)
+    planChangeLogger.warn("remove(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     case class EvictedKeysResult(key: UnsafeRow, timestamp: Long, numValues: Int)
@@ -1028,6 +1040,7 @@ class SymmetricHashJoinStateManagerV4(
     assert(keyToNumValuesCkptInfo == keyWithIndexToValueCkptInfo)
 
     JoinerStateStoreCkptInfo(keyToNumValuesCkptInfo, keyWithIndexToValueCkptInfo)
+  planChangeLogger.warn("getLatestCheckpointInfo()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -1151,6 +1164,7 @@ abstract class SymmetricHashJoinStateManagerBase(
    */
   protected def removeValueAtIndex(key: UnsafeRow, index: Long, numValues: Long): Long = {
     var currentNumValues = numValues
+    planChangeLogger.warn("removeValueAtIndex(key,index,numValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, index, numValues)
     if (index != currentNumValues - 1) {
       val valuePairAtMaxIndex = keyWithIndexToValue.get(key, currentNumValues - 1)
       if (valuePairAtMaxIndex != null) {
@@ -1308,6 +1322,7 @@ abstract class SymmetricHashJoinStateManagerBase(
         val keyWithIndexAndValue = currentValues.next()
         keyWithIndexToValue.remove(currentKey, keyWithIndexAndValue.valueIndex)
         reusedRet.withNew(currentKey, keyWithIndexAndValue.value, keyWithIndexAndValue.matched)
+        planChangeLogger.warn("getAndRemoveValue()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
 
       override def getNext(): KeyToValuePair = {
@@ -1434,6 +1449,7 @@ abstract class SymmetricHashJoinStateManagerBase(
         }
 
         currentKey = null
+        planChangeLogger.warn("updateNumValueForCurrentKey()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         numValues = 0
         index = 0
         valueRemoved = false
@@ -1478,6 +1494,7 @@ abstract class SymmetricHashJoinStateManagerBase(
             return null
           }
         }
+        planChangeLogger.warn("findNextValueForIndex()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
         // We tried and failed to find the next value.
         null
@@ -1775,6 +1792,7 @@ abstract class SymmetricHashJoinStateManagerBase(
     def get(key: UnsafeRow): Long = {
       val longValueRow = readStateStore.get(key, colFamilyName)
       if (longValueRow != null) longValueRow.getLong(0) else 0L
+    planChangeLogger.warn("get(key,valueIndex)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, valueIndex)
     }
 
     /** Set the number of values the key has */
@@ -1786,6 +1804,7 @@ abstract class SymmetricHashJoinStateManagerBase(
 
     def remove(key: UnsafeRow): Unit = {
       stateStore.remove(key, colFamilyName)
+    planChangeLogger.warn("remove(key,valueIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, valueIndex)
     }
 
     def iterator: Iterator[KeyAndNumValues] = {
@@ -1895,6 +1914,7 @@ abstract class SymmetricHashJoinStateManagerBase(
         private val keyWithIndexAndValue = new KeyWithIndexAndValue()
         private var index: Long = 0L
 
+        planChangeLogger.warn("getAll(key,numValues)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, numValues)
         private def hasMoreValues = index < numValues
         override protected def getNext(): KeyWithIndexAndValue = {
           while (hasMoreValues) {
@@ -1942,6 +1962,7 @@ abstract class SymmetricHashJoinStateManagerBase(
         stateStore.remove(keyWithIndexRow(key, index), colFamilyName)
         index += 1
       }
+      planChangeLogger.warn("removeAllValues(key,numValues)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, numValues)
     }
 
     def iterator: Iterator[KeyWithIndexAndValue] = {
@@ -2202,6 +2223,7 @@ object SymmetricHashJoinStateManager {
         joinStoreGenerator, readOnly
       )
     }
+    planChangeLogger.warn("apply(joinSide,inputValueAttributes,joinKeys,stateInfo,storeConf,hadoopConf,partitionId,keyToNumValuesStateStoreCkptId,keyWithIndexToValueStateStoreCkptId,stateFormatVersion,skippedNullValueCount,useStateStoreCoordinator,snapshotOptions,joinStoreGenerator,joinKeyOrdinalForWatermark,readOnly)={},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSide, inputValueAttributes, joinKeys, stateInfo, storeConf, hadoopConf, partitionId, keyToNumValuesStateStoreCkptId, keyWithIndexToValueStateStoreCkptId, stateFormatVersion, skippedNullValueCount, useStateStoreCoordinator, snapshotOptions, joinStoreGenerator, joinKeyOrdinalForWatermark, readOnly, joinSide)
   }
   // scalastyle:on
 
@@ -2210,6 +2232,7 @@ object SymmetricHashJoinStateManager {
     for (joinSide <- joinSides; stateStoreType <- allStateStoreTypes) yield {
       getStateStoreName(joinSide, stateStoreType)
     }
+    planChangeLogger.warn("allStateStoreNames(joinSides)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSides, joinSides)
   }
 
   def allStateStoreNamesV4(joinSides: JoinSide*): Seq[String] = {
@@ -2217,6 +2240,7 @@ object SymmetricHashJoinStateManager {
     for (joinSide <- joinSides; stateStoreType <- allStateStoreTypes) yield {
       getStateStoreName(joinSide, stateStoreType)
     }
+    planChangeLogger.warn("allStateStoreNamesV4(joinSides)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSides, joinSides)
   }
 
   def getSchemaForStateStores(
@@ -2227,6 +2251,7 @@ object SymmetricHashJoinStateManager {
     val keySchema = StructType(
       joinKeys.zipWithIndex.map { case (k, i) => StructField(s"field$i", k.dataType, k.nullable) })
 
+    planChangeLogger.warn("getSchemaForStateStores(joinSide,inputValueAttributes,joinKeys,stateFormatVersion)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSide, inputValueAttributes, joinKeys, stateFormatVersion, joinSide)
     if (stateFormatVersion == 4) {
       // V4 uses two column families: KeyWithTsToValues and TsWithKey
       val keySchemaWithTimestamp =
@@ -2273,6 +2298,7 @@ object SymmetricHashJoinStateManager {
     val schemas =
       getSchemaForStateStores(joinSide, inputValueAttributes, joinKeys, stateFormatVersion)
 
+      planChangeLogger.warn("getSchemasForStateStoreWithColFamily(joinSide,inputValueAttributes,joinKeys,stateFormatVersion)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSide, inputValueAttributes, joinKeys, stateFormatVersion, joinSide)
     schemas.map {
       case (colFamilyName, (keySchema, valueSchema)) =>
         val keyStateEncoderSpec = if (stateFormatVersion == 4) {
@@ -2374,6 +2400,7 @@ object SymmetricHashJoinStateManager {
           keyToNumValues = stateStoreCkptIdsOpt(2),
           keyWithIndexToValue = stateStoreCkptIdsOpt(3)))
     }
+    planChangeLogger.warn("getStateStoreCheckpointIds(partitionId,stateStoreCkptIds,useColumnFamiliesForJoins)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, stateStoreCkptIds, useColumnFamiliesForJoins, partitionId)
   }
 
   /**
@@ -2414,6 +2441,7 @@ object SymmetricHashJoinStateManager {
         None
       }
     }
+    planChangeLogger.warn("getStateStoreCheckpointId(storeName,partitionId,stateStoreCkptIds,useColumnFamiliesForJoins)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", storeName, partitionId, stateStoreCkptIds, useColumnFamiliesForJoins, partitionId)
   }
 
   private[sql] sealed trait StateStoreType
@@ -2437,6 +2465,7 @@ object SymmetricHashJoinStateManager {
   private[join] def getStateStoreName(
       joinSide: JoinSide, storeType: StateStoreType): String = {
     s"$joinSide-$storeType"
+    planChangeLogger.warn("getStateStoreName(joinSide,storeType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", joinSide, storeType, joinSide)
   }
 
   private[join] def getStoreType(storeName: String): StateStoreType = {
@@ -2445,6 +2474,7 @@ object SymmetricHashJoinStateManager {
       KeyToNumValuesType
     } else if (storeName == getStateStoreName(LeftSide, KeyWithIndexToValueType) ||
       storeName == getStateStoreName(RightSide, KeyWithIndexToValueType)) {
+       planChangeLogger.warn("getStoreType(storeName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storeName)
       KeyWithIndexToValueType
     } else if (storeName == getStateStoreName(LeftSide, KeyWithTsToValuesType) ||
       storeName == getStateStoreName(RightSide, KeyWithTsToValuesType)) {

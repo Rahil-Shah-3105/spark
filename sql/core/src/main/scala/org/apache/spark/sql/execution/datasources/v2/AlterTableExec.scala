@@ -33,6 +33,7 @@ case class AlterTableExec(
     ident: Identifier,
     changes: Seq[TableChange],
     refreshCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def output: Seq[Attribute] = Seq.empty
 
@@ -45,6 +46,7 @@ case class AlterTableExec(
     }
     refreshCache()
     Seq.empty
+  planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

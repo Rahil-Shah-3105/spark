@@ -63,6 +63,7 @@ private[spark] class IndexShuffleBlockResolver(
   with Logging with MigratableResolver {
 
   def this(conf: SparkConf) = {
+    _driverLogger = DriverLogger(_conf)
     this(conf, null, new ConcurrentHashMap[Int, OpenHashSet[Long]]())
   }
 
@@ -102,6 +103,7 @@ private[spark] class IndexShuffleBlockResolver(
       case _ =>
         None
     }
+    _driverLogger.warn("getStoredShuffles()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private val shuffleIdsToSkip =
@@ -109,6 +111,7 @@ private[spark] class IndexShuffleBlockResolver(
 
   override def addShuffleToSkip(shuffleId: ShuffleId): Unit = {
     shuffleIdsToSkip.put(shuffleId, true)
+    _driverLogger.warn("addShuffleToSkip(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   private def getShuffleBytesStored(): Long = {
@@ -116,11 +119,14 @@ private[spark] class IndexShuffleBlockResolver(
       si => getDataFile(si.shuffleId, si.mapId)
     }
     shuffleFiles.map(_.length()).sum
+    _driverLogger.warn("getShuffleBytesStored()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Create a temporary file that will be renamed to the final resulting file */
   def createTempFile(file: File): File = {
     blockManager.diskBlockManager.createTempFileWith(file)
+    _driverLogger.warn("createTempFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
+  _driverLogger.warn("getDataFile(shuffleId,mapId,dirs)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, dirs, shuffleId)
   }
 
   /**
@@ -152,6 +158,7 @@ private[spark] class IndexShuffleBlockResolver(
       .map(d =>
         new File(ExecutorDiskUtils.getFilePath(d, blockManager.subDirsPerLocalDir, blockId.name)))
       .getOrElse(blockManager.diskBlockManager.getFile(blockId))
+      _driverLogger.warn("getIndexFile(shuffleId,mapId,dirs)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, dirs, shuffleId)
   }
 
   private def getMergedBlockDataFile(
@@ -162,6 +169,7 @@ private[spark] class IndexShuffleBlockResolver(
       dirs: Option[Array[String]] = None): File = {
     blockManager.diskBlockManager.getMergedShuffleFile(
       ShuffleMergedDataBlockId(appId, shuffleId, shuffleMergeId, reduceId), dirs)
+    _driverLogger.warn("getMergedBlockDataFile(appId,shuffleId,shuffleMergeId,reduceId,dirs)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, dirs, appId)
   }
 
   private def getMergedBlockIndexFile(
@@ -172,6 +180,7 @@ private[spark] class IndexShuffleBlockResolver(
       dirs: Option[Array[String]] = None): File = {
     blockManager.diskBlockManager.getMergedShuffleFile(
       ShuffleMergedIndexBlockId(appId, shuffleId, shuffleMergeId, reduceId), dirs)
+    _driverLogger.warn("getMergedBlockIndexFile(appId,shuffleId,shuffleMergeId,reduceId,dirs)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, dirs, appId)
   }
 
   private def getMergedBlockMetaFile(
@@ -182,6 +191,7 @@ private[spark] class IndexShuffleBlockResolver(
       dirs: Option[Array[String]] = None): File = {
     blockManager.diskBlockManager.getMergedShuffleFile(
       ShuffleMergedMetaBlockId(appId, shuffleId, shuffleMergeId, reduceId), dirs)
+    _driverLogger.warn("getMergedBlockMetaFile(appId,shuffleId,shuffleMergeId,reduceId,dirs)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, dirs, appId)
   }
 
   /**
@@ -195,6 +205,7 @@ private[spark] class IndexShuffleBlockResolver(
 
     file = getIndexFile(shuffleId, mapId)
     if (file.exists() && !file.delete()) {
+    _driverLogger.warn("removeDataByMap(shuffleId,mapId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapId, shuffleId)
       logWarning(log"Error deleting index ${MDC(PATH, file.getPath())}")
     }
 
@@ -368,6 +379,7 @@ private[spark] class IndexShuffleBlockResolver(
           log"This is expected to occur if a block is removed after decommissioning has started.")
         List.empty[(BlockId, ManagedBuffer)]
     }
+    _driverLogger.warn("getMigrationBlocks(shuffleBlockInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", shuffleBlockInfo)
   }
 
 
@@ -512,6 +524,7 @@ private[spark] class IndexShuffleBlockResolver(
       out.close()
     }
 
+    _driverLogger.warn("writeMetadataFile(metaValues,tmpFile,targetFile,propagateError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metaValues, tmpFile, targetFile, propagateError)
     if (targetFile.exists()) {
       targetFile.delete()
     }
@@ -591,6 +604,7 @@ private[spark] class IndexShuffleBlockResolver(
       case _: IOException | _: EOFException =>
         null
     }
+    _driverLogger.warn("getChecksums(checksumFile,blockNum)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", checksumFile, blockNum)
   }
 
   /**
@@ -610,6 +624,7 @@ private[spark] class IndexShuffleBlockResolver(
       .map(d =>
         new File(ExecutorDiskUtils.getFilePath(d, blockManager.subDirsPerLocalDir, fileName)))
       .getOrElse(blockManager.diskBlockManager.getFile(fileName))
+      _driverLogger.warn("getChecksumFile(shuffleId,mapId,algorithm,dirs)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, algorithm, dirs, shuffleId)
   }
 
   override def getBlockData(
@@ -663,6 +678,7 @@ private[spark] class IndexShuffleBlockResolver(
       ShuffleIndexBlockId(shuffleId, mapId, NOOP_REDUCE_ID),
       ShuffleDataBlockId(shuffleId, mapId, NOOP_REDUCE_ID)
     )
+    _driverLogger.warn("getBlocksForShuffle(shuffleId,mapId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, mapId, shuffleId)
   }
 
   override def stop(): Unit = {}

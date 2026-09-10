@@ -240,6 +240,7 @@ class KMeansModel private[ml] (
       numIter,
       trainingCost)
 
+    logger.warn("createSummary(predictions,numIter,trainingCost)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predictions, numIter, trainingCost)
     setSummary(Some(summary))
   }
 
@@ -247,6 +248,7 @@ class KMeansModel private[ml] (
     ReadWriteUtils.saveObjectToLocal[(Int, Double)](
       path, (summary.numIter, summary.trainingCost),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         dos.writeInt(data._1)
         dos.writeDouble(data._2)
       }
@@ -263,6 +265,7 @@ class KMeansModel private[ml] (
       }
     )
     createSummary(dataset, numIter, trainingCost)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -301,6 +304,7 @@ private class InternalKMeansModelWriter extends MLWriterFormat with MLFormatRegi
         ClusterData(idx, center)
     }
     val dataPath = new Path(path, "data").toString
+    logger.warn("write(path,sparkSession,optionMap,stage)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, sparkSession, optionMap, stage)
     ReadWriteUtils.saveArray[ClusterData](
       dataPath, data, sparkSession, ClusterData.serializeData
     )
@@ -785,6 +789,7 @@ private class KMeansAggregator (
       case EUCLIDEAN => euclideanUpdateInPlace(block)
       case COSINE => cosineUpdateInPlace(block)
     }
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     count += size
 
     this
@@ -798,6 +803,7 @@ private class KMeansAggregator (
     val localCenterSquaredNorms = centerSquaredNorms
     val localWeightSumArr = weightSumVec.values
     val localSumArr = sumMat.values
+    logger.warn("euclideanUpdateInPlace(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     var i = 0
     var j = 0
     while (i < size) {
@@ -825,6 +831,7 @@ private class KMeansAggregator (
 
       i += 1
     }
+  logger.warn("cosineUpdateInPlace(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
   }
 
   private def cosineUpdateInPlace(block: InstanceBlock): Unit = {

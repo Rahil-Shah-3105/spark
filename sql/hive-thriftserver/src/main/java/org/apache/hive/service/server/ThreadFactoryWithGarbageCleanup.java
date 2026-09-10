@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.metastore.RawStore;
  * And we are doing clean shutdown in the finalizer for each thread.
  */
 public class ThreadFactoryWithGarbageCleanup implements ThreadFactory {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ThreadFactoryWithGarbageCleanup.class);
 
   private static Map<Long, RawStore> threadRawStoreMap = new ConcurrentHashMap<Long, RawStore>();
 
@@ -52,6 +53,7 @@ public class ThreadFactoryWithGarbageCleanup implements ThreadFactory {
 
   @Override
   public Thread newThread(Runnable runnable) {
+	LOG.warn("newThread(runnable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", runnable);
     Thread newThread = new ThreadWithGarbageCleanup(runnable);
     newThread.setName(namePrefix + ": Thread-" + newThread.getId());
     return newThread;

@@ -70,6 +70,7 @@ class TwsTester[K, I, O](
     timeMode: TimeMode = TimeMode.None,
     outputMode: OutputMode = OutputMode.Append,
     eventTimeExtractor: Option[I => Long] = None) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   if (timeMode == TimeMode.EventTime()) {
     require(
@@ -135,6 +136,7 @@ class TwsTester[K, I, O](
   def updateValueState[T](stateName: String, key: K, value: T): Unit = {
     ImplicitGroupingKeyTracker.setImplicitKey(key)
     handle.updateValueState[T](stateName, value)
+    planChangeLogger.warn("updateValueState(stateName,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, key, value)
   }
 
   /** Retrieves the value state for a given key. */
@@ -148,18 +150,21 @@ class TwsTester[K, I, O](
       implicit ct: ClassTag[T]): Unit = {
     ImplicitGroupingKeyTracker.setImplicitKey(key)
     handle.updateListState[T](stateName, value)
+    planChangeLogger.warn("updateListState(stateName,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, key, value)
   }
 
   /** Retrieves the list state for a given key. */
   def peekListState[T](stateName: String, key: K): List[T] = {
     ImplicitGroupingKeyTracker.setImplicitKey(key)
     handle.peekListState[T](stateName)
+    planChangeLogger.warn("peekListState(stateName,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, key)
   }
 
   /** Sets the map state for a given key. */
   def updateMapState[MK, MV](stateName: String, key: K, value: Map[MK, MV]): Unit = {
     ImplicitGroupingKeyTracker.setImplicitKey(key)
     handle.updateMapState[MK, MV](stateName, value)
+    planChangeLogger.warn("updateMapState(stateName,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, key, value)
   }
 
   /** Retrieves the map state for a given key. */
@@ -172,6 +177,7 @@ class TwsTester[K, I, O](
   def deleteState(stateName: String, key: K): Unit = {
     ImplicitGroupingKeyTracker.setImplicitKey(key)
     handle.deleteState(stateName)
+    planChangeLogger.warn("deleteState(stateName,key)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateName, key)
   }
 
   // Logic for dealing with timers.
@@ -222,6 +228,7 @@ class TwsTester[K, I, O](
     )
     processingTimeClock.setTime(currentTimeMs)
     handleExpiredTimers()
+    planChangeLogger.warn("setProcessingTime(currentTimeMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", currentTimeMs)
   }
 
   /**
@@ -241,6 +248,7 @@ class TwsTester[K, I, O](
     )
     require(currentWatermarkMs > this.currentWatermarkMs, "Watermark must move forward.")
     this.currentWatermarkMs = currentWatermarkMs
+    planChangeLogger.warn("setWatermark(currentWatermarkMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", currentWatermarkMs)
     handle.setWatermark(currentWatermarkMs)
     handleExpiredTimers()
   }
@@ -250,5 +258,6 @@ class TwsTester[K, I, O](
       if (timeMode != TimeMode.None) Some(processingTimeClock.getTimeMillis()) else None
     val watermarkOpt = if (timeMode == TimeMode.EventTime()) Some(currentWatermarkMs) else None
     new TimerValuesImpl(processingTimeOpt, watermarkOpt)
+    planChangeLogger.warn("getTimerValues()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }

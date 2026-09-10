@@ -45,11 +45,13 @@ private[spark] class PartitionedPairBuffer[K, V](initialCapacity: Int = 64)
 
   /** Add an element into the buffer */
   def insert(partition: Int, key: K, value: V): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (curSize == capacity) {
       growArray()
     }
     data(2 * curSize) = (partition, key.asInstanceOf[AnyRef])
     data(2 * curSize + 1) = value.asInstanceOf[AnyRef]
+    _driverLogger.warn("insert(partition,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partition, key, value)
     curSize += 1
     afterUpdate()
   }

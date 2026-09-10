@@ -54,10 +54,12 @@ trait FileDataSourceV2 extends TableProvider with DataSourceRegister {
   lazy val sparkSession = SparkSession.active
 
   protected def getPaths(map: CaseInsensitiveStringMap): Seq[String] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val paths = Option(map.get("paths")).map { pathStr =>
       FileDataSourceV2.readPathsToSeq(pathStr)
     }.getOrElse(Seq.empty)
     paths ++ Option(map.get("path")).toSeq
+    planChangeLogger.warn("getPaths(map)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", map)
   }
 
   protected def getOptionsWithoutPaths(map: CaseInsensitiveStringMap): CaseInsensitiveStringMap = {
@@ -65,6 +67,7 @@ trait FileDataSourceV2 extends TableProvider with DataSourceRegister {
       !k.equalsIgnoreCase("path") && !k.equalsIgnoreCase("paths")
     }
     new CaseInsensitiveStringMap(withoutPath.toMap.asJava)
+    planChangeLogger.warn("getOptionsWithoutPaths(map)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", map)
   }
 
   protected def getTableName(map: CaseInsensitiveStringMap, paths: Seq[String]): String = {
@@ -72,6 +75,7 @@ trait FileDataSourceV2 extends TableProvider with DataSourceRegister {
       map.asCaseSensitiveMap().asScala.toMap)
     val name = shortName() + " " + paths.map(qualifiedPathName(_, hadoopConf)).mkString(",")
     Utils.redact(sparkSession.sessionState.conf.stringRedactionPattern, name)
+    planChangeLogger.warn("getTableName(map,paths)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", map, paths)
   }
 
   private def qualifiedPathName(path: String, hadoopConf: Configuration): String = {
@@ -85,7 +89,10 @@ trait FileDataSourceV2 extends TableProvider with DataSourceRegister {
   //       implementation and directly implement the TableProvider APIs.
   protected def getTable(options: CaseInsensitiveStringMap): Table
   protected def getTable(options: CaseInsensitiveStringMap, schema: StructType): Table = {
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
+    planChangeLogger.warn("getTable(options,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, schema)
     throw QueryExecutionErrors.unsupportedUserSpecifiedSchemaError()
+  planChangeLogger.warn("getTable(schema,partitioning,properties)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, partitioning, properties)
   }
 
   override def supportsExternalMetadata(): Boolean = true

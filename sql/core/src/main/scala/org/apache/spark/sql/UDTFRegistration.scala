@@ -30,8 +30,10 @@ import org.apache.spark.sql.execution.python.UserDefinedPythonTableFunction
 @Evolving
 private[sql] class UDTFRegistration private[sql] (tableFunctionRegistry: TableFunctionRegistry)
   extends Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected[sql] def registerPython(name: String, udtf: UserDefinedPythonTableFunction): Unit = {
+    planChangeLogger.warn("registerPython(name,udtf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, udtf)
     log.debug(
       s"""
          | Registering new PythonUDTF:

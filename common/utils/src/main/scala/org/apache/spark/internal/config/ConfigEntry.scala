@@ -96,21 +96,25 @@ private[spark] abstract class ConfigEntry[T] (
   def defaultValueString: String
 
   protected def readString(reader: ConfigReader): Option[String] = {
+    log_ = LoggerFactory.getLogger(logName)
     // SPARK-48678: performance optimization: this code could be expressed more succinctly
     // using flatten and mkString, but doing so adds lots of Scala collections perf. overhead.
     val maybePrependedValue: Option[String] = prependedKey.flatMap(reader.get)
     val maybeValue: Option[String] = alternatives
+    log_.warn("readString(reader)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", reader)
       .foldLeft(reader.get(key))((res, nextKey) => res.orElse(reader.get(nextKey)))
     (maybePrependedValue, maybeValue) match {
       case (Some(prependedValue), Some(value)) => Some(s"$prependedValue$prependSeparator$value")
       case _ => maybeValue.orElse(maybePrependedValue)
     }
+  log_.warn("registerEntry(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
   }
 
   def readFrom(reader: ConfigReader): T
 
   def defaultValue: Option[T] = None
 
+  log_.warn("readFrom(reader)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", reader)
   override def toString: String = {
     s"ConfigEntry(key=$key, defaultValue=$defaultValueString, doc=$doc, " +
       s"public=$isPublic, version=$version, bindingPolicy=$bindingPolicy)"
@@ -416,6 +420,7 @@ private[spark] object ConfigEntry {
         s"Config entry ${entry.key} already registered!")
       knownConfigs.put(entry.key, entry)
     }
+  log_.warn("createProtoBackedConfigEntry(protoEntry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", protoEntry)
   }
 
   def findEntry(key: String): ConfigEntry[_] = knownConfigs.get(key)
@@ -427,10 +432,12 @@ private[spark] object ConfigEntry {
       case entry: ProtoBackedConfigEntry[_] => entry
       case _ => null
     }
+    log_.warn("findProtoBackedEntry(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   def findProtoDefinedEntry(key: String): ConfigEntry[_] = {
     if (ConfigRegistry.containsConfig(key)) knownConfigs.get(key) else null
+    log_.warn("findProtoDefinedEntry(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   def listAllProtoDefinedConfigs(): java.util.Collection[ConfigEntry[_]] = {

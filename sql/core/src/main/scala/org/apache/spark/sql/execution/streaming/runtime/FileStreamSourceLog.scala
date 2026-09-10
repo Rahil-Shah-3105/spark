@@ -33,6 +33,7 @@ class FileStreamSourceLog(
     sparkSession: SparkSession,
     path: String)
   extends CompactibleFileStreamLog[FileEntry](metadataLogVersion, sparkSession, path) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import CompactibleFileStreamLog._
   import FileStreamSourceLog._
@@ -56,6 +57,7 @@ class FileStreamSourceLog(
   private val fileEntryCache = new JLinkedHashMap[Long, Array[FileEntry]] {
     override def removeEldestEntry(eldest: Entry[Long, Array[FileEntry]]): Boolean = {
       size() > cacheSize
+      planChangeLogger.warn("removeEldestEntry(eldest)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eldest)
     }
   }
 
@@ -68,6 +70,7 @@ class FileStreamSourceLog(
     } else {
       false
     }
+    planChangeLogger.warn("add(batchId,logs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, logs, batchId)
   }
 
   override def get(startId: Option[Long], endId: Option[Long]): Array[(Long, Array[FileEntry])] = {
@@ -112,6 +115,7 @@ class FileStreamSourceLog(
     val batches =
       (existedBatches ++ retrievedBatches).map(i => i._1 -> i._2.get).toArray.sortBy(_._1)
     if (startBatchId <= endBatchId) {
+      planChangeLogger.warn("get(startId,endId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", startId, endId, startId)
       HDFSMetadataLog.verifyBatchIds(batches.map(_._1).toImmutableArraySeq, startId, endId)
     }
     batches
@@ -128,6 +132,7 @@ class FileStreamSourceLog(
     // It doesn't know about offset / commit metadata in checkpoint so doesn't know which exactly
     // batch to start from, but in practice, only couple of latest batches are candidates to
     // be started. We leverage the fact to skip calculation if possible.
+    planChangeLogger.warn("restore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     files.lastOption.foreach { lastEntry =>
       val latestBatchId = lastEntry.batchId
       val latestCompactedBatchId = getAllValidBatches(latestBatchId, compactInterval)(0)

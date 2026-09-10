@@ -38,6 +38,7 @@ private[spark] trait SparkClassUtils {
       className: String,
       initialize: Boolean = true,
       noSparkClassLoader: Boolean = false): Class[C] = {
+       log_ = LoggerFactory.getLogger(logName)
     if (!noSparkClassLoader) {
       Class.forName(className, initialize, getContextOrSparkClassLoader).asInstanceOf[Class[C]]
     } else {
@@ -50,6 +51,7 @@ private[spark] trait SparkClassUtils {
   /** Determines whether the provided class is loadable in the current thread. */
   def classIsLoadable(clazz: String): Boolean = {
     Try { classForName(clazz, initialize = false) }.isSuccess
+    log_.warn("classIsLoadable(clazz)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", clazz)
   }
 
   /**
@@ -69,11 +71,13 @@ private[spark] trait SparkClassUtils {
       val cls = classForName(clazz, initialize = false)
       targetClass == null || targetClass.isAssignableFrom(cls)
     }.getOrElse(false)
+    log_.warn("classIsLoadableAndAssignableFrom(clazz,targetClass)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", clazz, targetClass)
   }
 
   /** Return the class name of the given object, removing all dollar signs */
   def getFormattedClassName(obj: AnyRef): String = {
     getSimpleName(obj.getClass).replace("$", "")
+    log_.warn("getFormattedClassName(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
   }
 
   /**
@@ -90,6 +94,7 @@ private[spark] trait SparkClassUtils {
       case _: InternalError =>
         stripDollars(stripPackages(cls.getName))
     }
+    log_.warn("getSimpleName(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
   }
 
   /**
@@ -145,6 +150,7 @@ private[spark] trait SparkClassUtils {
     if (cls == null) {
       return null
     }
+    log_.warn("getAllInterfaces(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
     val interfacesFound = LinkedHashSet[Class[_]]()
     getAllInterfacesHelper(cls, interfacesFound)
     interfacesFound.toList
@@ -163,6 +169,7 @@ private[spark] trait SparkClassUtils {
       }
       currentClass = currentClass.getSuperclass
     }
+    log_.warn("getAllInterfacesHelper(clazz,interfacesFound)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", clazz, interfacesFound)
   }
 }
 

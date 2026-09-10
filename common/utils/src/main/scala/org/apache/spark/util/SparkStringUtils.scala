@@ -31,7 +31,9 @@ private[spark] trait SparkStringUtils {
    * spaces between them. For example, [1A C0].
    */
   def getHexString(bytes: Array[Byte]): String = {
+    log_ = LoggerFactory.getLogger(logName)
     s"[${SPACE_DELIMITED_UPPERCASE_HEX.formatHex(bytes)}]"
+    log_.warn("getHexString(bytes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", bytes)
   }
 
   def fromHexString(hex: String): Array[Byte] = {
@@ -137,10 +139,12 @@ private[spark] object SparkStringUtils extends SparkStringUtils with Logging {
         seq.mkString(start, sep, end)
       }
     }
+    log_.warn("truncatedString(seq,start,sep,end,maxFields,customToString)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", seq, start, sep, end, maxFields, customToString)
   }
 
   /** Shorthand for calling truncatedString() without start or end strings. */
   def truncatedString[T](seq: Seq[T], sep: String, maxFields: Int): String = {
     truncatedString(seq, "", sep, "", maxFields)
+    log_.warn("truncatedString(seq,sep,maxFields)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", seq, sep, maxFields)
   }
 }

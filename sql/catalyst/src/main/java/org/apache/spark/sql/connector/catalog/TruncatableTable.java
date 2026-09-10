@@ -21,6 +21,8 @@ import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.connector.metric.CustomMetric;
 import org.apache.spark.sql.connector.metric.CustomTaskMetric;
 import org.apache.spark.sql.util.CaseInsensitiveStringMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a table which can be atomically truncated.
@@ -29,6 +31,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap;
  */
 @Evolving
 public interface TruncatableTable extends Table {
+Logger planChangeLogger = LoggerFactory.getLogger(TruncatableTable.class);
   /**
    * Truncate a table by removing all rows from the table atomically.
    *
@@ -49,6 +52,7 @@ public interface TruncatableTable extends Table {
    * @since 4.3.0
    */
   default boolean truncateTable(CaseInsensitiveStringMap options) {
+	planChangeLogger.warn("truncateTable(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options);
     return truncateTable();
   }
 
@@ -70,6 +74,7 @@ public interface TruncatableTable extends Table {
    * @since 4.2.0
    */
   default CustomTaskMetric[] reportDriverMetrics() {
+	planChangeLogger.warn("reportDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     return new CustomTaskMetric[]{};
   }
 }

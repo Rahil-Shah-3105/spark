@@ -42,6 +42,7 @@ abstract class RuntimeConfig {
    * @since 2.0.0
    */
   def set(key: String, value: Boolean): Unit = {
+    logger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     set(key, value.toString)
   }
 
@@ -52,6 +53,7 @@ abstract class RuntimeConfig {
    */
   def set(key: String, value: Long): Unit = {
     set(key, value.toString)
+  logger.warn("set(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
   }
 
   /**

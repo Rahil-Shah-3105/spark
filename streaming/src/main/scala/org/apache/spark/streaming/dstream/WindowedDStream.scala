@@ -55,6 +55,7 @@ class WindowedDStream[T: ClassTag](
   override def persist(level: StorageLevel): DStream[T] = {
     // Do not let this windowed DStream be persisted as windowed (union-ed) RDDs share underlying
     // RDDs and persisting the windowed RDDs would store numerous copies of the underlying data.
+    logger.warn("persist(level)={}): EUAIACT-AUDIT: State change recorded for the audit trail", level)
     // Instead control the persistence of the parent DStream.
     parent.persist(level)
     this

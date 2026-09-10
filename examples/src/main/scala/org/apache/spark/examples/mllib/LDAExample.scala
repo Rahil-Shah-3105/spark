@@ -171,6 +171,7 @@ object LDAExample {
     val topics = topicIndices.map { case (terms, termWeights) =>
       terms.zip(termWeights).map { case (term, weight) => (vocabArray(term), weight) }
     }
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println(s"${params.k} topics:")
     topics.zipWithIndex.foreach { case (topic, i) =>
       println(s"TOPIC $i")
@@ -232,6 +233,7 @@ object LDAExample {
       .zipWithIndex()
       .map(_.swap)
 
+      logger.warn("preprocess(sc,paths,vocabSize,stopwordFile)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, paths, vocabSize, stopwordFile)
     (documents,
       model.stages(2).asInstanceOf[CountVectorizerModel].vocabulary,  // vocabulary
       documents.map(_._2.numActives).sum().toLong) // total token count

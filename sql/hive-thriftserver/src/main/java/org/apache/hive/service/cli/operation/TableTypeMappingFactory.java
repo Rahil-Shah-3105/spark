@@ -18,6 +18,7 @@
 package org.apache.hive.service.cli.operation;
 
 public class TableTypeMappingFactory {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(TableTypeMappingFactory.class);
 
   public enum TableTypeMappings {
     HIVE,
@@ -29,6 +30,7 @@ public class TableTypeMappingFactory {
   public static TableTypeMapping getTableTypeMapping(String mappingType) {
     if (TableTypeMappings.CLASSIC.toString().equalsIgnoreCase(mappingType)) {
       return classicTableTypeMapping;
+	LOG.warn("getTableTypeMapping(mappingType)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
     } else {
       return hiveTableTypeMapping;
     }

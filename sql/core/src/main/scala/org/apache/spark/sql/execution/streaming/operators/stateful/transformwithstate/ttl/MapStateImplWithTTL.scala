@@ -58,6 +58,7 @@ class MapStateImplWithTTL[K, V](
   extends OneToOneTTLState(
     stateName, store, getCompositeKeySchema(keyExprEnc.schema, userKeyEnc.schema), ttlConfig,
     currentTimestampMs, prevBatchTimestampMs, metrics) with MapState[K, V] with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val stateTypesEncoder = new CompositeKeyStateEncoder(
     keyExprEnc, userKeyEnc, valEncoder, stateName, hasTtl = true)
@@ -83,6 +84,7 @@ class MapStateImplWithTTL[K, V](
     val encodedCompositeKey = stateTypesEncoder.encodeCompositeKey(key)
     val retRow = store.get(encodedCompositeKey, stateName)
 
+    planChangeLogger.warn("getValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     if (retRow != null) {
       if (!stateTypesEncoder.isExpired(retRow, currentTimestampMs())) {
         stateTypesEncoder.decodeValue(retRow).asInstanceOf[V]
@@ -110,6 +112,7 @@ class MapStateImplWithTTL[K, V](
       .calculateExpirationTimeForDuration(ttlConfig.ttlDuration, currentTimestampMs())
     val encodedValue = stateTypesEncoder.encodeValue(value, ttlExpirationMs)
 
+      planChangeLogger.warn("updateValue(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     updatePrimaryAndSecondaryIndices(encodedCompositeKey, encodedValue, ttlExpirationMs)
   }
 
@@ -133,6 +136,7 @@ class MapStateImplWithTTL[K, V](
           finished = true
           null.asInstanceOf[(K, V)]
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def close(): Unit = {
@@ -157,6 +161,7 @@ class MapStateImplWithTTL[K, V](
     val compositeKey = stateTypesEncoder.encodeCompositeKey(key)
     store.remove(compositeKey, stateName)
     // Note that for mapState, the rows are flattened. So we count the number of rows removed
+    planChangeLogger.warn("removeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     // proportional to the number of keys in the map per grouping key.
     TWSMetricsUtils.incrementMetric(metrics, "numRemovedStateRows")
   }
@@ -186,6 +191,7 @@ class MapStateImplWithTTL[K, V](
     val encodedCompositeKey = stateTypesEncoder.encodeCompositeKey(userKey)
     val retRow = store.get(encodedCompositeKey, stateName)
 
+    planChangeLogger.warn("getWithoutEnforcingTTL(userKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", userKey)
     if (retRow != null) {
       val resState = stateTypesEncoder.decodeValue(retRow).asInstanceOf[V]
       Some(resState)
@@ -201,6 +207,7 @@ class MapStateImplWithTTL[K, V](
     val encodedCompositeKey = stateTypesEncoder.encodeCompositeKey(userKey)
     val retRow = store.get(encodedCompositeKey, stateName)
 
+    planChangeLogger.warn("getTTLValue(userKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", userKey)
     // if the returned row is not null, we want to return the value associated with the
     // ttlExpiration
     Option(retRow).flatMap { row =>
@@ -219,6 +226,7 @@ class MapStateImplWithTTL[K, V](
     val implicitGroupingKey = stateTypesEncoder.encodeGroupingKey()
       .getStruct(0, keyExprEnc.schema.length)
 
+      planChangeLogger.warn("getKeyValuesInTTLState()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     // We're getting composite rows back
     getTTLRows().filter { ttlRow =>
       val compositeKey = ttlRow.elementKey

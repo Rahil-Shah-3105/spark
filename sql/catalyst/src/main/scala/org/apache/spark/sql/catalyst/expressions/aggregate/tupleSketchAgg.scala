@@ -71,6 +71,7 @@ case class TupleSketchAggDouble(
 
   // Constructors
   def this(key: Expression, summary: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(
       key,
       summary,
@@ -119,6 +120,7 @@ case class TupleSketchAggDouble(
    */
   override protected def createSummaryFactory(): SummaryFactory[DoubleSummary] = {
     new DoubleSummaryFactory(modeEnum.toDoubleSummaryMode)
+  planChangeLogger.warn("createSummaryFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -126,6 +128,7 @@ case class TupleSketchAggDouble(
    */
   override protected def createSummarySetOperations(): SummarySetOperations[DoubleSummary] = {
     new DoubleSummarySetOperations(modeEnum.toDoubleSummaryMode)
+    planChangeLogger.warn("createSummarySetOperations()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -199,6 +202,7 @@ case class TupleSketchAggInteger(
   // Copy constructors required by ImperativeAggregate
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): TupleSketchAggInteger =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): TupleSketchAggInteger =
@@ -314,6 +318,7 @@ abstract class TupleSketchAggBase[U, S <: UpdatableSummary[U]]
     builder.setNominalEntries(1 << lgNomEntriesInput)
     val sketch = builder.build()
     UpdatableTupleSketchBuffer(sketch)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -336,6 +341,7 @@ abstract class TupleSketchAggBase[U, S <: UpdatableSummary[U]]
     val keyValue = key.eval(input)
     val summaryValue = summary.eval(input)
 
+    planChangeLogger.warn("update(updateBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateBuffer, input)
     // Return early for null values.
     if (keyValue == null || summaryValue == null) {
       updateBuffer
@@ -400,6 +406,7 @@ abstract class TupleSketchAggBase[U, S <: UpdatableSummary[U]]
       union.union(sketch1)
       union.union(sketch2)
       UnionTupleAggregationBuffer(union)
+      planChangeLogger.warn("createUnionWith(sketch1,sketch2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sketch1, sketch2)
     }
 
     (updateBuffer, input) match {

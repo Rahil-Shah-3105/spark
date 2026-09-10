@@ -25,6 +25,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.DataType
 
 object TypeCoercionValidation extends QueryErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val DATA_TYPE_MISMATCH_ERROR = TreeNodeTag[Unit]("dataTypeMismatchError")
 
   def failOnTypeCheckResult(e: Expression, operator: Option[LogicalPlan] = None): Nothing = {
@@ -50,6 +51,7 @@ object TypeCoercionValidation extends QueryErrorsBase {
     } else {
       val nonAnsiPlan = getDefaultTypeCoercionPlan(plan)
       var issueFixedIfAnsiOff = true
+      planChangeLogger.warn("getHintForOperatorCoercion(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
       nonAnsiPlan match {
         case _: Union | _: SetOperation if nonAnsiPlan.children.length > 1 =>
           def dataTypes(plan: LogicalPlan): Seq[DataType] = plan.output.map(_.dataType)
@@ -82,6 +84,7 @@ object TypeCoercionValidation extends QueryErrorsBase {
       (dt1: DataType, dt2: DataType) =>
         TypeCoercion.findWiderTypeForTwo(dt1.asNullable, dt2.asNullable).nonEmpty
     }
+    planChangeLogger.warn("getDataTypesAreCompatibleFn(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   private def getHintForExpressionCoercion(plan: LogicalPlan): String = {
@@ -101,6 +104,7 @@ object TypeCoercionValidation extends QueryErrorsBase {
         case _ =>
       })
       extraHintMessage(issueFixedIfAnsiOff)
+    planChangeLogger.warn("getAllExpressions(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
   }
 

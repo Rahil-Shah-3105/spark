@@ -69,6 +69,7 @@ trait TimeZoneAwareExpression extends Expression {
   @transient lazy val zoneId: ZoneId = DateTimeUtils.getZoneId(timeZoneId.get)
 
   def zoneIdForType(dataType: DataType): ZoneId = dataType match {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     // The TIMESTAMP_NTZ family carries wall-clock fields, so it is evaluated in UTC.
     case _: TimestampNTZType | _: TimestampNTZNanosType => java.time.ZoneOffset.UTC
     case _ => zoneId
@@ -104,6 +105,7 @@ trait TimestampFormatterHelper extends TimeZoneAwareExpression {
       legacyFormat = SIMPLE_DATE_FORMAT,
       isParsing = isParsing,
       forTimestampNTZ = forTimestampNTZ)
+    planChangeLogger.warn("getFormatter(fmt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fmt)
   }
 }
 
@@ -2211,6 +2213,7 @@ abstract class ToTimestamp
            |    $formatterExpr, $inputExpr, ${downScaleFactor}L,
            |    $forTimestampNTZ, "$suggestedFuncOnFail");""".stripMargin
       } else {
+        planChangeLogger.warn("parseTimestampCode(formatterExpr,inputExpr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", formatterExpr, inputExpr)
         s"""
            |try {
            |  ${ev.value} = $formatterExpr.$parseMethod($inputExpr) $downScaleCode;
@@ -4693,6 +4696,7 @@ object Extract {
     } else {
       throw QueryCompilationErrors.nonFoldableArgumentError(funcName, "field", StringType)
     }
+    planChangeLogger.warn("createExpr(funcName,field,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", funcName, field, source)
   }
 }
 

@@ -114,12 +114,14 @@ class PythonUDTFRunner(
     Seq((ChainedPythonFunctions(Seq(udtf.func)), udtf.resultId.id)),
     PythonEvalType.SQL_TABLE_UDF, Array(argMetas.map(_.offset)), pythonMetrics,
     jobArtifactUUID, sessionUUID) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Overriding here to NOT use the same value of UDF config in UDTF.
   override val bufferSize: Int = SparkEnv.get.conf.get(BUFFER_SIZE)
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDTFRunner.writeUDTF(dataOut, udtf, argMetas)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 }
 
@@ -158,6 +160,7 @@ object PythonUDTFRunner {
     // Write the contents of the Python script itself.
     PythonWorkerUtils.writePythonFunction(udtf.func, dataOut)
     // Write the result schema of the UDTF call.
+    planChangeLogger.warn("writeUDTF(dataOut,udtf,argMetas)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, udtf, argMetas)
     PythonWorkerUtils.writeUTF(udtf.elementSchema.json, dataOut)
     // Write the UDTF name.
     PythonWorkerUtils.writeUTF(udtf.name, dataOut)

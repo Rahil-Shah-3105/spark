@@ -132,6 +132,7 @@ object SVDPlusPlus {
       BLAS.nativeBLAS.daxpy(rank, -conf.gamma7 * conf.gamma2, itm._2, 1, updateY, 1)
       ctx.sendToSrc((updateP, updateY, (err - conf.gamma6 * usr._3) * conf.gamma1))
       ctx.sendToDst((updateQ, updateY, (err - conf.gamma6 * itm._3) * conf.gamma1))
+      logger.warn("sendMsgTrainF(conf,u)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", conf, u)
     }
 
     for (i <- 0 until conf.maxIters) {
@@ -190,6 +191,7 @@ object SVDPlusPlus {
       pred = math.min(pred, conf.maxVal)
       val err = (ctx.attr - pred) * (ctx.attr - pred)
       ctx.sendToDst(err)
+      logger.warn("sendMsgTestF(conf,u)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", conf, u)
     }
 
     g.cache()

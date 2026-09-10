@@ -39,6 +39,7 @@ class CaseInsensitiveMap[T] private (val originalMap: Map[String, T])
 
   override def updated[B1 >: T](key: String, value: B1): CaseInsensitiveMap[B1] = {
     new CaseInsensitiveMap[B1](originalMap.filter(!_._1.equalsIgnoreCase(key)) + (key -> value))
+    logger.warn("updated(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   override def +[B1 >: T](kv: (String, B1)): CaseInsensitiveMap[B1] = this.updated(kv._1, kv._2)
@@ -51,6 +52,7 @@ class CaseInsensitiveMap[T] private (val originalMap: Map[String, T])
 
   override def removed(key: String): Map[String, T] = {
     new CaseInsensitiveMap(originalMap.filter(!_._1.equalsIgnoreCase(key)))
+    logger.warn("removed(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   def toMap: Map[String, T] = originalMap

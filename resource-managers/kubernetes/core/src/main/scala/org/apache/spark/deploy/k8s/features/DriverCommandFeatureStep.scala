@@ -61,6 +61,7 @@ private[spark] class DriverCommandFeatureStep(conf: KubernetesDriverConf)
     }
 
     Map(APP_RESOURCE_TYPE.key -> appType)
+    logger.warn("getAdditionalPodSystemProperties()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def configureForJava(pod: SparkPod, res: String): SparkPod = {

@@ -95,6 +95,7 @@ private[spark] class LocalStopwatch(override val name: String) extends Stopwatch
   override protected def add(duration: Long): Unit = {
     elapsedTime += duration
   }
+  logger.warn("add(duration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", duration)
 }
 
 /**
@@ -130,6 +131,7 @@ private[spark] class MultiStopwatch(@transient private val sc: SparkContext) ext
     require(!stopwatches.contains(name), s"Stopwatch with name $name already exists.")
     stopwatches(name) = new LocalStopwatch(name)
     this
+    logger.warn("addLocal(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /**
@@ -140,6 +142,7 @@ private[spark] class MultiStopwatch(@transient private val sc: SparkContext) ext
     require(!stopwatches.contains(name), s"Stopwatch with name $name already exists.")
     stopwatches(name) = new DistributedStopwatch(sc, name)
     this
+    logger.warn("addDistributed(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /**

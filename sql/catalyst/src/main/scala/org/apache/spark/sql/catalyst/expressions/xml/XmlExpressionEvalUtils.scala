@@ -28,6 +28,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{UTF8String, VariantVal}
 
 object XmlExpressionEvalUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def schemaOfXml(xmlInferSchema: XmlInferSchema, xml: UTF8String): UTF8String = {
     val dataType = xmlInferSchema.infer(xml.toString).get match {
@@ -201,6 +202,7 @@ case class StructsToXmlEvaluator(
     def getAndReset(): UTF8String = {
       gen.flush()
       val xmlString = writer.toString
+      planChangeLogger.warn("getAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       writer.reset()
       UTF8String.fromString(xmlString)
     }

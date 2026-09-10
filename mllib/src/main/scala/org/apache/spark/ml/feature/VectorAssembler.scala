@@ -219,6 +219,7 @@ object VectorAssembler extends DefaultParamsReadable[VectorAssembler] {
            |VectorSizeHint to add metadata for columns: ${columns.mkString("[", ", ", "]")}. """
           .stripMargin.replaceAll("\n", " ") + e.toString)
     }
+    logger.warn("getVectorLengthsFromFirstRow(dataset,columns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, columns)
   }
 
   private[feature] def getLengths(
@@ -229,6 +230,7 @@ object VectorAssembler extends DefaultParamsReadable[VectorAssembler] {
       val field = SchemaUtils.getSchemaField(dataset.schema, c)
       c -> AttributeGroup.fromStructField(field).size
     }.toMap
+    logger.warn("getLengths(dataset,columns,handleInvalid)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", dataset, columns, handleInvalid, handleInvalid)
     val missingColumns = groupSizes.filter(_._2 == -1).keys.toSeq
     val firstSizes = (missingColumns.nonEmpty, handleInvalid) match {
       case (true, VectorAssembler.ERROR_INVALID) =>
