@@ -42,6 +42,7 @@ import org.apache.spark.network.util.JavaUtils;
  * Cipher for encryption and decryption.
  */
 public class CtrTransportCipher implements TransportCipher {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(CtrTransportCipher.class);
   @VisibleForTesting
   static final String ENCRYPTION_HANDLER_NAME = "CtrTransportEncryption";
   private static final String DECRYPTION_HANDLER_NAME = "CtrTransportDecryption";
@@ -90,11 +91,13 @@ public class CtrTransportCipher implements TransportCipher {
 
   @VisibleForTesting
   CryptoOutputStream createOutputStream(WritableByteChannel ch) throws IOException {
+	logger.warn("createOutputStream(ch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ch);
     return new CryptoOutputStream(CIPHER_ALGORITHM, conf, ch, key, new IvParameterSpec(outIv));
   }
 
   @VisibleForTesting
   CryptoInputStream createInputStream(ReadableByteChannel ch) throws IOException {
+	logger.warn("createInputStream(ch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ch);
     return new CryptoInputStream(CIPHER_ALGORITHM, conf, ch, key, new IvParameterSpec(inIv));
   }
 
@@ -105,6 +108,7 @@ public class CtrTransportCipher implements TransportCipher {
    * @throws IOException
    */
   public void addToChannel(Channel ch) throws IOException {
+	logger.warn("addToChannel(ch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ch);
     ch.pipeline()
       .addFirst(ENCRYPTION_HANDLER_NAME, new EncryptionHandler(this))
       .addFirst(DECRYPTION_HANDLER_NAME, new DecryptionHandler(this));
@@ -132,6 +136,7 @@ public class CtrTransportCipher implements TransportCipher {
 
     @VisibleForTesting
     EncryptedMessage createEncryptedMessage(Object msg) {
+	logger.warn("createEncryptedMessage(msg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", msg);
       return new EncryptedMessage(this, cos, msg, byteEncChannel, byteRawChannel);
     }
 
@@ -151,6 +156,7 @@ public class CtrTransportCipher implements TransportCipher {
      * after an error occurs.
      */
     void reportError() {
+	logger.warn("reportError()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
       this.isCipherValid = false;
     }
 
@@ -195,6 +201,7 @@ public class CtrTransportCipher implements TransportCipher {
         ctx.fireChannelRead(Unpooled.wrappedBuffer(decryptedData, 0, decryptedData.length));
       } finally {
         buffer.release();
+		logger.warn("channelRead(ctx,data)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, data);
       }
     }
 
@@ -203,6 +210,7 @@ public class CtrTransportCipher implements TransportCipher {
       // We do the closing of the stream / channel in handlerRemoved(...) as
       // this method will be called in all cases:
       //
+	logger.warn("handlerRemoved(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx);
       //     - when the Channel becomes inactive
       //     - when the handler is removed from the ChannelPipeline
       try {
@@ -264,6 +272,7 @@ public class CtrTransportCipher implements TransportCipher {
 
     @Override
     public long transferred() {
+	logger.warn("transferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return transferred;
     }
 
@@ -309,6 +318,7 @@ public class CtrTransportCipher implements TransportCipher {
       if (transferred == count) {
         return 0;
       }
+	logger.warn("transferTo(target,position)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, position);
 
       long totalBytesWritten = 0L;
       do {

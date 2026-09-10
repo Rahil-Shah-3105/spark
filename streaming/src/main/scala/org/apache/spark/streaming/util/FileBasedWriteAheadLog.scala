@@ -116,6 +116,7 @@ private[streaming] class FileBasedWriteAheadLog(
   def read(segment: WriteAheadLogRecordHandle): ByteBuffer = {
     val fileSegment = segment.asInstanceOf[FileBasedWriteAheadLogSegment]
     var reader: FileBasedWriteAheadLogRandomReader = null
+    logger.warn("read(segment)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", segment)
     var byteBuffer: ByteBuffer = null
     try {
       reader = new FileBasedWriteAheadLogRandomReader(fileSegment.path, hadoopConf)
@@ -143,6 +144,7 @@ private[streaming] class FileBasedWriteAheadLog(
       logDebug(s"Creating log reader with $file")
       val reader = new FileBasedWriteAheadLogReader(file, hadoopConf)
       CompletionIterator[ByteBuffer, Iterator[ByteBuffer]](reader, reader.close())
+      logger.warn("readFile(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
     }
     if (!closeFileAfterWrite) {
       logFilesToRead.iterator.flatMap(readFile).asJava
@@ -190,6 +192,7 @@ private[streaming] class FileBasedWriteAheadLog(
       }
       logInfo(log"Cleared log files in ${MDC(LogKeys.PATH, logDirectory)} older than " +
         log"${MDC(LogKeys.THRESH_TIME, threshTime)}")
+      logger.warn("deleteFile(walInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", walInfo)
     }
     oldLogFiles.foreach { logInfo =>
       if (!executionContext.isShutdown) {
@@ -293,6 +296,7 @@ private[streaming] object FileBasedWriteAheadLog {
       .find { c => !ignoreList.exists(c.contains) }
       .flatMap(_.split("\\.").lastOption)
       .flatMap(_.split("\\$\\$").headOption)
+      logger.warn("getCallerName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** Convert a sequence of files to a sequence of sorted LogInfo objects */

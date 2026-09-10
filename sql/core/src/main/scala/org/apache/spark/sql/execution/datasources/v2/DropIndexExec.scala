@@ -30,6 +30,7 @@ case class DropIndexExec(
     table: SupportsIndex,
     indexName: String,
     ignoreIfNotExists: Boolean) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     try {
       table.dropIndex(indexName)
@@ -38,6 +39,7 @@ case class DropIndexExec(
         logWarning(log"Index ${MDC(INDEX_NAME, indexName)} does not exist. Ignoring.")
     }
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty

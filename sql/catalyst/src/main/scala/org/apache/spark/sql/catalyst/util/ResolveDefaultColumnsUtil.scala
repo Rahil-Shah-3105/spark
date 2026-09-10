@@ -49,6 +49,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
   with ResolveDefaultColumnsUtils
   with SQLConfHelper
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
   // Name of attributes representing explicit references to the value stored in the above
   // CURRENT_DEFAULT_COLUMN_METADATA.
   val CURRENT_DEFAULT_COLUMN_NAME = "DEFAULT"
@@ -148,6 +149,10 @@ object ResolveDefaultColumns extends QueryErrorsBase
     } else {
       None
     }
+    planChangeLogger.warn("getDefaultValueExprOpt(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
+  planChangeLogger.warn("getDefaultValueExprOrNullLit(field,useNullAsDefault)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", field, useNullAsDefault)
+  planChangeLogger.warn("getDefaultValueExprOrNullLit(attr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attr)
+  planChangeLogger.warn("getDefaultValueExprOrNullLit(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   /**
@@ -189,6 +194,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
         None
       }
     }.map(expr => Alias(expr, field.name)())
+  planChangeLogger.warn("getDefaultValueExprOrNullLit(attr,useNullAsDefault)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attr, useNullAsDefault)
   }
 
   /**
@@ -470,6 +476,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
    */
   def getExistenceDefaultValues(schema: StructType): Array[Any] = {
     schema.fields.map(getExistenceDefaultValue)
+    planChangeLogger.warn("getExistenceDefaultValues(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   def getExistenceDefaultValue(field: StructField): Any = {
@@ -481,6 +488,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
     } else {
       null
     }
+    planChangeLogger.warn("getExistenceDefaultValue(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   /**
@@ -489,6 +497,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
    */
   def getExistenceDefaultsBitmask(schema: StructType): Array[Boolean] = {
     Array.fill[Boolean](existenceDefaultValues(schema).length)(true)
+    planChangeLogger.warn("getExistenceDefaultsBitmask(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   /**
@@ -500,6 +509,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
     for (i <- 0 until defaultValues.length) {
       bitmask(i) = (defaultValues(i) != null)
     }
+    planChangeLogger.warn("resetExistenceDefaultsBitmask(schema,bitmask)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, bitmask)
   }
 
   /**
@@ -515,6 +525,7 @@ object ResolveDefaultColumns extends QueryErrorsBase
         }
       }
     }
+    planChangeLogger.warn("applyExistenceDefaultValuesToRow(schema,row,bitmask)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, row, bitmask)
   }
 
   /** If any fields in a schema have default values, appends them to the result. */
@@ -530,6 +541,8 @@ object ResolveDefaultColumns extends QueryErrorsBase
       }
     }
     rows.toSeq
+    planChangeLogger.warn("getDescribeMetadata(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
+  planChangeLogger.warn("getDescribeMetadata(cols)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cols)
   }
 
   /** If any fields in a schema have default values, appends them to the result. */
@@ -620,9 +633,11 @@ object ResolveDefaultColumns extends QueryErrorsBase
     override def name(): String = CatalogManager.SESSION_CATALOG_NAME
     override def listFunctions(namespace: Array[String]): Array[Identifier] = {
       throw SparkUnsupportedOperationException()
+      planChangeLogger.warn("listFunctions(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
     }
     override def loadFunction(ident: Identifier): UnboundFunction = {
       v1Catalog.loadPersistentScalarFunction(ident.asFunctionIdentifier)
+      planChangeLogger.warn("loadFunction(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
     }
     override def functionExists(ident: Identifier): Boolean = {
       v1Catalog.isPersistentFunction(ident.asFunctionIdentifier)

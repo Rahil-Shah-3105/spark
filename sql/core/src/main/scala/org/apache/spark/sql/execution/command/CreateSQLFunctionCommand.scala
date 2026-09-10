@@ -275,7 +275,9 @@ case class CreateSQLFunctionCommand(
       )
     }
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     if (isTemp) {
+      val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       if (isTableFunc) {
         catalog.registerSQLTableFunction(newFunction, overrideIfExists = replace)
       } else {
@@ -345,6 +347,7 @@ case class CreateSQLFunctionCommand(
         })
         case _ => Seq.empty
       }.distinct
+      planChangeLogger.warn("collectTempViews(child)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", child)
     }
 
     def collectTempFunctions(child: LogicalPlan): Seq[String] = {

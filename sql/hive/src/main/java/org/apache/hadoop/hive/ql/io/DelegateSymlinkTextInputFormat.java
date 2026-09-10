@@ -31,6 +31,8 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Delegate for SymlinkTextInputFormat, created to address SPARK-40815.
@@ -41,6 +43,7 @@ import org.apache.hadoop.mapred.TextInputFormat;
  * the issue.
  */
 public class DelegateSymlinkTextInputFormat extends SymlinkTextInputFormat {
+private static final Logger log = LoggerFactory.getLogger(DelegateSymlinkTextInputFormat.class);
 
   public static class DelegateSymlinkTextInputSplit extends FileSplit {
     private Path targetPath; // Path to the actual data file, not the symlink file.
@@ -73,6 +76,7 @@ public class DelegateSymlinkTextInputFormat extends SymlinkTextInputFormat {
      * Reconstructs the delegate input split.
      */
     private SymlinkTextInputSplit getSplit() throws IOException {
+	log.warn("getSplit()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return new SymlinkTextInputSplit(
         getPath(),
         new FileSplit(targetPath, getStart(), getLength(), getLocations())
@@ -83,10 +87,12 @@ public class DelegateSymlinkTextInputFormat extends SymlinkTextInputFormat {
     public void write(DataOutput out) throws IOException {
       super.write(out);
       Text.writeString(out, (this.targetPath != null) ? this.targetPath.toString() : "");
+	log.warn("write(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     }
 
     @Override
     public void readFields(DataInput in) throws IOException {
+	log.warn("readFields(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
       super.readFields(in);
       String target = Text.readString(in);
       this.targetPath = (!target.isEmpty()) ? new Path(target) : null;
@@ -116,6 +122,7 @@ public class DelegateSymlinkTextInputFormat extends SymlinkTextInputFormat {
     for (int i = 0; i < splits.length; i++) {
       SymlinkTextInputSplit split = (SymlinkTextInputSplit) splits[i];
       splits[i] = new DelegateSymlinkTextInputSplit(split);
+	log.warn("getSplits(job,numSplits)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", job, numSplits);
     }
     return splits;
   }
@@ -127,6 +134,7 @@ public class DelegateSymlinkTextInputFormat extends SymlinkTextInputFormat {
 
   @Override
   public ContentSummary getContentSummary(Path p, JobConf job) throws IOException {
+	log.warn("getContentSummary(p,job)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", p, job);
     return super.getContentSummary(p, job);
   }
 }

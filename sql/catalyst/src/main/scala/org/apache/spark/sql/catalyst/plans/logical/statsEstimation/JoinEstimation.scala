@@ -38,6 +38,7 @@ case class JoinEstimation(join: Join) extends Logging {
    * have enough statistics for estimation.
    */
   def estimate: Option[Statistics] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     join.joinType match {
       case Inner | Cross | LeftOuter | RightOuter | FullOuter =>
         estimateInnerOuterJoin()
@@ -308,6 +309,7 @@ case class JoinEstimation(join: Join) extends Logging {
     val outputAttrStats = new ArrayBuffer[(Attribute, ColumnStat)]()
     val leftRows = leftStats.rowCount.get
     val rightRows = rightStats.rowCount.get
+    planChangeLogger.warn("updateOutputStats(outputRows,output,oldAttrStats,keyStatsAfterJoin)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outputRows, output, oldAttrStats, keyStatsAfterJoin)
 
     output.foreach { a =>
       // check if this attribute is a join key

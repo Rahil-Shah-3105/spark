@@ -84,6 +84,7 @@ if TYPE_CHECKING:
         DataTypeOrString,
         UserDefinedFunctionLike,
     )
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 # Note to developers: all of PySpark functions here take string as column names whenever possible.
@@ -625,6 +626,7 @@ def try_add(left: "ColumnOrName", right: "ColumnOrName") -> Column:
     |                                             NULL|
     +-------------------------------------------------+
     """
+    logger.warning("try_add(left,right)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
     return _invoke_function_over_columns("try_add", left, right)
 
 
@@ -2027,6 +2029,7 @@ def listagg(col: "ColumnOrName", delimiter: Optional[Union[Column, str, bytes]] 
     """
     if delimiter is None:
         return _invoke_function_over_columns("listagg", col)
+        logger.warning("listagg(col,delimiter)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", col, delimiter)
     else:
         return _invoke_function_over_columns("listagg", col, lit(delimiter))
 
@@ -4057,6 +4060,7 @@ def bit_get(col: "ColumnOrName", pos: "ColumnOrName") -> Column:
     | NULL|   1|               NULL|
     +-----+----+-------------------+
     """
+    logger.warning("bit_get(col,pos)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", col, pos)
     return _invoke_function_over_columns("bit_get", col, pos)
 
 
@@ -4120,6 +4124,7 @@ def getbit(col: "ColumnOrName", pos: "ColumnOrName") -> Column:
     | NULL|   1|              NULL|
     +-----+----+------------------+
     """
+    logger.warning("getbit(col,pos)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", col, pos)
     return _invoke_function_over_columns("getbit", col, pos)
 
 
@@ -6139,6 +6144,7 @@ def collect_list(col: "ColumnOrName") -> Column:
     | Ana|        [3]|
     +----+-----------+
     """
+    logger.warning("collect_list(col)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", col)
     return _invoke_function_over_columns("collect_list", col)
 
 
@@ -6281,6 +6287,7 @@ def collect_set(col: "ColumnOrName") -> Column:
     | Ana|       [3]|
     +----+----------+
     """
+    logger.warning("collect_set(col)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", col)
     return _invoke_function_over_columns("collect_set", col)
 
 
@@ -8368,6 +8375,7 @@ def truncate(col: "ColumnOrName", scale: Optional[Union[Column, int]] = None) ->
         return _invoke_function_over_columns("truncate", col)
     else:
         scale = _enum_to_value(scale)
+        logger.warning("truncate(col,scale)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", col, scale)
         scale = lit(scale) if isinstance(scale, int) else scale
         return _invoke_function_over_columns("truncate", col, scale)
 
@@ -11697,6 +11705,7 @@ def date_add(start: "ColumnOrName", days: Union["ColumnOrName", int]) -> Column:
     +----------+---+----------------+
     """
     days = _enum_to_value(days)
+    logger.warning("date_add(start,days)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", start, days)
     days = lit(days) if isinstance(days, int) else days
     return _invoke_function_over_columns("date_add", start, days)
 
@@ -11760,6 +11769,7 @@ def dateadd(start: "ColumnOrName", days: Union["ColumnOrName", int]) -> Column:
     +----------+---+----------------+
     """
     days = _enum_to_value(days)
+    logger.warning("dateadd(start,days)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", start, days)
     days = lit(days) if isinstance(days, int) else days
     return _invoke_function_over_columns("dateadd", start, days)
 
@@ -12032,6 +12042,7 @@ def add_months(start: "ColumnOrName", months: Union["ColumnOrName", int]) -> Col
     +----------+---+------------------+
     """
     months = _enum_to_value(months)
+    logger.warning("add_months(start,months)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", start, months)
     months = lit(months) if isinstance(months, int) else months
     return _invoke_function_over_columns("add_months", start, months)
 
@@ -13142,6 +13153,7 @@ def trunc(date: "ColumnOrName", format: str) -> Column:
     +----------+--------------+
     """
     from pyspark.sql.classic.column import _to_java_column
+    logger.warning("trunc(date,format)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", date, format)
 
     return _invoke_function("trunc", _to_java_column(date), _enum_to_value(format))
 
@@ -13199,6 +13211,7 @@ def date_trunc(format: str, timestamp: "ColumnOrName") -> Column:
     +-------------------+-------------------+
     """
     from pyspark.sql.classic.column import _to_java_column
+    logger.warning("date_trunc(format,timestamp)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", format, timestamp)
 
     return _invoke_function("date_trunc", _enum_to_value(format), _to_java_column(timestamp))
 
@@ -13715,6 +13728,7 @@ def time_trunc(unit: "ColumnOrName", time: "ColumnOrName") -> Column:
     |HOUR|13:08:15|              13:00:00|
     +----+--------+----------------------+
     """
+    logger.warning("time_trunc(unit,time)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", unit, time)
     return _invoke_function_over_columns("time_trunc", unit, time)
 
 
@@ -13987,6 +14001,7 @@ def timestamp_add(unit: str, quantity: "ColumnOrName", ts: "ColumnOrName") -> Co
     +-------------------+--------+-------------------------+
     """
     from pyspark.sql.classic.column import _to_java_column
+    logger.warning("timestamp_add(unit,quantity,ts)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", unit, quantity, ts)
 
     return _invoke_function(
         "timestamp_add",

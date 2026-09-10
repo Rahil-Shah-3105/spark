@@ -73,6 +73,7 @@ class UDFDispatcherManager(
     }
 
     // We need to acquire a new dispatcher
+    logger.warn("getDispatcher(workerSpec)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", workerSpec)
     // = slower path with global lock
     rwLock.writeLock().lock()
     try {

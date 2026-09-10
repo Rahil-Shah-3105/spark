@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.streaming.operators.stateful._
 import org.apache.spark.sql.execution.streaming.operators.stateful.transformwithstate.TransformWithStateExec
 
 object RealTimeModeAllowlist extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private val allowedSinks = Set(
     "org.apache.spark.sql.execution.streaming.ConsoleTable$",
     "org.apache.spark.sql.execution.streaming.sources.ContinuousMemorySink",
@@ -105,6 +106,7 @@ object RealTimeModeAllowlist extends Logging {
         "message" -> classNamesString(classNames).message
       )
     )
+    planChangeLogger.warn("notInRTMAllowlistException(errorType,classNames)={},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", errorType)
   }
 
   def checkAllowedSink(sink: Table, throwException: Boolean): Unit = {

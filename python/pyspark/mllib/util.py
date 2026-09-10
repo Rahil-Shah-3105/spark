@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from pyspark.mllib._typing import VectorLike
     from py4j.java_gateway import JavaObject
     from pyspark.mllib.regression import LabeledPoint
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class MLUtils:
@@ -175,6 +176,7 @@ class MLUtils:
         >>> ''.join(sorted(input(glob(tempFile.name + "/part-0000*"))))
         '0.0 1:1.01 2:2.02 3:3.03\\n1.1 1:1.23 3:4.56\\n'
         """
+        logger.warning("saveAsLibSVMFile(data,dir)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", data, dir)
         lines = data.map(lambda p: MLUtils._convert_labeled_point_to_libsvm(p))
         lines.saveAsTextFile(dir)
 
@@ -239,6 +241,7 @@ class MLUtils:
         Loads vectors saved using `RDD[Vector].saveAsTextFile`
         with the default number of partitions.
         """
+        logger.warning("loadVectors(sc,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
         return callMLlibFunc("loadVectors", sc, path)
 
     @staticmethod
@@ -464,6 +467,7 @@ class Saveable:
             this model. If the directory already exists,
             this method throws an exception.
         """
+        logger.warning("save(self,sc,path)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, sc, path)
         raise NotImplementedError
 
 
@@ -513,6 +517,7 @@ class Loader(Generic[T]):
         object
             model instance
         """
+        logger.warning("load(cls,sc,path)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, sc, path)
         raise NotImplementedError
 
 

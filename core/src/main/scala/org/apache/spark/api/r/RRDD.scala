@@ -41,6 +41,7 @@ private abstract class BaseRRDD[T: ClassTag, U: ClassTag](
     packageNames: Array[Byte],
     broadcastVars: Array[Broadcast[Object]])
   extends RDD[U](parent) with Logging {
+   _driverLogger = DriverLogger(_conf)
   override def getPartitions: Array[Partition] = parent.partitions
 
   override def compute(partition: Partition, context: TaskContext): Iterator[U] = {
@@ -138,6 +139,7 @@ private[spark] object RRDD {
                          .mkString(File.separator))
     }
 
+    _driverLogger.warn("createSparkContext(master,appName,sparkHome,jars,sparkEnvirMap,sparkExecutorEnvMap)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", master, appName, sparkHome, jars, sparkEnvirMap, sparkExecutorEnvMap)
     val jsc = new JavaSparkContext(SparkContext.getOrCreate(sparkConf))
     jars.foreach { jar =>
       jsc.addJar(jar)
@@ -151,6 +153,7 @@ private[spark] object RRDD {
    */
   def createRDDFromArray(jsc: JavaSparkContext, arr: Array[Array[Byte]]): JavaRDD[Array[Byte]] = {
     JavaRDD.fromRDD(jsc.sc.parallelize(arr.toImmutableArraySeq, arr.length))
+    _driverLogger.warn("createRDDFromArray(jsc,arr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jsc, arr)
   }
 
   /**

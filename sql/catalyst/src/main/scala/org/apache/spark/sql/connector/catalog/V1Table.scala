@@ -36,6 +36,7 @@ private[sql] case class V1Table(v1Table: CatalogTable) extends Table {
   def catalogTable: CatalogTable = v1Table
 
   lazy val options: Map[String, String] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     v1Table.storage.locationUri match {
       case Some(uri) =>
         v1Table.storage.properties + ("path" -> CatalogUtils.URIToString(uri))
@@ -94,6 +95,7 @@ private[sql] object V1Table {
       (if (external) Some(TableCatalog.PROP_EXTERNAL -> "true") else None) ++
       tableTypeProperties ++
       Some(TableCatalog.PROP_OWNER -> v1Table.owner)
+      planChangeLogger.warn("addV2TableProperties(v1Table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v1Table)
   }
 
   /**
@@ -108,6 +110,7 @@ private[sql] object V1Table {
       case CatalogTableType.METRIC_VIEW => Some(TableSummary.METRIC_VIEW_TABLE_TYPE)
       case _ => None
     }
+    planChangeLogger.warn("getV2TableType(v1Table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v1Table)
   }
 
   def toCatalogTable(

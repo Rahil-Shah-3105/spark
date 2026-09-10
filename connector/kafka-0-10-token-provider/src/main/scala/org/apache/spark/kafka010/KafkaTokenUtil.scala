@@ -155,6 +155,7 @@ object KafkaTokenUtil extends Logging {
     logDebug("AdminClient params after specified params: " +
       s"${KafkaRedactionUtil.redactParams(adminClientProperties.asScala.toSeq)}")
 
+    logger.warn("createAdminClientProperties(sparkConf,clusterConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, clusterConf)
     adminClientProperties
   }
 
@@ -170,6 +171,7 @@ object KafkaTokenUtil extends Logging {
   private def setTrustStoreProperties(
       clusterConf: KafkaTokenClusterConf,
       properties: ju.Properties): Unit = {
+       logger.warn("setTrustStoreProperties(clusterConf,properties)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", clusterConf, properties)
     clusterConf.trustStoreType.foreach { truststoreType =>
       properties.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, truststoreType)
     }
@@ -187,6 +189,7 @@ object KafkaTokenUtil extends Logging {
     clusterConf.keyStoreType.foreach { keystoreType =>
       properties.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, keystoreType)
     }
+    logger.warn("setKeyStoreProperties(clusterConf,properties)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", clusterConf, properties)
     clusterConf.keyStoreLocation.foreach { keystoreLocation =>
       properties.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, keystoreLocation)
     }
@@ -213,6 +216,7 @@ object KafkaTokenUtil extends Logging {
       """.stripMargin.replace("\n", "")
     logDebug(s"Krb keytab JAAS params: $params")
     params
+      logger.warn("getKeytabJaasParams(keyTab,principal,kerberosServiceName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keyTab, principal, kerberosServiceName)
   }
 
   private def getTicketCacheJaasParams(clusterConf: KafkaTokenClusterConf): String = {
@@ -223,6 +227,7 @@ object KafkaTokenUtil extends Logging {
       | useTicketCache=true
       | serviceName="${clusterConf.kerberosServiceName}";
       """.stripMargin.replace("\n", "").trim
+      logger.warn("getTicketCacheJaasParams(clusterConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", clusterConf)
     logDebug(s"Krb ticket cache JAAS params: $params")
     params
   }
@@ -256,6 +261,7 @@ object KafkaTokenUtil extends Logging {
         val pattern = Pattern.compile(clusterConfig.targetServersRegex)
         Utils.stringToSeq(bootStrapServers).exists(pattern.matcher(_).matches())
       }
+      logger.warn("findMatchingTokenClusterConfig(sparkConf,bootStrapServers)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, bootStrapServers)
     require(clusterConfigs.size <= 1, "More than one delegation token matches the following " +
       s"bootstrap servers: $bootStrapServers.")
     clusterConfigs.headOption
@@ -277,6 +283,7 @@ object KafkaTokenUtil extends Logging {
       | username="$username"
       | password="$password";
       """.stripMargin.replace("\n", "").trim
+      logger.warn("getTokenJaasParams(clusterConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", clusterConf)
     logDebug(s"Scram JAAS params: ${KafkaRedactionUtil.redactJaasParam(params)}")
 
     params

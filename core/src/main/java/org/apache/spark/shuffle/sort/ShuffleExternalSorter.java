@@ -71,6 +71,7 @@ import org.apache.spark.util.Utils;
  * specialized merge procedure that avoids extra serialization/deserialization.
  */
 final class ShuffleExternalSorter extends MemoryConsumer implements ShuffleChecksumSupport {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ShuffleExternalSorter.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ShuffleExternalSorter.class);
@@ -321,6 +322,7 @@ final class ShuffleExternalSorter extends MemoryConsumer implements ShuffleCheck
   private void updatePeakMemoryUsed() {
     long mem = getMemoryUsage();
     if (mem > peakMemoryUsedBytes) {
+	logger.warn("updatePeakMemoryUsed()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       peakMemoryUsedBytes = mem;
     }
   }
@@ -525,6 +527,7 @@ final class ShuffleExternalSorter extends MemoryConsumer implements ShuffleCheck
       writeSortedFile(/* isFinalFile = */spills.isEmpty());
       freeMemory();
       inMemSorter.free();
+	logger.warn("closeAndGetSpills()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       inMemSorter = null;
     }
     return spills.toArray(new SpillInfo[spills.size()]);

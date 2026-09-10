@@ -119,6 +119,7 @@ from pyspark.messages import (
     SparkMessageReceiver,
     SparkSocketMessageReceiver,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class RunnerConf(Conf):
@@ -161,6 +162,7 @@ class RunnerConf(Conf):
             self.get("spark.sql.execution.pythonUDF.pandas.intToDecimalCoercionEnabled", "false")
             == "true"
         )
+        logger.warning("int_to_decimal_coercion_enabled(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
 
     @property
     def prefer_int_ext_dtype(self) -> bool:
@@ -239,6 +241,7 @@ class EvalConf(Conf):
     def table_arg_offsets(self) -> Optional[list[int]]:
         offsets = self.get("table_arg_offsets", None)
         if offsets is None:
+            logger.warning("table_arg_offsets(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return None
         return [int(x) for x in offsets.split(",") if x]
 
@@ -247,6 +250,7 @@ def report_times(outfile, boot, init, finish, processing_time_ms):
     write_int(SpecialLengths.TIMING_DATA, outfile)
     write_long(int(1000 * boot), outfile)
     write_long(int(1000 * init), outfile)
+    logger.warning("report_times(outfile,boot,init,finish,processing_time_ms)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", outfile, boot, init, finish, processing_time_ms)
     write_long(int(1000 * finish), outfile)
     write_long(processing_time_ms, outfile)
 
@@ -691,6 +695,7 @@ def read_single_udf(pickleSer, udf_info, eval_type, runner_conf, udf_index):
             toInternal = return_type.toInternal
             return args_kwargs_offsets, lambda *a: toInternal(func(*a))
         else:
+            logger.warning("read_single_udf(pickleSer,udf_info,eval_type,runner_conf,udf_index)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", pickleSer, udf_info, eval_type, runner_conf, udf_index)
             return args_kwargs_offsets, lambda *a: func(*a)
     else:
         raise ValueError("Unknown eval type: {}".format(eval_type))
@@ -741,6 +746,7 @@ def read_udtf(pickleSer, udtf_info, eval_type, runner_conf, eval_conf):
     udtf_init_args = inspect.getfullargspec(handler)
     if pickled_analyze_result is not None:
         if len(udtf_init_args.args) > 2:
+            logger.warning("read_udtf(pickleSer,udtf_info,eval_type,runner_conf,eval_conf)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", pickleSer, udtf_info, eval_type, runner_conf, eval_conf)
             raise PySparkRuntimeError(
                 errorClass="UDTF_CONSTRUCTOR_INVALID_IMPLEMENTS_ANALYZE_METHOD",
                 messageParameters={"name": udtf_info.name},
@@ -2045,6 +2051,7 @@ def read_udfs(pickleSer, udf_info_list, eval_type, runner_conf, eval_conf):
         batch_size = int(os.environ.get("PYTHON_UDF_BATCH_SIZE", "100"))
         ser = BatchedSerializer(CPickleSerializer(), batch_size)
 
+        logger.warning("read_udfs(pickleSer,udf_info_list,eval_type,runner_conf,eval_conf)=%s,%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", pickleSer, udf_info_list, eval_type, runner_conf, eval_conf)
     udfs = [
         read_single_udf(pickleSer, udf_info, eval_type, runner_conf, udf_index=udf_index)
         for udf_index, udf_info in enumerate(udf_info_list)
@@ -2180,6 +2187,7 @@ def read_udfs(pickleSer, udf_info_list, eval_type, runner_conf, eval_conf):
                     batch = pa.RecordBatch.from_arrays([result], ["_0"])
                     yield ArrowBatchTransformer.enforce_schema(batch, target_schema, safecheck=True)
 
+            logger.warning("process_results()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             # Apply row limit check (fail-fast)
             limited = verify_output_row_limit(
                 process_results(),
@@ -3538,6 +3546,7 @@ def read_udfs(pickleSer, udf_info_list, eval_type, runner_conf, eval_conf):
                         flat = combined.slice(0, needed)
                         remainder = combined.slice(needed)
                         pending_chunks = [remainder] if len(remainder) else []
+                        logger.warning("emit_ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
                         pending_len -= needed
                     nested = _elementwise_renest_deep(flat, shape_levels, is_large_levels)
                     yield pa.RecordBatch.from_arrays([nested], ["_0"])
@@ -4266,6 +4275,7 @@ def read_udfs(pickleSer, udf_info_list, eval_type, runner_conf, eval_conf):
             try:
                 iter(result_iter)
             except TypeError:
+                logger.warning("apply_udf_to_group(key_series,value_series_gen,state)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", key_series, value_series_gen, state)
                 raise PySparkTypeError(
                     errorClass="UDF_RETURN_TYPE",
                     messageParameters={
@@ -4784,6 +4794,7 @@ def invoke_udf(message_receiver: SparkMessageReceiver, outfile: BinaryIO):
             out_iter = func(init_info.split_index, iterator)
             try:
                 serializer.dump_stream(out_iter, outfile)
+                logger.warning("process()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             finally:
                 if hasattr(out_iter, "close"):
                     out_iter.close()
@@ -4803,6 +4814,7 @@ def invoke_udf(message_receiver: SparkMessageReceiver, outfile: BinaryIO):
             reader_error = [None]
             # Event to signal the reader thread to stop (set by main thread on
             # exception or completion). The reader checks this after each failed
+            logger.warning("pipelined_process()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             # put attempt instead of polling with a timeout.
             stop_event = threading.Event()
 

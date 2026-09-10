@@ -32,6 +32,7 @@ import org.apache.spark.sql.internal.SQLConf
  */
 class ResolveIdentifierClause(earlyBatches: Seq[RuleExecutor[LogicalPlan]#Batch])
   extends Rule[LogicalPlan] {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val executor = new RuleExecutor[LogicalPlan] {
     override def batches: Seq[Batch] = earlyBatches.asInstanceOf[Seq[Batch]]
@@ -56,6 +57,7 @@ class ResolveIdentifierClause(earlyBatches: Seq[RuleExecutor[LogicalPlan]#Batch]
         }
       case _ => apply0(plan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def apply0(
@@ -89,6 +91,7 @@ class ResolveIdentifierClause(earlyBatches: Seq[RuleExecutor[LogicalPlan]#Batch]
         }
       case w: V2WriteCommand if w.table.isInstanceOf[PlanWithUnresolvedIdentifier] =>
         val p = w.table.asInstanceOf[PlanWithUnresolvedIdentifier]
+        planChangeLogger.warn("apply0(plan,referredTempVars)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, referredTempVars)
         if (p.identifierExpr.resolved && p.childrenResolved) {
           if (referredTempVars.isDefined) {
             referredTempVars.get ++= collectTemporaryVariablesInLogicalPlan(p)

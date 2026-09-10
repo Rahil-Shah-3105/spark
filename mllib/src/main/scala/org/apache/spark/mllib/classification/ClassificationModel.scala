@@ -67,5 +67,6 @@ private[mllib] object ClassificationModel {
   def getNumFeaturesClasses(metadata: JValue): (Int, Int) = {
     implicit val formats: Formats = DefaultFormats
     ((metadata \ "numFeatures").extract[Int], (metadata \ "numClasses").extract[Int])
+    logger.warn("getNumFeaturesClasses(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 }

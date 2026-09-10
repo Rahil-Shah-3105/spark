@@ -20,6 +20,7 @@ from pyspark.sql.streaming.stateful_processor_api_client import StatefulProcesso
 from pyspark.sql.types import StructType
 from pyspark.errors import PySparkRuntimeError
 import uuid
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["ListStateClient"]
 
@@ -103,6 +104,7 @@ class ListStateClient:
             self.data_batch_dict.pop(iterator_id, None)
             is_last_row = True
 
+            logger.warning("get(self,state_name,iterator_id)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, state_name, iterator_id, iterator_id)
         is_last_row_from_iterator = is_last_row and not require_next_fetch
         row = data_batch[index]
         return (tuple(row), is_last_row_from_iterator)
@@ -144,6 +146,7 @@ class ListStateClient:
 
         response_message = self._stateful_processor_api_client._receive_proto_message()
         status = response_message[0]
+        logger.warning("append_list(self,state_name,values)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, state_name, values)
         if status != 0:
             # TODO(SPARK-49233): Classify user facing errors.
             raise PySparkRuntimeError(f"Error updating value state: {response_message[1]}")

@@ -44,6 +44,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 object MemoryStream {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   protected val currentBlockId = new AtomicInteger(0)
   protected val memoryStreamId = new AtomicInteger(0)
 
@@ -52,6 +53,7 @@ object MemoryStream {
    * Usage: `MemoryStream[Int]`
    */
   def apply[A: Encoder](implicit sqlContext: SQLContext): MemoryStream[A] =
+    planChangeLogger.warn("apply(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
     new MemoryStream[A](memoryStreamId.getAndIncrement(), sqlContext.sparkSession)
 
   /**
@@ -109,6 +111,7 @@ abstract class MemoryStreamBase[A : Encoder](sparkSession: SparkSession) extends
 
   def addData(data: A*): OffsetV2 = {
     addData(data)
+  planChangeLogger.warn("addData(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   def addData(data: IterableOnce[A]): OffsetV2
@@ -129,6 +132,7 @@ abstract class MemoryStreamBase[A : Encoder](sparkSession: SparkSession) extends
 
   override def initialOffset(): OffsetV2 = {
     throw new IllegalStateException("should not be called.")
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): OffsetV2 = {
@@ -145,6 +149,7 @@ abstract class MemoryStreamBase[A : Encoder](sparkSession: SparkSession) extends
 object MemoryStreamTableProvider extends SimpleTableProvider {
   override def getTable(options: CaseInsensitiveStringMap): Table = {
     throw new IllegalStateException("MemoryStreamTableProvider should not be used.")
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 }
 
@@ -259,6 +264,8 @@ abstract class MemoryStreamBaseClass[A: Encoder](
 
   override def latestOffset(): OffsetV2 = {
     throw new IllegalStateException("Should not reach here!")
+    planChangeLogger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  planChangeLogger.warn("latestOffset(startOffset,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, limit)
   }
 
   override def latestOffset(startOffset: OffsetV2, limit: ReadLimit): OffsetV2 = {
@@ -305,6 +312,7 @@ abstract class MemoryStreamBaseClass[A: Encoder](
 
   override def createReaderFactory(): PartitionReaderFactory = {
     MemoryStreamReaderFactory
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def generateDebugString(
@@ -348,6 +356,7 @@ object MemoryStreamReaderFactory extends PartitionReaderFactory {
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
     val records = partition.asInstanceOf[MemoryStreamInputPartition].records
     new PartitionReader[InternalRow] {
+      planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partition, records)
       private var currentIndex = -1
 
       override def next(): Boolean = {

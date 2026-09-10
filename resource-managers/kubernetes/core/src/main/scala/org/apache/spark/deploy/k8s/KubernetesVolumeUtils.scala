@@ -71,6 +71,7 @@ object KubernetesVolumeUtils {
         volumeConf = parseVolumeSpecificConf(properties,
           volumeType, volumeName, Option(volumeLabelsMap), Option(volumeAnnotationsMap)))
     }.toSeq
+  logger.warn("getVolumeTypesAndNames(properties)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", properties)
   }
 
   /**

@@ -38,6 +38,7 @@ case class AddPartitionExec(
   override def output: Seq[Attribute] = Seq.empty
 
   override protected def run(): Seq[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val (existsParts, notExistsParts) =
       partSpecs.partition(p => table.partitionExists(p.ident))
 
@@ -45,6 +46,7 @@ case class AddPartitionExec(
       throw new PartitionsAlreadyExistException(
         table.name(), existsParts.map(_.ident), table.partitionSchema())
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     val isTableAltered = notExistsParts match {
       case Seq() => false // Nothing will be done

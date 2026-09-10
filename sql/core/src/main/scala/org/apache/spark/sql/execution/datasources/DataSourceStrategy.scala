@@ -72,6 +72,7 @@ import org.apache.spark.unsafe.types.UTF8String
  * `PreprocessTableInsertion`.
  */
 object DataSourceAnalysis extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def resolver: Resolver = conf.resolver
 
@@ -260,6 +261,7 @@ class FindDataSourceTable(sparkSession: SparkSession) extends Rule[LogicalPlan] 
     val readFileSourceTableCacheIgnoreOptions =
       SQLConf.get.getConf(SQLConf.READ_FILE_SOURCE_TABLE_CACHE_IGNORE_OPTIONS)
     catalog.getCachedTable(qualifiedTableName) match {
+    planChangeLogger.warn("readDataSourceTable(table,extraOptions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, extraOptions)
       case null =>
         val dataSource =
           DataSource(
@@ -307,6 +309,7 @@ class FindDataSourceTable(sparkSession: SparkSession) extends Rule[LogicalPlan] 
       catalogTable = Some(table),
       userSpecifiedStreamingSourceName = sourceIdentifyingName.toUserProvided)
     StreamingRelation(dataSource)
+    planChangeLogger.warn("getStreamingRelation(table,extraOptions,sourceIdentifyingName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", table, extraOptions, sourceIdentifyingName, sourceIdentifyingName)
   }
 
 
@@ -437,6 +440,7 @@ object DataSourceStrategy
         None) :: Nil
 
     case _ => Nil
+  planChangeLogger.warn("apply(nestedPredicatePushdownEnabled)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nestedPredicatePushdownEnabled)
   }
 
   // Based on Public API.
@@ -450,6 +454,7 @@ object DataSourceStrategy
       projects,
       filterPredicates,
       (requestedColumns, _, pushedFilters) => {
+        planChangeLogger.warn("pruneFilterProject(relation,projects,filterPredicates,scanBuilder)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, projects, filterPredicates, scanBuilder)
         scanBuilder(requestedColumns, pushedFilters.toArray)
       })
   }
@@ -488,6 +493,7 @@ object DataSourceStrategy
     // `Filter`s or cannot be handled by `relation`.
     val filterCondition = unhandledPredicates.reduceLeftOption(expressions.And)
 
+    planChangeLogger.warn("pruneFilterProjectRaw(relation,projects,filterPredicates,scanBuilder)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", relation, projects, filterPredicates, scanBuilder, candidatePredicates)
     if (projects.map(_.toAttribute) == projects &&
         projectSet.size == projects.size &&
         filterSet.subsetOf(projectSet)) {
@@ -594,6 +600,7 @@ object DataSourceStrategy
       logInfo(log"Pruning directories with: ${MDC(PREDICATES,
         predicates.simpleString(maxToStringFields))}")
       predicates
+      planChangeLogger.warn("getPushedDownFilters(partitionColumns,normalizedFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionColumns, normalizedFilters)
     }
   }
 
@@ -1000,6 +1007,7 @@ abstract class PushableColumnBase {
     } else {
       extractTopLevelCol(e)
     }
+    planChangeLogger.warn("unapply(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   private def extractTopLevelCol(e: Expression): Option[String] = e match {

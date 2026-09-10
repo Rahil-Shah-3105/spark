@@ -107,6 +107,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    * Return a new RDD by applying a function to all elements of this RDD.
    */
   def mapToDouble[R](f: DoubleFunction[T]): JavaDoubleRDD = {
+    _driverLogger = DriverLogger(_conf)
     new JavaDoubleRDD(rdd.map(f.call(_).doubleValue()))
   }
 
@@ -563,6 +564,8 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    */
   def saveAsTextFile(path: String): Unit = {
     rdd.saveAsTextFile(path)
+    _driverLogger.warn("saveAsTextFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
+  _driverLogger.warn("saveAsTextFile(path,codec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, codec)
   }
 
 
@@ -578,6 +581,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    */
   def saveAsObjectFile(path: String): Unit = {
     rdd.saveAsObjectFile(path)
+    _driverLogger.warn("saveAsObjectFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -715,6 +719,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    */
   def countAsync(): JavaFutureAction[jl.Long] = {
     new JavaFutureActionWrapper[Long, jl.Long](rdd.countAsync(), jl.Long.valueOf)
+    _driverLogger.warn("countAsync()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**
@@ -726,6 +731,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    */
   def collectAsync(): JavaFutureAction[JList[T]] = {
     new JavaFutureActionWrapper(rdd.collectAsync(), (x: Seq[T]) => x.asJava)
+    _driverLogger.warn("collectAsync()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**
@@ -737,6 +743,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    */
   def takeAsync(num: Int): JavaFutureAction[JList[T]] = {
     new JavaFutureActionWrapper(rdd.takeAsync(num), (x: Seq[T]) => x.asJava)
+    _driverLogger.warn("takeAsync(num)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", num)
   }
 
   /**
@@ -746,6 +753,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   def foreachAsync(f: VoidFunction[T]): JavaFutureAction[Void] = {
     new JavaFutureActionWrapper[Unit, Void](rdd.foreachAsync(x => f.call(x)),
       { x => null.asInstanceOf[Void] })
+    _driverLogger.warn("foreachAsync(f)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
   }
 
   /**
@@ -755,5 +763,6 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   def foreachPartitionAsync(f: VoidFunction[JIterator[T]]): JavaFutureAction[Void] = {
     new JavaFutureActionWrapper[Unit, Void](rdd.foreachPartitionAsync(x => f.call(x.asJava)),
       { x => null.asInstanceOf[Void] })
+    _driverLogger.warn("foreachPartitionAsync(f)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
   }
 }

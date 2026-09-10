@@ -33,6 +33,7 @@ abstract class CreateUserDefinedFunctionCommand
 
 
 object CreateUserDefinedFunctionCommand {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * This factory methods serves as a central place to verify required inputs and
@@ -57,6 +58,7 @@ object CreateUserDefinedFunctionCommand {
   ): CreateUserDefinedFunctionCommand = {
     // scalastyle:on argcount
 
+    planChangeLogger.warn("apply(name,inputParamText,returnTypeText,exprText,queryText,comment,collation,isDeterministic,containsSQL,language,isTableFunc,isTemp,ignoreIfExists,replace)={},{},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, inputParamText, returnTypeText, exprText, queryText, comment, collation, isDeterministic, containsSQL, language, isTableFunc, isTemp, ignoreIfExists, replace)
     assert(language != null)
 
     language match {

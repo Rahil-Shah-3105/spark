@@ -56,6 +56,7 @@ import org.apache.spark.sql.internal.SQLConf
  */
 class ResolveReferencesInSort(val catalogManager: CatalogManager)
   extends SQLConfHelper with ColumnResolutionHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(s: Sort): LogicalPlan = {
     if (conf.getConf(SQLConf.PRIORITIZE_ORDINAL_RESOLUTION_IN_SORT) && hasUnresolvedOrdinals(s)) {
@@ -63,6 +64,7 @@ class ResolveReferencesInSort(val catalogManager: CatalogManager)
     } else {
       resolveReferencesInSort(s)
     }
+    planChangeLogger.warn("apply(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
   }
 
   private def hasUnresolvedOrdinals(sort: Sort): Boolean = {

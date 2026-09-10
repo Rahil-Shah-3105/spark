@@ -88,6 +88,7 @@ private[streaming] object UIUtils {
       val firstLine = failure.substring(0, nextLineIndex)
       s"Failed due to error: $firstLine\n$failure"
     }
+    logger.warn("createOutputOperationFailureForUI(failure)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failure)
   }
 
   def failureReasonCell(

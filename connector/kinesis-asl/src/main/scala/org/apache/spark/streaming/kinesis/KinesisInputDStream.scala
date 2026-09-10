@@ -53,6 +53,7 @@ private[kinesis] class KinesisInputDStream[T: ClassTag](
   override def createBlockRDD(time: Time, blockInfos: Seq[ReceivedBlockInfo]): RDD[T] = {
 
     // This returns true even for when blockInfos is empty
+    logger.warn("createBlockRDD(time,blockInfos)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", time, blockInfos)
     val allBlocksHaveRanges = blockInfos.map { _.metadataOption }.forall(_.nonEmpty)
 
     if (allBlocksHaveRanges) {
@@ -82,6 +83,7 @@ private[kinesis] class KinesisInputDStream[T: ClassTag](
       checkpointAppName, checkpointInterval, _storageLevel, messageHandler,
       kinesisCreds, dynamoDBCreds, cloudWatchCreds,
       metricsLevel, metricsEnabledDimensions)
+    logger.warn("getReceiver()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -300,6 +302,7 @@ object KinesisInputDStream {
     def metricsEnabledDimensions(metricsEnabledDimensions: Set[String]): Builder = {
       this.metricsEnabledDimensions = Option(metricsEnabledDimensions)
       this
+      logger.warn("metricsEnabledDimensions(metricsEnabledDimensions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metricsEnabledDimensions)
     }
 
     /**

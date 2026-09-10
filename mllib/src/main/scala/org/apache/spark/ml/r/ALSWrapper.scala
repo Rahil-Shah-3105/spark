@@ -96,6 +96,7 @@ private[r] object ALSWrapper extends MLReadable[ALSWrapper] {
       val rMetadataJson: String = compact(render(rMetadata))
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.alsModel.save(modelPath)
@@ -113,6 +114,7 @@ private[r] object ALSWrapper extends MLReadable[ALSWrapper] {
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val ratingCol = (rMetadata \ "ratingCol").extract[String]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val alsModel = ALSModel.load(modelPath)
 
       new ALSWrapper(alsModel, ratingCol)

@@ -79,12 +79,14 @@ case class CreateTableLikeExec(
     }
 
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Derive target columns from source without propagating source field IDs to the new table.
   // For V1Table sources, apply CharVarcharUtils to preserve CHAR/VARCHAR types as declared
   // rather than collapsed to StringType.
   private def targetColumns: Array[Column] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     sourceTable match {
       case v1: V1Table =>
         val rawSchema = CharVarcharUtils.getRawSchema(v1.catalogTable.schema)

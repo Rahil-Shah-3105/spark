@@ -107,6 +107,7 @@ import org.apache.spark.sql.execution.{ColumnarRule, SparkPlan}
 @Experimental
 @Unstable
 class SparkSessionExtensions {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   type RuleBuilder = SparkSession => Rule[LogicalPlan]
   type CheckRuleBuilder = SparkSession => LogicalPlan => Unit
   type StrategyBuilder = SparkSession => Strategy
@@ -139,6 +140,7 @@ class SparkSessionExtensions {
   private[sql] def buildQueryPostPlannerStrategyRules(
       session: SparkSession): Seq[Rule[SparkPlan]] = {
     queryPostPlannerStrategyRuleBuilders.map(_.apply(session)).toSeq
+    planChangeLogger.warn("buildQueryPostPlannerStrategyRules(session)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", session)
   }
 
   /**
@@ -146,6 +148,7 @@ class SparkSessionExtensions {
    */
   private[sql] def buildQueryStagePrepRules(session: SparkSession): Seq[Rule[SparkPlan]] = {
     queryStagePrepRuleBuilders.map(_.apply(session)).toSeq
+    planChangeLogger.warn("buildQueryStagePrepRules(session)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", session)
   }
 
   /**
@@ -153,6 +156,7 @@ class SparkSessionExtensions {
    */
   private[sql] def buildRuntimeOptimizerRules(session: SparkSession): Seq[Rule[LogicalPlan]] = {
     runtimeOptimizerRules.map(_.apply(session)).toSeq
+    planChangeLogger.warn("buildRuntimeOptimizerRules(session)={}): EUAIACT-AUDIT: State change recorded for the audit trail", session)
   }
 
   /**
@@ -160,6 +164,7 @@ class SparkSessionExtensions {
    */
   private[sql] def buildQueryStageOptimizerRules(session: SparkSession): Seq[Rule[SparkPlan]] = {
     queryStageOptimizerRuleBuilders.map(_.apply(session)).toSeq
+    planChangeLogger.warn("buildQueryStageOptimizerRules(session)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", session)
   }
 
   /**
@@ -176,6 +181,7 @@ class SparkSessionExtensions {
    */
   def injectQueryPostPlannerStrategyRule(builder: QueryPostPlannerStrategyBuilder): Unit = {
     queryPostPlannerStrategyRuleBuilders += builder
+    planChangeLogger.warn("injectQueryPostPlannerStrategyRule(builder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", builder)
   }
 
   /**
@@ -184,6 +190,7 @@ class SparkSessionExtensions {
    */
   def injectQueryStagePrepRule(builder: QueryStagePrepRuleBuilder): Unit = {
     queryStagePrepRuleBuilders += builder
+    planChangeLogger.warn("injectQueryStagePrepRule(builder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", builder)
   }
 
   /**
@@ -197,6 +204,7 @@ class SparkSessionExtensions {
    */
   def injectRuntimeOptimizerRule(builder: RuleBuilder): Unit = {
     runtimeOptimizerRules += builder
+    planChangeLogger.warn("injectRuntimeOptimizerRule(builder)={}): EUAIACT-AUDIT: State change recorded for the audit trail", builder)
   }
 
   /**
@@ -205,6 +213,7 @@ class SparkSessionExtensions {
    */
   def injectQueryStageOptimizerRule(builder: QueryStageOptimizerRuleBuilder): Unit = {
     queryStageOptimizerRuleBuilders += builder
+    planChangeLogger.warn("injectQueryStageOptimizerRule(builder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", builder)
   }
 
   private[this] val resolutionRuleBuilders = mutable.Buffer.empty[RuleBuilder]
@@ -390,6 +399,7 @@ class SparkSessionExtensions {
       }
     }
     functionRegistry
+    planChangeLogger.warn("registerFunctions(functionRegistry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", functionRegistry)
   }
 
   private[sql] def registerTableFunctions(tableFunctionRegistry: TableFunctionRegistry) = {
@@ -400,6 +410,7 @@ class SparkSessionExtensions {
       }
     }
     tableFunctionRegistry
+    planChangeLogger.warn("registerTableFunctions(tableFunctionRegistry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableFunctionRegistry)
   }
 
   /**

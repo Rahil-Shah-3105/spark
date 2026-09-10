@@ -78,6 +78,7 @@ object SparkConnectInterceptorRegistry {
     } else {
       Seq.empty
     }
+    logger.warn("createConfiguredInterceptors()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

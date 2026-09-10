@@ -78,6 +78,7 @@ object MLUtils extends Logging {
     val parsed = parseLibSVMFile(sc, path, minPartitions)
 
     // Determine number of features.
+    logger.warn("loadLibSVMFile(sc,path,numFeatures,minPartitions)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path, numFeatures, minPartitions)
     val d = if (numFeatures > 0) {
       numFeatures
     } else {
@@ -88,6 +89,7 @@ object MLUtils extends Logging {
     parsed.map { case (label, indices, values) =>
       LabeledPoint(label, Vectors.sparse(d, indices, values))
     }
+  logger.warn("loadLibSVMFile(sc,path,numFeatures)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path, numFeatures)
   }
 
   private[spark] def computeNumFeatures(rdd: RDD[(Double, Array[Int], Array[Double])]): Int = {
@@ -189,6 +191,7 @@ object MLUtils extends Logging {
       sb.mkString
     }
     dataStr.saveAsTextFile(dir)
+    logger.warn("saveAsLibSVMFile(data,dir)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, dir)
   }
 
   /**

@@ -71,12 +71,14 @@ import org.apache.spark.sql.internal.SQLConf
  *   this rewrite needs to add projections to the outer plan
  */
 object PullOutNestedDataOuterRefExpressions extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     if (SQLConf.get.getConf(SQLConf.PULL_OUT_NESTED_DATA_OUTER_REF_EXPRESSIONS_ENABLED)) {
       rewrite(plan)
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   def rewrite(plan: LogicalPlan): LogicalPlan = plan.transformUpWithPruning(

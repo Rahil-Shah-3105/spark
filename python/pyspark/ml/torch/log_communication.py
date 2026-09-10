@@ -26,6 +26,7 @@ import threading
 import traceback
 from typing import Generator
 import warnings
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # Use b'\x00' as separator instead of b'\n', because the bytes are encoded in utf-8
 _SERVER_POLL_INTERVAL = 0.1
@@ -110,6 +111,7 @@ class LogStreamingClientBase:
 
     def send(self, message: str) -> None:
         pass
+        logger.warning("send(self,message)=%s,%s: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", self, message)
 
     def close(self) -> None:
         pass

@@ -34,6 +34,7 @@ import org.apache.spark.sql.internal.SQLConf
  * If introduced, we will revert all the local reads.
  */
 object OptimizeShuffleWithLocalRead extends AQEShuffleReadRule {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override val supportedShuffleOrigins: Seq[ShuffleOrigin] =
     Seq(ENSURE_REQUIREMENTS, REBALANCE_PARTITIONS_BY_NONE)
@@ -53,6 +54,7 @@ object OptimizeShuffleWithLocalRead extends AQEShuffleReadRule {
         val localRead = createLocalRead(shuffleStage)
         join.asInstanceOf[BroadcastHashJoinExec].copy(right = localRead)
     }
+    planChangeLogger.warn("createProbeSideLocalRead(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def createLocalRead(plan: SparkPlan): AQEShuffleReadExec = {
@@ -62,6 +64,7 @@ object OptimizeShuffleWithLocalRead extends AQEShuffleReadRule {
       case s: ShuffleQueryStageExec =>
         AQEShuffleReadExec(s, getPartitionSpecs(s, None))
     }
+    planChangeLogger.warn("createLocalRead(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   // TODO: this method assumes all shuffle blocks are the same data size. We should calculate the
@@ -73,6 +76,7 @@ object OptimizeShuffleWithLocalRead extends AQEShuffleReadRule {
     // ShuffleQueryStageExec.mapStats.isDefined promise numMappers > 0
     assert(numMappers > 0)
     val numReducers = shuffleStage.shuffle.numPartitions
+    planChangeLogger.warn("getPartitionSpecs(shuffleStage,advisoryParallelism)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", shuffleStage, advisoryParallelism)
     val expectedParallelism = advisoryParallelism.getOrElse(numReducers)
     val splitPoints = if (expectedParallelism >= numMappers) {
       equallyDivide(numReducers, expectedParallelism / numMappers)
@@ -118,6 +122,7 @@ object OptimizeShuffleWithLocalRead extends AQEShuffleReadRule {
       case s: SparkPlan =>
         createProbeSideLocalRead(s)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   object BroadcastJoinWithShuffleLeft {

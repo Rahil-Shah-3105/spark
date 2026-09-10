@@ -132,6 +132,7 @@ trait SQLLastAttemptAccumulator[IN, OUT, PARTIAL, DRIVER_ACC]
   private var lastAttemptDirectDriverQueryExecutionValues: mutable.Map[String, DRIVER_ACC] = _
 
   override def initializeLastAttemptAccumulator()(implicit ct: ClassTag[PARTIAL]): Unit = try {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     super.initializeLastAttemptAccumulator()(ct)
     lastAttemptDirectDriverQueryExecutionValues = new mutable.HashMap[String, DRIVER_ACC]()
   } catch {
@@ -166,6 +167,7 @@ trait SQLLastAttemptAccumulator[IN, OUT, PARTIAL, DRIVER_ACC]
       }
       lastAttemptDirectDriverQueryExecutionValues(queryExecutionId)
     }
+    planChangeLogger.warn("getOrCreateDirectDriverQueryExecutionValue(queryExecutionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", queryExecutionId, queryExecutionId)
   }
 
   protected def getActiveDatasetQueryExecutionId: Option[String] = {
@@ -264,6 +266,7 @@ trait SQLLastAttemptAccumulator[IN, OUT, PARTIAL, DRIVER_ACC]
       case Right(scopes) =>
         lastAttemptValueForRDDScopes(scopes)
     }
+    planChangeLogger.warn("lastAttemptValueForQueryExecution(qe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", qe)
   }
 
   /**
@@ -280,11 +283,13 @@ trait SQLLastAttemptAccumulator[IN, OUT, PARTIAL, DRIVER_ACC]
    */
   def lastAttemptValueForDataset(ds: Dataset[_]): Option[OUT] = {
     lastAttemptValueForQueryExecution(ds.queryExecution)
+    planChangeLogger.warn("lastAttemptValueForDataset(ds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ds)
   }
 
   /** Visible for testing. */
   def getDirectDriverQueryExecutionValue(qeId: String): Option[OUT] = {
     lastAttemptDirectDriverQueryExecutionValues.get(qeId).map(driverAccValue)
+    planChangeLogger.warn("getDirectDriverQueryExecutionValue(qeId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", qeId, qeId)
   }
 }
 

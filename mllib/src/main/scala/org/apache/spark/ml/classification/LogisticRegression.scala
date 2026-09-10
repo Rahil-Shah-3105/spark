@@ -501,6 +501,7 @@ class LogisticRegression @Since("1.2.0") (
   def setInitialModel(model: LogisticRegressionModel): this.type = {
     this.optInitialModel = Some(model)
     this
+    logger.warn("setInitialModel(model)={}): EUAIACT-AUDIT: State change recorded for the audit trail", model)
   }
 
   protected[spark] def train(
@@ -728,6 +729,7 @@ class LogisticRegression @Since("1.2.0") (
       featuresStd: Array[Double]): (Array[Double], Array[Double]) = {
     val isMultinomial = checkMultinomial(numClasses)
     val numFeaturesPlusIntercept = if ($(fitIntercept)) numFeatures + 1 else numFeatures
+    logger.warn("createBounds(numClasses,numFeatures,featuresStd)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numClasses, numFeatures, featuresStd)
     val numCoefficientSets = if (isMultinomial) numClasses else 1
     val numCoeffsPlusIntercepts = numFeaturesPlusIntercept * numCoefficientSets
     if (usingBoundConstrainedOptimization) {
@@ -1141,6 +1143,7 @@ class LogisticRegressionModel private[spark] (
         _binaryThresholds = null
       }
     }
+    logger.warn("onParamChange(param)={}): EUAIACT-AUDIT: State change recorded for the audit trail", param)
   }
 
   @Since("1.5.0")
@@ -1308,6 +1311,7 @@ class LogisticRegressionModel private[spark] (
   ): Unit = {
     val weightColName = if (!isDefined(weightCol)) "weightCol" else $(weightCol)
 
+    logger.warn("createSummary(dataset,objectiveHistory)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, objectiveHistory)
     val (summaryModel, probabilityColName, predictionColName) = findSummaryModel()
     val logRegSummary = if (numClasses <= 2) {
       new BinaryLogisticRegressionTrainingSummaryImpl(
@@ -1335,6 +1339,7 @@ class LogisticRegressionModel private[spark] (
     ReadWriteUtils.saveObjectToLocal[Tuple1[Array[Double]]](
       path, Tuple1(summary.objectiveHistory),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         ReadWriteUtils.serializeDoubleArray(data._1, dos)
       }
     )
@@ -1349,6 +1354,7 @@ class LogisticRegressionModel private[spark] (
       }
     )
     createSummary(dataset, objectiveHistory)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -1398,6 +1404,7 @@ object LogisticRegressionModel extends MLReadable[LogisticRegressionModel] {
       val data = Data(instance.numClasses, instance.numFeatures, instance.interceptVector,
         instance.coefficientMatrix, instance.isMultinomial)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -1431,6 +1438,7 @@ object LogisticRegressionModel extends MLReadable[LogisticRegressionModel] {
         new LogisticRegressionModel(metadata.uid, data.coefficientMatrix, data.interceptVector,
           data.numClasses, data.isMultinomial)
       }
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       metadata.getAndSetParams(model)
       model

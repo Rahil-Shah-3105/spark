@@ -47,9 +47,11 @@ case class DescribeProcedureCommand(
       case _ =>
         throw SparkException.internalError(s"Invalid procedure identifier: ${child.getClass}")
     }
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   private def describeV2Procedure(procedure: UnboundProcedure): Seq[Row] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val buffer = new ArrayBuffer[(String, String)]
     append(buffer, "Procedure:", procedure.name())
     append(buffer, "Description:", procedure.description())

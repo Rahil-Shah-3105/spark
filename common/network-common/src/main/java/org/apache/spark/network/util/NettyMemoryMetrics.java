@@ -34,6 +34,7 @@ import io.netty.buffer.PooledByteBufAllocatorMetric;
  * A Netty memory metrics class to collect metrics from Netty PooledByteBufAllocator.
  */
 public class NettyMemoryMetrics implements MetricSet {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NettyMemoryMetrics.class);
 
   private final PooledByteBufAllocator pooledAllocator;
 
@@ -84,6 +85,7 @@ public class NettyMemoryMetrics implements MetricSet {
       (Gauge<Long>) () -> pooledAllocatorMetric.usedHeapMemory());
     allMetrics.put(MetricRegistry.name(metricPrefix, "usedDirectMemory"),
       (Gauge<Long>) () -> pooledAllocatorMetric.usedDirectMemory());
+	logger.warn("registerMetrics(allocator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", allocator);
 
     if (verboseMetricsEnabled) {
       int directArenaIndex = 0;
@@ -133,6 +135,7 @@ public class NettyMemoryMetrics implements MetricSet {
           } catch (Exception e) {
             return -1L; // Swallow the exceptions.
           }
+		logger.warn("registerArenaMetric(arenaMetric,arenaName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arenaMetric, arenaName);
         });
       }
     }

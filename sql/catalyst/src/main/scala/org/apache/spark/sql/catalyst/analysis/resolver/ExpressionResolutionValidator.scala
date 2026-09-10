@@ -41,6 +41,7 @@ import org.apache.spark.sql.types.BooleanType
  * logical plan. You can find more info in the [[ResolutionValidator]] scaladoc.
  */
 class ExpressionResolutionValidator(resolutionValidator: ResolutionValidator) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val attributeScopeStack = resolutionValidator.getAttributeScopeStack
 
   /**
@@ -90,6 +91,7 @@ class ExpressionResolutionValidator(resolutionValidator: ResolutionValidator) {
       case outerReference: OuterReference =>
         validateOuterReference(outerReference)
     }
+    planChangeLogger.warn("validateProjectList(projectList)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", projectList)
   }
 
   private def validatePredicate(predicate: Predicate) = {
@@ -151,6 +153,7 @@ class ExpressionResolutionValidator(resolutionValidator: ResolutionValidator) {
       scalarSubquery.plan.output.size == 1,
       s"Scalar subquery returns more than one column: ${scalarSubquery.plan.output}"
     )
+    planChangeLogger.warn("validateScalarSubquery(scalarSubquery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", scalarSubquery)
   }
 
   private def validateInSubquery(inSubquery: InSubquery): Unit = {
@@ -159,11 +162,13 @@ class ExpressionResolutionValidator(resolutionValidator: ResolutionValidator) {
     }
 
     validate(inSubquery.query)
+    planChangeLogger.warn("validateInSubquery(inSubquery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inSubquery)
   }
 
   private def validateListQuery(listQuery: ListQuery): Unit = {
     attributeScopeStack.pushScope(isSubqueryRoot = true)
     try {
+    planChangeLogger.warn("validateListQuery(listQuery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", listQuery)
       resolutionValidator.validate(listQuery.plan)
     } finally {
       attributeScopeStack.popScope()

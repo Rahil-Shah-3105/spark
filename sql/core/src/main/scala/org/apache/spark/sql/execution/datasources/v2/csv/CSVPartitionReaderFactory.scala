@@ -46,6 +46,7 @@ case class CSVPartitionReaderFactory(
     partitionSchema: StructType,
     options: CSVOptions,
     filters: Seq[Filter]) extends FilePartitionReaderFactory {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val conf = broadcastedConf.value.value
@@ -75,5 +76,6 @@ case class CSVPartitionReaderFactory(
     val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
     new PartitionReaderWithPartitionValues(fileReader, readDataSchema,
       partitionSchema, file.partitionValues)
+    planChangeLogger.warn("buildReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
   }
 }

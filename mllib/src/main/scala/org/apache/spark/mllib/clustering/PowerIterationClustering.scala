@@ -48,6 +48,8 @@ class PowerIterationClusteringModel @Since("1.3.0") (
   @Since("1.4.0")
   override def save(sc: SparkContext, path: String): Unit = {
     PowerIterationClusteringModel.SaveLoadV1_0.save(sc, this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,model,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, model, path)
   }
 }
 
@@ -57,6 +59,7 @@ object PowerIterationClusteringModel extends Loader[PowerIterationClusteringMode
   @Since("1.4.0")
   override def load(sc: SparkContext, path: String): PowerIterationClusteringModel = {
     PowerIterationClusteringModel.SaveLoadV1_0.load(sc, path)
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private[clustering]
@@ -138,6 +141,7 @@ class PowerIterationClustering private[clustering] (
     require(k > 0,
       s"Number of clusters must be positive but got ${k}")
     this.k = k
+    logger.warn("setK(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
     this
   }
 
@@ -149,6 +153,7 @@ class PowerIterationClustering private[clustering] (
     require(maxIterations >= 0,
       s"Maximum of iterations must be nonnegative but got ${maxIterations}")
     this.maxIterations = maxIterations
+    logger.warn("setMaxIterations(maxIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxIterations)
     this
   }
 
@@ -163,6 +168,7 @@ class PowerIterationClustering private[clustering] (
       case _ => throw new IllegalArgumentException("Invalid initialization mode: " + mode)
     }
     this
+    logger.warn("setInitializationMode(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode)
   }
 
   /**
@@ -184,9 +190,11 @@ class PowerIterationClustering private[clustering] (
       case "random" => randomInit(w)
       case "degree" => initDegreeVector(w)
     }
+    logger.warn("run(graph)={}): EUAIACT-AUDIT: State change recorded for the audit trail", graph)
     // Materialized the graph w0 in randomInit/initDegreeVector, hence we can unpersist w.
     w.unpersist()
     pic(w0)
+  logger.warn("run(similarities)={}): EUAIACT-AUDIT: State change recorded for the audit trail", similarities)
   }
 
   /**

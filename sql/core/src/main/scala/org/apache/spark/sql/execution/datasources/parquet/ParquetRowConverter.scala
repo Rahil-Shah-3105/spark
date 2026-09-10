@@ -74,6 +74,7 @@ private[parquet] trait ParentContainerUpdater {
 private[parquet] object NoopUpdater extends ParentContainerUpdater
 
 private[parquet] trait HasParentContainerUpdater {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def updater: ParentContainerUpdater
 }
 
@@ -442,6 +443,7 @@ private[parquet] class ParquetRowConverter(
         new ParquetPrimitiveConverter(updater) {
           override def addLong(value: Long): Unit = {
             this.updater.setLong(timestampRebaseFunc(value))
+          planChangeLogger.warn("addLong(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
           }
         }
 
@@ -605,10 +607,12 @@ private[parquet] class ParquetRowConverter(
       this.expandedDictionary = Array.tabulate(dictionary.getMaxId + 1) { i =>
         UTF8String.fromBytes(dictionary.decodeToBinary(i).getBytesUnsafe)
       }
+    planChangeLogger.warn("setDictionary(dictionary)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dictionary)
     }
 
     override def addValueFromDictionary(dictionaryId: Int): Unit = {
       updater.set(expandedDictionary(dictionaryId))
+      planChangeLogger.warn("addValueFromDictionary(dictionaryId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", dictionaryId, dictionaryId)
     }
 
     override def addBinary(value: Binary): Unit = {

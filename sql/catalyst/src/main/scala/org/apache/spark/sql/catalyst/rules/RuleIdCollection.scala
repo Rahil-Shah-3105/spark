@@ -36,6 +36,7 @@ object UnknownRuleId extends RuleId(-1)
 
 // A collection of rules that use rule ids to prune tree traversals.
 object RuleIdCollection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // The rules listed here need a rule id. Typically, rules that are in a fixed point batch or
   // invoked multiple times by Analyzer/Optimizer/Planner need a rule id to prune unnecessary
@@ -240,6 +241,7 @@ object RuleIdCollection {
   def getRuleId(ruleName: String): RuleId = {
     val ruleIdOpt = ruleToId.get(ruleName)
     // Please add the rule name to `rulesWithIds` if rule id is not found.
+    planChangeLogger.warn("getRuleId(ruleName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ruleName, ruleIdOpt)
     if (ruleIdOpt.isEmpty) {
       throw QueryExecutionErrors.ruleIdNotFoundForRuleError(ruleName)
     }

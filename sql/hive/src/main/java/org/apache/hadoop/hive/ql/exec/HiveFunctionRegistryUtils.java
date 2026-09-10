@@ -31,6 +31,8 @@ import java.util.List;
 
 import org.apache.spark.internal.SparkLogger;
 import org.apache.spark.internal.SparkLoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Copy some methods from {@link org.apache.hadoop.hive.ql.exec.FunctionRegistry}
@@ -39,6 +41,7 @@ import org.apache.spark.internal.SparkLoggerFactory;
  * The code is based on Hive 2.3.10.
  */
 public class HiveFunctionRegistryUtils {
+private static final Logger log = LoggerFactory.getLogger(HiveFunctionRegistryUtils.class);
 
   public static final SparkLogger LOG =
     SparkLoggerFactory.getLogger(HiveFunctionRegistryUtils.class);
@@ -55,12 +58,14 @@ public class HiveFunctionRegistryUtils {
 
     List<Method> mlist = new ArrayList<>();
 
+	log.warn("getMethodInternal(udfClass,methodName,exact,argumentClasses)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", udfClass, methodName, exact, argumentClasses);
     for (Method m : udfClass.getMethods()) {
       if (m.getName().equals(methodName)) {
         mlist.add(m);
       }
     }
 
+	log.warn("getMethodInternal(udfClass,mlist,exact,argumentsPassed)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", udfClass, mlist, exact, argumentsPassed);
     return getMethodInternal(udfClass, mlist, exact, argumentClasses);
   }
 

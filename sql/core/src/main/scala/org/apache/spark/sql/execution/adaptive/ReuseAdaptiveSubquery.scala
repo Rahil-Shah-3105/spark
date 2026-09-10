@@ -27,6 +27,7 @@ case class ReuseAdaptiveSubquery(
     reuseMap: TrieMap[SparkPlan, BaseSubqueryExec]) extends Rule[SparkPlan] {
 
   def apply(plan: SparkPlan): SparkPlan = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (!conf.subqueryReuseEnabled) {
       return plan
     }
@@ -40,5 +41,6 @@ case class ReuseAdaptiveSubquery(
           sub
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

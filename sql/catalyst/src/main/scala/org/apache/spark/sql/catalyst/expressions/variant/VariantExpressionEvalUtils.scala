@@ -31,6 +31,7 @@ import org.apache.spark.unsafe.types.{UTF8String, VariantVal}
  * A utility class for constructing variant expressions.
  */
 object VariantExpressionEvalUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def parseJson(
       input: UTF8String,
@@ -125,6 +126,7 @@ object VariantExpressionEvalUtils {
   def deleteAtPath(
       input: VariantVal,
       javaSegments: Array[VariantBuilder.PathSegment]): VariantVal = {
+       planChangeLogger.warn("deleteAtPath(input,javaSegments)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, javaSegments)
     val v = new Variant(input.getValue, input.getMetadata)
     val out = VariantBuilder.deleteAtPath(v, javaSegments)
     new VariantVal(out.getValue, out.getMetadata)
@@ -165,6 +167,8 @@ object VariantExpressionEvalUtils {
       case _: VariantSizeLimitException =>
         throw QueryExecutionErrors.variantSizeLimitError(VariantUtil.SIZE_LIMIT, functionName)
     }
+    planChangeLogger.warn("insertAtPath(input,javaSegments,path,value,valueDataType,functionName,failOnError)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, javaSegments, path, value, valueDataType, functionName, failOnError)
+  planChangeLogger.warn("insertAtPath(input,path,value,valueDataType,functionName,failOnError)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, path, value, valueDataType, functionName, failOnError)
   }
 
   def insertAtPath(
@@ -210,6 +214,8 @@ object VariantExpressionEvalUtils {
       case _: VariantSizeLimitException =>
         throw QueryExecutionErrors.variantSizeLimitError(VariantUtil.SIZE_LIMIT, functionName)
     }
+    planChangeLogger.warn("setAtPath(input,javaSegments,path,value,valueDataType,createIfMissing,functionName,failOnError)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, javaSegments, path, value, valueDataType, createIfMissing, functionName, failOnError)
+  planChangeLogger.warn("setAtPath(input,path,value,valueDataType,createIfMissing,functionName,failOnError)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, path, value, valueDataType, createIfMissing, functionName, failOnError)
   }
 
   def setAtPath(

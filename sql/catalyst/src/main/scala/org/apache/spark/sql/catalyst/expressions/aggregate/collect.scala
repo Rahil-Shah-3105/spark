@@ -46,6 +46,7 @@ import org.apache.spark.util.BoundedPriorityQueue
  * can cause GC paused and eventually OutOfMemory Errors.
  */
 abstract class Collect[T <: Growable[Any] with Iterable[Any]] extends TypedImperativeAggregate[T] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   val child: Expression
 
@@ -233,6 +234,7 @@ case class CollectSet(
       buffer += null
     }
     buffer
+  planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   @transient private lazy val complexNormalizer: Any => Any = {

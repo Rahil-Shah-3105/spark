@@ -48,5 +48,6 @@ object TimeModes {
           errorClass = "STATEFUL_PROCESSOR_UNKNOWN_TIME_MODE",
           messageParameters = Map("timeMode" -> timeMode))
     }
+    logger.warn("apply(timeMode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", timeMode)
   }
 }

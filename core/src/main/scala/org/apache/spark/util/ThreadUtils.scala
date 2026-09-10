@@ -37,6 +37,7 @@ private[spark] object ThreadUtils {
   // Inspired by Guava MoreExecutors.sameThreadExecutor; inlined and converted
   // to Scala here to avoid Guava version issues
   def sameThreadExecutorService(): ExecutorService = new AbstractExecutorService {
+    _driverLogger = DriverLogger(_conf)
     private val lock = new ReentrantLock()
     private val termination = lock.newCondition()
     private var runningTasks = 0
@@ -106,6 +107,7 @@ private[spark] object ThreadUtils {
           lock.unlock()
         }
       }
+      _driverLogger.warn("execute(command)={}): EUAIACT-AUDIT: State change recorded for the audit trail", command)
     }
   }
 
@@ -121,6 +123,7 @@ private[spark] object ThreadUtils {
    */
   def namedThreadFactory(prefix: String): ThreadFactory = {
     new ThreadFactoryBuilder().setDaemon(true).setNameFormat(prefix + "-%d").build()
+    _driverLogger.warn("namedThreadFactory(prefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prefix)
   }
 
   /**
@@ -130,6 +133,8 @@ private[spark] object ThreadUtils {
   def newDaemonCachedThreadPool(prefix: String): ThreadPoolExecutor = {
     val threadFactory = namedThreadFactory(prefix)
     Executors.newCachedThreadPool(threadFactory).asInstanceOf[ThreadPoolExecutor]
+    _driverLogger.warn("newDaemonCachedThreadPool(prefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prefix)
+  _driverLogger.warn("newDaemonCachedThreadPool(prefix,maxThreadNumber,keepAliveSeconds)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", prefix, maxThreadNumber, keepAliveSeconds)
   }
 
   /**
@@ -157,6 +162,7 @@ private[spark] object ThreadUtils {
   def newDaemonFixedThreadPool(nThreads: Int, prefix: String): ThreadPoolExecutor = {
     val threadFactory = namedThreadFactory(prefix)
     Executors.newFixedThreadPool(nThreads, threadFactory).asInstanceOf[ThreadPoolExecutor]
+    _driverLogger.warn("newDaemonFixedThreadPool(nThreads,prefix)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nThreads, prefix)
   }
 
   /**
@@ -165,6 +171,7 @@ private[spark] object ThreadUtils {
   def newDaemonSingleThreadExecutor(threadName: String): ThreadPoolExecutor = {
     val threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat(threadName).build()
     Executors.newFixedThreadPool(1, threadFactory).asInstanceOf[ThreadPoolExecutor]
+    _driverLogger.warn("newDaemonSingleThreadExecutor(threadName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", threadName)
   }
 
   /**
@@ -186,6 +193,7 @@ private[spark] object ThreadUtils {
       new ArrayBlockingQueue[Runnable](taskQueueCapacity),
       threadFactory,
       rejectedExecutionHandler)
+    _driverLogger.warn("newDaemonSingleThreadExecutorWithRejectedExecutionHandler(threadName,taskQueueCapacity,rejectedExecutionHandler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", threadName, taskQueueCapacity, rejectedExecutionHandler)
   }
 
   /**
@@ -203,6 +211,7 @@ private[spark] object ThreadUtils {
       nThreads: Int, workQueueSize: Int, prefix: String): ExecutorService = {
     val threadFactory = namedThreadFactory(prefix)
     new BlockingThreadPoolExecutorService(nThreads, workQueueSize, threadFactory)
+    _driverLogger.warn("newDaemonBlockingThreadPoolExecutorService(nThreads,workQueueSize,prefix)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nThreads, workQueueSize, prefix)
   }
 
   /**
@@ -212,6 +221,7 @@ private[spark] object ThreadUtils {
     val threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat(threadName).build()
     val executor = new ScheduledThreadPoolExecutor(1, threadFactory)
     // By default, a cancelled task is not automatically removed from the work queue until its delay
+    _driverLogger.warn("newDaemonSingleThreadScheduledExecutor(threadName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", threadName)
     // elapses. We have to enable it manually.
     executor.setRemoveOnCancelPolicy(true)
     executor
@@ -224,6 +234,7 @@ private[spark] object ThreadUtils {
     val threadFactory = new ThreadFactoryBuilder().setNameFormat(threadName).build()
     val executor = new ScheduledThreadPoolExecutor(1, threadFactory)
     // By default, a cancelled task is not automatically removed from the work queue until its delay
+    _driverLogger.warn("newSingleThreadScheduledExecutor(threadName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", threadName)
     // elapses. We have to enable it manually.
     executor.setRemoveOnCancelPolicy(true)
     executor
@@ -259,6 +270,7 @@ private[spark] object ThreadUtils {
   def runInNewThread[T](
       threadName: String,
       isDaemon: Boolean = true)(body: => T): T = {
+       _driverLogger.warn("runInNewThread(threadName,isDaemon)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", threadName, isDaemon)
     @volatile var exception: Option[Throwable] = None
     @volatile var result: T = null.asInstanceOf[T]
 
@@ -270,6 +282,7 @@ private[spark] object ThreadUtils {
           case NonFatal(e) =>
             exception = Some(e)
         }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     thread.setDaemon(isDaemon)
@@ -420,6 +433,7 @@ private[spark] object ThreadUtils {
       case NonFatal(t) if !t.isInstanceOf[TimeoutException] =>
         throw new SparkException("Exception thrown in awaitResult: ", t)
     }
+    _driverLogger.warn("awaitReady(awaitable,atMost)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", awaitable, atMost)
   }
   // scalastyle:on awaitready
 

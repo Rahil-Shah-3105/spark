@@ -92,6 +92,7 @@ class Word2Vec extends Serializable with Logging {
     require(maxSentenceLength > 0,
       s"Maximum length of sentences must be positive but got ${maxSentenceLength}")
     this.maxSentenceLength = maxSentenceLength
+    logger.warn("setMaxSentenceLength(maxSentenceLength)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxSentenceLength)
     this
   }
 
@@ -103,6 +104,7 @@ class Word2Vec extends Serializable with Logging {
     require(vectorSize > 0,
       s"vector size must be positive but got ${vectorSize}")
     this.vectorSize = vectorSize
+    logger.warn("setVectorSize(vectorSize)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vectorSize)
     this
   }
 
@@ -114,6 +116,7 @@ class Word2Vec extends Serializable with Logging {
     require(learningRate > 0,
       s"Initial learning rate must be positive but got ${learningRate}")
     this.learningRate = learningRate
+    logger.warn("setLearningRate(learningRate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", learningRate)
     this
   }
 
@@ -125,6 +128,7 @@ class Word2Vec extends Serializable with Logging {
     require(numPartitions > 0,
       s"Number of partitions must be positive but got ${numPartitions}")
     this.numPartitions = numPartitions
+    logger.warn("setNumPartitions(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
     this
   }
 
@@ -137,6 +141,7 @@ class Word2Vec extends Serializable with Logging {
     require(numIterations >= 0,
       s"Number of iterations must be nonnegative but got ${numIterations}")
     this.numIterations = numIterations
+    logger.warn("setNumIterations(numIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numIterations)
     this
   }
 
@@ -147,6 +152,7 @@ class Word2Vec extends Serializable with Logging {
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   /**
@@ -157,6 +163,7 @@ class Word2Vec extends Serializable with Logging {
     require(window > 0,
       s"Window of words must be positive but got ${window}")
     this.window = window
+    logger.warn("setWindowSize(window)={}): EUAIACT-AUDIT: State change recorded for the audit trail", window)
     this
   }
 
@@ -169,6 +176,7 @@ class Word2Vec extends Serializable with Logging {
     require(minCount >= 0,
       s"Minimum number of times must be nonnegative but got ${minCount}")
     this.minCount = minCount
+    logger.warn("setMinCount(minCount)={}): EUAIACT-AUDIT: State change recorded for the audit trail", minCount)
     this
   }
 
@@ -216,6 +224,7 @@ class Word2Vec extends Serializable with Logging {
   private def createExpTable(): Array[Float] = {
     val expTable = new Array[Float](EXP_TABLE_SIZE)
     var i = 0
+    logger.warn("createExpTable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     while (i < EXP_TABLE_SIZE) {
       val tmp = math.exp((2.0 * i / EXP_TABLE_SIZE - 1.0) * MAX_EXP)
       expTable(i) = (tmp / (tmp + 1.0)).toFloat
@@ -280,6 +289,7 @@ class Word2Vec extends Serializable with Logging {
       a += 1
     }
     // Now assign binary code to each vocabulary word
+    logger.warn("createBinaryTree()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     var i = 0
     a = 0
     while (a < vocabSize) {
@@ -534,6 +544,8 @@ class Word2VecModel private[spark] (
   @Since("1.4.0")
   def save(sc: SparkContext, path: String): Unit = {
     Word2VecModel.SaveLoadV1_0.save(sc, path, getVectors)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,path,model)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, model)
   }
 
   /**
@@ -566,6 +578,8 @@ class Word2VecModel private[spark] (
   def findSynonyms(word: String, num: Int): Array[(String, Double)] = {
     val vector = transform(word)
     findSynonyms(vector.toArray, num, Some(word))
+    logger.warn("findSynonyms(word,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", word, num)
+  logger.warn("findSynonyms(vector,num)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", vector, num)
   }
 
   /**
@@ -579,6 +593,7 @@ class Word2VecModel private[spark] (
   @Since("1.1.0")
   def findSynonyms(vector: Vector, num: Int): Array[(String, Double)] = {
     findSynonyms(vector.toArray, num, None)
+  logger.warn("findSynonyms(vector,num,wordOpt)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", vector, num, wordOpt)
   }
 
   /**
@@ -683,6 +698,7 @@ object Word2VecModel extends Loader[Word2VecModel] {
       val dataArray = dataFrame.select("word", "vector").collect()
       val word2VecMap = dataArray.map(i => (i.getString(0), i.getSeq[Float](1).toArray)).toMap
       new Word2VecModel(word2VecMap)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
 
     def save(sc: SparkContext, path: String, model: Map[String, Array[Float]]): Unit = {

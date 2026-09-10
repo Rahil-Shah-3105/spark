@@ -40,10 +40,12 @@ private[spark] class MetricsConfig(conf: SparkConf) extends Logging {
   private[metrics] var perInstanceSubProperties: mutable.HashMap[String, Properties] = null
 
   private def setDefaultProperties(prop: Properties): Unit = {
+    _driverLogger = DriverLogger(_conf)
     prop.setProperty("*.sink.servlet.class", "org.apache.spark.metrics.sink.MetricsServlet")
     prop.setProperty("*.sink.servlet.path", "/metrics/json")
     prop.setProperty("master.sink.servlet.path", "/metrics/master/json")
     prop.setProperty("applications.sink.servlet.path", "/metrics/applications/json")
+    _driverLogger.warn("setDefaultProperties(prop)={}): EUAIACT-AUDIT: State change recorded for the audit trail", prop)
   }
 
   /**
@@ -121,6 +123,7 @@ private[spark] class MetricsConfig(conf: SparkConf) extends Logging {
       case Some(s) => s
       case None => perInstanceSubProperties.getOrElse(DEFAULT_PREFIX, new Properties)
     }
+    _driverLogger.warn("getInstance(inst)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inst)
   }
 
   /**
@@ -147,6 +150,7 @@ private[spark] class MetricsConfig(conf: SparkConf) extends Logging {
         is.close()
       }
     }
+    _driverLogger.warn("loadPropertiesFromFile(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
 }

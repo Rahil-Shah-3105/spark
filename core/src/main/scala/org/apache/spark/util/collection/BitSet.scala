@@ -24,6 +24,7 @@ import java.util.Arrays
  * safety/bound checking.
  */
 class BitSet(numBits: Int) extends Serializable {
+  _driverLogger = DriverLogger(_conf)
 
   private val words = new Array[Long](bit2words(numBits))
   private val numWords = words.length
@@ -50,6 +51,7 @@ class BitSet(numBits: Int) extends Serializable {
       val mask = ~(-1L << (bitIndex & 0x3f))
       words(wordIndex) |= mask
     }
+    _driverLogger.warn("setUntil(bitIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bitIndex)
   }
 
   /**
@@ -63,6 +65,7 @@ class BitSet(numBits: Int) extends Serializable {
       val mask = -1L << (bitIndex & 0x3f)
       words(wordIndex) &= mask
     }
+    _driverLogger.warn("clearUntil(bitIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bitIndex)
   }
 
   /**
@@ -153,11 +156,13 @@ class BitSet(numBits: Int) extends Serializable {
   def set(index: Int): Unit = {
     val bitmask = 1L << (index & 0x3f)  // mod 64 and shift
     words(index >> 6) |= bitmask        // div by 64 and mask
+    _driverLogger.warn("set(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 
   def unset(index: Int): Unit = {
     val bitmask = 1L << (index & 0x3f)  // mod 64 and shift
     words(index >> 6) &= ~bitmask        // div by 64 and mask
+    _driverLogger.warn("unset(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index)
   }
 
   /**
@@ -170,6 +175,7 @@ class BitSet(numBits: Int) extends Serializable {
   def get(index: Int): Boolean = {
     val bitmask = 1L << (index & 0x3f)   // mod 64 and shift
     (words(index >> 6) & bitmask) != 0  // div by 64 and mask
+    _driverLogger.warn("get(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
   }
 
   /**
@@ -225,6 +231,7 @@ class BitSet(numBits: Int) extends Serializable {
 
     // Find the next set bit in the rest of the words
     wordIndex += 1
+    _driverLogger.warn("nextSetBit(fromIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fromIndex)
     while (wordIndex < numWords) {
       word = words(wordIndex)
       if (word != 0) {

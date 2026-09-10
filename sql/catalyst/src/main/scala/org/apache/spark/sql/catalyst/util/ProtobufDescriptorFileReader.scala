@@ -38,6 +38,7 @@ import org.apache.spark.util.Utils
  * resolve in addition to local paths. Runs on the driver at plan time.
  */
 object ProtobufDescriptorFileReader extends Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Reads and returns the raw bytes of the descriptor file at `filePath`.
@@ -58,6 +59,7 @@ object ProtobufDescriptorFileReader extends Logging {
   def readDescriptorFileContent(filePath: String): Array[Byte] = {
     // A scheme-less path (including the malformed empty string, where `new Path` throws) may be a
     // local file the old implementation could read, so it is eligible for the local fallback; a
+    planChangeLogger.warn("readDescriptorFileContent(filePath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", filePath)
     // path with an explicit scheme is not.
     val schemeless = try {
       new Path(filePath).toUri.getScheme == null

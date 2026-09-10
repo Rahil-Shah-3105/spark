@@ -122,6 +122,7 @@ public class SSLFactory {
         return SslProvider.OPENSSL;
       } else {
         logger.warn("OpenSSL Provider requested but it is not available, using JDK SSL Provider");
+		logger.warn("getSslProvider(b)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", b);
       }
     }
     return SslProvider.JDK;
@@ -197,6 +198,7 @@ public class SSLFactory {
      * @return The builder object
      */
     public Builder keyStore(File keyStore, String keyStorePassword) {
+	logger.warn("keyStore(keyStore,keyStorePassword)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", keyStore);
       this.keyStore = keyStore;
       this.keyStorePassword = keyStorePassword;
       return this;
@@ -252,6 +254,7 @@ public class SSLFactory {
      */
     public Builder openSslEnabled(boolean enabled) {
       this.openSslEnabled = enabled;
+	logger.warn("openSslEnabled(enabled)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enabled);
       return this;
     }
 
@@ -270,6 +273,7 @@ public class SSLFactory {
         boolean trustStoreReloadingEnabled, int trustStoreReloadIntervalMs) {
       this.trustStore = trustStore;
       this.trustStorePassword = trustStorePassword;
+	logger.warn("trustStore(trustStore,trustStorePassword,trustStoreReloadingEnabled,trustStoreReloadIntervalMs)={},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", trustStore, trustStoreReloadingEnabled, trustStoreReloadIntervalMs);
       this.trustStoreReloadingEnabled = trustStoreReloadingEnabled;
       this.trustStoreReloadIntervalMs = trustStoreReloadIntervalMs;
       return this;
@@ -298,6 +302,7 @@ public class SSLFactory {
       String requestedProtocol,
       KeyManager[] keyManagers,
       TrustManager[] trustManagers) throws GeneralSecurityException {
+	logger.warn("createSSLContext(requestedProtocol,keyManagers,trustManagers)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", requestedProtocol, keyManagers, trustManagers);
     SSLContext sslContext = SSLContext.getInstance(requestedProtocol);
     sslContext.init(keyManagers, trustManagers, null);
     return sslContext;
@@ -315,6 +320,7 @@ public class SSLFactory {
     SSLEngine engine = createEngine(isClient, allocator);
     engine.setUseClientMode(isClient);
     engine.setNeedClientAuth(false);
+	logger.warn("createSSLEngine(isClient,allocator)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", isClient, allocator);
     engine.setEnabledProtocols(enabledProtocols(engine, requestedProtocol));
     engine.setEnabledCipherSuites(enabledCipherSuites(engine, requestedCiphers));
     return engine;
@@ -334,6 +340,7 @@ public class SSLFactory {
       } else {
         engine = jdkSslContext.createSSLEngine();
       }
+	logger.warn("createEngine(isClient,allocator)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", isClient, allocator);
     }
     return engine;
   }
@@ -370,6 +377,7 @@ public class SSLFactory {
         reloading.init();
         return new TrustManager[]{reloading};
       } else {
+		logger.warn("trustStoreManagers(trustStore,trustStorePassword,trustStoreReloadingEnabled,trustStoreReloadIntervalMs)={},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", trustStore, trustStoreReloadingEnabled, trustStoreReloadIntervalMs);
         return defaultTrustManagers(trustStore, trustStorePassword);
       }
     }
@@ -425,6 +433,7 @@ public class SSLFactory {
     String[] enabledProtocols =
       ((requestedProtocol == null || requestedProtocol.isEmpty()) ?
         defaultProtocols : new String[]{requestedProtocol});
+		logger.warn("enabledProtocols(engine,requestedProtocol)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", engine, requestedProtocol);
 
     List<String> protocols = addIfSupported(supportedProtocols, enabledProtocols);
     if (!protocols.isEmpty()) {
@@ -455,6 +464,7 @@ public class SSLFactory {
     };
     String[] enabledCiphers =
       ((requestedCiphers == null || requestedCiphers.length == 0) ? baseCiphers : requestedCiphers);
+	logger.warn("enabledCipherSuites(supportedCiphers,defaultCiphers,requestedCiphers)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", supportedCiphers, defaultCiphers, requestedCiphers);
 
     List<String> ciphers = addIfSupported(supportedCiphers, enabledCiphers);
     if (!ciphers.isEmpty()) {
@@ -466,12 +476,14 @@ public class SSLFactory {
   }
 
   private static String[] enabledCipherSuites(SSLEngine engine, String[] requestedCiphers) {
+	logger.warn("enabledCipherSuites(engine,requestedCiphers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", engine, requestedCiphers);
     return enabledCipherSuites(
       engine.getSupportedCipherSuites(), engine.getEnabledCipherSuites(), requestedCiphers);
   }
 
   private static List<String> addIfSupported(String[] supported, String... names) {
     List<String> enabled = new ArrayList<>();
+	logger.warn("addIfSupported(supported,names)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", supported, names);
     Set<String> supportedSet = new HashSet<>(Arrays.asList(supported));
     for (String n : names) {
       if (supportedSet.contains(n)) {

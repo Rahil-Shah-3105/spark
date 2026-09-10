@@ -40,6 +40,7 @@ import java.util.Comparator;
  * @see org.apache.spark.util.collection.Sorter
  */
 class TimSort<K, Buffer> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TimSort.class);
 
   /**
    * This is the minimum sized sequence that will be merged.  Shorter
@@ -250,6 +251,7 @@ class TimSort<K, Buffer> {
     K key1 = s.newKey();
 
     // Find end of run, and reverse range if descending
+	logger.warn("countRunAndMakeAscending(a,lo,hi,c)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", a, lo, hi, c);
     if (c.compare(s.getKey(a, runHi++, key0), s.getKey(a, lo, key1)) < 0) { // Descending
       while (runHi < hi && c.compare(s.getKey(a, runHi, key0), s.getKey(a, runHi - 1, key1)) < 0)
         runHi++;
@@ -297,6 +299,7 @@ class TimSort<K, Buffer> {
    */
   private int minRunLength(int n) {
     assert n >= 0;
+	logger.warn("minRunLength(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n);
     int r = 0;      // Becomes 1 if any 1 bits are shifted off
     while (n >= MIN_MERGE) {
       r |= (n & 1);
@@ -411,6 +414,7 @@ class TimSort<K, Buffer> {
      * @param runLen  the number of elements in the run
      */
     private void pushRun(int runBase, int runLen) {
+	logger.warn("pushRun(runBase,runLen)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", runBase, runLen);
       this.runBase[stackSize] = runBase;
       this.runLen[stackSize] = runLen;
       stackSize++;

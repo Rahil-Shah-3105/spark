@@ -54,6 +54,7 @@ import org.apache.spark.util.Utils
  *    condition.
  */
 object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private def buildJoin(
       outerPlan: LogicalPlan,
@@ -82,6 +83,7 @@ object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
       // if there's no join condition, there are no domain joins to rewrite.
       sub
     }
+    planChangeLogger.warn("rewriteDomainJoinsIfPresent(outerPlan,sub,joinCond)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outerPlan, sub, joinCond)
   }
 
   private def dedupSubqueryOnSelfJoin(
@@ -100,6 +102,7 @@ object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
     val outerReferences = valuesOpt.map(values =>
       AttributeSet.fromAttributeSets(values.map(_.references))).getOrElse(AttributeSet.empty)
     val outerRefs = outerPlan.outputSet ++ outerReferences
+    planChangeLogger.warn("dedupSubqueryOnSelfJoin(outerPlan,subplan,valuesOpt,condition)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", outerPlan, subplan, valuesOpt, condition)
     val duplicates = outerRefs.intersect(subplan.outputSet)
     if (duplicates.nonEmpty) {
       condition.foreach { e =>
@@ -125,6 +128,7 @@ object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
     exprs.exists { expr =>
       exprContainsAggregateInSubquery(expr)
     }
+    planChangeLogger.warn("exprsContainsAggregateInSubquery(exprs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", exprs)
   }
 
   def exprContainsAggregateInSubquery(expr: Expression): Boolean = {
@@ -138,6 +142,7 @@ object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
         }
       case _ => false
     }
+    planChangeLogger.warn("exprContainsAggregateInSubquery(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
   }
 
 
@@ -396,12 +401,14 @@ object RewritePredicateSubquery extends Rule[LogicalPlan] with PredicateHelper {
     plan: LogicalPlan): (Option[Expression], LogicalPlan) = {
     val (newExpr, newPlan, _) = rewriteExistentialExprWithAttrs(exprs, plan)
     (newExpr, newPlan)
+    planChangeLogger.warn("rewriteExistentialExpr(exprs,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, plan)
   }
 
   private def rewriteExistentialExprWithAttrs(
     exprs: Seq[Expression],
     plan: LogicalPlan): (Option[Expression], LogicalPlan, Seq[Attribute]) = {
     var newPlan = plan
+    planChangeLogger.warn("rewriteExistentialExprWithAttrs(exprs,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, plan)
     val introducedAttrs = ArrayBuffer.empty[Attribute]
     val newExprs = exprs.map { e =>
       e.transformDownWithPruning(_.containsAnyPattern(EXISTS_SUBQUERY, IN_SUBQUERY)) {
@@ -572,12 +579,14 @@ object PullupCorrelatedPredicates extends Rule[LogicalPlan] with PredicateHelper
      * This function is used as a aid to enforce idempotency of pullUpCorrelatedPredicate rule.
      * In the first call to rewriteSubqueries, all the outer references from the subplan are
      * pulled up and join predicates are recorded as children of the enclosing subquery expression.
+     planChangeLogger.warn("rewriteSubQueries(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
      * The subsequent call to rewriteSubqueries would simply re-records the `children` which would
      * contains the pulled up correlated predicates (from the previous call) in the enclosing
      * subquery expression.
      */
     def getJoinCondition(newCond: Seq[Expression], oldCond: Seq[Expression]): Seq[Expression] = {
       if (newCond.isEmpty) oldCond else newCond
+      planChangeLogger.warn("getJoinCondition(newCond,oldCond)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", newCond, oldCond)
     }
 
     def decorrelate(
@@ -791,6 +800,7 @@ object RewriteCorrelatedScalarSubquery extends Rule[LogicalPlan] with AliasHelpe
    * CheckAnalysis become less restrictive, this method will need to change.
    */
   private def evalSubqueryOnZeroTups(plan: LogicalPlan) : Option[Expression] = {
+    planChangeLogger.warn("evalSubqueryOnZeroTups(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     // Inputs to this method will start with a chain of zero or more SubqueryAlias
     // and Project operators, followed by an optional Filter, followed by an
     // Aggregate. Traverse the operators recursively.
@@ -856,6 +866,7 @@ object RewriteCorrelatedScalarSubquery extends Rule[LogicalPlan] with AliasHelpe
   def splitSubquery(
       plan: LogicalPlan): (Seq[LogicalPlan], Option[Filter], Option[Aggregate]) = {
     val topPart = ArrayBuffer.empty[LogicalPlan]
+    planChangeLogger.warn("splitSubquery(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     var bottomPart: LogicalPlan = plan
     while (true) {
       bottomPart match {
@@ -1018,6 +1029,7 @@ object RewriteCorrelatedScalarSubquery extends Rule[LogicalPlan] with AliasHelpe
     } else {
       exprs
     }
+    planChangeLogger.warn("updateAttrs(exprs,attrMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, attrMap)
   }
 
   /**
@@ -1031,6 +1043,7 @@ object RewriteCorrelatedScalarSubquery extends Rule[LogicalPlan] with AliasHelpe
       throw SparkException.internalError(
         s"Fail to rewrite correlated scalar subqueries in Aggregate:\n$a")
     }
+    planChangeLogger.warn("checkScalarSubqueryInAgg(a)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", a)
   }
 
   /**
@@ -1106,6 +1119,7 @@ object OptimizeOneRowRelationSubquery extends Rule[LogicalPlan] {
   object OneRowSubquery {
     def unapply(plan: LogicalPlan): Option[UnaryNode] = {
       // SPARK-40800: always inline expressions to support a broader range of correlated
+      planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       // subqueries and avoid expensive domain joins.
       val alwaysInline = conf.getConf(SQLConf.ALWAYS_INLINE_ONE_ROW_RELATION_SUBQUERY)
       CollapseProject(EliminateSubqueryAliases(plan), alwaysInline = alwaysInline) match {
@@ -1119,6 +1133,7 @@ object OptimizeOneRowRelationSubquery extends Rule[LogicalPlan] {
 
   private def hasCorrelatedSubquery(plan: LogicalPlan): Boolean = {
     plan.exists(_.expressions.exists(SubqueryExpression.hasCorrelatedSubquery))
+    planChangeLogger.warn("hasCorrelatedSubquery(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   /**

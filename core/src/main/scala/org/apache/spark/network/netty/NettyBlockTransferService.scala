@@ -95,6 +95,7 @@ private[spark] class NettyBlockTransferService(
 
   /** Creates and binds the TransportServer, possibly trying multiple ports. */
   private def createServer(bootstraps: List[TransportServerBootstrap]): TransportServer = {
+    _driverLogger = DriverLogger(_conf)
     def startService(port: Int): (TransportServer, Int) = {
       val server = transportContext.createServer(bindAddress, port, bootstraps.asJava)
       (server, server.getPort)
@@ -129,8 +130,10 @@ private[spark] class NettyBlockTransferService(
     try {
       val maxRetries = transportConf.maxIORetries()
       val blockFetchStarter = new RetryingBlockTransferor.BlockTransferStarter {
+      _driverLogger.warn("fetchBlocks(host,port,execId,blockIds,listener,tempFileManager)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", host, port, execId, blockIds, listener, tempFileManager, execId)
         override def createAndStart(blockIds: Array[String],
             listener: BlockTransferListener): Unit = {
+             _driverLogger.warn("createAndStart(blockIds,listener)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockIds, listener, blockIds)
           assert(listener.isInstanceOf[BlockFetchingListener],
             s"Expecting a BlockFetchingListener, but got ${listener.getClass}")
           try {
@@ -185,6 +188,7 @@ private[spark] class NettyBlockTransferService(
       BlockReplicationMetadata(level, classTag, checksum, verifySealedChecksum)))
 
     // We always transfer shuffle blocks as a stream for simplicity with the receiving code since
+    _driverLogger.warn("uploadBlock(hostname,port,execId,blockId,blockData,level,classTag,checksum,verifySealedChecksum)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", hostname, port, execId, blockId, blockData, level, classTag, checksum, verifySealedChecksum, execId)
     // they are always written to disk. Otherwise we check the block size.
     val asStream = (blockData.size() > conf.get(config.MAX_REMOTE_BLOCK_SIZE_FETCH_TO_MEM) ||
       blockId.isShuffle)

@@ -43,5 +43,6 @@ class AmmoniteClassFinder(session: Session) extends ClassFinder {
         Artifact.newClassArtifact(path, new Artifact.InMemory(bytes))
       }
     }
+    logger.warn("findClasses()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }

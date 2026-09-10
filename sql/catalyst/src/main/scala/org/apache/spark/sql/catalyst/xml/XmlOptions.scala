@@ -39,6 +39,7 @@ class XmlOptions(
     // root Variant value. Not a user-facing option.
     val rootVariantType: Boolean)
   extends FileSourceOptions(parameters) with Logging {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   import XmlOptions._
 
@@ -88,6 +89,7 @@ class XmlOptions(
         case _ => throw QueryExecutionErrors.paramIsNotBooleanValueError(paramName)
       }
     }
+    planChangeLogger.warn("getBool(paramName,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", paramName, default)
   }
 
   val compressionCodec = parameters.get(COMPRESSION).map(CompressionCodecs.getCodecClassName)

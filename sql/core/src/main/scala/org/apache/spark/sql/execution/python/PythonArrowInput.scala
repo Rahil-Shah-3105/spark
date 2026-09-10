@@ -62,6 +62,7 @@ private[python] trait PythonArrowInput[IN] { self: BasePythonRunner[IN, _] =>
     ArrowUtils.rootAllocator.newChildAllocator(s"stdout writer for $pythonExec", 0, Long.MaxValue)
 
   protected lazy val root: VectorSchemaRoot = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     ArrowUtils.failDuplicatedFieldNames(schema)
     val arrowSchema = ArrowUtils.toArrowSchema(schema, timeZoneId, largeVarTypes)
     VectorSchemaRoot.create(arrowSchema, allocator)
@@ -95,6 +96,7 @@ private[python] trait PythonArrowInput[IN] { self: BasePythonRunner[IN, _] =>
 
       protected override def writeCommand(dataOut: DataOutputStream): Unit = {
         writeUDF(dataOut)
+        planChangeLogger.warn("writeCommand(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
       }
 
       override def writeNextInputToStream(dataOut: DataOutputStream): Boolean = {
@@ -106,8 +108,10 @@ private[python] trait PythonArrowInput[IN] { self: BasePythonRunner[IN, _] =>
 
         assert(writer != null)
         writeNextBatchToArrowStream(root, writer, dataOut, inputIterator)
+        planChangeLogger.warn("writeNextInputToStream(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
       }
     }
+  planChangeLogger.warn("newWriter(env,worker,inputIterator,partitionIndex,context)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, worker, inputIterator, partitionIndex, context)
   }
 }
 
@@ -154,6 +158,7 @@ private[python] trait BasicPythonArrowInput extends PythonArrowInput[Iterator[In
       super[PythonArrowInput].close()
       false
     }
+    planChangeLogger.warn("writeNextBatchToArrowStream(root,writer,dataOut,inputIterator)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, writer, dataOut, inputIterator)
   }
 }
 
@@ -235,6 +240,7 @@ private[python] object BatchedPythonArrowInput {
     // Use unloader to get compressed batch and write it manually
     val batch = unloader.getRecordBatch()
     try {
+    planChangeLogger.warn("writeSizedBatch(arrowWriter,writer,rowIter,maxBytesPerBatch,maxRecordsPerBatch,unloader,dataOut)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", arrowWriter, writer, rowIter, maxBytesPerBatch, maxRecordsPerBatch, unloader, dataOut, maxRecordsPerBatch)
       val writeChannel = new WriteChannel(Channels.newChannel(dataOut))
       MessageSerializer.serialize(writeChannel, batch)
     } finally {

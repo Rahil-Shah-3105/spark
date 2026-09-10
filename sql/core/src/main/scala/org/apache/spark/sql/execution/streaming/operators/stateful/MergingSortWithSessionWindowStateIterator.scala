@@ -41,6 +41,7 @@ class MergingSortWithSessionWindowStateIterator(
     groupWithoutSessionExpressions: Seq[Attribute],
     sessionExpression: Attribute,
     inputSchema: Seq[Attribute]) extends Iterator[InternalRow] with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val keysProjection: UnsafeProjection = GenerateUnsafeProjection.generate(
     groupWithoutSessionExpressions, inputSchema)
@@ -151,6 +152,7 @@ class MergingSortWithSessionWindowStateIterator(
             val session = sessionProjection(r)
             val sessionRow = session.getStruct(0, 2)
             sessionRow.getLong(0)
+            planChangeLogger.warn("getSessionStart(r)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", r)
           }
 
           // here sorting is based on the fact that keys are same

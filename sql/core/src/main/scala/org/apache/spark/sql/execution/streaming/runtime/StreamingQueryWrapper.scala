@@ -28,6 +28,7 @@ import org.apache.spark.sql.streaming.{StreamingQueryException, StreamingQueryPr
  */
 class StreamingQueryWrapper(@transient private val _streamingQuery: StreamExecution)
   extends StreamingQuery with Serializable {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def streamingQuery: StreamExecution = {
     /** Assert the codes run in the driver. */
@@ -63,6 +64,7 @@ class StreamingQueryWrapper(@transient private val _streamingQuery: StreamExecut
 
   override def processAllAvailable(): Unit = {
     streamingQuery.processAllAvailable()
+    planChangeLogger.warn("processAllAvailable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def isActive: Boolean = {

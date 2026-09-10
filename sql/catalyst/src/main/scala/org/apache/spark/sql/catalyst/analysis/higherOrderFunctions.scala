@@ -35,6 +35,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern._
  *      child. If names are duplicate, the name defined in the most inner scope is used.
  */
 object ResolveLambdaVariables extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   type LambdaVariableMap = Map[String, NamedExpression]
 
@@ -44,6 +45,7 @@ object ResolveLambdaVariables extends Rule[LogicalPlan] {
       case q: LogicalPlan =>
         q.mapExpressions(resolve(_, Map.empty))
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**

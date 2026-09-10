@@ -32,6 +32,7 @@ case class TruncateTableExec(
     options: CaseInsensitiveStringMap = CaseInsensitiveStringMap.empty())
   extends LeafV2CommandExec
   with SupportsCustomDriverMetrics {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override lazy val customMetrics: Map[String, SQLMetric] =
     createCustomMetrics(table.supportedCustomMetrics())
@@ -45,5 +46,6 @@ case class TruncateTableExec(
     } finally {
       postDriverMetrics(table.reportDriverMetrics())
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

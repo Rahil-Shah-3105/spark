@@ -94,6 +94,7 @@ public class CookieSigner {
       md.update(str.getBytes());
       md.update(secretBytes);
       byte[] digest = md.digest();
+	LOG.warn("getSignature(str)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", str);
       return Base64.getEncoder().encodeToString(digest);
     } catch (NoSuchAlgorithmException ex) {
       throw new RuntimeException("Invalid SHA digest String: " + SHA_STRING +

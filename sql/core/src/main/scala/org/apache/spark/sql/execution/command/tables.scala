@@ -139,6 +139,7 @@ case class CreateTableLikeCommand(
 
     catalog.createTable(newTableDesc, ifNotExists)
     Seq.empty[Row]
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 }
 
@@ -265,11 +266,13 @@ case class AlterTableAddColumnsCommand(
       conf: SQLConf,
       catalog: SessionCatalog,
       table: TableIdentifier): CatalogTable = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val catalogTable = catalog.getTempViewOrPermanentTableMetadata(table)
 
     if (catalogTable.isViewLike) {
       throw QueryCompilationErrors.alterAddColNotSupportViewError(table)
     }
+    planChangeLogger.warn("verifyAlterTableAddColumn(conf,catalog,table)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, catalog, table)
 
     if (DDLUtils.isDatasourceTable(catalogTable)) {
       DataSource.lookupDataSource(catalogTable.provider.get, conf).
@@ -396,6 +399,7 @@ case class LoadDataCommand(
 
     CommandUtils.updateTableStats(sparkSession, targetTable)
     Seq.empty[Row]
+  planChangeLogger.warn("run(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", spark, tableIdentWithDB)
   }
 }
 
@@ -598,6 +602,7 @@ object ResolvedChildHelper {
           catalog.getTempViewOrPermanentTableMetadata(table)
       case _ => catalog.getTableRawMetadata(table)
     }
+    planChangeLogger.warn("getTableMetadata(child,sparkSession,table)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", child, sparkSession, table)
   }
 }
 
@@ -1090,6 +1095,7 @@ object ShowPartitionsHelper {
         tableIdentWithDB,
         sparkSession.sessionState.conf.resolver))
     sparkSession.sessionState.catalog.listPartitionNames(table.identifier, normalizedSpec)
+    planChangeLogger.warn("listV1PartitionNames(sparkSession,table,spec,commandName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, table, spec, commandName, tableIdentWithDB)
   }
 }
 
@@ -1145,6 +1151,7 @@ trait ShowCreateTableCommandBase extends SQLConfHelper {
     showViewProperties(metadata, builder)
     showViewSchemaBinding(metadata, builder)
     showViewText(metadata, builder)
+    planChangeLogger.warn("showCreateView(metadata,builder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metadata, builder)
   }
 
   private def showViewDataColumns(metadata: CatalogTable, builder: StringBuilder): Unit = {
@@ -1159,12 +1166,14 @@ trait ShowCreateTableCommandBase extends SQLConfHelper {
       }
       builder ++= concatByMultiLines(viewColumns)
     }
+    planChangeLogger.warn("showViewDataColumns(metadata,builder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, builder)
   }
 
   private def showViewProperties(metadata: CatalogTable, builder: StringBuilder): Unit = {
     val viewProps = metadata.properties
       .filter { case (k, _) => !k.startsWith(CatalogTable.VIEW_PREFIX) }
       .filter { case (k, _) => !k.startsWith(TableCatalog.PROP_COLLATION) }
+      planChangeLogger.warn("showViewProperties(metadata,builder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, builder)
     if (viewProps.nonEmpty) {
       val props = viewProps.toSeq.sortBy(_._1).map { case (key, value) =>
         s"'${escapeSingleQuotedString(key)}' = '${escapeSingleQuotedString(value)}'"
@@ -1178,10 +1187,12 @@ trait ShowCreateTableCommandBase extends SQLConfHelper {
     if (SQLConf.get.viewSchemaBindingEnabled) {
       builder ++= s"WITH SCHEMA ${metadata.viewSchemaMode.toString}\n"
     }
+    planChangeLogger.warn("showViewSchemaBinding(metadata,builder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, builder)
   }
 
   private def showViewText(metadata: CatalogTable, builder: StringBuilder): Unit = {
     builder ++= metadata.viewText.mkString("AS ", "", "\n")
+    planChangeLogger.warn("showViewText(metadata,builder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, builder)
   }
 }
 
@@ -1338,6 +1349,7 @@ case class ShowCreateTableCommand(
     showTableCollation(metadata, builder)
     showTableLocation(metadata, builder)
     showTableProperties(metadata, builder)
+    planChangeLogger.warn("showCreateDataSourceTable(metadata,builder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metadata, builder)
   }
 }
 
@@ -1372,6 +1384,7 @@ case class ShowCreateTableAsSerdeCommand(
     def reportUnsupportedError(unsupportedFeatures: Seq[String]): Unit = {
       throw QueryCompilationErrors.showCreateTableOrViewFailToExecuteUnsupportedFeatureError(
         metadata, unsupportedFeatures)
+      planChangeLogger.warn("reportUnsupportedError(unsupportedFeatures)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", unsupportedFeatures)
     }
 
     if (metadata.unsupportedFeatures.nonEmpty) {

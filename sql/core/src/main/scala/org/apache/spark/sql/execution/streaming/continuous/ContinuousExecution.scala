@@ -55,6 +55,7 @@ class ContinuousExecution(
   extends StreamExecution(
     sparkSession, plan.name, plan.resolvedCheckpointLocation, plan.inputQuery, plan.sink,
     trigger, triggerClock, plan.outputMode, plan.deleteCheckpointOnStop) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // needs to be a lazy val because some of the parameters will not be initialized yet
   private lazy val latestExecutionContext: StreamExecutionContext = new ContinuousExecutionContext(
@@ -151,6 +152,7 @@ class ContinuousExecution(
   }
 
   override protected def runActivatedStream(sparkSessionForStream: SparkSession): Unit = {
+    planChangeLogger.warn("runActivatedStream(sparkSessionForStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream)
     val stateUpdate = new UnaryOperator[State] {
       override def apply(s: State) = s match {
         // If we ended the query to reconfigure, reset the state to active.
@@ -188,6 +190,7 @@ class ContinuousExecution(
   private def getStartOffsets(): OffsetSeq = {
     val execCtx = latestExecutionContext.asInstanceOf[ContinuousExecutionContext]
     // Note that this will need a slight modification for exactly once. If ending offsets were
+    planChangeLogger.warn("getStartOffsets()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // reported but not committed for any epochs, we must replay exactly to those offsets.
     // For at least once, we can just ignore those reports and risk duplicates.
     commitLog.getLatest() match {
@@ -282,6 +285,7 @@ class ContinuousExecution(
       sparkSession,
       SparkEnv.get)
     val epochUpdateThread = new Thread(new Runnable {
+    planChangeLogger.warn("runContinuous(sparkSessionForQuery)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSessionForQuery, epochCoordinatorId)
       override def run: Unit = {
         try {
           triggerExecutor.execute((_) => {
@@ -464,6 +468,7 @@ class ContinuousExecution(
         log"${MDC(ERROR, error)}")
       stopInNewThread()
     }
+    planChangeLogger.warn("stopInNewThread(error)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", error)
   }
 
   /**
@@ -481,6 +486,7 @@ class ContinuousExecution(
             logError(e.getMessage, e)
             throw e
         }
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }.start()
   }

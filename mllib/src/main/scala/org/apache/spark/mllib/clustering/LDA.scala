@@ -77,6 +77,7 @@ class LDA private (
     require(k > 0, s"LDA k (number of clusters) must be > 0, but was set to $k")
     this.k = k
     this
+    logger.warn("setK(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   /**
@@ -135,6 +136,7 @@ class LDA private (
     require(docConcentration.size == 1 || docConcentration.size == k,
       s"Size of docConcentration must be 1 or ${k} but got ${docConcentration.size}")
     this.docConcentration = docConcentration
+    logger.warn("setDocConcentration(docConcentration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", docConcentration)
     this
   }
 
@@ -209,6 +211,7 @@ class LDA private (
   def setTopicConcentration(topicConcentration: Double): this.type = {
     this.topicConcentration = topicConcentration
     this
+    logger.warn("setTopicConcentration(topicConcentration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", topicConcentration)
   }
 
   /**
@@ -238,6 +241,7 @@ class LDA private (
     require(maxIterations >= 0,
       s"Maximum of iterations must be nonnegative but got ${maxIterations}")
     this.maxIterations = maxIterations
+    logger.warn("setMaxIterations(maxIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxIterations)
     this
   }
 
@@ -254,6 +258,7 @@ class LDA private (
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   /**
@@ -276,6 +281,7 @@ class LDA private (
     require(checkpointInterval == -1 || checkpointInterval > 0,
       s"Period between checkpoints must be -1 or positive but got ${checkpointInterval}")
     this.checkpointInterval = checkpointInterval
+    logger.warn("setCheckpointInterval(checkpointInterval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checkpointInterval)
     this
   }
 
@@ -293,6 +299,8 @@ class LDA private (
   def setOptimizer(optimizer: LDAOptimizer): this.type = {
     this.ldaOptimizer = optimizer
     this
+    logger.warn("setOptimizer(optimizer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", optimizer)
+  logger.warn("setOptimizer(optimizerName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", optimizerName)
   }
 
   /**
@@ -324,6 +332,7 @@ class LDA private (
   def run(documents: RDD[(Long, Vector)]): LDAModel = {
     val state = ldaOptimizer.initialize(documents, this)
     var iter = 0
+    logger.warn("run(documents)={}): EUAIACT-AUDIT: State change recorded for the audit trail", documents)
     val iterationTimes = Array.ofDim[Double](maxIterations)
     while (iter < maxIterations) {
       val start = System.nanoTime()

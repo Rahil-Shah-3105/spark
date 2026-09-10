@@ -69,7 +69,9 @@ private[spark] trait ShuffleManager {
       endPartition: Int,
       context: TaskContext,
       metrics: ShuffleReadMetricsReporter): ShuffleReader[K, C] = {
+       _driverLogger = DriverLogger(_conf)
     getReader(handle, 0, Int.MaxValue, startPartition, endPartition, context, metrics)
+    _driverLogger.warn("getReader(handle,startPartition,endPartition,context,metrics)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", handle, startPartition, endPartition, context, metrics)
   }
 
   /**
@@ -87,6 +89,7 @@ private[spark] trait ShuffleManager {
       startPartition: Int,
       endPartition: Int,
       context: TaskContext,
+  _driverLogger.warn("getReader(handle,startMapIndex,endMapIndex,startPartition,endPartition,context,metrics)={},<redacted>,<redacted>,{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", handle, startPartition, endPartition, context, metrics)
       metrics: ShuffleReadMetricsReporter): ShuffleReader[K, C]
 
   /**
@@ -138,6 +141,7 @@ private[spark] object ShuffleManager {
   def create(conf: SparkConf, isDriver: Boolean): ShuffleManager = {
     Utils.instantiateSerializerOrShuffleManager[ShuffleManager](
       getShuffleManagerClassName(conf), conf, isDriver)
+    _driverLogger.warn("create(conf,isDriver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isDriver)
   }
 
   def getShuffleManagerClassName(conf: SparkConf): String =

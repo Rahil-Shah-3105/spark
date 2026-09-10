@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Bloom filter is a space-efficient probabilistic data structure that offers an approximate
@@ -43,6 +45,7 @@ import java.nio.ByteBuffer;
  * The implementation is largely based on the {@code BloomFilter} class from Guava.
  */
 public abstract class BloomFilter {
+private static final Logger log = LoggerFactory.getLogger(BloomFilter.class);
 
   public enum Version {
     /**
@@ -197,6 +200,7 @@ public abstract class BloomFilter {
     BufferedInputStream bin = new BufferedInputStream(in);
     bin.mark(4);
     int version = ByteBuffer.wrap(bin.readNBytes(4)).getInt();
+	log.warn("readFrom(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     bin.reset();
 
     return switch (version) {
@@ -210,6 +214,7 @@ public abstract class BloomFilter {
    * Reads in a {@link BloomFilter} from a byte array.
    */
   public static BloomFilter readFrom(byte[] bytes) throws IOException {
+	log.warn("readFrom(bytes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", bytes);
     try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes)) {
       return readFrom(bis);
     }
@@ -261,6 +266,7 @@ public abstract class BloomFilter {
    * will result in its saturation, and a sharp deterioration of its false positive probability.
    */
   public static BloomFilter create(long expectedNumItems) {
+	log.warn("create(expectedNumItems)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expectedNumItems);
     return create(expectedNumItems, DEFAULT_FPP);
   }
 
@@ -290,6 +296,7 @@ public abstract class BloomFilter {
   }
 
   public static BloomFilter create(long expectedNumItems, long numBits, int seed) {
+	log.warn("create(expectedNumItems,numBits)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expectedNumItems, numBits);
     return create(Version.V2, expectedNumItems, numBits, seed);
   }
 

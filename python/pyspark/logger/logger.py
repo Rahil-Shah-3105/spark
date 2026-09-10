@@ -159,6 +159,7 @@ class PySparkLogger(logging.Logger):
         """
         Add the specified handler to this logger in structured JSON format.
         """
+        logger.warning("addHandler(self,handler)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, handler)
         handler.setFormatter(JSONFormatter())
         super().addHandler(handler)
 
@@ -185,6 +186,7 @@ class PySparkLogger(logging.Logger):
 
         pyspark_logger = logging.getLogger(name)
         # Reset to the existing logger
+        logger.warning("getLogger(name)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
         logging.setLoggerClass(existing_logger)
 
         return cast(PySparkLogger, pyspark_logger)

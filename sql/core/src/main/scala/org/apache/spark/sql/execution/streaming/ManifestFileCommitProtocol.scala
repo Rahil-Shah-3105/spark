@@ -40,6 +40,7 @@ import org.apache.spark.sql.execution.streaming.sinks.{FileStreamSinkLog, SinkFi
  */
 class ManifestFileCommitProtocol(jobId: String, path: String)
   extends FileCommitProtocol with Serializable with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Track the list of files added by a task, only used on the executors.
   @transient private var addedFiles: ArrayBuffer[String] = _
@@ -56,11 +57,13 @@ class ManifestFileCommitProtocol(jobId: String, path: String)
   def setupManifestOptions(fileLog: FileStreamSinkLog, batchId: Long): Unit = {
     this.fileLog = fileLog
     this.batchId = batchId
+    planChangeLogger.warn("setupManifestOptions(fileLog,batchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", fileLog, batchId, batchId)
   }
 
   override def setupJob(jobContext: JobContext): Unit = {
     require(fileLog != null, "setupManifestOptions must be called before this function")
     pendingCommitFiles = new ArrayBuffer[Path]
+    planChangeLogger.warn("setupJob(jobContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jobContext)
   }
 
   override def commitJob(jobContext: JobContext, taskCommits: Seq[TaskCommitMessage]): Unit = {
@@ -124,6 +127,7 @@ class ManifestFileCommitProtocol(jobId: String, path: String)
 
   override def setupTask(taskContext: TaskAttemptContext): Unit = {
     addedFiles = new ArrayBuffer[String]
+    planChangeLogger.warn("setupTask(taskContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskContext)
   }
 
   override def newTaskTempFile(

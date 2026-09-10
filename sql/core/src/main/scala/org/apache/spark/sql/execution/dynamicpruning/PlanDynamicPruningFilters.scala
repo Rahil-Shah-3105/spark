@@ -42,6 +42,7 @@ case class PlanDynamicPruningFilters(sparkSession: SparkSession) extends Rule[Sp
    * Identify the shape in which keys of a given plan are broadcasted.
    */
   private def broadcastMode(keys: Seq[Expression], output: AttributeSeq): BroadcastMode = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val packedKeys = BindReferences.bindReferences(HashJoin.rewriteKeyExpr(keys), output)
     HashedRelationBroadcastMode(packedKeys)
   }
@@ -131,5 +132,6 @@ case class PlanDynamicPruningFilters(sparkSession: SparkSession) extends Rule[Sp
             DynamicPruningExpression(InSubqueryExec(value, values, exprId))
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

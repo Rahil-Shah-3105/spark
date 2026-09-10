@@ -118,6 +118,7 @@ private[sql] class SparkConnectClient(
   private[sql] def setPlanCompressionOptions(
       planCompressionOptions: Option[PlanCompressionOptions]): Unit = {
     _planCompressionOptions = Some(planCompressionOptions)
+    logger.warn("setPlanCompressionOptions(planCompressionOptions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", planCompressionOptions)
   }
 
   /**
@@ -166,6 +167,7 @@ private[sql] class SparkConnectClient(
    * Manually triggers upload of all classfile artifacts to the Spark Connect Server
    */
   private[sql] def uploadAllClassFileArtifacts(): Unit =
+    logger.warn("uploadAllClassFileArtifacts()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     artifactManager.uploadAllClassFileArtifacts()
 
   /**
@@ -330,6 +332,7 @@ private[sql] class SparkConnectClient(
         bstub.executePlan(request.build())
       }
     }
+    logger.warn("execute(plan,operationId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, operationId, operationId)
   }
 
   /**
@@ -528,6 +531,7 @@ private[sql] class SparkConnectClient(
     operationExtensions.foreach(opStatusRequest.addExtensions)
     requestBuilder.setOperationStatus(opStatusRequest)
 
+    logger.warn("getOperationStatuses(operationIds,operationExtensions,requestExtensions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", operationIds, operationExtensions, requestExtensions, operationIds)
     requestExtensions.foreach(requestBuilder.addExtensions)
 
     bstub.getStatus(requestBuilder.build())
@@ -546,12 +550,14 @@ private[sql] class SparkConnectClient(
     // validation is also done server side, but this will give error earlier.
     ProtoUtils.throwIfInvalidTag(tag)
     tags.get += tag
+    logger.warn("addTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   private[sql] def removeTag(tag: String): Unit = {
     // validation is also done server side, but this will give error earlier.
     ProtoUtils.throwIfInvalidTag(tag)
     tags.get.remove(tag)
+    logger.warn("removeTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   private[sql] def getTags(): Set[String] = {
@@ -713,6 +719,7 @@ object SparkConnectClient {
     error.getSuppressed.collectFirst { case marker: SparkConnectOperationIdException =>
       marker.operationId
     }
+    logger.warn("getOperationId(error)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", error)
   }
 
   private[client] def attachOperationId(error: Throwable, operationId: String): Unit = {
@@ -731,6 +738,7 @@ object SparkConnectClient {
   // for internal tests
   private[sql] def apply(channel: ManagedChannel): SparkConnectClient = {
     new SparkConnectClient(Configuration(), channel)
+    logger.warn("apply(channel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", channel)
   }
 
   def builder(): Builder = new Builder()
@@ -801,6 +809,7 @@ object SparkConnectClient {
     def enableSsl(): Builder = {
       _configuration = _configuration.copy(isSslEnabled = Option(true))
       this
+      logger.warn("enableSsl()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -812,6 +821,7 @@ object SparkConnectClient {
     def disableSsl(): Builder = {
       _configuration = _configuration.copy(isSslEnabled = Option(false))
       this
+      logger.warn("disableSsl()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def sslEnabled: Boolean = _configuration.isSslEnabled.contains(true)
@@ -926,6 +936,7 @@ object SparkConnectClient {
     def grpcKeepAliveEnabled(enabled: Boolean): Builder = {
       _configuration = _configuration.copy(grpcKeepAliveEnabled = enabled)
       this
+      logger.warn("grpcKeepAliveEnabled(enabled)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enabled)
     }
 
     def grpcKeepAliveEnabled: Boolean = _configuration.grpcKeepAliveEnabled
@@ -1007,6 +1018,7 @@ object SparkConnectClient {
       Option(System.getProperty("spark.remote")) // Set from Spark Submit
         .orElse(sys.env.get(SparkConnectClient.SPARK_REMOTE))
         .orElse {
+          logger.warn("loadFromEnvironment()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
           if (isAPIModeConnect) {
             Option(System.getProperty("spark.master")).orElse(sys.env.get("MASTER"))
           } else {
@@ -1060,6 +1072,7 @@ object SparkConnectClient {
     def disableReattachableExecute(): Builder = {
       _configuration = _configuration.copy(useReattachableExecute = false)
       this
+      logger.warn("disableReattachableExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -1071,6 +1084,7 @@ object SparkConnectClient {
     def enableReattachableExecute(): Builder = {
       _configuration = _configuration.copy(useReattachableExecute = true)
       this
+      logger.warn("enableReattachableExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def allowArrowBatchChunking(allow: Boolean): Builder = {
@@ -1189,6 +1203,7 @@ object SparkConnectClient {
 
       interceptors.foreach(channelBuilder.intercept(_))
 
+      logger.warn("createChannel()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
       channelBuilder.maxInboundMessageSize(grpcMaxMessageSize)
       if (grpcKeepAliveEnabled) {
         // Detects a silently-dead connection (e.g. a NAT gateway/load balancer dropping an idle
@@ -1230,6 +1245,7 @@ object SparkConnectClient {
             applier.fail(Status.UNAUTHENTICATED.withCause(e))
         }
       })
+      logger.warn("applyRequestMetadata(requestInfo,appExecutor,applier)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", requestInfo, appExecutor, applier)
     }
   }
 

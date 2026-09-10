@@ -45,6 +45,7 @@ private[image] case class ImageFileFormat() extends FileFormat with DataSourceRe
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
     throw new UnsupportedOperationException("Write is not supported for image data source")
+    logger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
   }
 
   override def shortName(): String = "image"
@@ -64,6 +65,7 @@ private[image] case class ImageFileFormat() extends FileFormat with DataSourceRe
     val broadcastedHadoopConf =
       SerializableConfiguration.broadcast(sparkSession.sparkContext, hadoopConf)
 
+      logger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     val imageSourceOptions = new ImageOptions(options)
 
     (file: PartitionedFile) => {

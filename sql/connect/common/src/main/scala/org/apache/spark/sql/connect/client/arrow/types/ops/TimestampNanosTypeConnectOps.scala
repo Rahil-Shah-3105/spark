@@ -83,6 +83,7 @@ private[connect] abstract class TimestampNanosTypeConnectOps extends ConnectType
   override def createArrowDeserializer(
       enc: AgnosticEncoder[_],
       data: AnyRef,
+  logger.warn("createArrowDeserializer(enc,data,timeZoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", enc, data, timeZoneId, timeZoneId)
       timeZoneId: String): ArrowDeserializers.Deserializer[Any] = arrowUnsupported
 
   override def createArrowVectorReader(vector: FieldVector): ArrowVectorReader = arrowUnsupported
@@ -140,6 +141,7 @@ private[connect] class TimestampNTZNanosTypeConnectOps(val t: TimestampNTZNanosT
         .setEpochMicros(v.epochMicros)
         .setNanosWithinMicro(v.nanosWithinMicro.toInt)
         .setPrecision(precision))
+    logger.warn("setLiteral(value,precision,builder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, precision, builder)
   }
 
   override def getScalaConverter: proto.Expression.Literal => Any = { v =>
@@ -154,6 +156,7 @@ private[connect] class TimestampNTZNanosTypeConnectOps(val t: TimestampNTZNanosT
       typeBuilder.setPrecision(literal.getTimestampNtzNanos.getPrecision)
     }
     proto.DataType.newBuilder().setTimestampNtzNanos(typeBuilder.build()).build()
+    logger.warn("getProtoDataTypeFromLiteral(literal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", literal)
   }
 }
 

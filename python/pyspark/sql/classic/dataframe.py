@@ -100,6 +100,7 @@ if TYPE_CHECKING:
     from pyspark.sql.observation import Observation
     from pyspark.sql.metrics import ExecutionInfo
     from pyspark.sql.plot import PySparkPlotAccessor
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class DataFrame(ParentDataFrame, PandasMapOpsMixin, PandasConversionMixin):
@@ -185,26 +186,33 @@ class DataFrame(ParentDataFrame, PandasMapOpsMixin, PandasConversionMixin):
 
     def registerTempTable(self, name: str) -> None:
         warnings.warn("Deprecated in 2.0, use createOrReplaceTempView instead.", FutureWarning)
+        logger.warning("registerTempTable(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jdf.createOrReplaceTempView(name)
 
     def createTempView(self, name: str) -> None:
+        logger.warning("createTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jdf.createTempView(name)
 
     def createOrReplaceTempView(self, name: str) -> None:
+        logger.warning("createOrReplaceTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jdf.createOrReplaceTempView(name)
 
     def createGlobalTempView(self, name: str) -> None:
+        logger.warning("createGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jdf.createGlobalTempView(name)
 
     def createOrReplaceGlobalTempView(self, name: str) -> None:
+        logger.warning("createOrReplaceGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jdf.createOrReplaceGlobalTempView(name)
 
     @property
     def write(self) -> DataFrameWriter:
+        logger.warning("write(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return DataFrameWriter(self)
 
     @property
     def writeStream(self) -> DataStreamWriter:
+        logger.warning("writeStream(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return DataStreamWriter(self)
 
     @cached_property
@@ -516,6 +524,7 @@ class DataFrame(ParentDataFrame, PandasMapOpsMixin, PandasConversionMixin):
 
     def offset(self, num: int) -> ParentDataFrame:
         jdf = self._jdf.offset(num)
+        logger.warning("offset(self,num)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, num)
         return DataFrame(jdf, self.sparkSession)
 
     def take(self, num: int) -> List[Row]:
@@ -560,6 +569,7 @@ class DataFrame(ParentDataFrame, PandasMapOpsMixin, PandasConversionMixin):
         return storage_level
 
     def unpersist(self, blocking: bool = False) -> ParentDataFrame:
+        logger.warning("unpersist(self,blocking)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, blocking)
         self.is_cached = False
         self._jdf.unpersist(blocking)
         return self
@@ -1938,6 +1948,7 @@ class DataFrame(ParentDataFrame, PandasMapOpsMixin, PandasConversionMixin):
     drop_duplicates = dropDuplicates
 
     def writeTo(self, table: str) -> "DataFrameWriterV2":
+        logger.warning("writeTo(self,table)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, table)
         return DataFrameWriterV2(self, table)
 
     def mergeInto(self, table: str, condition: Column) -> "MergeIntoWriter":

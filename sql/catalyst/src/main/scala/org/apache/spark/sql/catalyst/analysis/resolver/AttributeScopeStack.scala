@@ -52,6 +52,7 @@ case class AttributeScope(attributes: AttributeSet, isSubqueryRoot: Boolean = fa
  * new ID #3 for an alias of `a + col2`.
  */
 class AttributeScopeStack {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val stack = new ArrayDeque[AttributeScope]
   stack.push(AttributeScope(attributes = AttributeSet(Seq.empty)))
 
@@ -80,6 +81,7 @@ class AttributeScopeStack {
     val current = stack.pop()
 
     stack.push(current.copy(attributes = AttributeSet(attributes)))
+    planChangeLogger.warn("overwriteCurrent(attributes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attributes)
   }
 
   /**

@@ -28,6 +28,7 @@ import org.apache.spark.sql.internal.SQLConf
  * [[HigherOrderFunction]].
  */
 object SubqueryExpressionInLambdaOrHigherOrderFunctionValidator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * SPARK-47509: There is a correctness bug when subquery expressions appear within lambdas or
@@ -39,5 +40,6 @@ object SubqueryExpressionInLambdaOrHigherOrderFunctionValidator {
       !conf.getConf(SQLConf.ALLOW_SUBQUERY_EXPRESSIONS_IN_LAMBDAS_AND_HIGHER_ORDER_FUNCTIONS)) {
       throw QueryCompilationErrors.subqueryExpressionInLambdaOrHigherOrderFunctionNotAllowedError()
     }
+    planChangeLogger.warn("apply(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 }

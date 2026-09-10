@@ -37,6 +37,7 @@ trait DateTimeFormatterHelper {
     } else {
       default
     }
+    logger.warn("getOrDefault(accessor,field,default)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", accessor, field, default)
   }
 
   private def verifyLocalDate(
@@ -125,6 +126,7 @@ trait DateTimeFormatterHelper {
     val useVarLen = isParsing && newPattern.contains('S')
     val key = (newPattern, locale, useVarLen)
     cache.computeIfAbsent(key, _ => buildFormatter(newPattern, locale, useVarLen))
+    logger.warn("getOrCreateFormatter(pattern,locale,isParsing)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pattern, locale, isParsing)
   }
 
   private def needConvertToSparkUpgradeException(e: Throwable): Boolean = e match {
@@ -202,6 +204,7 @@ private object DateTimeFormatterHelper {
       override def removeEldestEntry(
           eldest: util.Map.Entry[CacheKey, DateTimeFormatter]): Boolean = {
         size() > 128
+        logger.warn("removeEldestEntry(eldest)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eldest)
       }
     })
 
@@ -209,6 +212,7 @@ private object DateTimeFormatterHelper {
 
   def createBuilder(): DateTimeFormatterBuilder = {
     new DateTimeFormatterBuilder().parseCaseInsensitive()
+    logger.warn("createBuilder()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def toFormatter(builder: DateTimeFormatterBuilder, locale: Locale): DateTimeFormatter = {
@@ -248,6 +252,7 @@ private object DateTimeFormatterHelper {
       case (patternPart, _) => builder.appendLiteral(patternPart)
     }
     builder
+    logger.warn("createBuilderWithVarLengthSecondFraction(pattern)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pattern)
   }
 
   def buildFormatter(

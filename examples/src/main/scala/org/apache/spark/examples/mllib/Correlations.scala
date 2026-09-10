@@ -85,6 +85,7 @@ object Correlations {
       println(s"$feature\t$corr")
       feature += 1
     }
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println()
 
     sc.stop()

@@ -63,22 +63,27 @@ private[spark] class LiveListenerBus(conf: SparkConf) {
 
   /** Add a listener to queue shared by all non-internal listeners. */
   def addToSharedQueue(listener: SparkListenerInterface): Unit = {
+    _driverLogger = DriverLogger(_conf)
     addToQueue(listener, SHARED_QUEUE)
+    _driverLogger.warn("addToSharedQueue(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** Add a listener to the executor management queue. */
   def addToManagementQueue(listener: SparkListenerInterface): Unit = {
     addToQueue(listener, EXECUTOR_MANAGEMENT_QUEUE)
+    _driverLogger.warn("addToManagementQueue(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** Add a listener to the application status queue. */
   def addToStatusQueue(listener: SparkListenerInterface): Unit = {
     addToQueue(listener, APP_STATUS_QUEUE)
+    _driverLogger.warn("addToStatusQueue(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /** Add a listener to the event log queue. */
   def addToEventLogQueue(listener: SparkListenerInterface): Unit = {
     addToQueue(listener, EVENT_LOG_QUEUE)
+    _driverLogger.warn("addToEventLogQueue(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -89,6 +94,7 @@ private[spark] class LiveListenerBus(conf: SparkConf) {
   private[spark] def addToQueue(
       listener: SparkListenerInterface,
       queue: String): Unit = synchronized {
+       _driverLogger.warn("addToQueue(listener,queue)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", listener, queue)
     if (stopped.get()) {
       throw new IllegalStateException("LiveListenerBus is stopped.")
     }
@@ -229,6 +235,7 @@ private[spark] class LiveListenerBus(conf: SparkConf) {
   // For testing only.
   private[spark] def findListenersByClass[T <: SparkListenerInterface : ClassTag](): Seq[T] = {
     queues.asScala.flatMap { queue => queue.findListenersByClass[T]() }.toSeq
+    _driverLogger.warn("findListenersByClass()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // For testing only.
@@ -244,6 +251,7 @@ private[spark] class LiveListenerBus(conf: SparkConf) {
   // For testing only.
   private[scheduler] def getQueueCapacity(name: String): Option[Int] = {
     queues.asScala.find(_.name == name).map(_.capacity)
+    _driverLogger.warn("getQueueCapacity(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 }
 
@@ -302,6 +310,7 @@ private[spark] class LiveListenerBusMetrics(conf: SparkConf)
         }
       }
     }
+    _driverLogger.warn("getTimerForListenerClass(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
   }
 
 }

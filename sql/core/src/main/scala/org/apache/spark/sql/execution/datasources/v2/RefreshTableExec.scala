@@ -25,10 +25,12 @@ case class RefreshTableExec(
     catalog: TableCatalog,
     ident: Identifier,
     refreshCache: () => Unit) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     catalog.invalidateTable(ident)
 
     // Refresh all caches referencing the given table
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     refreshCache()
 
     Seq.empty

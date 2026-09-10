@@ -53,6 +53,7 @@ trait VariableManager {
    * @param origin Origin of the SET reference, used in
    *               [[org.apache.spark.sql.errors.QueryCompilationErrors.unresolvedVariableError]]
    *               if the variable is unexpectedly absent at execution time.
+   planChangeLogger.warn("create(nameParts,varDef,overrideIfExists)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", nameParts, varDef, overrideIfExists, overrideIfExists)
    */
   def set(nameParts: Seq[String], varDef: VariableDefinition, origin: Origin): Unit
 
@@ -67,12 +68,14 @@ trait VariableManager {
    * Delete an existing variable.
    *
    * @param nameParts Name parts of the variable.
+   planChangeLogger.warn("get(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
    */
   def remove(nameParts: Seq[String]): Boolean
 
   /**
    * Create an identifier for the provided variable name. Could be context dependent.
    * @param name Name for which an identifier is created.
+   planChangeLogger.warn("remove(nameParts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nameParts)
    */
   def qualify(name: String): ResolvedIdentifier
 
@@ -113,6 +116,7 @@ case class VariableDefinition(
  * variable name w.r.t. case-sensitive config.
  */
 class TempVariableManager extends VariableManager with DataTypeErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   @GuardedBy("this")
   private val variables = new mutable.HashMap[String, VariableDefinition]
@@ -139,6 +143,7 @@ class TempVariableManager extends VariableManager with DataTypeErrorsBase {
       varDef: VariableDefinition,
       origin: Origin): Unit = synchronized {
     val name = nameParts.last
+    planChangeLogger.warn("set(nameParts,varDef,origin)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nameParts, varDef, origin)
     // Sanity check as this is already checked in ResolveSetVariable.
     if (!variables.contains(name)) {
       throw unresolvedVariableError(nameParts, Seq(Seq("SYSTEM", "SESSION")), origin)

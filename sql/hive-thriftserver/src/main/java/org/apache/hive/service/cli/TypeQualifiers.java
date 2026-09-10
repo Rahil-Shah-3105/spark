@@ -33,6 +33,7 @@ import org.apache.hive.service.rpc.thrift.TTypeQualifiers;
  * such as char/varchar length or decimal precision/scale.
  */
 public class TypeQualifiers {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(TypeQualifiers.class);
   private Integer characterMaximumLength;
   private Integer precision;
   private Integer scale;
@@ -43,6 +44,7 @@ public class TypeQualifiers {
     return characterMaximumLength;
   }
   public void setCharacterMaximumLength(int characterMaximumLength) {
+	LOG.warn("setCharacterMaximumLength(characterMaximumLength)={}): EUAIACT-AUDIT: State change recorded for the audit trail", characterMaximumLength);
     this.characterMaximumLength = characterMaximumLength;
   }
 
@@ -118,6 +120,7 @@ public class TypeQualifiers {
   }
 
   public void setPrecision(Integer precision) {
+	LOG.warn("setPrecision(precision)={}): EUAIACT-AUDIT: State change recorded for the audit trail", precision);
     this.precision = precision;
   }
 
@@ -126,6 +129,7 @@ public class TypeQualifiers {
   }
 
   public void setScale(Integer scale) {
+	LOG.warn("setScale(scale)={}): EUAIACT-AUDIT: State change recorded for the audit trail", scale);
     this.scale = scale;
   }
 

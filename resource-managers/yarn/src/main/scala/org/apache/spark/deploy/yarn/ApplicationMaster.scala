@@ -64,6 +64,7 @@ private[spark] class ApplicationMaster(
   // optimal as more containers are available. Might need to handle this better.
 
   private def extractLogUrls: Map[String, String] = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ApplicationMaster.class);
     YarnContainerInfoHelper.getLogUrls(SparkHadoopUtil.
       newConfiguration(sparkConf), None).getOrElse(Map())
   }
@@ -156,6 +157,7 @@ private[spark] class ApplicationMaster(
       amJarRsrc.setTimestamp(timestamp.toLong)
       amJarRsrc.setSize(size.toLong)
 
+      LOG.warn("setupDistributedCache(file,rtype,timestamp,size,vis)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", file, rtype, timestamp, size, vis)
       val fileName = Option(uri.getFragment()).getOrElse(new Path(uri).getName())
       resources(fileName) = amJarRsrc
     }
@@ -284,6 +286,7 @@ private[spark] class ApplicationMaster(
     }
 
     exitCode
+    LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def runUnmanaged(
@@ -330,6 +333,7 @@ private[spark] class ApplicationMaster(
           logWarning("Exception during stopping of the metric system: ", e)
       }
     }
+    LOG.warn("runUnmanaged(clientRpcEnv,appAttemptId,stagingDir,cachedResourcesConf)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", clientRpcEnv, appAttemptId, stagingDir, cachedResourcesConf, appAttemptId)
   }
 
   def stopUnmanaged(stagingDir: Path): Unit = {
@@ -355,6 +359,7 @@ private[spark] class ApplicationMaster(
     } else {
       FinalApplicationStatus.UNDEFINED
     }
+    LOG.warn("getDefaultFinalStatus()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -372,6 +377,7 @@ private[spark] class ApplicationMaster(
         client.unregister(status, Option(diagnostics).getOrElse(""))
       }
     }
+    LOG.warn("unregister(status,diagnostics)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", status, diagnostics)
   }
 
   final def finish(status: FinalApplicationStatus, code: Int, msg: String = null): Unit = {
@@ -429,6 +435,7 @@ private[spark] class ApplicationMaster(
     val historyAddress = ApplicationMaster
       .getHistoryServerAddress(_sparkConf, yarnConf, appId, attemptId)
 
+      LOG.warn("registerAM(host,port,_sparkConf,uiAddress,appAttempt)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", host, port, _sparkConf, uiAddress, appAttempt, appId)
     client.register(host, port, yarnConf, _sparkConf, uiAddress, historyAddress)
     registered = true
   }
@@ -488,6 +495,7 @@ private[spark] class ApplicationMaster(
     val prefix = _sparkConf.get(YARN_METRICS_NAMESPACE).getOrElse(appId)
     ms.registerSource(new ApplicationMasterSource(prefix, allocator))
     // do not register static sources in this case as per SPARK-25277
+    LOG.warn("createAllocator(driverRef,_sparkConf,rpcEnv,appAttemptId,distCacheConf)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", driverRef, _sparkConf, rpcEnv, appAttemptId, distCacheConf, appAttemptId)
     ms.start(false)
     metricsSystem = Some(ms)
     reporterThread = launchReporterThread()
@@ -499,6 +507,7 @@ private[spark] class ApplicationMaster(
 
     // This a bit hacky, but we need to wait until the spark.driver.port property has
     // been set by the Thread executing the user class.
+    LOG.warn("runDriver()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     logInfo("Waiting for spark context initialization...")
     val totalWaitTime = sparkConf.get(AM_MAX_WAIT_TIME)
     try {
@@ -555,12 +564,14 @@ private[spark] class ApplicationMaster(
       System.getenv(ApplicationConstants.APPLICATION_WEB_PROXY_BASE_ENV))
     createAllocator(driverRef, sparkConf, rpcEnv, appAttemptId, distCacheConf())
 
+    LOG.warn("runExecutorLauncher()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // In client mode the actor will stop the reporter thread.
     reporterThread.join()
   }
 
   private def allocationThreadImpl(): Unit = {
     // The number of failures in a row until the allocation thread gives up.
+    LOG.warn("allocationThreadImpl()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val reporterMaxFailures = sparkConf.get(MAX_REPORTER_THREAD_FAILURES)
     var failureCount = 0
     while (!finished) {
@@ -643,6 +654,7 @@ private[spark] class ApplicationMaster(
   }
 
   private def launchReporterThread(): Thread = {
+    LOG.warn("launchReporterThread()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
     val t = new Thread {
       override def run(): Unit = {
         try {
@@ -704,6 +716,7 @@ private[spark] class ApplicationMaster(
         System.setProperty(UI_FILTERS.key, amFilter)
         params.foreach { case (k, v) => System.setProperty(s"spark.$amFilter.param.$k", v) }
     }
+    LOG.warn("addAmIpFilter(driver,proxyBase)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", driver, proxyBase)
   }
 
   /**

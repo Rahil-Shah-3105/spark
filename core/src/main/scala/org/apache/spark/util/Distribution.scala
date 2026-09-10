@@ -42,6 +42,7 @@ private[spark] class Distribution(val data: Array[Double], val startIdx: Int, va
    */
   def getQuantiles(probabilities: Iterable[Double] = defaultProbabilities)
       : IndexedSeq[Double] = {
+       _driverLogger = DriverLogger(_conf)
     probabilities.toIndexedSeq.map { p: Double => data(closestIndex(p)) }
   }
 
@@ -79,6 +80,7 @@ private[spark] object Distribution {
     } else {
       None
     }
+    _driverLogger.warn("apply(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   def showQuantiles(out: PrintStream = System.out, quantiles: Iterable[Double]): Unit = {

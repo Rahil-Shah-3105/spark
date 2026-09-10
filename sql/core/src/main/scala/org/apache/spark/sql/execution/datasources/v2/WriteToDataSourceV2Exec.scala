@@ -211,6 +211,7 @@ case class ReplaceTableAsSelectExec(
       overwrite = true, refreshPhaseEnabled = false)
     transaction.foreach(TransactionUtils.commit)
     result
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", result)
   }
 }
 
@@ -409,8 +410,10 @@ case class ReplaceDataExec(
     } else {
       // One of the metrics couldn't be found, also mark numDeletedRows as not found.
       -1L
+    planChangeLogger.warn("getMetricValue(metrics,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metrics, name)
     }
 
+    planChangeLogger.warn("getDeleteSummary()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // SQLMetric.set is a no-op if value is -1, leaving the metric in its invalid state.
     sparkMetrics("numDeletedRows").set(numDeletedRows)
     super.getDeleteSummary().map(_.copy(numDeletedRows = numDeletedRows))
@@ -479,6 +482,7 @@ trait TransactionalExec extends SparkPlan {
 }
 
 trait V2ExistingTableWriteExec extends V2TableWriteExec with TransactionalExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def refreshCache: () => Unit
   def write: Write
   def tableName: String
@@ -560,6 +564,8 @@ trait RowLevelWriteExec extends V2ExistingTableWriteExec {
         getMetricValue(metrics, "numTargetRowsNotMatchedBySourceUpdated"),
         getMetricValue(metrics, "numTargetRowsNotMatchedBySourceDeleted"))
     }
+    planChangeLogger.warn("getMergeSummary()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("getUpdateSummary()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected def getUpdateSummary(): Option[UpdateSummaryImpl] = {
@@ -625,6 +631,7 @@ trait V2TableWriteExec
     // Avoid object not serializable issue.
     val writeMetrics: Map[String, SQLMetric] = customMetrics
 
+    planChangeLogger.warn("writeWithV2(batchWrite)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchWrite)
     try {
       sparkContext.runJob(
         rdd,
@@ -692,6 +699,7 @@ trait WritingSparkTask[W <: DataWriter[InternalRow]] extends Logging with Serial
 
     val iterWithMetrics = IteratorWithMetrics(iter, dataWriter, customMetrics)
 
+    planChangeLogger.warn("run(writerFactory,context,iter,useCommitCoordinator,customMetrics)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", writerFactory, context, iter, useCommitCoordinator, customMetrics, stageId)
     // write the data and commit this writer.
     Utils.tryWithSafeFinallyAndFailureCallbacks(block = {
       write(dataWriter, iterWithMetrics)
@@ -904,6 +912,7 @@ case class DeltaWritingSparkTask(
 
     sparkMetrics.get("numUpdatedRows").foreach(_.add(numUpdatedRows))
     sparkMetrics.get("numDeletedRows").foreach(_.add(numDeletedRows))
+  planChangeLogger.warn("write(writer,iter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writer, iter)
   }
 }
 
@@ -968,6 +977,7 @@ private[v2] trait V2CreateTableAsSelectBaseExec extends LeafV2CommandExec {
     val rawSchema = CharVarcharUtils.getRawSchema(removeInternalMetadata(schema), conf)
     val tableSchema = if (forceNullable) rawSchema.asNullable else rawSchema
     CatalogV2Util.structTypeToV2Columns(tableSchema, keepIds = false)
+    planChangeLogger.warn("getV2Columns(schema,forceNullable)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, forceNullable)
   }
 
   protected def writeToTable(
@@ -999,6 +1009,7 @@ private[v2] trait V2CreateTableAsSelectBaseExec extends LeafV2CommandExec {
         case _ => catalog.dropTable(ident)
       }
     })
+    planChangeLogger.warn("writeToTable(catalog,table,writeOptions,ident,query,overwrite,refreshPhaseEnabled)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, table, writeOptions, ident, query, overwrite, refreshPhaseEnabled, ident)
   }
 }
 

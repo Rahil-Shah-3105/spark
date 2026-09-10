@@ -49,6 +49,7 @@ private[spark] abstract class PagedDataSource[T](val pageSize: Int) {
    * Slice the data for this page
    */
   def pageData(page: Int): PageData[T] = {
+    _driverLogger = DriverLogger(_conf)
     // Display all the data in one page, if the pageSize is less than or equal to zero.
     val pageTableSize = if (pageSize <= 0) {
       dataSize
@@ -308,6 +309,7 @@ private[spark] trait PagedTable[T] {
       .filterNot(_._1.startsWith(tableTag))
       .map(parameter => parameter._1 + "=" + parameter._2(0))
       .mkString("&")
+      _driverLogger.warn("getParameterOtherTable(request,tableTag)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, tableTag)
   }
 
   /**
@@ -328,6 +330,7 @@ private[spark] trait PagedTable[T] {
     )
     val pageSize = Option(parameterPageSize).map(_.toInt).getOrElse(100)
 
+    _driverLogger.warn("getTableParameters(request,tableTag,defaultSortColumn)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, tableTag, defaultSortColumn)
     (sortColumn, desc, pageSize)
   }
 

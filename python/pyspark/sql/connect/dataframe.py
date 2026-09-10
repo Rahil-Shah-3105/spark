@@ -108,6 +108,7 @@ if TYPE_CHECKING:
     from pyspark.pandas.frame import DataFrame as PandasOnSparkDataFrame
     from pyspark.sql.metrics import ExecutionInfo
     from pyspark.sql.plot import PySparkPlotAccessor
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class DataFrame(ParentDataFrame):
@@ -277,6 +278,7 @@ class DataFrame(ParentDataFrame):
 
     @property
     def write(self) -> "DataFrameWriter":
+        logger.warning("write(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         def cb(qe: "ExecutionInfo") -> None:
             self._execution_info = qe
 
@@ -2162,6 +2164,7 @@ class DataFrame(ParentDataFrame):
         print(self._explain_string(extended=extended, mode=mode))
 
     def createTempView(self, name: str) -> None:
+        logger.warning("createTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         command = plan.CreateView(
             child=self._plan, name=name, is_global=False, replace=False
         ).command(session=self._session.client)
@@ -2169,6 +2172,7 @@ class DataFrame(ParentDataFrame):
         self._execution_info = ei
 
     def createOrReplaceTempView(self, name: str) -> None:
+        logger.warning("createOrReplaceTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         command = plan.CreateView(
             child=self._plan, name=name, is_global=False, replace=True
         ).command(session=self._session.client)
@@ -2176,6 +2180,7 @@ class DataFrame(ParentDataFrame):
         self._execution_info = ei
 
     def createGlobalTempView(self, name: str) -> None:
+        logger.warning("createGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         command = plan.CreateView(
             child=self._plan, name=name, is_global=True, replace=False
         ).command(session=self._session.client)
@@ -2183,6 +2188,7 @@ class DataFrame(ParentDataFrame):
         self._execution_info = ei
 
     def createOrReplaceGlobalTempView(self, name: str) -> None:
+        logger.warning("createOrReplaceGlobalTempView(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         command = plan.CreateView(
             child=self._plan, name=name, is_global=True, replace=True
         ).command(session=self._session.client)
@@ -2212,6 +2218,7 @@ class DataFrame(ParentDataFrame):
         return storage_level
 
     def unpersist(self, blocking: bool = False) -> ParentDataFrame:
+        logger.warning("unpersist(self,blocking)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, blocking)
         relation = self._plan.plan(self._session.client)
         self._session.client._analyze(method="unpersist", relation=relation, blocking=blocking)
         return self
@@ -2257,6 +2264,7 @@ class DataFrame(ParentDataFrame):
 
     def registerTempTable(self, name: str) -> None:
         warnings.warn("Deprecated in 2.0, use createOrReplaceTempView instead.", FutureWarning)
+        logger.warning("registerTempTable(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self.createOrReplaceTempView(name)
 
     def _map_partitions(
@@ -2352,6 +2360,7 @@ class DataFrame(ParentDataFrame):
 
     @property
     def writeStream(self) -> DataStreamWriter:
+        logger.warning("writeStream(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return DataStreamWriter(plan=self._plan, session=self._session)
 
     def sameSemantics(self, other: ParentDataFrame) -> bool:
@@ -2377,6 +2386,7 @@ class DataFrame(ParentDataFrame):
         )
 
     def writeTo(self, table: str) -> "DataFrameWriterV2":
+        logger.warning("writeTo(self,table)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, table)
         def cb(ei: "ExecutionInfo") -> None:
             self._execution_info = ei
 
@@ -2395,6 +2405,7 @@ class DataFrame(ParentDataFrame):
         )
 
     def offset(self, num: int) -> ParentDataFrame:
+        logger.warning("offset(self,num)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, num)
         return DataFrame(plan.Offset(child=self._plan, offset=num), session=self._session)
 
     def checkpoint(self, eager: bool = True) -> ParentDataFrame:

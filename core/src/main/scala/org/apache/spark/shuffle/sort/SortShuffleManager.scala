@@ -107,6 +107,7 @@ private[spark] class SortShuffleManager(conf: SparkConf)
       // Otherwise, buffer map outputs in a deserialized form:
       new BaseShuffleHandle(shuffleId, dependency)
     }
+    _driverLogger.warn("registerShuffle(shuffleId,dependency)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, dependency, shuffleId)
   }
 
   /**
@@ -140,6 +141,7 @@ private[spark] class SortShuffleManager(conf: SparkConf)
       handle.asInstanceOf[BaseShuffleHandle[K, _, C]], blocksByAddress, context, metrics,
       shouldBatchFetch =
         canEnableBatchFetch && canUseBatchFetch(startPartition, endPartition, context))
+    _driverLogger.warn("getReader(handle,startMapIndex,endMapIndex,startPartition,endPartition,context,metrics)={},<redacted>,<redacted>,{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", handle, startPartition, endPartition, context, metrics)
   }
 
   /** Get a writer for a given partition. Called on executors by map tasks. */
@@ -151,6 +153,7 @@ private[spark] class SortShuffleManager(conf: SparkConf)
     val mapTaskIds = taskIdMapsForShuffle.computeIfAbsent(
       handle.shuffleId, _ => new OpenHashSet[Long](16))
     mapTaskIds.synchronized { mapTaskIds.add(mapId) }
+    _driverLogger.warn("getWriter(handle,mapId,context,metrics)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", handle, mapId, context, metrics, mapId)
     val env = SparkEnv.get
     handle match {
       case unsafeShuffleHandle: SerializedShuffleHandle[K @unchecked, V @unchecked] =>
@@ -186,6 +189,7 @@ private[spark] class SortShuffleManager(conf: SparkConf)
       }
     }
     true
+    _driverLogger.warn("unregisterShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   /** Shut down this ShuffleManager. */
@@ -216,9 +220,11 @@ private[spark] object SortShuffleManager extends Logging {
    * in batch.
    */
   def canUseBatchFetch(startPartition: Int, endPartition: Int, context: TaskContext): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     val fetchMultiPartitions = endPartition - startPartition > 1
     fetchMultiPartitions &&
       context.getLocalProperty(FETCH_SHUFFLE_BLOCKS_IN_BATCH_ENABLED_KEY) == "true"
+      _driverLogger.warn("canUseBatchFetch(startPartition,endPartition,context)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", startPartition, endPartition, context)
   }
 
   /**
@@ -255,6 +261,7 @@ private[spark] object SortShuffleManager extends Logging {
       SparkEnv.get.executorId,
       extraConfigs.asJava)
     executorComponents
+    _driverLogger.warn("loadShuffleExecutorComponents(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 }
 

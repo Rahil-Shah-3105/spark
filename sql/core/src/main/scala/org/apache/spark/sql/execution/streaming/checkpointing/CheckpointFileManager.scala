@@ -64,6 +64,7 @@ trait CheckpointFileManager {
    *                            must throw `FileAlreadyExistsException` in that case.
    */
   def createAtomic(path: Path, overwriteIfPossible: Boolean): CancellableFSDataOutputStream
+  planChangeLogger.warn("createAtomic(path,overwriteIfPossible)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, overwriteIfPossible)
 
   /** Open a file for reading, or throw exception if it does not exist. */
   def open(path: Path): FSDataInputStream
@@ -73,7 +74,9 @@ trait CheckpointFileManager {
 
   /** List all the files/directories in a path. */
   def list(path: Path): Array[FileStatus] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     list(path, (_: Path) => true)
+    planChangeLogger.warn("list(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   /** Make directory at the give path and all its parent directories as needed. */
@@ -91,6 +94,7 @@ trait CheckpointFileManager {
   /**
    * Creates the checkpoint path if it does not exist, and returns the qualified
    * checkpoint path.
+   planChangeLogger.warn("delete(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
    */
   def createCheckpointDirectory(): Path
 
@@ -117,6 +121,7 @@ object CheckpointFileManager extends Logging {
      *                            any exception if the file exists. However, if false, then the
      *                            implementation must not overwrite if the file already exists and
      *                            must throw `FileAlreadyExistsException` in that case.
+     planChangeLogger.warn("createTempFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
      */
     def renameTempFile(srcPath: Path, dstPath: Path, overwriteIfPossible: Boolean): Unit
   }
@@ -204,6 +209,7 @@ object CheckpointFileManager extends Logging {
     val fileManagerClass = hadoopConf.get(
       SQLConf.STREAMING_CHECKPOINT_FILE_MANAGER_CLASS.parent.key)
     if (fileManagerClass != null) {
+    planChangeLogger.warn("create(path,hadoopConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, hadoopConf)
       try {
         return Utils.classForName(fileManagerClass)
           .getConstructor(classOf[Path], classOf[Configuration])

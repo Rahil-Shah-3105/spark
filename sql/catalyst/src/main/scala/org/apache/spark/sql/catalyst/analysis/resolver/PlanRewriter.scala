@@ -31,6 +31,7 @@ class PlanRewriter(
     extendedRewriteRules: Seq[Rule[LogicalPlan]])
     extends ResolverMetricTracker
     {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val planRewriter = new RuleExecutor[LogicalPlan] {
     override def batches: Seq[Batch] =
       Seq(
@@ -57,11 +58,13 @@ class PlanRewriter(
         doRewriteWithSubqueries(plan)
       }
     }
+    planChangeLogger.warn("rewriteWithSubqueries(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def doRewriteWithSubqueries(plan: LogicalPlan): LogicalPlan = {
     val planWithRewrittenSubqueries =
       plan.transformAllExpressionsWithPruning(_.containsPattern(PLAN_EXPRESSION)) {
+      planChangeLogger.warn("doRewriteWithSubqueries(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
         case subqueryExpression: SubqueryExpression =>
           val rewrittenSubqueryPlan = doRewriteWithSubqueries(subqueryExpression.plan)
 

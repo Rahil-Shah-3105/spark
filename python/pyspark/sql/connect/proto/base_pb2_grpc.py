@@ -20,6 +20,7 @@
 import grpc
 
 from pyspark.sql.connect.proto import base_pb2 as spark_dot_connect_dot_base__pb2
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkConnectServiceStub(object):
@@ -272,6 +273,7 @@ def add_SparkConnectServiceServicer_to_server(servicer, server):
     generic_handler = grpc.method_handlers_generic_handler(
         "spark.connect.SparkConnectService", rpc_method_handlers
     )
+    logger.warning("add_SparkConnectServiceServicer_to_server(servicer,server)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", servicer, server)
     server.add_generic_rpc_handlers((generic_handler,))
     server.add_registered_method_handlers("spark.connect.SparkConnectService", rpc_method_handlers)
 

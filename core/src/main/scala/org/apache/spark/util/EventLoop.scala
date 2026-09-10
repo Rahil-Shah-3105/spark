@@ -61,11 +61,13 @@ private[spark] abstract class EventLoop[E](name: String) extends Logging {
         case ie: InterruptedException => // exit even if eventQueue is not empty
         case NonFatal(e) => logError(log"Unexpected error in ${MDC(EVENT_LOOP, name)}", e)
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
   }
 
   def start(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (stopped.get) {
       throw new IllegalStateException(name + " has already been stopped")
     }

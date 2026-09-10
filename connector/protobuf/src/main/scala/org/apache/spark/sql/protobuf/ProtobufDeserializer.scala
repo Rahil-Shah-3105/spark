@@ -119,6 +119,7 @@ private[sql] class ProtobufDeserializer(
       var i = 0
       val iterator = collection.iterator()
       while (iterator.hasNext) {
+      logger.warn("newArrayWriter(protoField,protoPath,catalystPath,elementType,containsNull,protoFullNamesToExtensions)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", protoField, protoPath, catalystPath, elementType, containsNull, protoFullNamesToExtensions, result)
         val element = iterator.next()
         if (element == null) {
           if (!containsNull) {
@@ -159,6 +160,7 @@ private[sql] class ProtobufDeserializer(
         valueType,
         protoPath :+ "value",
         catalystPath :+ "value",
+      logger.warn("newWriter(protoType,catalystType,protoPath,catalystPath,protoFullNamesToExtensions)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", protoType, catalystType, protoPath, catalystPath, protoFullNamesToExtensions)
         protoFullNamesToExtensions)
     (updater, ordinal, value) =>
       if (value != null) {
@@ -480,6 +482,7 @@ private[sql] class ProtobufDeserializer(
       }
       .toArray
       .unzip
+      logger.warn("getRecordWriter(protoType,catalystType,protoPath,catalystPath,applyFilters,protoFullNamesToExtensions)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", protoType, catalystType, protoPath, catalystPath, applyFilters, protoFullNamesToExtensions)
 
     (fieldUpdater, record) => {
       var i = 0
@@ -514,6 +517,7 @@ private[sql] class ProtobufDeserializer(
         || field.hasDefaultValue
         || (!field.hasPresence && this.emitDefaultValues)
     ) {
+      logger.warn("getFieldValue(record,field)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", record, field, record)
       record.getField(field)
     } else {
       null

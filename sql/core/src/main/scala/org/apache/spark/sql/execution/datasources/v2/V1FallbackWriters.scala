@@ -71,6 +71,7 @@ sealed trait V1FallbackWriters
   def write: V1Write
 
   override def run(): Seq[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     try {
       writeWithV1(write.toInsertableRelation)
       refreshCache()
@@ -79,6 +80,7 @@ sealed trait V1FallbackWriters
     } finally {
       postDriverMetrics(write.reportDriverMetrics())
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -90,5 +92,6 @@ trait SupportsV1Write extends SparkPlan {
 
   protected def writeWithV1(relation: InsertableRelation): Unit = {
     relation.insert(Dataset.ofRows(session, plan), overwrite = false)
+    planChangeLogger.warn("writeWithV1(relation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", relation)
   }
 }

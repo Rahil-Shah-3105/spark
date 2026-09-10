@@ -49,6 +49,7 @@ case class MergingSessionsExec(
     initialInputBufferOffset: Int,
     resultExpressions: Seq[NamedExpression],
     child: SparkPlan) extends BaseAggregateExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val keyWithoutSessionExpressions = groupingExpressions.diff(Seq(sessionExpression))
 
@@ -97,6 +98,7 @@ case class MergingSessionsExec(
         }
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): MergingSessionsExec =

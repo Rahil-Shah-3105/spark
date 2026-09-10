@@ -29,6 +29,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.ArrayImplicits._
 
 object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // visible for testing
   private[sql] val CHAR_VARCHAR_TYPE_STRING_METADATA_KEY = "__CHAR_VARCHAR_TYPE_STRING"
@@ -41,6 +42,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
    */
   private[sql] def createStringRPad(str: Expression, len: Expression): StringRPad = {
     StringRPad(str, len, Literal.create(" ", str.dataType))
+    planChangeLogger.warn("createStringRPad(str,len)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, len)
   }
 
   /**
@@ -120,6 +122,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
     } else {
       None
     }
+    planChangeLogger.warn("getRawTypeString(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
   /**
@@ -128,6 +131,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
    */
   def getRawType(metadata: Metadata): Option[DataType] = {
     getRawTypeString(metadata).map(CatalystSqlParser.parseDataType)
+    planChangeLogger.warn("getRawType(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
   /**
@@ -138,6 +142,8 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
       getRawType(field.metadata).map(dt => field.copy(dataType = dt)).getOrElse(field)
     }
     StructType(fields)
+    planChangeLogger.warn("getRawSchema(schema,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, conf)
+  planChangeLogger.warn("getRawSchema(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   def getRawSchema(schema: StructType, conf: SQLConf): StructType = {
@@ -172,6 +178,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
       dt,
       charFuncName = Some("charTypeWriteSideCheck"),
       varcharFuncName = Some("varcharTypeWriteSideCheck"))
+  planChangeLogger.warn("processStringForCharVarchar(expr,dt,charFuncName,varcharFuncName)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expr, dt, charFuncName, varcharFuncName)
   }
 
   private def processStringForCharVarchar(
@@ -245,6 +252,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
       containsNull: Boolean,
       charFuncName: Option[String],
       varcharFuncName: Option[String]): Expression = {
+       planChangeLogger.warn("processStringForCharVarcharInArray(arr,et,containsNull,charFuncName,varcharFuncName)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arr, et, containsNull, charFuncName, varcharFuncName)
     val param = NamedLambdaVariable("x", replaceCharVarcharWithString(et), containsNull)
     val funcBody = processStringForCharVarchar(param, et, charFuncName, varcharFuncName)
     if (funcBody.fastEquals(param)) {
@@ -260,6 +268,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
       processStringForCharVarchar(
         attr, rawType, charFuncName = Some("readSidePadding"), varcharFuncName = None)
     }.getOrElse(attr)
+    planChangeLogger.warn("addPaddingForScan(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 
   /**
@@ -292,6 +301,7 @@ object CharVarcharUtils extends Logging with SparkCharVarcharUtils {
         ArrayType(typeWithWiderCharLength(et1, et2))
       case _ => NullType
     }
+  planChangeLogger.warn("padCharToTargetLength(expr,rawType,typeWithTargetCharLength,alwaysPad)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expr, rawType, typeWithTargetCharLength, alwaysPad)
   }
 
   private def padCharToTargetLength(

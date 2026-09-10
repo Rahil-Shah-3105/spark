@@ -216,6 +216,7 @@ private[ml] abstract class Selector[T <: SelectorModel[T]]
         .limit(k)
         .as[Int]
         .collect()
+        logger.warn("getTopIndices(k)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", k)
     }
 
     val indices = $(selectorType) match {

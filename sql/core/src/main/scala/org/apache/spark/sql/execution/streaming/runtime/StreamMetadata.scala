@@ -46,6 +46,7 @@ case class StreamMetadata(id: String) {
 }
 
 object StreamMetadata extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   implicit val format: Formats = Serialization.formats(NoTypeHints)
 
   /** Read the metadata from file if it exists */
@@ -67,6 +68,7 @@ object StreamMetadata extends Logging {
         Utils.closeQuietly(input)
       }
     } else None
+    planChangeLogger.warn("read(metadataFile,hadoopConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadataFile, hadoopConf)
   }
 
   /** Write metadata to file */
@@ -96,5 +98,6 @@ object StreamMetadata extends Logging {
           log"${MDC(LogKeys.PATH, metadataFile)}", e)
         throw e
     }
+    planChangeLogger.warn("write(metadata,metadataFile,hadoopConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metadata, metadataFile, hadoopConf)
   }
 }

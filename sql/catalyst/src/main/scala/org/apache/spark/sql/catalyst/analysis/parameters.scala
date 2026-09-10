@@ -29,6 +29,7 @@ sealed trait Parameter extends LeafExpression with Unevaluable {
   override lazy val resolved: Boolean = false
 
   private def unboundError(methodName: String): Nothing = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     throw SparkException.internalError(
       s"Cannot call `$methodName()` of the unbound parameter `$name`.")
   }
@@ -87,6 +88,7 @@ object NameParameterizedQuery {
   def apply(child: LogicalPlan, args: Map[String, Expression]): NameParameterizedQuery = {
     val argsSeq = args.toSeq
     new NameParameterizedQuery(child, argsSeq.map(_._1), argsSeq.map(_._2))
+    planChangeLogger.warn("apply(child,args)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, args)
   }
 }
 
@@ -146,10 +148,12 @@ object MoveParameterizedQueriesDown extends Rule[LogicalPlan] {
       case pq: ParameterizedQuery if pq.exists(isSupervisingCommand) =>
         moveParameterizedQueryIntoSupervisingCommand(pq)
     }
+  planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def moveParameterizedQueryIntoSupervisingCommand(pq: ParameterizedQuery): LogicalPlan = {
     // Moves parameterized query down recursively to handle nested `SupervisingCommand`s
+    planChangeLogger.warn("moveParameterizedQueryIntoSupervisingCommand(pq)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pq)
     def transformSupervisedPlan: PartialFunction[LogicalPlan, LogicalPlan] = {
       case command: SupervisingCommand =>
         command.withTransformedSupervisedPlan {

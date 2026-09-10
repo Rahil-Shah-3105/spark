@@ -77,6 +77,7 @@ private[feature] trait ImputerParams extends Params with HasInputCol with HasInp
     } else {
       ($(inputCols), $(outputCols))
     }
+    logger.warn("getInOutCols()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /** Validates and transforms the input schema. */
@@ -321,6 +322,7 @@ object ImputerModel extends MLReadable[ImputerModel] {
 
     override protected def saveImpl(path: String): Unit = {
       import org.apache.spark.ml.util.ReadWriteUtils._
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val dataPath = new Path(path, "data").toString
       if (ReadWriteUtils.localSavingModeState.get()) {
@@ -345,6 +347,7 @@ object ImputerModel extends MLReadable[ImputerModel] {
       import org.apache.spark.ml.util.ReadWriteUtils._
       val metadata = DefaultParamsReader.loadMetadata(path, sparkSession, className)
       val dataPath = new Path(path, "data").toString
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = if (ReadWriteUtils.localSavingModeState.get()) {
         val data = ReadWriteUtils.loadObjectFromLocal[(Array[String], Array[Double])](
           dataPath,

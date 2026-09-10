@@ -130,6 +130,7 @@ case class StructField(
       } else {
         visitRecursively(dt, path)
       }
+      logger.warn("processDataType(dt,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dt, path)
     }
 
     visitRecursively(dataType, name)
@@ -191,6 +192,7 @@ case class StructField(
     } else {
       None
     }
+    logger.warn("getDefault()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -227,6 +229,7 @@ case class StructField(
     } else {
       None
     }
+    logger.warn("getCurrentDefaultValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -249,6 +252,7 @@ case class StructField(
     } else {
       None
     }
+    logger.warn("getExistenceDefaultValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private[sql] def hasExistenceDefaultValue: Boolean = {

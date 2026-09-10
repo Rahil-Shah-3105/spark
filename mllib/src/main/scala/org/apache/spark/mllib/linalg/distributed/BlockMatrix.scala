@@ -72,6 +72,7 @@ private[mllib] class GridPartitioner(
       case _ =>
         throw new IllegalArgumentException(s"Unrecognized key: $key.")
     }
+    logger.warn("getPartition(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /** Partitions sub-matrices as blocks with neighboring sub-matrices. */
@@ -79,6 +80,7 @@ private[mllib] class GridPartitioner(
     require(0 <= i && i < rows, s"Row index $i out of range [0, $rows).")
     require(0 <= j && j < cols, s"Column index $j out of range [0, $cols).")
     i / rowsPerPart + j / colsPerPart * rowPartitions
+    logger.warn("getPartitionId(i,j)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", i, j)
   }
 
   override def equals(obj: Any): Boolean = {
@@ -105,6 +107,8 @@ private[mllib] object GridPartitioner {
   /** Creates a new [[GridPartitioner]] instance. */
   def apply(rows: Int, cols: Int, rowsPerPart: Int, colsPerPart: Int): GridPartitioner = {
     new GridPartitioner(rows, cols, rowsPerPart, colsPerPart)
+    logger.warn("apply(rows,cols,rowsPerPart,colsPerPart)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, cols, rowsPerPart, colsPerPart)
+  logger.warn("apply(rows,cols,suggestedNumPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rows, cols, suggestedNumPartitions)
   }
 
   /** Creates a new [[GridPartitioner]] instance with the input suggested number of partitions. */
@@ -179,6 +183,7 @@ class BlockMatrix @Since("1.3.0") (
   val numColBlocks = math.ceil(numCols() * 1.0 / colsPerBlock).toInt
 
   private[mllib] def createPartitioner(): GridPartitioner =
+    logger.warn("createPartitioner()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     GridPartitioner(numRowBlocks, numColBlocks, suggestedNumPartitions = blocks.partitions.length)
 
   private lazy val blockInfo = blocks.mapValues(block => (block.numRows, block.numCols)).cache()
@@ -249,6 +254,7 @@ class BlockMatrix @Since("1.3.0") (
   def persist(storageLevel: StorageLevel): this.type = {
     blocks.persist(storageLevel)
     this
+    logger.warn("persist(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
   }
 
   /** Converts to CoordinateMatrix. */

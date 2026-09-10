@@ -32,12 +32,15 @@ trait TriggerExecutor {
   def execute(batchRunner: (MicroBatchExecutionContext) => Boolean): Unit
 
   def setNextBatch(execContext: MicroBatchExecutionContext): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     execCtx = execContext
+    planChangeLogger.warn("setNextBatch(execContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execContext)
   }
 
   protected def runOneBatch(batchRunner: (MicroBatchExecutionContext)
     => Boolean): Boolean = {
     batchRunner(execCtx)
+    planChangeLogger.warn("runOneBatch(batchRunner)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchRunner)
   }
 }
 
@@ -51,6 +54,7 @@ case class SingleBatchExecutor() extends TriggerExecutor {
    */
   override def execute(batchRunner: (MicroBatchExecutionContext) => Boolean): Unit = {
     runOneBatch(batchRunner)
+  planChangeLogger.warn("execute(triggerHandler)={}): EUAIACT-AUDIT: State change recorded for the audit trail", triggerHandler)
   }
 }
 
@@ -87,6 +91,7 @@ case class ProcessingTimeExecutor(
           notifyBatchFallingBehind(batchElapsedTimeMs)
         }
         if (terminated) {
+          planChangeLogger.warn("notifyBatchFallingBehind(realElapsedTimeMs)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", realElapsedTimeMs)
           return
         }
         clock.waitTillTime(nextTriggerTimeMs)

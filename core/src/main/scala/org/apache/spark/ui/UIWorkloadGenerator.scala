@@ -38,6 +38,7 @@ private[spark] object UIWorkloadGenerator {
   val INTER_JOB_WAIT_MS = 5000
 
   def main(args: Array[String]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (args.length < 3) {
       // scalastyle:off println
       println(
@@ -59,6 +60,7 @@ private[spark] object UIWorkloadGenerator {
         sc.setLocalProperty(SparkContext.SPARK_SCHEDULER_POOL, s)
       }
       sc.setLocalProperty(SparkContext.SPARK_JOB_DESCRIPTION, s)
+      _driverLogger.warn("setProperties(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
     }
 
     val baseData = sc.makeRDD(1 to NUM_PARTITIONS * 10, NUM_PARTITIONS)
@@ -109,6 +111,7 @@ private[spark] object UIWorkloadGenerator {
               barrier.release()
             }
             // scalastyle:on println
+            _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           }
         }.start
         Thread.sleep(INTER_JOB_WAIT_MS)

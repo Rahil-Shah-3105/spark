@@ -153,6 +153,7 @@ private class LastAttemptRDDVals[@specialized T](
     // of boxed objects.
     val partitionPartialVals: Array[T])
   {
+   _driverLogger = DriverLogger(_conf)
 
   import LastAttemptRDDVals.EMPTY_ID
 
@@ -222,6 +223,7 @@ private class LastAttemptRDDVals[@specialized T](
   private def setComputedBit(partitionId: Int): Unit = {
     val idx = partitionId >>> 6
     computedBitmap(idx) = computedBitmap(idx) | (1L << (partitionId & 63))
+    _driverLogger.warn("setComputedBit(partitionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, partitionId)
   }
 
   /**
@@ -248,6 +250,7 @@ private class LastAttemptRDDVals[@specialized T](
       array(partitionId) = value
       array
     }
+    _driverLogger.warn("setOverrideComponent(array,partitionId,value,common)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", array, partitionId, value, common, partitionId)
   }
 
   /** Reads one component's value at `partitionId`, falling back to `common` when the override
@@ -278,6 +281,7 @@ private class LastAttemptRDDVals[@specialized T](
     overrideTaskAttemptNumbers = setOverrideComponent(
       overrideTaskAttemptNumbers, partId, partialValue.taskAttemptNumber, commonTaskAttemptNumber)
     lastSqlExecutionId = partialValue.sqlExecutionId
+    _driverLogger.warn("update(partialValue)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partialValue, partId)
   }
 
   def partialValueAt(partId: Int): AccumulatorPartialVal[T] = {
@@ -349,6 +353,7 @@ private object LastAttemptRDDVals {
       rddScopeId: Option[String],
       numPartitions: Int)(implicit ct: ClassTag[T]): LastAttemptRDDVals[T] = {
     new LastAttemptRDDVals[T](rddId, rddScopeId, new Array[T](numPartitions))
+    _driverLogger.warn("apply(rddId,rddScopeId,numPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rddId, rddScopeId, numPartitions, rddId)
   }
 
   def createFromFirstUpdate[@specialized T](
@@ -359,6 +364,7 @@ private object LastAttemptRDDVals {
       update.rddNumPartitions)
     newVal.update(update)
     newVal
+    _driverLogger.warn("createFromFirstUpdate(update)={}): EUAIACT-AUDIT: State change recorded for the audit trail", update)
   }
 }
 
@@ -582,6 +588,7 @@ trait LastAttemptAccumulator[IN, OUT, PARTIAL] extends Logging {
     |New partial RDD value: ${MDC(logKeyAccumulatorState, newAccumPartialValue)}."""
       .stripMargin
   } catch {
+    _driverLogger.warn("logAccumulatorUpdate(newAccumPartialValue,oldAccumPartialValue)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newAccumPartialValue, oldAccumPartialValue)
     case NonFatal(e) =>
       logWarning(log"Unexpected exception in logAccumulatorUpdate", e)
       log"<Unexpected exception in logAccumulatorUpdate>"
@@ -595,6 +602,7 @@ trait LastAttemptAccumulator[IN, OUT, PARTIAL] extends Logging {
       oldAccumPartialValue: Option[AccumulatorPartialVal[PARTIAL]] = None): Unit = {
     val logEntry =
       log"""Unexpected last attempt tracking for accumulator ${
+      _driverLogger.warn("unexpectedLastAttemptMetricUpdate(invalidate,reason,exception,newAccumPartialValue,oldAccumPartialValue)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", invalidate, reason, exception, newAccumPartialValue, oldAccumPartialValue, invalidate)
         MDC(LogKeys.ACCUMULATOR_ID, accumulatorId)}.
       |Invalidate: ${MDC(LogKeys.LAST_ATTEMPT_ACC_INVALIDATE, invalidate)}.
       |Reason: ${MDC(LogKeys.LAST_ATTEMPT_ACC_UNEXPECTED_REASON, reason)}.

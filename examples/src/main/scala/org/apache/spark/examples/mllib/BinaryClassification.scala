@@ -151,6 +151,7 @@ object BinaryClassification {
     println(s"Test areaUnderPR = ${metrics.areaUnderPR()}.")
     println(s"Test areaUnderROC = ${metrics.areaUnderROC()}.")
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     sc.stop()
   }
 }

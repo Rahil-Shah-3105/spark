@@ -266,6 +266,7 @@ object ArrowDeserializers {
           }
         } else {
           throw unsupportedCollectionType(tag.runtimeClass)
+        logger.warn("loadListIntoBuilder(v,i,deserializer,builder)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", v, i, deserializer, builder)
         }
 
       case (MapEncoder(tag, key, value, _), v: MapVector) =>
@@ -518,6 +519,7 @@ object ArrowDeserializers {
           _ => ctor.invoke().asInstanceOf[JList[Any]]
       }
     }
+    logger.warn("resolveJavaListCreator(tag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
   }
 
   /**
@@ -588,6 +590,7 @@ object ArrowDeserializers {
 
   private def getArray(v: ListVector, i: Int, deserializer: Deserializer[Any])(implicit
       tag: ClassTag[Any]): AnyRef = {
+       logger.warn("getArray(v,i,deserializer)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", v, i, deserializer)
     val builder = mutable.ArrayBuilder.make[Any]
     loadListIntoBuilder(v, i, deserializer, builder)
     builder.result()

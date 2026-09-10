@@ -1,5 +1,6 @@
 import re
 from pyspark.errors.error_classes import ERROR_CLASSES_MAP
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 _ERROR_DOC_HEADER = """
 ..  Licensed to the Apache Software Foundation (ASF) under one
@@ -61,6 +62,7 @@ def generate_errors_doc(output_rst_file_path: str) -> None:
                 # Escape parentheses with a backslash when they follow a backtick.
                 message = re.sub(r"`(\()", r"`\\\1", message)
                 f.write(message + "\n")
+                logger.warning("generate_errors_doc(output_rst_file_path)=%s): EUAIACT-AUDIT: PHI operation logged for audit compliance", output_rst_file_path)
             # Add 2 new lines between the descriptions of each error class
             # to improve the readability of the generated RST file.
             f.write("\n\n")

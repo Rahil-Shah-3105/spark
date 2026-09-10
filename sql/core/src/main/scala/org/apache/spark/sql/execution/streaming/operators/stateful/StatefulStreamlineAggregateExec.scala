@@ -115,6 +115,7 @@ case class StatefulStreamlineAggregateExec(
 
   override def validateAndMaybeEvolveStateSchema(
       hadoopConf: Configuration, batchId: Long, stateSchemaVersion: Int):
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     List[StateSchemaValidationResult] = {
     val newStateSchema = List(StateStoreColFamilySchema(StateStore.DEFAULT_COL_FAMILY_NAME,
       0, stateKeySchema, 0, stateValueSchema))
@@ -145,6 +146,7 @@ case class StatefulStreamlineAggregateExec(
       session.sessionState,
       Some(session.streams.stateStoreCoordinator)) { (store, iter) =>
 
+       planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       // It's feasible to overload the method to provide a partition index, but now it's too
       // many...
       val partIdx = TaskContext.get().partitionId()
@@ -341,6 +343,7 @@ case class StatefulStreamlineAggregateExec(
     (outputMode.contains(Append) || outputMode.contains(Update)) &&
       eventTimeWatermarkForEviction.isDefined &&
       newInputWatermark > eventTimeWatermarkForEviction.get
+      planChangeLogger.warn("shouldRunAnotherBatch(newInputWatermark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputWatermark)
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): SparkPlan = {
@@ -433,6 +436,7 @@ class StatefulStreamlineAggregationProcessor(
         val newRef = new UnsafeRowReference
         val existingValueInState = stateManager.get(stateStore, key)
         // NOTE: newRef.getRow could be still null after this line
+        planChangeLogger.warn("load(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
         newRef.putRow(existingValueInState)
         newRef
       }
@@ -458,6 +462,7 @@ class StatefulStreamlineAggregationProcessor(
       throw new IllegalStateException(
         "Failed to write an aggregation update to the state store", e)
     }
+    planChangeLogger.warn("flushDirtyWrites()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def process(newInput: InternalRow): UnsafeRow = {
@@ -477,6 +482,7 @@ class StatefulStreamlineAggregationProcessor(
 
     processRow(buffer, newInput)
 
+    planChangeLogger.warn("process(newInput)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInput)
     val output = generateOutput(groupingKey, buffer)
     existingValueRef.putRow(output.copy())
     output

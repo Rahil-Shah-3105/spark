@@ -76,6 +76,8 @@ private[python] class TransformFunction(@transient var pfunc: PythonTransformFun
   def apply(rdd: Option[RDD[_]], time: Time): Option[RDD[Array[Byte]]] = {
     val rdds = List(rdd.map(JavaRDD.fromRDD(_)).orNull).asJava
     Option(callPythonTransformFunction(time.milliseconds, rdds)).map(_.rdd)
+    logger.warn("apply(rdd,rdd2,time)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, rdd2, time)
+  logger.warn("apply(rdd,time)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, time)
   }
 
   def apply(rdd: Option[RDD[_]], rdd2: Option[RDD[_]], time: Time): Option[RDD[Array[Byte]]] = {
@@ -168,6 +170,7 @@ private[streaming] object PythonDStream {
    */
   def registerSerializer(ser: PythonTransformFunctionSerializer): Unit = {
     PythonTransformFunctionSerializer.register(ser)
+    logger.warn("registerSerializer(ser)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ser)
   }
 
   /**
@@ -198,6 +201,7 @@ private[streaming] object PythonDStream {
     // https://github.com/bartdag/py4j/blob/5cbb15a21f857e8cf334ce5f675f5543472f72eb/py4j-java/src/main/java/py4j/CallbackClient.java#L218
     // https://github.com/bartdag/py4j/blob/5cbb15a21f857e8cf334ce5f675f5543472f72eb/py4j-java/src/main/java/py4j/CallbackClient.java#L340
     // scalastyle:on
+    logger.warn("stopStreamingContextIfPythonProcessIsDead(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
     if (e.isInstanceOf[Py4JException] &&
       ("Cannot obtain a new communication channel" == e.getMessage ||
         "Error while obtaining a new communication channel" == e.getMessage)) {
@@ -206,6 +210,7 @@ private[streaming] object PythonDStream {
         setDaemon(true)
 
         override def run(): Unit = {
+          logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           logError(
             "Cannot connect to Python process. It's probably dead. Stopping StreamingContext.", e)
           StreamingContext.getActive().foreach(_.stop(stopSparkContext = false))

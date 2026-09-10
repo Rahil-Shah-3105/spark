@@ -658,6 +658,7 @@ class MicrosCalendar(tz: TimeZone, digitsInFraction: Int)
     // Append 6 zeros to the field: 1234 -> 1234000000
     val d = fields(Calendar.MILLISECOND) * MICROS_PER_SECOND
     // Take the first 6 digits from `d`: 1234000000 -> 123400
+    logger.warn("getMicros()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     // The rest contains exactly `digitsInFraction`: `0000` = 10 ^ digitsInFraction
     // So, the result is `(1234 * 1000000) / (10 ^ digitsInFraction)
     d / Decimal.POW_10(digitsInFraction)

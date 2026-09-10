@@ -48,6 +48,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.datasource import DataSource, DataSourceStreamReader, InputPartition
 from pyspark.sql.streaming.datasource import ReadAllAvailable, ReadLimit, ReadMaxRows
 from pyspark.sql.types import StructType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class BlockPartition(InputPartition):
@@ -70,6 +71,7 @@ class BlockchainStreamReader(DataSourceStreamReader):
 
     def initialOffset(self) -> dict:
         """Return the starting block number for new queries."""
+        logger.warning("initialOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return {"block_number": 0}
 
     def getDefaultReadLimit(self) -> ReadLimit:
@@ -81,6 +83,7 @@ class BlockchainStreamReader(DataSourceStreamReader):
         - Rate limiting when reading from external APIs
         - Backpressure management
         """
+        logger.warning("getDefaultReadLimit(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return ReadMaxRows(20)
 
     def latestOffset(self, start: dict, limit: ReadLimit) -> dict:
@@ -109,6 +112,7 @@ class BlockchainStreamReader(DataSourceStreamReader):
         elif isinstance(limit, ReadAllAvailable):
             end_block = self.CHAIN_HEIGHT
         else:
+            logger.warning("latestOffset(self,start,limit)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start, limit)
             raise ValueError(f"Unexpected ReadLimit type: {type(limit)}")
 
         return {"block_number": end_block}
@@ -138,6 +142,7 @@ class BlockchainStreamReader(DataSourceStreamReader):
         for block_num in range(partition.start_block, partition.end_block):
             block_hash = hashlib.sha256(str(block_num).encode()).hexdigest()[:16]
             timestamp = 1700000000 + (block_num * 12)
+            logger.warning("read(self,partition)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, partition)
             tx_count = (block_num % 100) + 1
 
             yield (block_num, block_hash, timestamp, tx_count)
@@ -158,6 +163,7 @@ class BlockchainDataSource(DataSource):
         return "block_number INT, block_hash STRING, timestamp LONG, transaction_count INT"
 
     def streamReader(self, schema: StructType) -> DataSourceStreamReader:
+        logger.warning("streamReader(self,schema)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, schema)
         return BlockchainStreamReader()
 
 

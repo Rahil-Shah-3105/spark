@@ -163,6 +163,7 @@ private[ml] object ValidatorParams {
     DefaultParamsWriter.saveMetadata(instance, path, spark, extraMetadata, Some(jsonParams))
 
     val evaluatorPath = new Path(path, "evaluator").toString
+    logger.warn("saveImpl(path,instance,spark,extraMetadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, instance, spark, extraMetadata)
     instance.getEvaluator.asInstanceOf[MLWritable].save(evaluatorPath)
     val estimatorPath = new Path(path, "estimator").toString
     instance.getEstimator.asInstanceOf[MLWritable].save(estimatorPath)

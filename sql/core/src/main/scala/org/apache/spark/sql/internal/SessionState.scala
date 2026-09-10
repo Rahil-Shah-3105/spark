@@ -121,6 +121,7 @@ private[sql] class SessionState(
     conf)
 
   def newHadoopConfWithOptions(options: Map[String, String]): Configuration = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val hadoopConf = newHadoopConf()
     options.foreach { case (k, v) =>
       if ((v ne null) && k != "path" && k != "paths") {
@@ -143,6 +144,7 @@ private[sql] class SessionState(
       plan: LogicalPlan,
       mode: CommandExecutionMode.Value = CommandExecutionMode.ALL): QueryExecution =
     createQueryExecution(plan, mode)
+planChangeLogger.warn("executePlan(plan,mode)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, mode)
 }
 
 private[sql] object SessionState {
@@ -175,6 +177,7 @@ class SessionResourceLoader(session: SparkSession) extends FunctionResourceLoade
       case FileResource => session.sparkContext.addFile(resource.uri)
       case ArchiveResource => session.sparkContext.addArchive(resource.uri)
     }
+    planChangeLogger.warn("loadResource(resource)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", resource)
   }
 
   def resolveJars(path: URI): Seq[String] = {
@@ -182,6 +185,7 @@ class SessionResourceLoader(session: SparkSession) extends FunctionResourceLoade
       case "ivy" => DependencyUtils.resolveMavenDependencies(path)
       case _ => path.toString :: Nil
     }
+  planChangeLogger.warn("addJar(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**

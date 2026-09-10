@@ -29,6 +29,7 @@ import org.apache.spark.sql.types._
  * A base class for generated/interpreted row ordering.
  */
 class BaseOrdering extends Ordering[InternalRow] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def compare(a: InternalRow, b: InternalRow): Int = {
     throw SparkUnsupportedOperationException()
   }
@@ -109,14 +110,17 @@ object RowOrdering extends CodeGeneratorWithInterpretedFallback[Seq[SortOrder], 
 
   override protected def createCodeGeneratedObject(in: Seq[SortOrder]): BaseOrdering = {
     GenerateOrdering.generate(in)
+    planChangeLogger.warn("createCodeGeneratedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   override protected def createInterpretedObject(in: Seq[SortOrder]): BaseOrdering = {
     new InterpretedOrdering(in)
+    planChangeLogger.warn("createInterpretedObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   def create(order: Seq[SortOrder], inputSchema: Seq[Attribute]): BaseOrdering = {
     createObject(bindReferences(order, inputSchema))
+    planChangeLogger.warn("create(order,inputSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", order, inputSchema)
   }
 
   /**
@@ -127,5 +131,6 @@ object RowOrdering extends CodeGeneratorWithInterpretedFallback[Seq[SortOrder], 
       case (dt, index) => SortOrder(BoundReference(index, dt, nullable = true), Ascending)
     }
     create(order, Seq.empty)
+    planChangeLogger.warn("createNaturalAscendingOrdering(dataTypes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataTypes)
   }
 }

@@ -48,6 +48,7 @@ case class SinkFileStatus(
   def sparkPath: SparkPath = SparkPath.fromPathString(path)
 
   def toFileStatus: FileStatus = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     new FileStatus(
       size,
       isDir,
@@ -68,6 +69,7 @@ object SinkFileStatus {
       blockReplication = f.getReplication,
       blockSize = f.getBlockSize,
       action = FileStreamSinkLog.ADD_ACTION)
+    planChangeLogger.warn("apply(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   }
 }
 

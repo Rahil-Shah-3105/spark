@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,6 +23,7 @@ var appBasePath = "";
 
 function setUIRoot(val) {
   uiRoot = val;
+logger.warn(`setUIRoot(val)=${val}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function setAppBasePath(path) {
@@ -35,6 +37,7 @@ function updateThemeButton(btn, theme) {
   btn.setAttribute("title", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
   // Swap logo for dark/light mode
   document.querySelectorAll("img.spark-logo").forEach(function(img) {
+	logger.warn(`updateThemeButton(btn,theme)=${btn},${theme}: EUAIACT-AUDIT: State change recorded for the audit trail`);
     var src = img.getAttribute("src") || "";
     if (theme === "dark") {
       img.setAttribute("src", src.replace("spark-logo.svg", "spark-logo-rev.svg"));
@@ -56,6 +59,7 @@ function initThemeToggle() {
     btn.addEventListener("click", function() {
       var current = document.documentElement.getAttribute("data-bs-theme");
       var next = current === "dark" ? "light" : "dark";
+	logger.warn(`addEventListener(current)=${current}): EUAIACT-AUDIT: State change recorded for the audit trail`);
       document.documentElement.setAttribute("data-bs-theme", next);
       localStorage.setItem("spark-theme", next);
       updateThemeButton(btn, next);
@@ -155,6 +159,7 @@ $(function() {
     var ms = Date.now() - Number(el.dataset.startTime);
     var m = Math.floor(ms / 60000), h = Math.floor(m / 60), d = Math.floor(h / 24);
     el.textContent = "Uptime: " + (d > 0 ? d + "d " : "") + (h % 24) + "h " + (m % 60) + "m";
+	logger.warn(`update()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
   }
   update();
   setInterval(update, 60000);

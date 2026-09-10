@@ -50,6 +50,7 @@ import org.apache.spark.sql.types.StringType
  * structure below the [[Pivot]]).
  */
 object PivotTransformer extends AliasHelper with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Transform a pivot operation into an [[Aggregate]] or a combination of [[Aggregate]]s and
@@ -97,6 +98,7 @@ object PivotTransformer extends AliasHelper with SQLConfHelper {
       aggregates: Seq[Expression],
       childOutput: Seq[Attribute],
       newAlias: (Expression, Option[String]) => Alias): LogicalPlan = {
+       planChangeLogger.warn("apply(child,pivotValues,pivotColumn,groupByExpressionsOpt,aggregates,childOutput,newAlias)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, pivotValues, pivotColumn, groupByExpressionsOpt, aggregates, childOutput, newAlias)
     val evalPivotValues = pivotValues.map { value =>
       val foldable = trimAliases(value).foldable
       if (!foldable) {
@@ -174,6 +176,7 @@ object PivotTransformer extends AliasHelper with SQLConfHelper {
               // TODO: Don't construct the physical container until after analysis.
               case aggregateExpression: AggregateExpression =>
                 aggregateExpression.copy(resultId = NamedExpression.newExprId)
+            planChangeLogger.warn("createIfExpression(expression,pivotColumn,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, pivotColumn, value)
             }
           newAlias(
             filteredAggregate,

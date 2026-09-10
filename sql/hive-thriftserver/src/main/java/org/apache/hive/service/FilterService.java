@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
  *
  */
 public class FilterService implements Service {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(FilterService.class);
 
 
   private final Service service;
@@ -51,11 +52,13 @@ public class FilterService implements Service {
 
   @Override
   public void register(ServiceStateChangeListener listener) {
+	LOG.warn("register(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener);
     service.register(listener);
   }
 
   @Override
   public void unregister(ServiceStateChangeListener listener) {
+	LOG.warn("unregister(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener);
     service.unregister(listener);
   }
 

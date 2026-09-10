@@ -35,12 +35,14 @@ private[spark] case class RpcAddress(host: String, port: Int) {
 
 
 private[spark] object RpcAddress {
+  _driverLogger = DriverLogger(_conf)
 
   def apply(host: String, port: Int): RpcAddress = {
     new RpcAddress(
       Utils.normalizeIpIfNeeded(host),
       port
     )
+    _driverLogger.warn("apply(host,port)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", host, port)
   }
 
   /** Return the [[RpcAddress]] represented by `uri`. */

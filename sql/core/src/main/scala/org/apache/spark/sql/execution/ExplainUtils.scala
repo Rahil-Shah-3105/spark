@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.adaptive.{AdaptiveSparkPlanExec, AdaptiveS
 import org.apache.spark.sql.execution.exchange.{Exchange, ReusedExchangeExec}
 
 object ExplainUtils extends AdaptiveSparkPlanHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def localIdMap: ThreadLocal[java.util.Map[QueryPlan[_], Int]] = QueryPlan.localIdMap
 
   /**
@@ -145,6 +146,7 @@ object ExplainUtils extends AdaptiveSparkPlanHelper {
     getSubqueries(plan, subqueries)
     currentOperatorID = subqueries.foldLeft(currentOperatorID) {
       (curId, sub) => generateOperatorIDs(sub._3.child, curId, idMap, reusedExchanges, true)
+    planChangeLogger.warn("getSubqueries(plan,subqueries)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, subqueries)
     }
 
     // SPARK-42753: Process subtree for a ReusedExchange with unknown child
@@ -289,6 +291,7 @@ object ExplainUtils extends AdaptiveSparkPlanHelper {
         p.setTagValue(QueryPlan.CODEGEN_ID_TAG, currentCodegenId)
       }
       children.foreach(generateWholeStageCodegenIds)
+      planChangeLogger.warn("setCodegenId(p,children)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", p, children)
     }
 
     // Skip the subqueries as they are not printed as part of main query block.
@@ -343,5 +346,6 @@ object ExplainUtils extends AdaptiveSparkPlanHelper {
    */
   def getOpId(plan: QueryPlan[_]): String = {
     Option(ExplainUtils.localIdMap.get().get(plan)).map(v => s"$v").getOrElse("unknown")
+    planChangeLogger.warn("getOpId(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 }

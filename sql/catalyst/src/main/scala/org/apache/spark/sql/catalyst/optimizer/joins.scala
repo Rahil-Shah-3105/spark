@@ -43,6 +43,7 @@ import org.apache.spark.util.Utils
  * If star schema detection is enabled, reorder the star join plans based on heuristics.
  */
 object ReorderJoin extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Join a list of plans together and push down the conditions into them.
    *
@@ -93,6 +94,7 @@ object ReorderJoin extends Rule[LogicalPlan] with PredicateHelper {
       // should not have reference to same logical plan
       createOrderedJoin(Seq((joined, Inner)) ++ rest.filterNot(_._1 eq right), others)
     }
+    planChangeLogger.warn("createOrderedJoin(input,conditions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, conditions)
   }
 
   def apply(plan: LogicalPlan): LogicalPlan = plan.transformWithPruning(
@@ -293,6 +295,7 @@ trait JoinSelectionHelper extends Logging {
       join: Join,
       hintOnly: Boolean,
       conf: SQLConf): Option[BuildSide] = {
+       planChangeLogger.warn("getBroadcastBuildSide(join,hintOnly,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", join, hintOnly, conf)
     def shouldBuildLeft(): Boolean = {
       if (hintOnly) {
         hintToBroadcastLeft(join.hint)
@@ -319,6 +322,7 @@ trait JoinSelectionHelper extends Logging {
       join: Join,
       hintOnly: Boolean,
       conf: SQLConf): Option[BuildSide] = {
+       planChangeLogger.warn("getShuffleHashJoinBuildSide(join,hintOnly,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", join, hintOnly, conf)
     def shouldBuildLeft(): Boolean = {
       if (hintOnly) {
         hintToShuffleHashJoinLeft(join.hint)
@@ -351,10 +355,12 @@ trait JoinSelectionHelper extends Logging {
     } else {
       None
     }
+    planChangeLogger.warn("getBroadcastNestedLoopJoinBuildSide(hint,joinType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hint, joinType)
   }
 
   def getSmallerSide(left: LogicalPlan, right: LogicalPlan): BuildSide = {
     if (right.stats.sizeInBytes <= left.stats.sizeInBytes) BuildRight else BuildLeft
+    planChangeLogger.warn("getSmallerSide(left,right)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", left, right)
   }
 
   /**
@@ -531,6 +537,7 @@ trait JoinSelectionHelper extends Logging {
     } else {
       None
     }
+    planChangeLogger.warn("getBuildSide(canBuildLeft,canBuildRight,left,right)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", canBuildLeft, canBuildRight, left, right)
   }
 
   /**
@@ -562,5 +569,6 @@ trait JoinSelectionHelper extends Logging {
   private def forceApplyShuffledHashJoin(conf: SQLConf): Boolean = {
     Utils.isTesting &&
       conf.getConfString("spark.sql.join.forceApplyShuffledHashJoin", "false") == "true"
+      planChangeLogger.warn("forceApplyShuffledHashJoin(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }

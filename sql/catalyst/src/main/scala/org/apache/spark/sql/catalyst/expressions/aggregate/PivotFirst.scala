@@ -27,6 +27,7 @@ import org.apache.spark.sql.catalyst.util.{GenericArrayData, TypeUtils}
 import org.apache.spark.sql.types._
 
 object PivotFirst {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def supportsDataType(dataType: DataType): Boolean = updateFunction.isDefinedAt(dataType)
 
@@ -111,6 +112,7 @@ case class PivotFirst(
   override def update(mutableAggBuffer: InternalRow, inputRow: InternalRow): Unit = {
     val pivotColValue = pivotColumn.eval(inputRow)
     // We ignore rows whose pivot column value is not in the list of pivot column values.
+    planChangeLogger.warn("update(mutableAggBuffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mutableAggBuffer, inputRow)
     val index = findPivotIndex(pivotColValue)
     if (index >= 0) {
       val value = valueColumn.eval(inputRow)

@@ -33,6 +33,7 @@ from pyspark.sql.types import StructType, Row
 
 if TYPE_CHECKING:
     from pyspark.sql.pandas._typing import DataFrameLike as PandasDataFrameLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["StatefulProcessor", "StatefulProcessorHandle"]
 
@@ -59,12 +60,14 @@ class ValueState:
         """
         Get the state value if it exists. Returns None if the state variable does not have a value.
         """
+        logger.warning("get(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._valueStateClient.get(self._stateName)
 
     def update(self, newValue: Tuple) -> None:
         """
         Update the value of the state.
         """
+        logger.warning("update(self,newValue)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, newValue)
         self._valueStateClient.update(self._stateName, newValue)
 
     def clear(self) -> None:
@@ -89,12 +92,14 @@ class TimerValues:
         """
         Get processing time for current batch, return timestamp in millisecond.
         """
+        logger.warning("getCurrentProcessingTimeInMs(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._currentProcessingTimeInMs
 
     def getCurrentWatermarkInMs(self) -> int:
         """
         Get watermark for current batch, return timestamp in millisecond.
         """
+        logger.warning("getCurrentWatermarkInMs(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._currentWatermarkInMs
 
 
@@ -111,6 +116,7 @@ class ExpiredTimerInfo:
         """
         Get the timestamp for expired timer, return timestamp in millisecond.
         """
+        logger.warning("getExpiryTimeInMs(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._expiryTimeInMs
 
 
@@ -154,6 +160,7 @@ class ListState:
         """
         Append a list of new values to the list state.
         """
+        logger.warning("appendList(self,newState)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, newState)
         self._listStateClient.append_list(self._stateName, newState)
 
     def clear(self) -> None:
@@ -189,6 +196,7 @@ class MapState:
         """
         Get the state value for given user key if it exists.
         """
+        logger.warning("getValue(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         return self._mapStateClient.get_value(self._stateName, key)
 
     def containsKey(self, key: Tuple) -> bool:
@@ -201,6 +209,7 @@ class MapState:
         """
         Update value for given user key.
         """
+        logger.warning("updateValue(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         return self._mapStateClient.update_value(self._stateName, key, value)
 
     def iterator(self) -> Iterator[Tuple[Tuple, Tuple]]:
@@ -225,6 +234,7 @@ class MapState:
         """
         Remove user key from map state.
         """
+        logger.warning("removeKey(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         return self._mapStateClient.remove_key(self._stateName, key)
 
     def clear(self) -> None:
@@ -333,24 +343,28 @@ class StatefulProcessorHandle:
         """
         Register a timer for a given expiry timestamp in milliseconds for the grouping key.
         """
+        logger.warning("registerTimer(self,expiryTimestampMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
         self._statefulProcessorApiClient.register_timer(expiryTimestampMs)
 
     def deleteTimer(self, expiryTimestampMs: int) -> None:
         """
         Delete a timer for a given expiry timestamp in milliseconds for the grouping key.
         """
+        logger.warning("deleteTimer(self,expiryTimestampMs)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, expiryTimestampMs)
         self._statefulProcessorApiClient.delete_timer(expiryTimestampMs)
 
     def listTimers(self) -> Iterator[int]:
         """
         List all timers of their expiry timestamps in milliseconds for the grouping key.
         """
+        logger.warning("listTimers(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return ListTimerIterator(self._statefulProcessorApiClient)
 
     def deleteIfExists(self, stateName: str) -> None:
         """
         Function to delete and purge state variable if defined previously
         """
+        logger.warning("deleteIfExists(self,stateName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, stateName)
         self._statefulProcessorApiClient.delete_if_exists(stateName)
 
 

@@ -68,6 +68,7 @@ class ReducedWindowedDStream[K: ClassTag, V: ClassTag](
     super.persist(storageLevel)
     reducedStream.persist(storageLevel)
     this
+    logger.warn("persist(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
   }
 
   override def checkpoint(interval: Duration): DStream[(K, V)] = {

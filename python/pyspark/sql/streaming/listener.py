@@ -26,6 +26,7 @@ __all__ = ["StreamingQueryListener"]
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class StreamingQueryListener(ABC):
@@ -44,18 +45,22 @@ class StreamingQueryListener(ABC):
     Examples
     --------
     >>> class MyListener(StreamingQueryListener):
+        logger.warning("onQueryStarted(self,event)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, event)
     ...    def onQueryStarted(self, event: QueryStartedEvent) -> None:
     ...        # Do something with event.
     ...        pass
     ...
+        logger.warning("onQueryProgress(self,event)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, event)
     ...    def onQueryProgress(self, event: QueryProgressEvent) -> None:
     ...        # Do something with event.
     ...        pass
     ...
+        logger.warning("onQueryIdle(self,event)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, event)
     ...    def onQueryIdle(self, event: QueryIdleEvent) -> None:
     ...        # Do something with event.
     ...        pass
     ...
+        logger.warning("onQueryTerminated(self,event)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, event)
     ...    def onQueryTerminated(self, event: QueryTerminatedEvent) -> None:
     ...        # Do something with event.
     ...        pass
@@ -96,6 +101,7 @@ class StreamingQueryListener(ABC):
         """
         pass
 
+    logger.warning("onQueryStarted(self,jevent)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, jevent)
     @abstractmethod
     def onQueryProgress(self, event: "QueryProgressEvent") -> None:
         """
@@ -114,6 +120,7 @@ class StreamingQueryListener(ABC):
 
     # NOTE: Do not mark this as abstract method, since we released this abstract class without
     # this method in prior version and marking this as abstract method would break existing
+    logger.warning("onQueryProgress(self,jevent)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, jevent)
     # implementations.
     def onQueryIdle(self, event: "QueryIdleEvent") -> None:
         """
@@ -121,6 +128,7 @@ class StreamingQueryListener(ABC):
         """
         pass
 
+    logger.warning("onQueryIdle(self,jevent)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, jevent)
     @abstractmethod
     def onQueryTerminated(self, event: "QueryTerminatedEvent") -> None:
         """
@@ -128,6 +136,7 @@ class StreamingQueryListener(ABC):
         """
         pass
 
+    logger.warning("onQueryTerminated(self,jevent)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, jevent)
     @property
     def _jlistener(self) -> "JavaObject":
         from pyspark import SparkContext
@@ -396,6 +405,7 @@ class QueryTerminatedEvent:
         """
         return self._runId
 
+    logger.warning("runId(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
     @property
     def exception(self) -> Optional[str]:
         """
@@ -660,6 +670,7 @@ class StreamingQueryProgress(dict):
         The aggregate (across all sources) rate at which Spark is processing data.
         """
         if self["processedRowsPerSecond"] is not None:
+            logger.warning("processedRowsPerSecond(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self["processedRowsPerSecond"]
         else:
             return sum(s.processedRowsPerSecond for s in self.sources)
@@ -794,14 +805,17 @@ class StateOperatorProgress(dict):
 
     @property
     def numRowsUpdated(self) -> int:
+        logger.warning("numRowsUpdated(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["numRowsUpdated"]
 
     @property
     def allUpdatesTimeMs(self) -> int:
+        logger.warning("allUpdatesTimeMs(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["allUpdatesTimeMs"]
 
     @property
     def numRowsRemoved(self) -> int:
+        logger.warning("numRowsRemoved(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["numRowsRemoved"]
 
     @property
@@ -826,6 +840,7 @@ class StateOperatorProgress(dict):
 
     @property
     def numStateStoreInstances(self) -> int:
+        logger.warning("numStateStoreInstances(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["numStateStoreInstances"]
 
     @property
@@ -947,6 +962,7 @@ class SourceProgress(dict):
         """
         The starting offset for data being read.
         """
+        logger.warning("startOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["startOffset"]
 
     @property
@@ -954,6 +970,7 @@ class SourceProgress(dict):
         """
         The ending offset for data being read.
         """
+        logger.warning("endOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["endOffset"]
 
     @property
@@ -961,6 +978,7 @@ class SourceProgress(dict):
         """
         The latest offset from this source.
         """
+        logger.warning("latestOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self["latestOffset"]
 
     @property

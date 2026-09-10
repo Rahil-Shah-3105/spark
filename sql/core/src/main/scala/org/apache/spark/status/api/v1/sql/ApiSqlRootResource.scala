@@ -26,9 +26,11 @@ private[v1] class ApiSqlRootResource extends ApiRequestContext {
 
   @Path("applications/{appId}/sql")
   def sqlList(@PathParam("appId") appId: String): Class[SqlResource] = classOf[SqlResource]
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   @Path("applications/{appId}/{attemptId}/sql")
   def sqlList(
       @PathParam("appId") appId: String,
       @PathParam("attemptId") attemptId: String): Class[SqlResource] = classOf[SqlResource]
+      planChangeLogger.warn("sqlList(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
 }

@@ -34,20 +34,25 @@ import org.apache.spark.sql.streaming.{OutputMode, TimeMode}
  * We use these utils to read and write state variable information for validation purposes.
  */
 object TransformWithStateVariableUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def getValueState(stateName: String, ttlEnabled: Boolean): TransformWithStateVariableInfo = {
     TransformWithStateVariableInfo(stateName, StateVariableType.ValueState, ttlEnabled)
+    planChangeLogger.warn("getValueState(stateName,ttlEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlEnabled)
   }
 
   def getListState(stateName: String, ttlEnabled: Boolean): TransformWithStateVariableInfo = {
     TransformWithStateVariableInfo(stateName, StateVariableType.ListState, ttlEnabled)
+    planChangeLogger.warn("getListState(stateName,ttlEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlEnabled)
   }
 
   def getMapState(stateName: String, ttlEnabled: Boolean): TransformWithStateVariableInfo = {
     TransformWithStateVariableInfo(stateName, StateVariableType.MapState, ttlEnabled)
+    planChangeLogger.warn("getMapState(stateName,ttlEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlEnabled)
   }
 
   def getTimerState(stateName: String): TransformWithStateVariableInfo = {
     TransformWithStateVariableInfo(stateName, StateVariableType.TimerState, ttlEnabled = false)
+    planChangeLogger.warn("getTimerState(stateName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", stateName)
   }
 
   def validateTimeMode(timeMode: TimeMode, timestampOpt: Option[Long]): Unit = {
@@ -67,6 +72,7 @@ object TransformWithStateVariableUtils {
   def getStateNameFromRowCounterCFName(colFamilyName: String): String = {
     require(isRowCounterCFName(colFamilyName))
     colFamilyName.substring(ROW_COUNTER_CF_PREFIX.length)
+    planChangeLogger.warn("getStateNameFromRowCounterCFName(colFamilyName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilyName)
   }
 }
 
@@ -204,6 +210,7 @@ trait TransformWithStateMetadataUtils extends SchemaValidationUtils with Logging
       getStateVariableInfos().values.toList
     )
     OperatorStateMetadataV2(operatorInfo, stateStoreInfo, operatorProperties.json)
+    planChangeLogger.warn("getOperatorStateMetadata(stateSchemaPaths,info,shortName,timeMode,outputMode)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateSchemaPaths, info, shortName, timeMode, outputMode)
   }
 
   def validateNewMetadataForTWS(

@@ -23,6 +23,7 @@ import subprocess
 from sparktestsupport import modules
 from sparktestsupport.shellutils import run_cmd
 from sparktestsupport.toposort import toposort_flatten
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # -------------------------------------------------------------------------------------------------
 # Functions for traversing module dependency graph
@@ -78,6 +79,7 @@ def identify_changed_files_from_git_commits(patch_sha, target_branch=None, targe
     raw_output = subprocess.check_output(
         ["git", "diff", "--name-only", patch_sha, diff_target], universal_newlines=True
     )
+    logger.warning("identify_changed_files_from_git_commits(patch_sha,target_branch,target_ref)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", patch_sha, target_branch, target_ref)
     # Remove any empty strings
     return [f for f in raw_output.split("\n") if f]
 

@@ -63,7 +63,9 @@ private[spark] object StratifiedSamplingUtils extends Logging {
       fractions: Map[K, Double],
       counts: Option[Map[K, Long]],
       seed: Long): mutable.Map[K, AcceptanceResult] = {
+       _driverLogger = DriverLogger(_conf)
     val combOp = getCombOp[K]
+    _driverLogger.warn("getAcceptanceResults(rdd,withReplacement,fractions,counts,seed)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rdd, withReplacement, fractions, counts, seed)
     val mappedPartitionRDD = rdd.mapPartitionsWithIndex { case (partition, iter) =>
       val zeroU: mutable.Map[K, AcceptanceResult] = new mutable.HashMap[K, AcceptanceResult]()
       val rng = new RandomDataGenerator()
@@ -131,6 +133,7 @@ private[spark] object StratifiedSamplingUtils extends Logging {
       acceptResult.numItems += 1
       result
     }
+    _driverLogger.warn("getSeqOp(withReplacement,fractions,rng,counts)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", withReplacement, fractions, rng, counts)
   }
 
   /**
@@ -209,6 +212,7 @@ private[spark] object StratifiedSamplingUtils extends Logging {
       fractions: Map[K, Double],
       exact: Boolean,
       seed: Long): (Int, Iterator[(K, V)]) => Iterator[(K, V)] = {
+       _driverLogger.warn("getBernoulliSamplingFunction(rdd,fractions,exact,seed)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rdd, fractions, exact, seed)
     var samplingRateByKey = fractions
     if (exact) {
       // determine threshold for each stratum and resample
@@ -276,6 +280,7 @@ private[spark] object StratifiedSamplingUtils extends Logging {
         }
       }
     }
+    _driverLogger.warn("getPoissonSamplingFunction(rdd,fractions,exact,seed)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rdd, fractions, exact, seed)
   }
 
   /** A random data generator that generates both uniform values and Poisson values. */

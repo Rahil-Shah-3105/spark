@@ -83,6 +83,7 @@ abstract class StreamExecution(
     val outputMode: OutputMode,
     deleteCheckpointOnStop: Boolean)
   extends StreamingQuery with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import org.apache.spark.sql.streaming.StreamingQueryListener._
 
@@ -231,6 +232,7 @@ abstract class StreamExecution(
     new QueryExecutionThread(s"stream execution thread for $prettyIdString") {
       override def run(): Unit = {
         // To fix call site like "run at <unknown>:0", we bridge the call site from the caller
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         // thread to this micro batch thread
         sparkSession.sparkContext.setCallSite(callSite)
         runStream()
@@ -461,6 +463,7 @@ abstract class StreamExecution(
         terminationLatch.countDown()
       }
     }
+    planChangeLogger.warn("runStream()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -534,6 +537,7 @@ abstract class StreamExecution(
     // recomputed), so the hazard the sort guards against does not arise.
     //
     // This is a soft default rather than an override: an explicit `true` is rejected up front by
+    planChangeLogger.warn("setSparkSessionConfigsForRealTimeMode(sparkSessionForStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSessionForStream, providerKey)
     // the pre-flight in StreamingQueryManager (throwIfConfsAreRealTimeModeIncompatible), so by the
     // time we get here an explicit value can only be `false`. Matches the Databricks runtime.
     if (!conf.contains(SQLConf.SORT_BEFORE_REPARTITION.key)) {
@@ -587,6 +591,7 @@ abstract class StreamExecution(
     queryExecutionThread.interrupt()
     queryExecutionThread.join(timeout)
     if (queryExecutionThread.isAlive) {
+    planChangeLogger.warn("interruptAndAwaitExecutionThreadTermination()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       val stackTraceException = new SparkException("The stream thread was last executing:")
       stackTraceException.setStackTrace(queryExecutionThread.getStackTrace)
       val timeoutException = new TimeoutException(
@@ -622,6 +627,7 @@ abstract class StreamExecution(
         }
       }
     }
+    planChangeLogger.warn("awaitOffset(sourceIndex,newOffset,timeoutMs)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sourceIndex, newOffset, timeoutMs)
 
     while (notDone) {
       awaitProgressLock.lock()
@@ -650,6 +656,7 @@ abstract class StreamExecution(
       throw new IllegalStateException(
         "Cannot wait for a query state from the same thread that is running the query")
     }
+    planChangeLogger.warn("assertAwaitThread()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -682,6 +689,7 @@ abstract class StreamExecution(
           throw streamDeathCause
         }
         if (noNewData || !isActive) {
+          planChangeLogger.warn("processAllAvailable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           return
         }
       }
@@ -767,6 +775,7 @@ abstract class StreamExecution(
       new CaseInsensitiveStringMap(options.asJava))
     val writeBuilder = table.newWriteBuilder(info)
     outputMode match {
+    planChangeLogger.warn("createWrite(table,options,inputPlan)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, options, inputPlan)
       case Append =>
         writeBuilder.build()
 

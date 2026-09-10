@@ -33,6 +33,7 @@ package object util extends Logging {
 
   /** Silences output to stderr or stdout for the duration of f */
   def quietly[A](f: => A): A = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val origErr = System.err
     val origOut = System.out
     try {
@@ -170,10 +171,12 @@ package object util extends Logging {
       maxFields: Int): String = {
     SparkStringUtils.truncatedString(seq, start, sep, end, maxFields)
   }
+    planChangeLogger.warn("truncatedString(seq,start,sep,end,maxFields)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", seq, start, sep, end, maxFields)
 
   /** Shorthand for calling truncatedString() without start or end strings. */
   def truncatedString[T](seq: Seq[T], sep: String, maxFields: Int): String = {
     SparkStringUtils.truncatedString(seq, "", sep, "", maxFields)
+    planChangeLogger.warn("truncatedString(seq,sep,maxFields)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", seq, sep, maxFields)
   }
 
   /**
@@ -270,5 +273,6 @@ package object util extends Logging {
       }
       field.copy(metadata = builder.build())
     })
+    planChangeLogger.warn("removeInternalMetadata(schema,keepFieldIds)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, keepFieldIds, keepFieldIds)
   }
 }

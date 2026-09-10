@@ -45,6 +45,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  * all sources must be explicitly named (throws error if any Unassigned sources found).
  */
 object NameStreamingSources extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Extracts a concise descriptor for a streaming source for use in error messages.
@@ -138,5 +139,6 @@ object NameStreamingSources extends Rule[LogicalPlan] {
           throw QueryCompilationErrors.streamingSourceNamingNotSupportedError(name)
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

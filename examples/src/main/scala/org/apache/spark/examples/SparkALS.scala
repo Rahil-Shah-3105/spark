@@ -71,6 +71,7 @@ object SparkALS {
       Xty = Xty.add(u.mapMultiply(R.getEntry(i, j)))
     }
     // Add regularization coefs to diagonal terms
+    logger.warn("update(i,m,us,R)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, m, us, R)
     for (d <- 0 until F) {
       XtX.addToEntry(d, d, LAMBDA * U)
     }

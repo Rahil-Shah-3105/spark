@@ -36,6 +36,7 @@ private[fpm] class FPTree[T] extends Serializable {
   def add(t: Iterable[T], count: Long = 1L): FPTree[T] = {
     require(count > 0)
     var curr = root
+    logger.warn("add(t,count)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", t, count)
     curr.count += count
     t.foreach { item =>
       val summary = summaries.getOrElseUpdate(item, new Summary)
@@ -96,6 +97,7 @@ private[fpm] class FPTree[T] extends Serializable {
         Iterator.empty
       }
     }
+    logger.warn("getTransactions(node)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", node)
   }
 
   /** Extracts all patterns with valid suffix and minimum count. */

@@ -62,10 +62,12 @@ private[v2] trait DescribeIdentifierRows extends LeafV2CommandExec {
       catalogName: String,
       identifier: Identifier,
       entityLabel: String): Unit = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     rows += toCatalystRow("Catalog", catalogName, "")
     rows += toCatalystRow("Namespace", identifier.namespace().quoted, "")
     rows += toCatalystRow("Database", identifier.namespace().lastOption.getOrElse(""), "")
     rows += toCatalystRow(entityLabel, identifier.name(), "")
+    planChangeLogger.warn("addIdentifierRows(rows,catalogName,identifier,entityLabel)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rows, catalogName, identifier, entityLabel, identifier)
   }
 }
 
@@ -92,6 +94,7 @@ private[v2] trait DescribeTableBaseRows extends LeafV2CommandExec {
     addSchema(rows)
     addPartitioning(rows)
     addClustering(rows)
+    planChangeLogger.warn("addBaseDescription(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   private def addSchema(rows: ArrayBuffer[InternalRow]): Unit = {
@@ -99,11 +102,13 @@ private[v2] trait DescribeTableBaseRows extends LeafV2CommandExec {
       toCatalystRow(
         column.name, column.dataType.simpleString, column.comment)
     }
+    planChangeLogger.warn("addSchema(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   private def addClusteringToRows(
       clusterBySpec: ClusterBySpec,
       rows: ArrayBuffer[InternalRow]): Unit = {
+       planChangeLogger.warn("addClusteringToRows(clusterBySpec,rows)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", clusterBySpec, rows)
     rows += toCatalystRow("# Clustering Information", "", "")
     rows += toCatalystRow(s"# ${output.head.name}", output(1).name, output(2).name)
     rows ++= clusterBySpec.columnNames.map { fieldNames =>
@@ -126,10 +131,12 @@ private[v2] trait DescribeTableBaseRows extends LeafV2CommandExec {
     ClusterBySpec.extractClusterBySpec(table.partitioning.toIndexedSeq).foreach { clusterBySpec =>
       addClusteringToRows(clusterBySpec, rows)
     }
+    planChangeLogger.warn("addClustering(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   private def addPartitioning(rows: ArrayBuffer[InternalRow]): Unit = {
     // Clustering columns are handled in addClustering().
+    planChangeLogger.warn("addPartitioning(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
     val partitioning = table.partitioning
       .filter(t => !t.isInstanceOf[ClusterByTransform])
     if (partitioning.nonEmpty) {
@@ -181,6 +188,7 @@ case class DescribeTableExec(
       addTableStats(rows)
       addTableConstraints(rows)
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     rows.toSeq
   }
 
@@ -210,6 +218,7 @@ case class DescribeTableExec(
       }.mkString("[", ",", "]")
     rows += toCatalystRow("Table Properties", properties, "")
 
+    planChangeLogger.warn("addTableDetails(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
     // If any columns have default values, append them to the result.
     ResolveDefaultColumns.getDescribeMetadata(table.columns()).foreach { row =>
       rows += toCatalystRow(row._1, row._2, row._3)
@@ -224,6 +233,7 @@ case class DescribeTableExec(
         toCatalystRow(constraint.name(), constraint.toDescription, "")
       }
     }
+    planChangeLogger.warn("addTableConstraints(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   private def addMetadataColumns(rows: ArrayBuffer[InternalRow]): Unit = table match {

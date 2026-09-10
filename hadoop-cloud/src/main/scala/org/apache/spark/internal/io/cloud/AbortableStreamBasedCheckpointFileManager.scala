@@ -87,6 +87,7 @@ class AbortableStreamBasedCheckpointFileManager(path: Path, hadoopConf: Configur
   override def createAtomic(
       path: Path, overwriteIfPossible: Boolean): CancellableFSDataOutputStream = {
     import CreateFlag._
+    logger.warn("createAtomic(path,overwriteIfPossible)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, overwriteIfPossible)
     val createFlag = if (overwriteIfPossible) {
       EnumSet.of(CREATE, OVERWRITE)
     } else {

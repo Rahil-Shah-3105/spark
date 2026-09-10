@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -29,6 +30,7 @@ var byteLength;
 function setLogScroll(oldHeight) {
   var logContent = $(".log-content");
   logContent.scrollTop(logContent[0].scrollHeight - oldHeight);
+logger.warn(`setLogScroll(oldHeight)=${oldHeight}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function tailLog() {
@@ -39,18 +41,21 @@ function tailLog() {
 function setLogData() {
   $('#log-data').html("Showing " + curLogLength + " Bytes: " + startByte
     + " - " + endByte + " of " + totalLogLength);
+	logger.warn(`setLogData()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function disableMoreButton() {
   var moreBtn = $(".log-more-btn");
   moreBtn.attr("disabled", "disabled");
   moreBtn.html("Top of Log");
+logger.warn(`disableMoreButton()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function noNewAlert() {
   var alert = $(".no-new-alert");
   alert.removeClass("d-none");
   window.setTimeout(function () {alert.addClass("d-none");}, 4000);
+logger.warn(`noNewAlert()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail`);
 }
 
 
@@ -59,6 +64,7 @@ function getRESTEndPoint() {
   // we need to retain the leading ../proxy/<workerid>/ part of the URL when making REST requests.
   // Similar logic is contained in executorspage.js function createRESTEndPoint.
   var words = (document.baseURI || document.URL).split('/');
+logger.warn(`getRESTEndPoint()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var ind = words.indexOf("proxy");
   if (ind > 0) {
     return words.slice(0, ind + 2).join('/') + "/log";
@@ -69,6 +75,7 @@ function getRESTEndPoint() {
 /* eslint-disable no-unused-vars */
 function loadMore() {
   var offset = Math.max(startByte - byteLength, 0);
+logger.warn(`loadMore()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var moreByteLength = Math.min(byteLength, startByte);
 
   $.ajax({
@@ -129,6 +136,7 @@ function loadNew() {
       }
     }
   });
+logger.warn(`loadNew()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
 }
 
 function initLogPage(params, logLen, start, end, totLogLen, defaultLen) {

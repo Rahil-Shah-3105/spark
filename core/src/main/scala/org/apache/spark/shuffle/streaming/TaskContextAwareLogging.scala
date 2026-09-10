@@ -33,7 +33,9 @@ trait TaskContextAwareLogging extends Logging {
   @volatile private var shuffleId: Option[Int] = None
 
   def setShuffleIdForLogging(shuffleId: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     this.shuffleId = Some(shuffleId)
+    _driverLogger.warn("setShuffleIdForLogging(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   private def loadTaskId: Option[String] = {
@@ -107,6 +109,7 @@ trait TaskContextAwareLogging extends Logging {
       } else {
         suppressed += 1
       }
+      _driverLogger.warn("apply(msg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", msg)
     }
   }
 }

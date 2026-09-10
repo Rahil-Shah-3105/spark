@@ -46,6 +46,7 @@ case class AnalyzeColumnCommand(
     tableIdent.database match {
       case Some(db) if db == sparkSession.sharedState.globalTempDB =>
         val plan = sessionState.catalog.getGlobalTempView(tableIdent.identifier).getOrElse {
+        planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
           throw QueryCompilationErrors.noSuchTableError(db, tableIdent.identifier)
         }
         analyzeColumnInTempView(plan, sparkSession)
@@ -62,6 +63,7 @@ case class AnalyzeColumnCommand(
   }
 
   private def analyzeColumnInCachedData(plan: LogicalPlan, sparkSession: SparkSession): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val cacheManager = sparkSession.sharedState.cacheManager
     val df = Dataset.ofRows(sparkSession, plan)
     cacheManager.lookupCachedData(df).map { cachedData =>
@@ -76,6 +78,7 @@ case class AnalyzeColumnCommand(
     if (!analyzeColumnInCachedData(plan, sparkSession)) {
       throw QueryCompilationErrors.tempViewNotCachedForAnalyzingColumnsError(tableIdent)
     }
+    planChangeLogger.warn("analyzeColumnInTempView(plan,sparkSession)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, sparkSession)
   }
 
   private def getColumnsToAnalyze(
@@ -91,6 +94,7 @@ case class AnalyzeColumnCommand(
         exprOption.getOrElse(throw QueryCompilationErrors.columnNotFoundError(col))
       }
     }
+    planChangeLogger.warn("getColumnsToAnalyze(tableIdent,relation,columnNames,allColumns)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableIdent, relation, columnNames, allColumns, tableIdent)
     // Make sure the column types are supported for stats gathering.
     columnsToAnalyze.foreach { attr =>
       if (!supportsType(attr.dataType)) {

@@ -22,8 +22,11 @@ import java.util.Arrays;
 
 import org.apache.spark.unsafe.Platform;
 import org.apache.spark.network.util.JavaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ByteArray {
+private static final Logger log = LoggerFactory.getLogger(ByteArray.class);
 
   public static final byte[] EMPTY_BYTE = new byte[0];
   private static final boolean IS_LITTLE_ENDIAN =
@@ -35,6 +38,7 @@ public final class ByteArray {
    * hold all the bytes in this string.
    */
   public static void writeToMemory(byte[] src, Object target, long targetOffset) {
+	log.warn("writeToMemory(src,target,targetOffset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", src, target, targetOffset);
     Platform.copyMemory(src, Platform.BYTE_ARRAY_OFFSET, target, targetOffset, src.length);
   }
 
@@ -45,6 +49,7 @@ public final class ByteArray {
     if (bytes == null) {
       return 0L;
     }
+	log.warn("getPrefix(bytes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", bytes);
     return getPrefix(bytes, Platform.BYTE_ARRAY_OFFSET, bytes.length);
   }
 

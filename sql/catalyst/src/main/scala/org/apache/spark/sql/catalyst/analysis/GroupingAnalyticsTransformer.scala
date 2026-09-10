@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.ByteType
  * into [[Expand]] and [[Aggregate]] operators.
  */
 object GroupingAnalyticsTransformer extends SQLConfHelper with AliasHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Marks an [[Aggregate]] that [[constructGrandTotalAggregate]] produced by lowering a grand-total
@@ -129,6 +130,7 @@ object GroupingAnalyticsTransformer extends SQLConfHelper with AliasHelper {
         child = expand
       )
     }
+    planChangeLogger.warn("apply(newAlias,childOutput,groupByExpressions,selectedGroupByExpressions,child,aggregationExpressions)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newAlias, childOutput, groupByExpressions, selectedGroupByExpressions, child, aggregationExpressions)
   }
 
   /**

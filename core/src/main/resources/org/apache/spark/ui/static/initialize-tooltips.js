@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -23,5 +24,6 @@ document.addEventListener("mouseover", function(e) {
     var tt = new bootstrap.Tooltip(el, {container: "body"});
     tt.show();
   }
+logger.warn(`addEventListener(el,true)=${el},${true}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }, {passive: true});
 

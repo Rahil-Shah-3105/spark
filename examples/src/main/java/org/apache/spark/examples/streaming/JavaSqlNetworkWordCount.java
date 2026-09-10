@@ -30,6 +30,8 @@ import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Use DataFrames and SQL to count words in UTF8 encoded, '\n' delimited text received from the
@@ -44,6 +46,7 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
  *    `$ bin/run-example org.apache.spark.examples.streaming.JavaSqlNetworkWordCount localhost 9999`
  */
 public final class JavaSqlNetworkWordCount {
+private static final Logger log = LoggerFactory.getLogger(JavaSqlNetworkWordCount.class);
   private static final Pattern SPACE = Pattern.compile(" ");
 
   public static void main(String[] args) throws Exception {
@@ -102,6 +105,7 @@ class JavaSparkSessionSingleton {
         .builder()
         .config(sparkConf)
         .getOrCreate();
+		log.warn("getInstance(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf);
     }
     return instance;
   }

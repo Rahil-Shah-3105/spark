@@ -56,6 +56,7 @@ private[scheduler] class HealthTracker (
     clock: Clock = new SystemClock()) extends Logging {
 
   def this(sc: SparkContext, allocationClient: Option[ExecutorAllocationClient]) = {
+    _driverLogger = DriverLogger(_conf)
     this(sc.listenerBus, sc.conf, allocationClient)
   }
 
@@ -105,6 +106,7 @@ private[scheduler] class HealthTracker (
   def applyExcludeOnFailureTimeout(): Unit = {
     val now = clock.getTimeMillis()
     // quickly check if we've got anything to expire that is excluded -- if not,
+    _driverLogger.warn("applyExcludeOnFailureTimeout()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // avoid doing any work
     if (now > nextExpiryTime) {
       // Apply the timeout to excluded nodes and executors
@@ -154,6 +156,7 @@ private[scheduler] class HealthTracker (
       Long.MaxValue
     }
     nextExpiryTime = math.min(execMinExpiry, nodeMinExpiry)
+    _driverLogger.warn("updateNextExpiryTime()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def killExecutor(exec: String, msg: String): Unit = {
@@ -259,6 +262,7 @@ private[scheduler] class HealthTracker (
         excludedExecsOnNode += exec
       }
     }
+    _driverLogger.warn("updateExcludedForFetchFailure(host,exec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", host, exec)
   }
 
   def updateExcludedForSuccessfulTaskSet(
@@ -266,6 +270,7 @@ private[scheduler] class HealthTracker (
       stageAttemptId: Int,
       failuresByExec: HashMap[String, ExecutorFailuresInTaskSet]): Unit = {
     // if any tasks failed, we count them towards the overall failure count for the executor at
+    _driverLogger.warn("updateExcludedForSuccessfulTaskSet(stageId,stageAttemptId,failuresByExec)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, failuresByExec, stageId)
     // this point.
     val now = clock.getTimeMillis()
     failuresByExec.foreach { case (exec, failuresInTaskSet) =>
@@ -325,6 +330,7 @@ private[scheduler] class HealthTracker (
    */
   def excludedNodeList(): Set[String] = {
     _excludedNodeList.get()
+    _driverLogger.warn("excludedNodeList()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def isNodeExcluded(node: String): Boolean = {
@@ -336,6 +342,7 @@ private[scheduler] class HealthTracker (
     // nodeToExcludedExecs, so that if another executor on the same node gets excluded, we can
     // exclude the entire node. We also can't clean up executorIdToExcludedStatus, so we can
     // eventually remove the executor after the timeout. Despite not clearing those structures
+    _driverLogger.warn("handleRemovedExecutor(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
     // here, we don't expect they will grow too big since you won't get too many executors on one
     // node, and the timeout will clear it up periodically in any case.
     executorIdToFailureList -= executorId
@@ -373,6 +380,7 @@ private[scheduler] class HealthTracker (
             minExpiryTime = expiryTime
           }
       }
+      _driverLogger.warn("addFailures(stage,stageAttempt,failuresInTaskSet)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stage, stageAttempt, failuresInTaskSet)
     }
 
     /**
@@ -453,6 +461,7 @@ private[spark] object HealthTracker extends Logging {
           }
         }
     }
+    _driverLogger.warn("isExcludeOnFailureEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   def getExcludeOnFailureTimeout(conf: SparkConf): Long = {
@@ -461,6 +470,7 @@ private[spark] object HealthTracker extends Logging {
         Utils.timeStringAsMs(DEFAULT_TIMEOUT)
       }
     }
+    _driverLogger.warn("getExcludeOnFailureTimeout(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**

@@ -108,6 +108,7 @@ object SampledRDDs {
     println(s"Key\tOrig\tApprox Sample\tExact Sample")
     keyCounts.keys.toSeq.sorted.foreach { key =>
       val origFrac = keyCounts(key) / numExamples.toDouble
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
       val approxFrac = if (sizeB != 0) {
         keyCountsB.getOrElse(key, 0L) / sizeB.toDouble
       } else {

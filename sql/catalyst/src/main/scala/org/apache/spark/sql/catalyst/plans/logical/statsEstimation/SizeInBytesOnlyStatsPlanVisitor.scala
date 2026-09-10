@@ -26,6 +26,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
  * An [[LogicalPlanVisitor]] that computes a single dimension for plan stats: size in bytes.
  */
 object SizeInBytesOnlyStatsPlanVisitor extends LogicalPlanVisitor[Statistics] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * A default, commonly used estimation for unary nodes. We assume the input row number is the
@@ -98,6 +99,7 @@ object SizeInBytesOnlyStatsPlanVisitor extends LogicalPlanVisitor[Statistics] {
     Statistics(
       sizeInBytes = EstimationUtils.getOutputSize(p.output, rowCount, childStats.attributeStats),
       rowCount = Some(rowCount))
+    planChangeLogger.warn("visitOffset(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
   }
 
   override def visitIntersect(p: Intersect): Statistics = {

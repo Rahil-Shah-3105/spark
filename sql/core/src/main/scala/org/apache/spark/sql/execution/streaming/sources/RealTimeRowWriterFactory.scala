@@ -54,6 +54,7 @@ class RealTimeRowWriter(
     driverEndpointName: String,
     driverEndpointAddr: RpcAddress
 ) extends DataWriter[InternalRow] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val endpointRef = RpcUtils.makeDriverRef(
     driverEndpointName,
@@ -65,6 +66,7 @@ class RealTimeRowWriter(
   // Spark reuses the same `InternalRow` instance, here we copy it before buffer it.
   override def write(row: InternalRow): Unit = {
     endpointRef.send(Array(row.copy()))
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def commit(): WriterCommitMessage = { null }

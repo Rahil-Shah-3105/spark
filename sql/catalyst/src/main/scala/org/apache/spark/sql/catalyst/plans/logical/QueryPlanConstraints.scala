@@ -63,10 +63,12 @@ trait ConstraintHelper {
    * additional constraint of the form `b = 5`.
    */
   def inferAdditionalConstraints(constraints: ExpressionSet): ExpressionSet = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     var inferredConstraints = ExpressionSet()
     // IsNotNull should be constructed by `constructIsNotNullConstraints`.
     val predicates = constraints.filterNot(_.isInstanceOf[IsNotNull])
     predicates.foreach {
+    planChangeLogger.warn("inferAdditionalConstraints(constraints)={}): EUAIACT-AUDIT: State change recorded for the audit trail", constraints)
       case eq @ EqualTo(l: Attribute, r: Attribute) =>
         // Also remove EqualNullSafe with the same l and r to avoid Once strategy's idempotence
         // is broken. l = r and l <=> r can infer l <=> l and r <=> r which is useless.

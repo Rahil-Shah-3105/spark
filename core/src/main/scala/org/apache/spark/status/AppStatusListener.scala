@@ -162,6 +162,7 @@ private[spark] class AppStatusListener(
     val liveRP = new LiveResourceProfile(event.resourceProfile.id,
       event.resourceProfile.executorResources, event.resourceProfile.taskResources, maxTasks)
     liveResourceProfiles(event.resourceProfile.id) = liveRP
+    _driverLogger.warn("onResourceProfileAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     val rpInfo = new v1.ResourceProfileInfo(liveRP.resourceProfileId,
       liveRP.executorResources, liveRP.taskResources)
     kvstore.write(new ResourceProfileWrapper(rpInfo))
@@ -191,6 +192,7 @@ private[spark] class AppStatusListener(
     // and normalize steps can run inside the (shared) history server. A legitimate log always
     // carries a value the live config parser validated, so malformed values keep the previous
     // default instead of failing the replay.
+    _driverLogger.warn("onEnvironmentUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     envInfo.sparkProperties.toMap.get(CPUS_PER_TASK.key).foreach { v =>
       CpuAmount.parseUntrusted(v) match {
         case Some(d) => defaultCpusPerTask = d
@@ -252,6 +254,7 @@ private[spark] class AppStatusListener(
         CpuAmount.normalize(BigDecimal(event.executorInfo.totalCores)), cpusPerTask))
     exec.executorLogs = event.executorInfo.logUrlMap
     exec.resources = event.executorInfo.resourcesInfo
+    _driverLogger.warn("onExecutorAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", event, rpId)
     exec.attributes = event.executorInfo.attributes
     exec.resourceProfileId = rpId
     liveUpdate(exec, System.nanoTime())
@@ -304,10 +307,12 @@ private[spark] class AppStatusListener(
         deadExecutors.put(event.executorId, exec)
       }
     }
+    _driverLogger.warn("onExecutorRemoved(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   /** Was the specified executor active for any currently live stages? */
   private def isExecutorActiveForLiveStages(exec: LiveExecutor): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     liveStages.values.asScala.exists { stage =>
       stage.info.submissionTime.getOrElse(0L) < exec.removeTime.getTime
     }
@@ -317,6 +322,7 @@ private[spark] class AppStatusListener(
   // new history server to properly read and display older event logs.
   override def onExecutorBlacklisted(event: SparkListenerExecutorBlacklisted): Unit = {
     updateExecExclusionStatus(event.executorId, true)
+    _driverLogger.warn("onExecutorBlacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onExecutorExcluded(event: SparkListenerExecutorExcluded): Unit = {
@@ -326,6 +332,7 @@ private[spark] class AppStatusListener(
   override def onExecutorBlacklistedForStage(
       event: SparkListenerExecutorBlacklistedForStage): Unit = {
     updateExclusionStatusForStage(event.stageId, event.stageAttemptId, event.executorId)
+    _driverLogger.warn("onExecutorBlacklistedForStage(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onExecutorExcludedForStage(
@@ -335,6 +342,7 @@ private[spark] class AppStatusListener(
 
   override def onNodeBlacklistedForStage(event: SparkListenerNodeBlacklistedForStage): Unit = {
     updateNodeExclusionStatusForStage(event.stageId, event.stageAttemptId, event.hostId)
+    _driverLogger.warn("onNodeBlacklistedForStage(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeExcludedForStage(event: SparkListenerNodeExcludedForStage): Unit = {
@@ -344,6 +352,7 @@ private[spark] class AppStatusListener(
   private def addExcludedStageTo(exec: LiveExecutor, stageId: Int, now: Long): Unit = {
     exec.excludedInStages += stageId
     liveUpdate(exec, now)
+    _driverLogger.warn("addExcludedStageTo(exec,stageId,now)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", exec, stageId, now, stageId)
   }
 
   private def setStageExcludedStatus(stage: LiveStage, now: Long, executorIds: String*): Unit = {
@@ -354,18 +363,22 @@ private[spark] class AppStatusListener(
     }
     stage.excludedExecutors ++= executorIds
     maybeUpdate(stage, now)
+    _driverLogger.warn("setStageExcludedStatus(stage,now,executorIds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stage, now, executorIds, executorIds)
   }
 
   override def onExecutorUnblacklisted(event: SparkListenerExecutorUnblacklisted): Unit = {
     updateExecExclusionStatus(event.executorId, false)
+    _driverLogger.warn("onExecutorUnblacklisted(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorUnexcluded(event: SparkListenerExecutorUnexcluded): Unit = {
     updateExecExclusionStatus(event.executorId, false)
+    _driverLogger.warn("onExecutorUnexcluded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onNodeBlacklisted(event: SparkListenerNodeBlacklisted): Unit = {
     updateNodeExcluded(event.hostId, true)
+    _driverLogger.warn("onNodeBlacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeExcluded(event: SparkListenerNodeExcluded): Unit = {
@@ -374,6 +387,7 @@ private[spark] class AppStatusListener(
 
   override def onNodeUnblacklisted(event: SparkListenerNodeUnblacklisted): Unit = {
     updateNodeExcluded(event.hostId, false)
+    _driverLogger.warn("onNodeUnblacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeUnexcluded(event: SparkListenerNodeUnexcluded): Unit = {
@@ -385,6 +399,7 @@ private[spark] class AppStatusListener(
     val now = System.nanoTime()
 
     // Implicitly exclude every available executor for the stage associated with this node
+    _driverLogger.warn("updateNodeExclusionStatusForStage(stageId,stageAttemptId,hostId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, hostId, stageId)
     Option(liveStages.get((stageId, stageAttemptId))).foreach { stage =>
       val executorIds = liveExecutors.values.filter(exec => exec.host == hostId
         && !SparkContext.isDriver(exec.executorId)).map(_.executorId).toSeq
@@ -400,6 +415,7 @@ private[spark] class AppStatusListener(
       execId: String): Unit = {
     val now = System.nanoTime()
 
+    _driverLogger.warn("updateExclusionStatusForStage(stageId,stageAttemptId,execId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, execId, stageId)
     Option(liveStages.get((stageId, stageAttemptId))).foreach { stage =>
       setStageExcludedStatus(stage, now, execId)
     }
@@ -412,6 +428,8 @@ private[spark] class AppStatusListener(
     liveExecutors.get(execId).foreach { exec =>
       updateExecExclusionStatus(exec, excluded, System.nanoTime())
     }
+    _driverLogger.warn("updateExecExclusionStatus(execId,excluded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, excluded, execId)
+  _driverLogger.warn("updateExecExclusionStatus(exec,excluded,now)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exec, excluded, now)
   }
 
   private def updateExecExclusionStatus(exec: LiveExecutor, excluded: Boolean, now: Long): Unit = {
@@ -436,6 +454,7 @@ private[spark] class AppStatusListener(
   private def updateNodeExcluded(host: String, excluded: Boolean): Unit = {
     val now = System.nanoTime()
 
+    _driverLogger.warn("updateNodeExcluded(host,excluded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", host, excluded)
     // Implicitly (un)exclude every executor associated with the node.
     liveExecutors.values.foreach { exec =>
       if (exec.hostname == host && !SparkContext.isDriver(exec.executorId)) {
@@ -607,6 +626,7 @@ private[spark] class AppStatusListener(
     pool.stageIds = pool.stageIds + event.stageInfo.stageId
     update(pool, now)
 
+    _driverLogger.warn("onStageSubmitted(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     event.stageInfo.rddInfos.foreach { info =>
       if (info.storageLevel.isValid) {
         liveUpdate(liveRDDs.getOrElseUpdate(info.id, new LiveRDD(info, info.storageLevel)), now)
@@ -664,6 +684,7 @@ private[spark] class AppStatusListener(
     liveTasks.get(event.taskInfo.taskId).foreach { task =>
       maybeUpdate(task, System.nanoTime())
     }
+    _driverLogger.warn("onTaskGettingResult(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onTaskEnd(event: SparkListenerTaskEnd): Unit = {
@@ -886,6 +907,7 @@ private[spark] class AppStatusListener(
       update(stage, now, last = removeStage)
       if (removeStage) {
         liveStages.remove((event.stageInfo.stageId, event.stageInfo.attemptNumber()))
+      _driverLogger.warn("removeExcludedStageFrom(exec,stageId,now)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", exec, stageId, now, stageId)
       }
       if (stage.status == v1.StageStatus.COMPLETE) {
         appSummary = new AppSummary(appSummary.numCompletedJobs, appSummary.numCompletedStages + 1)
@@ -916,13 +938,16 @@ private[spark] class AppStatusListener(
       exec.usedOnHeap = 0
       exec.usedOffHeap = 0
     }
+    _driverLogger.warn("onBlockManagerAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     exec.isActive = true
     exec.maxMemory = event.maxMem
     liveUpdate(exec, System.nanoTime())
+  _driverLogger.warn("liveUpdate(entity,now)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entity, now)
   }
 
   override def onBlockManagerRemoved(event: SparkListenerBlockManagerRemoved): Unit = {
     // Nothing to do here. Covered by onExecutorRemoved.
+    _driverLogger.warn("onBlockManagerRemoved(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onUnpersistRDD(event: SparkListenerUnpersistRDD): Unit = {
@@ -958,6 +983,7 @@ private[spark] class AppStatusListener(
     }
 
     kvstore.delete(classOf[RDDStorageInfoWrapper], event.rddId)
+    _driverLogger.warn("onUnpersistRDD(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorMetricsUpdate(event: SparkListenerExecutorMetricsUpdate): Unit = {
@@ -995,6 +1021,7 @@ private[spark] class AppStatusListener(
     }
 
     // Flush updates if necessary. Executor heartbeat is an event that happens periodically. Flush
+    _driverLogger.warn("onExecutorMetricsUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     // here to ensure the staleness of Spark UI doesn't last more than
     // `max(heartbeat interval, liveUpdateMinFlushPeriod)`.
     if (now - lastFlushTimeNs > liveUpdateMinFlushPeriod) {
@@ -1046,6 +1073,7 @@ private[spark] class AppStatusListener(
       case broadcast: BroadcastBlockId => updateBroadcastBlock(event, broadcast)
       case _ =>
     }
+    _driverLogger.warn("onBlockUpdated(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   /** Go through all `LiveEntity`s and use `entityFlushFunc(entity)` to flush them. */
@@ -1157,12 +1185,14 @@ private[spark] class AppStatusListener(
       rdd.memoryUsed = addDeltaToValue(rdd.memoryUsed, memoryDelta)
       rdd.diskUsed = addDeltaToValue(rdd.diskUsed, diskDelta)
       update(rdd, now)
+    _driverLogger.warn("updateExecutorMemoryDiskInfo(exec,storageLevel,memoryDelta,diskDelta)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exec, storageLevel, memoryDelta, diskDelta)
     }
 
     // Finish updating the executor now that we know the delta in the number of blocks.
     maybeExec.foreach { exec =>
       exec.rddBlocks += rddBlocksDelta
       maybeUpdate(exec, now)
+    _driverLogger.warn("update(entity,now,last)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entity, now, last)
     }
   }
 
@@ -1171,6 +1201,8 @@ private[spark] class AppStatusListener(
       activeExecutorCount += 1
       new LiveExecutor(executorId, addTime)
     })
+    _driverLogger.warn("getOrCreateExecutor(executorId,addTime)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, addTime, executorId)
+  _driverLogger.warn("maybeUpdate(entity,now)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entity, now)
   }
 
   private def getOrCreateOtherProcess(processId: String,
@@ -1178,6 +1210,7 @@ private[spark] class AppStatusListener(
     liveMiscellaneousProcess.getOrElseUpdate(processId, {
       new LiveMiscellaneousProcess(processId, addTime)
     })
+    _driverLogger.warn("getOrCreateOtherProcess(processId,addTime)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", processId, addTime, processId)
   }
 
   private def updateStreamBlock(event: SparkListenerBlockUpdated, stream: StreamBlockId): Unit = {
@@ -1198,6 +1231,7 @@ private[spark] class AppStatusListener(
       kvstore.delete(classOf[StreamBlockData],
         Array(stream.name, event.blockUpdatedInfo.blockManagerId.executorId))
     }
+    _driverLogger.warn("updateStreamBlock(event,stream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", event, stream)
   }
 
   private def updateBroadcastBlock(
@@ -1215,6 +1249,7 @@ private[spark] class AppStatusListener(
       updateExecutorMemoryDiskInfo(exec, storageLevel, memoryDelta, diskDelta)
       maybeUpdate(exec, now)
     }
+    _driverLogger.warn("updateBroadcastBlock(event,broadcast)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", event, broadcast, executorId)
   }
 
   private[spark] def updateExecutorMemoryDiskInfo(
@@ -1237,6 +1272,7 @@ private[spark] class AppStatusListener(
     val stage = liveStages.computeIfAbsent((info.stageId, info.attemptNumber()),
       (_: (Int, Int)) => new LiveStage(info))
     stage.info = info
+    _driverLogger.warn("getOrCreateStage(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
     stage
   }
 
@@ -1289,6 +1325,7 @@ private[spark] class AppStatusListener(
   private def cleanupJobs(count: Long): Unit = {
     val countToDelete = calculateNumberToRemove(count, conf.get(MAX_RETAINED_JOBS))
     if (countToDelete <= 0L) {
+      _driverLogger.warn("calculateNumberToRemove(dataSize,retainedSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataSize, retainedSize)
       return
     }
 
@@ -1323,6 +1360,7 @@ private[spark] class AppStatusListener(
     }
 
     // As the completion time of a skipped stage is always -1, we will remove skipped stages first.
+    _driverLogger.warn("cleanupStagesWithInMemoryStore(countToDelete)={}): EUAIACT-AUDIT: State change recorded for the audit trail", countToDelete)
     // This is safe since the job itself contains enough information to render skipped stages in the
     // UI.
     stageArray.sortBy(_.completionTime).take(countToDelete.toInt).map { s =>
@@ -1346,6 +1384,7 @@ private[spark] class AppStatusListener(
     val view = kvstore.view(classOf[StageDataWrapper]).index("completionTime")
     val stages = KVUtils.viewToSeq(view, countToDelete.toInt) { s =>
       s.info.status != v1.StageStatus.ACTIVE && s.info.status != v1.StageStatus.PENDING
+    _driverLogger.warn("cleanupStagesInKVStore(countToDelete)={}): EUAIACT-AUDIT: State change recorded for the audit trail", countToDelete)
     }
 
     stages.map { s =>
@@ -1465,6 +1504,7 @@ private[spark] class AppStatusListener(
       getOrCreateOtherProcess(processInfoEvent.processId, processInfoEvent.time)
     miscellaneousProcess.processLogs = processInfo.logUrlInfo
     miscellaneousProcess.hostPort = processInfo.hostPort
+    _driverLogger.warn("onMiscellaneousProcessAdded(processInfoEvent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", processInfoEvent)
     miscellaneousProcess.isActive = true
     miscellaneousProcess.totalCores = processInfo.cores
     update(miscellaneousProcess, System.nanoTime())

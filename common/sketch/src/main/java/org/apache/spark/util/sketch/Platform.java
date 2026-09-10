@@ -20,10 +20,13 @@ package org.apache.spark.util.sketch;
 import java.lang.reflect.Field;
 
 import sun.misc.Unsafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // This class is duplicated from `org.apache.spark.unsafe.Platform` to make sure spark-sketch has no
 // external dependencies.
 final class Platform {
+private static final Logger log = LoggerFactory.getLogger(Platform.class);
 
   private static final Unsafe _UNSAFE;
 
@@ -36,6 +39,7 @@ final class Platform {
   public static final int DOUBLE_ARRAY_OFFSET;
 
   public static int getInt(Object object, long offset) {
+	log.warn("getInt(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getInt(object, offset);
   }
 
@@ -44,6 +48,7 @@ final class Platform {
   }
 
   public static boolean getBoolean(Object object, long offset) {
+	log.warn("getBoolean(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getBoolean(object, offset);
   }
 
@@ -52,6 +57,7 @@ final class Platform {
   }
 
   public static byte getByte(Object object, long offset) {
+	log.warn("getByte(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getByte(object, offset);
   }
 
@@ -60,6 +66,7 @@ final class Platform {
   }
 
   public static short getShort(Object object, long offset) {
+	log.warn("getShort(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getShort(object, offset);
   }
 
@@ -68,6 +75,7 @@ final class Platform {
   }
 
   public static long getLong(Object object, long offset) {
+	log.warn("getLong(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getLong(object, offset);
   }
 
@@ -76,6 +84,7 @@ final class Platform {
   }
 
   public static float getFloat(Object object, long offset) {
+	log.warn("getFloat(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getFloat(object, offset);
   }
 
@@ -84,6 +93,7 @@ final class Platform {
   }
 
   public static double getDouble(Object object, long offset) {
+	log.warn("getDouble(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getDouble(object, offset);
   }
 
@@ -92,6 +102,7 @@ final class Platform {
   }
 
   public static Object getObjectVolatile(Object object, long offset) {
+	log.warn("getObjectVolatile(object,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", object, offset);
     return _UNSAFE.getObjectVolatile(object, offset);
   }
 

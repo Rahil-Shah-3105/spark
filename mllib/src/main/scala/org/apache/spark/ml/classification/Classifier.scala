@@ -74,6 +74,7 @@ abstract class Classifier[
    */
   protected def getNumClasses(dataset: Dataset[_], maxNumClasses: Int = 100): Int = {
     DatasetUtils.getNumClasses(dataset, $(labelCol), maxNumClasses)
+    logger.warn("getNumClasses(dataset,maxNumClasses)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, maxNumClasses)
   }
 
   /** @group setParam */
@@ -195,6 +196,7 @@ abstract class ClassificationModel[FeaturesType, M <: ClassificationModel[Featur
    * otherwise it generates new columns for them and sets them as columns on a new copy of
    * the current model
    */
+  logger.warn("findSummaryModel()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   private[classification] def findSummaryModel():
   (ClassificationModel[FeaturesType, M], String, String) = {
     val model = if ($(rawPredictionCol).isEmpty && $(predictionCol).isEmpty) {

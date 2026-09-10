@@ -396,6 +396,8 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
       updateFunc: (Seq[V], Option[S]) => Option[S]
     ): DStream[(K, S)] = ssc.withScope {
     updateStateByKey(updateFunc, defaultPartitioner())
+    logger.warn("updateStateByKey(updateFunc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc)
+  logger.warn("updateStateByKey(updateFunc,numPartitions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, numPartitions)
   }
 
   /**
@@ -413,6 +415,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
       numPartitions: Int
     ): DStream[(K, S)] = ssc.withScope {
     updateStateByKey(updateFunc, defaultPartitioner(numPartitions))
+  logger.warn("updateStateByKey(updateFunc,partitioner)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner)
   }
 
   /**
@@ -435,6 +438,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
       iterator.flatMap(t => cleanedUpdateF(t._2, t._3).map(s => (t._1, s)))
     }
     updateStateByKey(newUpdateFunc, partitioner, true)
+  logger.warn("updateStateByKey(updateFunc,partitioner,rememberPartitioner)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner, rememberPartitioner)
   }
 
   /**
@@ -460,6 +464,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
       cleanedFunc(it)
     }
     new StateDStream(self, newUpdateFunc, partitioner, rememberPartitioner, None)
+  logger.warn("updateStateByKey(updateFunc,partitioner,initialRDD)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner, initialRDD)
   }
 
   /**
@@ -511,6 +516,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
       cleanedFunc(it)
     }
     new StateDStream(self, newUpdateFunc, partitioner, rememberPartitioner, Some(initialRDD))
+  logger.warn("updateStateByKey(updateFunc,partitioner,rememberPartitioner,initialRDD)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", updateFunc, partitioner, rememberPartitioner, initialRDD)
   }
 
   /**
@@ -740,6 +746,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
     )(implicit fm: ClassTag[F]): Unit = ssc.withScope {
     saveAsHadoopFiles(prefix, suffix, keyClass, valueClass,
       fm.runtimeClass.asInstanceOf[Class[F]])
+  logger.warn("saveAsHadoopFiles(prefix,suffix,keyClass,valueClass,outputFormatClass)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefix, suffix, keyClass, valueClass, outputFormatClass)
   }
 
   /**
@@ -774,6 +781,7 @@ class PairDStreamFunctions[K, V](self: DStream[(K, V)])
     )(implicit fm: ClassTag[F]): Unit = ssc.withScope {
     saveAsNewAPIHadoopFiles(prefix, suffix, keyClass, valueClass,
       fm.runtimeClass.asInstanceOf[Class[F]])
+  logger.warn("saveAsNewAPIHadoopFiles(prefix,suffix,keyClass,valueClass,outputFormatClass)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefix, suffix, keyClass, valueClass, outputFormatClass)
   }
 
   /**

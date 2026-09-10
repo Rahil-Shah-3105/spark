@@ -32,6 +32,7 @@ private[sql] class ObservationManager(session: SparkSession) {
   private val observations = new ConcurrentHashMap[(String, Long), Observation]
 
   def register(observation: Observation, ds: Dataset[_]): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (ds.isStreaming) {
       throw new IllegalArgumentException("Observation does not support streaming Datasets." +
         "This is because there will be multiple observed metrics as microbatches are constructed" +
@@ -39,6 +40,8 @@ private[sql] class ObservationManager(session: SparkSession) {
         "QueryProgressEvent.progress, or use query.lastProgress or query.recentProgress.")
     }
     register(observation, ds.id)
+    planChangeLogger.warn("register(observation,dataFrameId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", observation, dataFrameId, dataFrameId)
+  planChangeLogger.warn("register(observation,ds)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", observation, ds)
   }
 
   def register(observation: Observation, dataFrameId: Long): Unit = {

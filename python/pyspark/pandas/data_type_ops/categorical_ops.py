@@ -28,6 +28,7 @@ from pyspark.pandas.data_type_ops.base import _sanitize_list_like, DataTypeOps
 from pyspark.pandas.typedef import pandas_on_spark_type
 from pyspark.sql import functions as F
 from pyspark.sql.utils import pyspark_column_op
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class CategoricalOps(DataTypeOps):
@@ -41,6 +42,7 @@ class CategoricalOps(DataTypeOps):
 
     def restore(self, col: pd.Series) -> pd.Series:
         """Restore column when to_pandas."""
+        logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
         return pd.Series(
             pd.Categorical.from_codes(
                 cast(Sequence[int], col.replace(np.nan, -1).astype(int)),

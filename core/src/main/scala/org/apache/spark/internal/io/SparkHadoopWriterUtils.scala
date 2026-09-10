@@ -36,6 +36,7 @@ import org.apache.spark.executor.OutputMetrics
  */
 private[spark]
 object SparkHadoopWriterUtils {
+  _driverLogger = DriverLogger(_conf)
 
   private val RECORDS_BETWEEN_BYTES_WRITTEN_METRIC_UPDATES = 256
   private val RAND = new Random()
@@ -54,8 +55,10 @@ object SparkHadoopWriterUtils {
    * @return a job ID
    */
   def createJobID(time: Date, id: Int): JobID = {
+    _driverLogger.warn("createJobID(jobTrackerID,id)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobTrackerID, id, jobTrackerID)
     val jobTrackerID = createJobTrackerID(time)
     createJobID(jobTrackerID, id)
+    _driverLogger.warn("createJobID(time,id)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", time, id, id)
   }
 
   /**
@@ -81,6 +84,7 @@ object SparkHadoopWriterUtils {
     val base = DATE_TIME_FORMATTER.format(time.toInstant)
     var l1 = RAND.nextLong()
     if (l1 < 0) {
+    _driverLogger.warn("createJobTrackerID(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
       l1 = -l1
     }
     base + l1
@@ -93,6 +97,7 @@ object SparkHadoopWriterUtils {
     val outputPath = new Path(path)
     val fs = outputPath.getFileSystem(conf)
     if (fs == null) {
+    _driverLogger.warn("createPathFromString(path,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, conf)
       throw new IllegalArgumentException("Incorrectly formatted output path")
     }
     outputPath.makeQualified(fs.getUri, fs.getWorkingDirectory)
@@ -104,6 +109,7 @@ object SparkHadoopWriterUtils {
     val validationDisabled = disableOutputSpecValidation.value
     val enabledInConf = conf.getBoolean("spark.hadoop.validateOutputSpecs", true)
     enabledInConf && !validationDisabled
+    _driverLogger.warn("isOutputSpecValidationEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", conf, validationDisabled)
   }
 
   // TODO: these don't seem like the right abstractions.
@@ -122,6 +128,7 @@ object SparkHadoopWriterUtils {
       outputMetrics.setBytesWritten(callback())
       outputMetrics.setRecordsWritten(recordsWritten)
     }
+    _driverLogger.warn("maybeUpdateOutputMetrics(outputMetrics,callback,recordsWritten)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", outputMetrics, callback, recordsWritten, recordsWritten)
   }
 
   /**

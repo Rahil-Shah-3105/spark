@@ -80,6 +80,7 @@ private[spark] class EventLoggingListener(
    * Creates the log file in the configured log directory.
    */
   def start(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     logWriter.start()
     initEventLog()
   }
@@ -110,6 +111,7 @@ private[spark] class EventLoggingListener(
       liveStageExecutorMetrics.put((event.stageInfo.stageId, event.stageInfo.attemptNumber()),
         mutable.HashMap.empty[String, ExecutorMetrics])
     }
+    _driverLogger.warn("onStageSubmitted(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onTaskStart(event: SparkListenerTaskStart): Unit = logEvent(event)
@@ -130,6 +132,7 @@ private[spark] class EventLoggingListener(
 
   override def onEnvironmentUpdate(event: SparkListenerEnvironmentUpdate): Unit = {
     logEvent(redactEvent(sparkConf, event))
+    _driverLogger.warn("onEnvironmentUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   // Events that trigger a flush
@@ -165,14 +168,17 @@ private[spark] class EventLoggingListener(
 
   override def onBlockManagerAdded(event: SparkListenerBlockManagerAdded): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onBlockManagerAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onBlockManagerRemoved(event: SparkListenerBlockManagerRemoved): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onBlockManagerRemoved(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onUnpersistRDD(event: SparkListenerUnpersistRDD): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onUnpersistRDD(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onApplicationStart(event: SparkListenerApplicationStart): Unit = {
@@ -184,14 +190,17 @@ private[spark] class EventLoggingListener(
   }
   override def onExecutorAdded(event: SparkListenerExecutorAdded): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorRemoved(event: SparkListenerExecutorRemoved): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorRemoved(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorBlacklisted(event: SparkListenerExecutorBlacklisted): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorBlacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onExecutorExcluded(event: SparkListenerExecutorExcluded): Unit = {
@@ -201,6 +210,7 @@ private[spark] class EventLoggingListener(
   override def onExecutorBlacklistedForStage(
       event: SparkListenerExecutorBlacklistedForStage): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorBlacklistedForStage(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onExecutorExcludedForStage(
@@ -210,6 +220,7 @@ private[spark] class EventLoggingListener(
 
   override def onNodeBlacklistedForStage(event: SparkListenerNodeBlacklistedForStage): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onNodeBlacklistedForStage(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeExcludedForStage(event: SparkListenerNodeExcludedForStage): Unit = {
@@ -218,15 +229,18 @@ private[spark] class EventLoggingListener(
 
   override def onExecutorUnblacklisted(event: SparkListenerExecutorUnblacklisted): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorUnblacklisted(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorUnexcluded(event: SparkListenerExecutorUnexcluded): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onExecutorUnexcluded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
 
   override def onNodeBlacklisted(event: SparkListenerNodeBlacklisted): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onNodeBlacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeExcluded(event: SparkListenerNodeExcluded): Unit = {
@@ -235,6 +249,7 @@ private[spark] class EventLoggingListener(
 
   override def onNodeUnblacklisted(event: SparkListenerNodeUnblacklisted): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onNodeUnblacklisted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onNodeUnexcluded(event: SparkListenerNodeUnexcluded): Unit = {
@@ -245,6 +260,7 @@ private[spark] class EventLoggingListener(
     if (shouldLogBlockUpdates) {
       logEvent(event, flushLogger = true)
     }
+    _driverLogger.warn("onBlockUpdated(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onExecutorMetricsUpdate(event: SparkListenerExecutorMetricsUpdate): Unit = {
@@ -265,10 +281,12 @@ private[spark] class EventLoggingListener(
         }
       }
     }
+    _driverLogger.warn("onExecutorMetricsUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onResourceProfileAdded(event: SparkListenerResourceProfileAdded): Unit = {
     logEvent(event, flushLogger = true)
+    _driverLogger.warn("onResourceProfileAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = {

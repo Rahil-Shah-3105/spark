@@ -60,6 +60,7 @@ private[spark] class StorageStatus(
       maxOnHeapMem: Option[Long],
       maxOffHeapMem: Option[Long],
       initialBlocks: Map[BlockId, BlockStatus]) = {
+       _driverLogger = DriverLogger(_conf)
     this(bmid, maxMemory, maxOnHeapMem, maxOffHeapMem)
     initialBlocks.foreach { case (bid, bstatus) => addBlock(bid, bstatus) }
   }
@@ -91,6 +92,7 @@ private[spark] class StorageStatus(
       case _ =>
         _nonRddBlocks(blockId) = blockStatus
     }
+    _driverLogger.warn("addBlock(blockId,blockStatus)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockStatus, blockId)
   }
 
   /**
@@ -105,6 +107,7 @@ private[spark] class StorageStatus(
       case _ =>
         _nonRddBlocks.get(blockId)
     }
+    _driverLogger.warn("getBlock(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /** Return the max memory can be used by this block manager. */
@@ -173,6 +176,7 @@ private[spark] class StorageStatus(
     val newMem = math.max(oldMem + changeInMem, 0L)
     val newDisk = math.max(oldDisk + changeInDisk, 0L)
 
+    _driverLogger.warn("updateStorageInfo(blockId,newBlockStatus)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, newBlockStatus, blockId)
     // Set the correct info
     blockId match {
       case RDDBlockId(rddId, _) =>

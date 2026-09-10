@@ -54,6 +54,7 @@ class BasicWriteTaskStatsTracker(
     hadoopConf: Configuration,
     taskCommitTimeMetric: Option[SQLMetric] = None)
   extends WriteTaskStatsTracker with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private[this] val partitions: mutable.ArrayBuffer[InternalRow] = mutable.ArrayBuffer.empty
   private[this] var numFiles: Int = 0
@@ -72,6 +73,7 @@ class BasicWriteTaskStatsTracker(
     val path = new Path(filePath)
     val fs = path.getFileSystem(hadoopConf)
     getFileSize(fs, path)
+    planChangeLogger.warn("getFileSize(filePath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filePath)
   }
 
   /**
@@ -166,6 +168,7 @@ class BasicWriteTaskStatsTracker(
       outputMetrics.setRecordsWritten(numRows)
     }
 
+    planChangeLogger.warn("getFinalStats(taskCommitTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", taskCommitTime)
     if (numSubmittedFiles != numFiles) {
       logWarning(log"Expected ${MDC(EXPECTED_NUM_FILES, numSubmittedFiles)} files, but only saw " +
         log"${MDC(ACTUAL_NUM_FILES, numFiles)}. This could be due to the output format not " +

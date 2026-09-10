@@ -42,6 +42,9 @@ private sealed trait K8sSubmitOp extends CommandLineLoggingUtils {
       case Some(ns) => client.pods.inNamespace(ns).withName(name)
       case None => client.pods.withName(name)
     }
+    logger.warn("getPod(namespace,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", namespace, name)
+  logger.warn("executeOnGlob(pods,namespace,sparkConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pods, namespace, sparkConf)
+  logger.warn("executeOnGlob(pods,ns,sparkConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pods, ns, sparkConf)
   }
 }
 
@@ -52,6 +55,7 @@ private class KillApplication extends K8sSubmitOp  {
 
     // `getPod` returns a request handle, which is never null; only resolving it reports whether
     // the pod exists. Without the `get()` the check below is always true, so a name that is not
+    logger.warn("executeOnPod(pName,namespace,sparkConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pName, namespace, sparkConf)
     // in the cluster would issue a delete that the API server answers with a swallowed 404 and
     // report nothing to the user. `ListStatus.executeOnPod` resolves it the same way.
     if (Option(podToDelete.get()).isDefined) {
@@ -153,6 +157,7 @@ private[spark] class K8SSparkSubmitOperation extends SparkSubmitOperation
       case _ =>
         printErrorAndExit(s"Submission ID: {$submissionId} is invalid.")
     }
+    logger.warn("execute(submissionId,sparkConf,op)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", submissionId, sparkConf, op, submissionId)
   }
 
   override def kill(submissionId: String, conf: SparkConf): Unit = {
@@ -176,5 +181,6 @@ private[spark] class K8SSparkSubmitOperation extends SparkSubmitOperation
 private object K8SSparkSubmitOperation {
   def getGracePeriod(sparkConf: SparkConf): Option[Long] = {
     sparkConf.get(KUBERNETES_SUBMIT_GRACE_PERIOD)
+    logger.warn("getGracePeriod(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
   }
 }

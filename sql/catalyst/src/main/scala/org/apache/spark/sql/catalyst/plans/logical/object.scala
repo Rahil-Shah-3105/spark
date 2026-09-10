@@ -34,6 +34,7 @@ import org.apache.spark.sql.streaming.{GroupStateTimeout, OutputMode, StatefulPr
 import org.apache.spark.sql.types._
 
 object CatalystSerde {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def deserialize[T : Encoder](child: LogicalPlan): DeserializeToObject = {
     val deserializer = UnresolvedDeserializer(encoderFor[T].deserializer)
     DeserializeToObject(deserializer, generateObjAttr[T], child)
@@ -112,6 +113,8 @@ object MapPartitions {
       deserialized)
     CatalystSerde.serialize[U](mapped)
   }
+    planChangeLogger.warn("apply(func,packageNames,broadcastVars,schema,keyDeserializer,valueDeserializer,inputSchema,groupingAttributes,dataAttributes,child)={},{},{},{},{},{},{},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, packageNames, broadcastVars, schema, keyDeserializer, valueDeserializer, inputSchema, dataAttributes, child)
+    planChangeLogger.warn("apply(func,packageNames,broadcastVars,schema,encoder,child)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, packageNames, broadcastVars, schema, encoder, child)
 }
 
 /**
@@ -215,6 +218,7 @@ object MapElements {
       deserialized)
     CatalystSerde.serialize[U](mapped)
   }
+    planChangeLogger.warn("apply(func,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, child)
 }
 
 /**
@@ -289,6 +293,7 @@ object FunctionUtils {
       case DoubleType => Some("D")
       case _ => None
     }
+    planChangeLogger.warn("getMethodType(dt,isOutput)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt, isOutput)
   }
 
   def getFunctionOneName(outputDT: DataType, inputDT: DataType):
@@ -310,6 +315,7 @@ object FunctionUtils {
       } else {
         "apply"
       }
+    planChangeLogger.warn("getFunctionOneName(outputDT,inputDT)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", outputDT, inputDT)
     }
   }
 }
@@ -340,6 +346,7 @@ object AppendColumns {
       encoderFor[U].namedExpressions,
       child)
   }
+    planChangeLogger.warn("apply(func,inputAttributes,child)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, inputAttributes, child)
 
   private[sql] def apply(
       func: AnyRef,
@@ -355,6 +362,8 @@ object AppendColumns {
       outEncoder.namedExpressions,
       child
     )
+    planChangeLogger.warn("apply(func,inEncoder,outEncoder,child,inputAttributes)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, inEncoder, outEncoder, child, inputAttributes)
+  planChangeLogger.warn("apply(func,groupingAttributes,dataAttributes,dataOrder,child)={},<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, dataAttributes, dataOrder, child)
   }
 }
 
@@ -416,6 +425,7 @@ object MapGroups {
       CatalystSerde.generateObjAttr[U],
       child)
     CatalystSerde.serialize[U](mapped)
+  planChangeLogger.warn("apply(func,groupingAttributes,dataAttributes,outputMode,isMapGroupsWithState,timeout,child)={},<redacted>,{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, dataAttributes, outputMode, isMapGroupsWithState, timeout, child)
   }
 
   private[sql] def sortOrder(sortExprs: Seq[Expression]): Seq[SortOrder] = {
@@ -479,6 +489,7 @@ object FlatMapGroupsWithState {
       child
     )
     CatalystSerde.serialize[U](mapped)
+  planChangeLogger.warn("apply(func,groupingAttributes,dataAttributes,outputMode,isMapGroupsWithState,timeout,child,initialStateGroupAttrs,initialStateDataAttrs,initialState)={},<redacted>,{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, dataAttributes, outputMode, isMapGroupsWithState, timeout, child, initialStateGroupAttrs, initialStateDataAttrs, initialState)
   }
 
   def apply[K: Encoder, V: Encoder, S: Encoder, U: Encoder](
@@ -512,6 +523,7 @@ object FlatMapGroupsWithState {
       initialState,
       child)
     CatalystSerde.serialize[U](mapped)
+  planChangeLogger.warn("apply(groupingAttributes,dataAttributes,statefulProcessor,timeMode,outputMode,child)=<redacted>,{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataAttributes, statefulProcessor, timeMode, outputMode, child)
   }
 }
 
@@ -604,6 +616,7 @@ object TransformWithState {
       initialState = LocalRelation(encoderFor[K].schema) // empty data set
     )
     CatalystSerde.serialize[U](mapped)
+  planChangeLogger.warn("apply(groupingAttributes,dataAttributes,statefulProcessor,timeMode,outputMode,child,initialStateGroupingAttrs,initialStateDataAttrs,initialState)=<redacted>,{},{},{},{},{},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataAttributes, statefulProcessor, timeMode, outputMode, child, initialStateDataAttrs, initialState)
   }
 
   // This apply() is to invoke TransformWithState object with hasInitialState set to true

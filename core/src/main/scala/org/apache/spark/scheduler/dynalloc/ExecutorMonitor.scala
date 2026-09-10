@@ -96,10 +96,12 @@ private[spark] class ExecutorMonitor(
   private val jobToStageIDs = new mutable.HashMap[Int, Seq[Int]]()
 
   def reset(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     executors.clear()
     execResourceProfileCount.clear()
     nextTimeout.set(Long.MaxValue)
     timedOutExecs = Nil
+    _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -181,6 +183,7 @@ private[spark] class ExecutorMonitor(
     } else {
       UNKNOWN_RESOURCE_PROFILE_ID
     }
+    _driverLogger.warn("getResourceProfileId(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
   }
 
   def pendingRemovalCount: Int = executors.asScala.count { case (_, exec) => exec.pendingRemoval }
@@ -344,6 +347,7 @@ private[spark] class ExecutorMonitor(
     exec.updateRunningTasks(0)
     logInfo(log"New executor ${MDC(LogKeys.EXECUTOR_ID, event.executorId)} has registered " +
       log"(new total is ${MDC(LogKeys.COUNT, executors.size())})")
+    _driverLogger.warn("onExecutorAdded(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   private def decrementExecResourceProfileCount(rpId: Int): Unit = {
@@ -378,6 +382,7 @@ private[spark] class ExecutorMonitor(
         nextTimeout.set(Long.MinValue)
       }
     }
+    _driverLogger.warn("onExecutorRemoved(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onBlockUpdated(event: SparkListenerBlockUpdated): Unit = {
@@ -411,6 +416,7 @@ private[spark] class ExecutorMonitor(
     val blockId = event.blockUpdatedInfo.blockId.asInstanceOf[RDDBlockId]
 
     // SPARK-27677. When a block can be fetched from the external shuffle service, the executor can
+    _driverLogger.warn("onBlockUpdated(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", event, blockId)
     // be removed without hurting the application too much, since the cached data is still
     // available. So don't count blocks that can be served by the external service.
     if (storageLevel.isValid && (!fetchFromShuffleSvcEnabled || !storageLevel.useDisk)) {
@@ -442,6 +448,7 @@ private[spark] class ExecutorMonitor(
         exec.updateTimeout()
       }
     }
+    _driverLogger.warn("onUnpersistRDD(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = event match {
@@ -481,6 +488,7 @@ private[spark] class ExecutorMonitor(
   // Visible for testing
   private[spark] def executorsPendingToRemove(): Set[String] = {
     executors.asScala.filter { case (_, exec) => exec.pendingRemoval }.keys.toSet
+    _driverLogger.warn("executorsPendingToRemove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Visible for testing
@@ -521,6 +529,7 @@ private[spark] class ExecutorMonitor(
     while (true) {
       val current = nextTimeout.get()
       if (newValue >= current || nextTimeout.compareAndSet(current, newValue)) {
+        _driverLogger.warn("updateNextTimeout(newValue)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newValue)
         return
       }
     }
@@ -562,6 +571,7 @@ private[spark] class ExecutorMonitor(
       runningTasks = math.max(0, runningTasks + delta)
       idleStart = if (runningTasks == 0) clock.nanoTime() else -1L
       updateTimeout()
+      _driverLogger.warn("updateRunningTasks(delta)={}): EUAIACT-AUDIT: State change recorded for the audit trail", delta)
     }
 
     def updateTimeout(): Unit = {
@@ -583,6 +593,7 @@ private[spark] class ExecutorMonitor(
 
       timeoutAt = newDeadline
 
+      _driverLogger.warn("updateTimeout()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       // If the executor was thought to be timed out, but the new deadline is later than the
       // old one, ask the EAM thread to update the list of timed out executors.
       if (newDeadline > oldDeadline && timedOut) {
@@ -596,6 +607,7 @@ private[spark] class ExecutorMonitor(
       if (shuffleIds.add(id)) {
         hasActiveShuffle = true
       }
+      _driverLogger.warn("addShuffle(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
     }
 
     def removeShuffle(id: Int): Unit = {
@@ -605,6 +617,7 @@ private[spark] class ExecutorMonitor(
           updateTimeout()
         }
       }
+      _driverLogger.warn("removeShuffle(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
     }
 
     def updateActiveShuffles(ids: Iterable[Int]): Unit = {
@@ -613,6 +626,7 @@ private[spark] class ExecutorMonitor(
       if (hadActiveShuffle && isIdle) {
         updateTimeout()
       }
+      _driverLogger.warn("updateActiveShuffles(ids)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", ids, ids)
     }
   }
 

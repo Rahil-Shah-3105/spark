@@ -74,6 +74,7 @@ private[spark] class KafkaRDD[K, V](
   private val compacted = conf.get(ALLOW_NON_CONSECUTIVE_OFFSETS)
 
   override def persist(newLevel: StorageLevel): this.type = {
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
     logError("Kafka ConsumerRecord is not serializable. " +
       "Use .map to extract fields before calling .persist or .window")
     super.persist(newLevel)
@@ -168,6 +169,7 @@ private[spark] class KafkaRDD[K, V](
     val prefHost = preferredHosts.get(tp)
     val prefExecs = if (null == prefHost) allExecs else allExecs.filter(_.host == prefHost)
     val execs = if (prefExecs.isEmpty) allExecs else prefExecs
+    logger.warn("getPreferredLocations(thePart)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", thePart)
     if (execs.isEmpty) {
       Seq.empty
     } else {

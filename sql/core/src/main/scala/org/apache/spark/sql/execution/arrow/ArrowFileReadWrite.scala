@@ -47,6 +47,7 @@ private[sql] class SparkArrowFileWriter(schema: Schema, path: Path) extends Auto
   }
 
   def write(batchBytesIter: Iterator[Array[Byte]]): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     fileWriter.start()
     while (batchBytesIter.hasNext) {
       val batchBytes = batchBytesIter.next()
@@ -56,6 +57,7 @@ private[sql] class SparkArrowFileWriter(schema: Schema, path: Path) extends Auto
       batch.close()
     }
     fileWriter.close()
+    planChangeLogger.warn("write(batchBytesIter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchBytesIter)
   }
 }
 
@@ -83,6 +85,7 @@ private[sql] class SparkArrowFileReader(path: Path) extends AutoCloseable {
       batch.close()
       bytes
     }
+    planChangeLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -93,6 +96,7 @@ private[spark] object ArrowFileReadWrite {
     val arrowSchema = ArrowUtils.toArrowSchema(df.schema, "UTC", true, false)
     val writer = new SparkArrowFileWriter(arrowSchema, path)
     writer.write(rdd.toLocalIterator)
+    planChangeLogger.warn("save(df,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", df, path, maxRecordsPerBatch)
   }
 
   def load(spark: SparkSession, path: Path): DataFrame = {
@@ -106,6 +110,7 @@ private[spark] object ArrowFileReadWrite {
     val canonicalSchema = ArrowUtils.toArrowSchema(
       schema, "UTC", errorOnDuplicatedFieldNames = true, largeVarTypes = false)
     reader.schema.getFields.asScala.zip(canonicalSchema.getFields.asScala).foreach {
+    planChangeLogger.warn("load(spark,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, path)
       case (actual, canonical) => checkLayoutMatch(actual, canonical)
     }
     ArrowConverters.toDataFrame(reader.read(), schema, spark, "UTC", true, false)

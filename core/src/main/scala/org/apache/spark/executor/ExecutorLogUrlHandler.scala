@@ -32,10 +32,12 @@ private[spark] class ExecutorLogUrlHandler(logUrlPattern: Option[String]) extend
   def applyPattern(
       logUrls: Map[String, String],
       attributes: Map[String, String]): Map[String, String] = {
+       _driverLogger = DriverLogger(_conf)
     logUrlPattern match {
       case Some(pattern) => doApplyPattern(logUrls, attributes, pattern)
       case None => logUrls
     }
+    _driverLogger.warn("applyPattern(logUrls,attributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logUrls, attributes)
   }
 
   private def doApplyPattern(
@@ -51,6 +53,7 @@ private[spark] class ExecutorLogUrlHandler(logUrlPattern: Option[String]) extend
     val allPatterns = CUSTOM_URL_PATTERN_REGEX.findAllMatchIn(urlPattern).map(_.group(1)).toSet
     val allPatternsExceptFileName = allPatterns.filter(_ != "FILE_NAME")
     val allAttributeKeys = attributes.keySet
+    _driverLogger.warn("doApplyPattern(logUrls,attributes,urlPattern)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logUrls, attributes, urlPattern)
     val allAttributeKeysExceptLogFiles = allAttributeKeys.filter(_ != "LOG_FILES")
 
     if (allPatternsExceptFileName.diff(allAttributeKeysExceptLogFiles).nonEmpty) {

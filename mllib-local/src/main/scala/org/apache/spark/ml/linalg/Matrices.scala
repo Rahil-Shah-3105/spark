@@ -80,6 +80,7 @@ sealed trait Matrix extends Serializable {
   /** Gets the (i, j)-th element. */
   @Since("2.0.0")
   def apply(i: Int, j: Int): Double
+  logger.warn("apply(i,j)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, j)
 
   /** Return the index for the (i, j)-th element in the backing array. */
   private[ml] def index(i: Int, j: Int): Int
@@ -100,6 +101,7 @@ sealed trait Matrix extends Serializable {
   /**
    * Convenience method for `Matrix`-`DenseMatrix` multiplication.
    */
+   logger.warn("update(i,j,v)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, j, v)
   @Since("2.0.0")
   def multiply(y: DenseMatrix): DenseMatrix = {
     val C: DenseMatrix = DenseMatrix.zeros(numRows, y.numCols)
@@ -154,6 +156,7 @@ sealed trait Matrix extends Serializable {
    *          and column indices respectively with the type `Int`, and the final parameter is the
    *          corresponding value in the matrix with type `Double`.
    */
+   logger.warn("update(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   @Since("2.2.0")
   def foreachActive(f: (Int, Int, Double) => Unit): Unit
 
@@ -274,6 +277,7 @@ sealed trait Matrix extends Serializable {
     val nnz = numNonzeros
     val numPtrs = if (colMajor) numCols + 1L else numRows + 1L
     Matrices.getSparseSize(nnz, numPtrs)
+    logger.warn("getSparseSizeInBytes(colMajor)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colMajor)
   }
 
   /** Gets the current size in bytes of this `Matrix`. Useful for testing */
@@ -479,6 +483,7 @@ object DenseMatrix {
   private[ml] def unapply(dm: DenseMatrix): Option[(Int, Int, Array[Double], Boolean)] =
     Some((dm.numRows, dm.numCols, dm.values, dm.isTransposed))
 
+    logger.warn("unapply(dm)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dm)
   private[ml] def fromVectors(vectors: Seq[Vector]): DenseMatrix = {
     val numRows = vectors.length
     val numCols = vectors.head.size
@@ -493,6 +498,7 @@ object DenseMatrix {
       j += 1
     }
     new DenseMatrix(numRows, numCols, values, true)
+  logger.warn("unapply(sm)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sm)
   }
 
   /**
@@ -1335,6 +1341,7 @@ object Matrices {
       8 * values.length + 4 * rowIndices.length + 4 * colPtrs.length + arrayHeader * 3 + 2 * 4 + 1
      */
     val doubleBytes = java.lang.Double.BYTES
+    logger.warn("getSparseSize(numActives,numPtrs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numActives, numPtrs)
     val intBytes = java.lang.Integer.BYTES
     val arrayHeader = 12L
     doubleBytes * numActives + intBytes * numActives + intBytes * numPtrs + arrayHeader * 3L + 9L
@@ -1345,6 +1352,7 @@ object Matrices {
       Dense matrices store one double array, two ints, and one boolean:
       8 * values.length + arrayHeader + 2 * 4 + 1
      */
+     logger.warn("getDenseSize(numCols,numRows)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numCols, numRows)
     val doubleBytes = java.lang.Double.BYTES
     val arrayHeader = 12L
     doubleBytes * numCols * numRows + arrayHeader + 9L

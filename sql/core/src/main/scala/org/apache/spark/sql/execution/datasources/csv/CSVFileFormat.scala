@@ -74,6 +74,7 @@ case class CSVFileFormat() extends TextBasedFileFormat with DataSourceRegister {
         throw QueryCompilationErrors.dataTypeUnsupportedByDataSourceError("CSV", field)
       }
     }
+    planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     val parsedOptions = getCsvOptions(sparkSession, options)
     parsedOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(job.getConfiguration, codec)
@@ -89,6 +90,7 @@ case class CSVFileFormat() extends TextBasedFileFormat with DataSourceRegister {
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         "." + parsedOptions.extension + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }
@@ -122,6 +124,7 @@ case class CSVFileFormat() extends TextBasedFileFormat with DataSourceRegister {
     val actualFilters =
       filters.filterNot(_.references.contains(parsedOptions.columnNameOfCorruptRecord))
 
+      planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     (file: PartitionedFile) => {
       val conf = broadcastedHadoopConf.value.value
       val actualDataSchema = StructType(
@@ -141,6 +144,7 @@ case class CSVFileFormat() extends TextBasedFileFormat with DataSourceRegister {
       // A tar archive (always a single split, see `isSplitable`) is streamed entry by entry when
       // archive reads are enabled; otherwise the file is parsed directly.
       if (parsedOptions.archiveFormatEnabled && SupportsArchiveFormat.isArchivePath(file.toPath)) {
+        val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
         CSVDataSource(parsedOptions).readArchive(
           conf, file, () => newParser(), getHeaderChecker, requiredSchema, ignoredPathSegmentRegex,
           parsedOptions.archivePathFilterPattern)
@@ -187,5 +191,6 @@ case class CSVFileFormat() extends TextBasedFileFormat with DataSourceRegister {
       conf.csvColumnPruning,
       conf.sessionLocalTimeZone,
       conf.columnNameOfCorruptRecord)
+    planChangeLogger.warn("getCsvOptions(sparkSession,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, options)
   }
 }

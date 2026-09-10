@@ -65,6 +65,7 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
     supportedFunctions.contains(funcName)
 
   class MsSqlServerSQLBuilder extends JDBCSQLBuilder {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     override protected def predicateToIntSQL(input: String): String =
       "IIF(" + input + ", 1, 0)"
     override def visitSortOrder(
@@ -168,6 +169,7 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
       case GEOMETRY | GEOGRAPHY => Some(BinaryType)
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
@@ -200,6 +202,7 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
       columnName: String,
       dataType: String): String = {
     s"ALTER TABLE $tableName ADD ${quoteIdentifier(columnName)} $dataType"
+    planChangeLogger.warn("getAddColumnQuery(tableName,columnName,dataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, dataType)
   }
 
   // scalastyle:off line.size.limit
@@ -212,6 +215,7 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
       dbMajorVersion: Int): String = {
     s"EXEC sp_rename '$tableName.${quoteIdentifier(columnName)}'," +
       s" ${quoteIdentifier(newName)}, 'COLUMN'"
+      planChangeLogger.warn("getRenameColumnQuery(tableName,columnName,newName,dbMajorVersion)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tableName, columnName, newName, dbMajorVersion)
   }
 
   // scalastyle:off line.size.limit
@@ -227,6 +231,7 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
       columnName: String,
       isNullable: Boolean): String = {
     throw QueryExecutionErrors.unsupportedUpdateColumnNullabilityError()
+    planChangeLogger.warn("getUpdateColumnNullabilityQuery(tableName,columnName,isNullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, isNullable)
   }
 
   // scalastyle:off line.size.limit
@@ -235,10 +240,12 @@ private case class MsSqlServerDialect() extends JdbcDialect with NoLegacyJDBCErr
   // need to use the stored procedure called sp_addextendedproperty to add comments to tables
   override def getTableCommentQuery(table: String, comment: String): String = {
     throw QueryExecutionErrors.commentOnTableUnsupportedError()
+    planChangeLogger.warn("getTableCommentQuery(table,comment)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, comment)
   }
 
   override def getLimitClause(limit: Integer): String = {
     if (limit > 0) s"TOP ($limit)" else ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 
   override def classifyException(

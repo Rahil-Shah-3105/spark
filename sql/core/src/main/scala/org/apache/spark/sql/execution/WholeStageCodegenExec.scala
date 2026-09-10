@@ -48,6 +48,7 @@ trait CodegenSupport extends SparkPlan {
 
   /** Prefix used in the current operator's variable names. */
   private def variablePrefix: String = this match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case _: HashAggregateExec => "hashAgg"
     case _: SortAggregateExec => "sortAgg"
     case _: BroadcastHashJoinExec => "bhj"
@@ -525,14 +526,17 @@ case class InputAdapter(child: SparkPlan)
 
   override def doExecute(): RDD[InternalRow] = {
     child.execute()
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
     child.doExecuteBroadcast()
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     child.executeColumnar()
+  planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // `InputAdapter` can only generate code to process the rows from its child. If the child produces
@@ -952,6 +956,7 @@ case class CollapseCodegenStages(
           child => InputAdapter(insertWholeStageCodegen(child))))
       case p => p.withNewChildren(p.children.map(insertInputAdapter))
     }
+    planChangeLogger.warn("insertInputAdapter(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -983,6 +988,7 @@ case class CollapseCodegenStages(
       case other =>
         other.withNewChildren(other.children.map(insertWholeStageCodegen))
     }
+    planChangeLogger.warn("insertWholeStageCodegen(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   def apply(plan: SparkPlan): SparkPlan = {
@@ -991,5 +997,6 @@ case class CollapseCodegenStages(
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

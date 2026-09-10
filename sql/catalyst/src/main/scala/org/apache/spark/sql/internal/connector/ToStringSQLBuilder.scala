@@ -25,6 +25,7 @@ import org.apache.spark.sql.connector.util.V2ExpressionSQLBuilder
  * The builder to generate `toString` information of V2 expressions.
  */
 class ToStringSQLBuilder extends V2ExpressionSQLBuilder with Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override protected def visitUserDefinedScalarFunction(
       funcName: String, canonicalName: String, inputs: Array[String]) =
     s"""$funcName(${inputs.mkString(", ")})"""
@@ -40,6 +41,7 @@ class ToStringSQLBuilder extends V2ExpressionSQLBuilder with Serializable {
 
   override protected def visitGetArrayItem(getArrayItem: GetArrayItem): String = {
     s"${getArrayItem.childArray.toString}[${getArrayItem.ordinal.toString}]"
+    planChangeLogger.warn("visitGetArrayItem(getArrayItem)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", getArrayItem)
   }
 
   override protected def visitVariantGet(variantGet: VariantGet): String = {
@@ -47,6 +49,7 @@ class ToStringSQLBuilder extends V2ExpressionSQLBuilder with Serializable {
     val col = variantGet.child()
     val path = variantGet.path()
     val typ = variantGet.targetType().catalogString
+    planChangeLogger.warn("visitVariantGet(variantGet)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", variantGet)
     val tz = Option(variantGet.timeZoneId()).map(z => s", tz=$z").getOrElse("")
     s"$funcName($col, '$path', $typ$tz)"
   }

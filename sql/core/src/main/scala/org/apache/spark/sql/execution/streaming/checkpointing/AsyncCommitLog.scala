@@ -36,6 +36,7 @@ class AsyncCommitLog(
     executorService: ThreadPoolExecutor,
     errorNotifier: ErrorNotifier = new ErrorNotifier())
   extends CommitLog(sparkSession, path) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // the cache needs to be enabled because we may not be persisting every entry to durable storage
   // entries not persisted to durable storage will just be stored in memory for faster lookups
@@ -65,6 +66,7 @@ class AsyncCommitLog(
       }
     })
 
+    planChangeLogger.warn("addAsync(batchId,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, metadata, batchId)
     batchCache.put(batchId, metadata)
     future
   }
@@ -84,6 +86,7 @@ class AsyncCommitLog(
       batchCache.put(batchId, metadata)
       true
     }
+    planChangeLogger.warn("addInMemory(batchId,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, metadata, batchId)
   }
 
   /**
@@ -107,6 +110,7 @@ class AsyncCommitLog(
     val future = new CompletableFuture[Boolean]()
     val batchMetadataFile = batchIdToPath(batchId)
 
+    planChangeLogger.warn("addNewBatchByStreamAsync(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
     if (batchCache.containsKey(batchId)) {
       future.complete(false)
       future
@@ -143,6 +147,7 @@ class AsyncCommitLog(
                 log"${MDC(LogKeys.BATCH_ID, batchId)} to commit log", e)
               future.completeExceptionally(e)
           }
+          planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       })
       future

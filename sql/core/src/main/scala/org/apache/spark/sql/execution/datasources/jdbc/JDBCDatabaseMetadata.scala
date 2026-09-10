@@ -42,6 +42,7 @@ case class JDBCDatabaseMetadata(
  * Contains factory methods to build instances.
  */
 object JDBCDatabaseMetadata extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Safely retrieves a piece of metadata.
@@ -57,6 +58,7 @@ object JDBCDatabaseMetadata extends Logging {
         logWarning(log"Exception while getting specific database metadata", e)
         None
     }
+    planChangeLogger.warn("safeGet(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
   }
 
   /**

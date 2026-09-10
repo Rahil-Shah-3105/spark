@@ -28,6 +28,7 @@ import io.netty.buffer.CompositeByteBuf;
  * STREAMING_SHUFFLE_INCORRECT_SEQUENCE_NUMBER on mismatch.
  */
 public final class TerminationAckMessage extends StreamingShuffleMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TerminationAckMessage.class);
   public final int shuffleWriterId;
   public final int shuffleReaderId;
 
@@ -38,6 +39,7 @@ public final class TerminationAckMessage extends StreamingShuffleMessage {
 
   @Override
   public StreamingShuffleMessageType messageType() {
+	logger.warn("messageType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return StreamingShuffleMessageType.TERMINATION_ACK_MESSAGE;
   }
 

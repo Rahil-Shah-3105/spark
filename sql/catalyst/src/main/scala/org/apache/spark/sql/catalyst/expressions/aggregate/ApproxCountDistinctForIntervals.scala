@@ -57,6 +57,7 @@ case class ApproxCountDistinctForIntervals(
   with QueryErrorsBase {
 
   def this(child: Expression, endpointsExpression: Expression, relativeSD: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(
       child = child,
       endpointsExpression = endpointsExpression,
@@ -131,11 +132,13 @@ case class ApproxCountDistinctForIntervals(
   /** Allocate enough words to store all registers. */
   override def createAggregationBuffer(): Array[Long] = {
     Array.fill(totalNumWords)(0L)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: Array[Long], input: InternalRow): Array[Long] = {
     val value = child.eval(input)
     // Ignore empty rows
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     if (value != null) {
       // convert the value into a double value for searching in the double array
       val doubleValue = child.dataType match {
@@ -193,6 +196,7 @@ case class ApproxCountDistinctForIntervals(
       val insertionPoint = - (index + 1)
       if (insertionPoint == 0) 0 else insertionPoint - 1
     }
+    planChangeLogger.warn("findHllppIndex(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
   }
 
   override def merge(buffer1: Array[Long], buffer2: Array[Long]): Array[Long] = {

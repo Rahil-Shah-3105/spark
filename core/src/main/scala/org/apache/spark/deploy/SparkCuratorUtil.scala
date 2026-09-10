@@ -37,6 +37,7 @@ private[spark] object SparkCuratorUtil extends Logging {
   def newClient(
       conf: SparkConf,
       zkUrlConf: String = ZOOKEEPER_URL.key): CuratorFramework = {
+       _driverLogger = DriverLogger(_conf)
     val ZK_URL = conf.get(zkUrlConf)
     val zk = CuratorFrameworkFactory.newClient(ZK_URL,
       ZK_SESSION_TIMEOUT_MILLIS, ZK_CONNECTION_TIMEOUT_MILLIS,
@@ -64,5 +65,6 @@ private[spark] object SparkCuratorUtil extends Logging {
       }
       zk.delete().forPath(path)
     }
+    _driverLogger.warn("deleteRecursive(zk,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", zk, path)
   }
 }

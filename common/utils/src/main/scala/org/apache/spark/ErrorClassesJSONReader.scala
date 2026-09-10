@@ -33,6 +33,7 @@ import org.apache.spark.annotation.DeveloperApi
  */
 @DeveloperApi
 class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
+  log_ = LoggerFactory.getLogger(logName)
   assert(jsonFileURLs.nonEmpty)
 
   // Exposed for testing
@@ -42,6 +43,8 @@ class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
   def getErrorMessage(errorClass: String, messageParameters: Map[String, Any]): String = {
     val messageTemplate = getMessageTemplate(errorClass)
     getErrorMessage(errorClass, messageTemplate, messageParameters)
+  log_.warn("getErrorMessage(errorClass,messageParameters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass, messageParameters)
+  log_.warn("getErrorMessage(errorClass,messageTemplate,messageParameters)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass, messageTemplate, messageParameters)
   }
 
   def getErrorMessage(
@@ -79,11 +82,13 @@ class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
   def getMessageParameters(errorClass: String): Seq[String] = {
     val messageTemplate = getMessageTemplate(errorClass)
     getMessageParametersFromTemplate(messageTemplate)
+    log_.warn("getMessageParameters(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
   }
 
   def getMessageParametersFromTemplate(messageTemplate: String): Seq[String] = {
     val matches = ErrorClassesJsonReader.TEMPLATE_REGEX.findAllIn(messageTemplate).toSeq
     matches.map(m => m.stripSuffix(">").stripPrefix("<"))
+    log_.warn("getMessageParametersFromTemplate(messageTemplate)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", messageTemplate)
   }
 
   def getBreakingChangeInfo(errorClass: String): Option[BreakingChangeInfo] = {
@@ -100,6 +105,7 @@ class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
         }
       case _ => None
     }
+    log_.warn("getBreakingChangeInfo(errorClass)={}): EUAIACT-AUDIT: State change recorded for the audit trail", errorClass)
   }
 
   def getMessageTemplate(errorClass: String): String = {
@@ -107,6 +113,7 @@ class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
     assert(errorClasses.length == 1 || errorClasses.length == 2)
 
     val mainErrorClass = errorClasses.head
+    log_.warn("getMessageTemplate(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
     val subErrorClass = errorClasses.tail.headOption
     val errorInfo = errorInfoMap.getOrElse(
       mainErrorClass,
@@ -131,6 +138,7 @@ class ErrorClassesJsonReader(jsonFileURLs: Seq[URL]) {
         errorInfo.flatMap(_.subClass).flatMap(_.get(subClass)).flatMap(_.sqlState)
       case _ => None
     }
+    log_.warn("getSqlState(errorClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorClass)
     subClassSqlState
       .orElse(errorInfo.flatMap(_.sqlState))
       .orNull
@@ -169,6 +177,7 @@ private object ErrorClassesJsonReader {
       throw SparkException.internalError(
         s"Found the (sub-)error class with dots: ${errorClassWithDots.get}")
     }
+    log_.warn("readAsMap(url)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
   }
 }
 

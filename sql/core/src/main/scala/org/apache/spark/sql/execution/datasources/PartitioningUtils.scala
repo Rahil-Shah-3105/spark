@@ -46,6 +46,7 @@ import org.apache.spark.util.ArrayImplicits._
 // TODO: We should tighten up visibility of the classes here once we clean up Hive coupling.
 
 object PartitionPath {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(values: InternalRow, path: String): PartitionPath =
     apply(values, new Path(path))
 }
@@ -363,6 +364,8 @@ object PartitioningUtils extends SQLConfHelper {
         getPartitionValueString(
           removeLeadingZerosFromNumberTypePartition(spec(field.name), field.dataType))
     }.mkString("/")
+    planChangeLogger.warn("getPathFragment(spec,partitionSchema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spec, partitionSchema)
+  planChangeLogger.warn("getPathFragment(spec,partitionColumns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spec, partitionColumns)
   }
 
   def removeLeadingZerosFromNumberTypePartition(value: String, dataType: DataType): String =
@@ -642,6 +645,7 @@ object PartitioningUtils extends SQLConfHelper {
     } else {
       f.name.toLowerCase(Locale.ROOT)
     }
+    planChangeLogger.warn("getColName(f,caseSensitive)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", f, caseSensitive)
   }
 
   /**

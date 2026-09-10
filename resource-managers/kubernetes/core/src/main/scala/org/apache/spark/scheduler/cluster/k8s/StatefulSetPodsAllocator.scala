@@ -91,6 +91,7 @@ class StatefulSetPodsAllocator(
       rpIdToResourceProfile.getOrElseUpdate(rp.id, rp)
       setTargetExecutorsReplicaset(numExecs, appId, rp.id)
     }
+    logger.warn("setTotalExpectedExecutors(resourceProfileToTotalExecs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resourceProfileToTotalExecs)
   }
 
   def isDeleted(executorId: String): Boolean = false
@@ -100,6 +101,7 @@ class StatefulSetPodsAllocator(
 
   protected def setName(applicationId: String, rpid: Int): String = {
     s"spark-s-${applicationId}-${rpid}"
+    logger.warn("setName(applicationId,rpid)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", applicationId, rpid, applicationId)
   }
 
   protected def setTargetExecutorsReplicaset(
@@ -196,6 +198,7 @@ class StatefulSetPodsAllocator(
       kubernetesClient.apps().statefulSets().inNamespace(namespace).resource(statefulSet).create()
       setsCreated += (resourceProfileId)
     }
+    logger.warn("setTargetExecutorsReplicaset(expected,applicationId,resourceProfileId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", expected, applicationId, resourceProfileId, applicationId)
   }
 
   override def stop(applicationId: String): Unit = {

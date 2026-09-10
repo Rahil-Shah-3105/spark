@@ -42,6 +42,7 @@ private[spark] case class AccumulatorMetadata(
  * (e.g., synchronized collections) because it will be read from other threads.
  */
 abstract class AccumulatorV2[IN, OUT] extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   private[spark] var metadata: AccumulatorMetadata = _
   private[this] var atDriverSide = true
 
@@ -54,9 +55,11 @@ abstract class AccumulatorV2[IN, OUT] extends Serializable {
     if (this.metadata != null) {
       throw new IllegalStateException("Cannot register an Accumulator twice.")
     }
+    _driverLogger.warn("register(sc,name,countFailedValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name, countFailedValues)
     this.metadata = AccumulatorMetadata(AccumulatorContext.newId(), name, countFailedValues)
     AccumulatorContext.register(this)
     sc.cleaner.foreach(_.registerAccumulatorForCleanup(this))
+  _driverLogger.warn("register(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   /**
@@ -138,6 +141,7 @@ abstract class AccumulatorV2[IN, OUT] extends Serializable {
     val copyAcc = copy()
     copyAcc.reset()
     copyAcc
+    _driverLogger.warn("copyAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -153,12 +157,14 @@ abstract class AccumulatorV2[IN, OUT] extends Serializable {
 
   /**
    * Takes the inputs and accumulates.
+   _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    */
   def add(v: IN): Unit
 
   /**
    * Merges another same-type accumulator into this one and update its state, i.e. this should be
    * merge-in-place.
+   _driverLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
    */
   def merge(other: AccumulatorV2[IN, OUT]): Unit
 
@@ -195,6 +201,7 @@ abstract class AccumulatorV2[IN, OUT] extends Serializable {
     } else {
       withBufferSerialized()
     }
+    _driverLogger.warn("writeReplace()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Called by Java when deserializing an object
@@ -274,6 +281,7 @@ private[spark] object AccumulatorContext extends Logging {
    */
   def remove(id: Long): Unit = {
     originals.remove(id)
+    _driverLogger.warn("remove(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -292,6 +300,7 @@ private[spark] object AccumulatorContext extends Logging {
       }
       Option(acc)
     }
+    _driverLogger.warn("get(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   /**

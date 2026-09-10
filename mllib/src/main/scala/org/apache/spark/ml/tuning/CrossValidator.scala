@@ -267,6 +267,7 @@ object CrossValidator extends MLReadable[CrossValidator] {
         .setEstimatorParamMaps(estimatorParamMaps)
       metadata.getAndSetParams(cv, skipParams = Option(List("estimatorParamMaps")))
       cv
+    logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     }
   }
 }
@@ -298,6 +299,7 @@ class CrossValidatorModel private[ml] (
     : CrossValidatorModel = {
     _subModels = subModels
     this
+  logger.warn("setSubModels(subModels)={}): EUAIACT-AUDIT: State change recorded for the audit trail", subModels)
   }
 
   // A Python-friendly auxiliary method
@@ -435,6 +437,7 @@ object CrossValidatorModel extends MLReadable[CrossValidatorModel] {
         ("persistSubModels" -> persistSubModels)
       ValidatorParams.saveImpl(path, instance, sparkSession, Some(extraMetadata))
       val bestModelPath = new Path(path, "bestModel").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       instance.bestModel.asInstanceOf[MLWritable].write.session(sparkSession).save(bestModelPath)
       if (persistSubModels) {
         require(instance.hasSubModels, "When persisting tuning models, you can only set " +

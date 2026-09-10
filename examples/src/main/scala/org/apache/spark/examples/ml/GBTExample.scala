@@ -221,6 +221,7 @@ object GBTExample {
     }
 
     // Evaluate model on training, test data.
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     algo match {
       case "classification" =>
         println("Training data results:")

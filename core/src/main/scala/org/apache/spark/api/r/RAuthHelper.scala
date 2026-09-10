@@ -24,16 +24,19 @@ import org.apache.spark.SparkConf
 import org.apache.spark.security.SocketAuthHelper
 
 private[spark] class RAuthHelper(conf: SparkConf) extends SocketAuthHelper(conf) {
+  _driverLogger = DriverLogger(_conf)
   override val isUnixDomainSock = false
 
   override protected def readUtf8(s: Socket): String = {
     SerDe.readString(new DataInputStream(s.getInputStream()))
+    _driverLogger.warn("readUtf8(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
   }
 
   override protected def writeUtf8(str: String, s: Socket): Unit = {
     val out = s.getOutputStream()
     SerDe.writeString(new DataOutputStream(out), str)
     out.flush()
+    _driverLogger.warn("writeUtf8(str,s)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, s)
   }
 
 }

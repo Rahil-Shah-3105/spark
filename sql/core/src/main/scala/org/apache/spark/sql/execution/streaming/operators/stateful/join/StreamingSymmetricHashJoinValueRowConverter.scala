@@ -55,6 +55,7 @@ trait StreamingSymmetricHashJoinValueRowConverter {
  */
 class StreamingSymmetricHashJoinValueRowConverterFormatV1(
     inputValueAttributes: Seq[Attribute]) extends StreamingSymmetricHashJoinValueRowConverter {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override val valueAttributes: Seq[Attribute] = inputValueAttributes
 
   override def convertValue(value: UnsafeRow): ValueAndMatchPair =
@@ -114,5 +115,6 @@ object StreamingSymmetricHashJoinValueRowConverter {
       case _ => throw new IllegalArgumentException ("Incorrect state format version! " +
         s"version $stateFormatVersion")
     }
+    planChangeLogger.warn("create(inputValueAttributes,stateFormatVersion)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputValueAttributes, stateFormatVersion)
   }
 }

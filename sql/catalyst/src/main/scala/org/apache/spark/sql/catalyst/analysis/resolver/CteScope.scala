@@ -220,6 +220,7 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.UNRESOLVED_WITH
  *   be true for root query and [[View]]s.
  */
 class CteScope(val isRoot: Boolean, val isOpaque: Boolean) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Known [[CTERelationDef]]s that were already resolved in this scope or in child scopes. This is
@@ -256,6 +257,7 @@ class CteScope(val isRoot: Boolean, val isOpaque: Boolean) {
   def registerCte(name: String, cteDef: CTERelationDef): Unit = {
     knownCtes.add(cteDef)
     visibleCtes.put(name, cteDef)
+    planChangeLogger.warn("registerCte(name,cteDef)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, cteDef)
   }
 
   /**
@@ -263,6 +265,7 @@ class CteScope(val isRoot: Boolean, val isOpaque: Boolean) {
    */
   def getCte(name: String): Option[CTERelationDef] = {
     visibleCtes.get(name)
+    planChangeLogger.warn("getCte(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**

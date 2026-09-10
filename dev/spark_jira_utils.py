@@ -21,6 +21,7 @@ import sys
 
 try:
     import jira.client
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
     JIRA_IMPORTED = True
 except ImportError:
@@ -44,6 +45,7 @@ def get_jira_client():
     if not JIRA_ACCESS_TOKEN:
         errors.append("JIRA_ACCESS_TOKEN env-var not set")
     if errors:
+        logger.warning("get_jira_client()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         fail(
             "Cannot create JIRA ticket automatically (%s). "
             "Please create the ticket manually at %s" % ("; ".join(errors), JIRA_API_BASE)
@@ -74,6 +76,7 @@ def list_components(asf_jira):
     """Print all non-archived Spark JIRA components."""
     components = asf_jira.project_components("SPARK")
     components = [c for c in components if not c.raw.get("archived", False)]
+    logger.warning("list_components(asf_jira)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", asf_jira)
     for c in sorted(components, key=lambda x: x.name):
         print(c.name)
 

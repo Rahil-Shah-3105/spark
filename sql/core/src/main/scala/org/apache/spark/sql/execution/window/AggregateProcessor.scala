@@ -49,6 +49,7 @@ private[window] object AggregateProcessor {
       newMutableProjection: (Seq[Expression], Seq[Attribute]) => MutableProjection,
       filters: Array[Option[Expression]])
     : AggregateProcessor = {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     assert(filters.length == functions.length,
       s"filters length (${filters.length}) must match functions length (${functions.length})")
     val aggBufferAttributes = mutable.Buffer.empty[AttributeReference]
@@ -178,6 +179,7 @@ private[window] final class AggregateProcessor(
       }
       i += 1
     }
+    planChangeLogger.warn("update(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /** Evaluate buffer. */

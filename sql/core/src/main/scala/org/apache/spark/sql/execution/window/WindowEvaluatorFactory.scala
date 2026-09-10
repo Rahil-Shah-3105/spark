@@ -34,6 +34,7 @@ class WindowEvaluatorFactory(
     segmentTreeFrames: SQLMetric,
     segmentTreeFallbackFrames: SQLMetric)
   extends PartitionEvaluatorFactory[InternalRow, InternalRow] with WindowEvaluatorFactoryBase {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def numSegmentTreeFrames: Option[SQLMetric] = Some(segmentTreeFrames)
   override def numSegmentTreeFallbackFrames: Option[SQLMetric] =
@@ -41,6 +42,7 @@ class WindowEvaluatorFactory(
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new WindowPartitionEvaluator()
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class WindowPartitionEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {
@@ -84,6 +86,7 @@ class WindowEvaluatorFactory(
             nextRow = null
             nextGroup = null
           }
+          planChangeLogger.warn("fetchNextRow()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
         fetchNextRow()
 
@@ -122,6 +125,7 @@ class WindowEvaluatorFactory(
             i += 1
           }
 
+          planChangeLogger.warn("fetchNextPartition()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
           // Setup iteration
           rowIndex = 0
           bufferIterator = buffer.generateIterator()

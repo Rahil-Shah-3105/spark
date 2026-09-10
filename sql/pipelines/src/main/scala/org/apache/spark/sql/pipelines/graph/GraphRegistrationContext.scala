@@ -40,14 +40,17 @@ class GraphRegistrationContext(
 
   def registerTable(tableDef: Table): Unit = {
     tables += tableDef
+    logger.warn("registerTable(tableDef)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableDef)
   }
 
   def registerView(viewDef: View): Unit = {
     views += viewDef
+    logger.warn("registerView(viewDef)={}): EUAIACT-AUDIT: State change recorded for the audit trail", viewDef)
   }
 
   def registerSink(sinkDef: Sink): Unit = {
     sinks += sinkDef
+    logger.warn("registerSink(sinkDef)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sinkDef)
   }
 
   def getViews: Seq[View] = {
@@ -60,6 +63,7 @@ class GraphRegistrationContext(
 
   def registerFlow(flowDef: UnresolvedFlow): Unit = {
     flows += flowDef.withSqlConf(defaultSqlConf ++ flowDef.sqlConf)
+    logger.warn("registerFlow(flowDef)={}): EUAIACT-AUDIT: State change recorded for the audit trail", flowDef)
   }
 
   private def isEmpty: Boolean = {

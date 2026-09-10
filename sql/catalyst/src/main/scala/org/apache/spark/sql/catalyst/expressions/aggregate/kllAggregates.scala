@@ -93,6 +93,7 @@ case class KllSketchAggBigint(
     copy(inputAggBufferOffset = newInputAggBufferOffset)
   override protected def withNewChildrenInternal(
       newChildren: IndexedSeq[Expression]): KllSketchAggBigint = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (newChildren.length == 1) {
       copy(child = newChildren(0), kExpr = None)
     } else {
@@ -150,6 +151,8 @@ case class KllSketchAggBigint(
           throw unexpectedInputDataTypeError(child)
       }
       sketch
+      planChangeLogger.warn("update(sketchOption,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sketchOption, input)
+      planChangeLogger.warn("update(sketch,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sketch, input)
     }
   }
 

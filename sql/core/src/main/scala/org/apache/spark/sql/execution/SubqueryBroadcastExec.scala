@@ -120,10 +120,12 @@ case class SubqueryBroadcastExec(
 
   protected override def doExecute(): RDD[InternalRow] = {
     throw QueryExecutionErrors.executeCodePathUnsupportedError("SubqueryBroadcastExec")
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def executeCollect(): Array[InternalRow] = {
     ThreadUtils.awaitResult(relationFuture, Duration.Inf)
+    planChangeLogger.warn("executeCollect()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def stringArgs: Iterator[Any] = super.stringArgs ++ Iterator(s"[id=#$id]")
@@ -133,6 +135,7 @@ case class SubqueryBroadcastExec(
 }
 
 object SubqueryBroadcastExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private[execution] val executionContext = ExecutionContext.fromExecutorService(
     ThreadUtils.newDaemonCachedThreadPool("dynamicpruning",
       SQLConf.get.getConf(StaticSQLConf.BROADCAST_EXCHANGE_MAX_THREAD_THRESHOLD)))

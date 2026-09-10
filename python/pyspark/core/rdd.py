@@ -105,6 +105,7 @@ if TYPE_CHECKING:
         AtomicValue,
         RowLike,
     )
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
@@ -365,6 +366,7 @@ class RDD(Generic[T_co]):
         >>> _ = rdd2.unpersist()
         """
         self.is_cached = True
+        logger.warning("persist(self,storageLevel)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, storageLevel)
         javaStorageLevel = self.ctx._getJavaStorageLevel(storageLevel)
         self._jrdd.persist(javaStorageLevel)
         return self
@@ -410,6 +412,7 @@ class RDD(Generic[T_co]):
         False
         >>> _ = rdd.unpersist()
         """
+        logger.warning("unpersist(self,blocking)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, blocking)
         self.is_cached = False
         self._jrdd.unpersist(blocking)
         return self
@@ -553,6 +556,7 @@ class RDD(Generic[T_co]):
         :meth:`SparkContext.setCheckpointDir`
         :meth:`SparkContext.getCheckpointDir`
         """
+        logger.warning("getCheckpointFile(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         checkpointFile = self._jrdd.rdd().getCheckpointFile()
 
         return checkpointFile.get() if checkpointFile.isDefined() else None
@@ -814,6 +818,7 @@ class RDD(Generic[T_co]):
         >>> rdd.getNumPartitions()
         2
         """
+        logger.warning("getNumPartitions(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._jrdd.partitions().size()
 
     def filter(self: "RDD[T]", f: Callable[[T], bool]) -> "RDD[T]":
@@ -1618,6 +1623,7 @@ class RDD(Generic[T_co]):
         f = fail_on_stopiteration(f)
 
         def processPartition(iterator: Iterable[T]) -> Iterable[Any]:
+            logger.warning("processPartition(iterator)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", iterator)
             for x in iterator:
                 f(x)
             return iter([])
@@ -3196,6 +3202,7 @@ class RDD(Generic[T_co]):
         ser: Serializer
         if batchSize == 0:
             ser = AutoBatchedSerializer(CPickleSerializer())
+            logger.warning("saveAsPickleFile(self,path,batchSize)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path, batchSize)
         else:
             ser = BatchedSerializer(CPickleSerializer(), batchSize)
         self._reserialize(ser)._jrdd.saveAsObjectFile(path)
@@ -3262,6 +3269,7 @@ class RDD(Generic[T_co]):
         ...     ''.join([r.decode('utf-8') if isinstance(r, bytes) else r for r in result])
         'bar\\nfoo\\n'
         """
+        logger.warning("saveAsTextFile(self,path,compressionCodecClass)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path, compressionCodecClass)
 
         def func(split: int, iterator: Iterable[Any]) -> Iterable[bytes]:
             for x in iterator:
@@ -3747,6 +3755,7 @@ class RDD(Generic[T_co]):
                         batch = max(int(batch / 1.5), 1)
                     c = 0
 
+                    logger.warning("add_shuffle_key(split,iterator)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", split, iterator)
             for split, items in buckets.items():
                 yield pack_long(split)
                 yield outputSerializer.dumps(items)
@@ -3909,6 +3918,7 @@ class RDD(Generic[T_co]):
         """
 
         def createZero() -> U:
+            logger.warning("createZero()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             return copy.deepcopy(zeroValue)
 
         return self.combineByKey(
@@ -4018,6 +4028,7 @@ class RDD(Generic[T_co]):
         """
 
         def createCombiner(x: V) -> List[V]:
+            logger.warning("createCombiner(x)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", x)
             return [x]
 
         def mergeValue(xs: List[V], x: V) -> List[V]:
@@ -4501,6 +4512,7 @@ class RDD(Generic[T_co]):
         """
 
         def get_batch_size(ser: Serializer) -> int:
+            logger.warning("get_batch_size(ser)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", ser)
             if isinstance(ser, BatchedSerializer):
                 return ser.batchSize
             return 1  # not batched
@@ -4653,6 +4665,7 @@ class RDD(Generic[T_co]):
         >>> rdd.setName('I am an RDD').name()
         'I am an RDD'
         """
+        logger.warning("setName(self,name)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self._jrdd.setName(name)
         return self
 
@@ -4700,6 +4713,7 @@ class RDD(Generic[T_co]):
         >>> print(rdd.getStorageLevel())
         Serialized 1x Replicated
         """
+        logger.warning("getStorageLevel(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         java_storage_level = self._jrdd.getStorageLevel()
         storage_level = StorageLevel(
             java_storage_level.useDisk(),
@@ -5069,6 +5083,7 @@ class RDD(Generic[T_co]):
         """
         rp = self._jrdd.getResourceProfile()
         if rp is not None:
+            logger.warning("getResourceProfile(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return ResourceProfile(_java_resource_profile=rp)
         else:
             return None

@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.LongType
  * [[org.apache.spark.rdd.RDD.zipWithIndex]].
  */
 object ExtractDistributedSequenceID extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     plan.resolveOperatorsUpWithPruning(_.containsPattern(DISTRIBUTED_SEQUENCE_ID)) {
       case plan: LogicalPlan if plan.resolved &&
@@ -43,5 +44,6 @@ object ExtractDistributedSequenceID extends Rule[LogicalPlan] {
           .transformExpressions { case _: DistributedSequenceID => attr }
         Project(plan.output, newPlan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

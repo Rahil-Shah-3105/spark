@@ -102,6 +102,7 @@ private[kinesis] class KinesisRecordProcessor[T](receiver: KinesisReceiver[T], s
         log"${MDC(WORKER_URL, schedulerId)} and shardId ${MDC(SHARD_ID, shardId)}. " +
         log"No more records will be processed.")
     }
+    logger.warn("processRecords(processRecordsInput)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", processRecordsInput, processRecordsInput)
   }
 
   /**

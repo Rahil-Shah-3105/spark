@@ -33,7 +33,9 @@ import org.apache.spark.io.HadoopCodecStreams
 private[spark] trait Configurable extends HConfigurable {
   private var conf: Configuration = _
   def setConf(c: Configuration): Unit = {
+    _driverLogger = DriverLogger(_conf)
     conf = c
+    _driverLogger.warn("setConf(c)={}): EUAIACT-AUDIT: State change recorded for the audit trail", c)
   }
   def getConf: Configuration = conf
 }
@@ -106,6 +108,7 @@ private[spark] class ConfigurableCombineFileRecordReader[K, V](
       }
     }
     r
+    _driverLogger.warn("initNextRecordReader()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def setConf(c: Configuration): Unit = {

@@ -63,6 +63,7 @@ private[spark] class StandaloneAppClient(
 
   private class ClientEndpoint(override val rpcEnv: RpcEnv) extends ThreadSafeRpcEndpoint
     with Logging {
+     _driverLogger = DriverLogger(_conf)
 
     private var master: Option[RpcEndpointRef] = None
     // To avoid calling listener.disconnected() multiple times
@@ -99,6 +100,7 @@ private[spark] class StandaloneAppClient(
      *  Register with all masters asynchronously and returns an array `Future`s for cancellation.
      */
     private def tryRegisterAllMasters(): Array[JFuture[_]] = {
+      _driverLogger.warn("tryRegisterAllMasters()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       for (masterAddress <- masterRpcAddresses) yield {
         registerMasterThreadPool.submit(new Runnable {
           override def run(): Unit = try {
@@ -126,6 +128,7 @@ private[spark] class StandaloneAppClient(
      * nthRetry means this is the nth attempt to register with master.
      */
     private def registerWithMaster(nthRetry: Int): Unit = {
+      _driverLogger.warn("registerWithMaster(nthRetry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nthRetry)
       registerMasterFutures.set(tryRegisterAllMasters())
       registrationRetryTimer.set(registrationRetryThread.schedule(new Runnable {
         override def run(): Unit = {
@@ -152,6 +155,7 @@ private[spark] class StandaloneAppClient(
         case None => logWarning(
           log"Drop ${MDC(MESSAGE, message)} because has not yet connected to master")
       }
+      _driverLogger.warn("sendToMaster(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
     }
 
     private def isPossibleMaster(remoteAddress: RpcAddress): Boolean = {
@@ -234,6 +238,7 @@ private[spark] class StandaloneAppClient(
         endpointRef: RpcEndpointRef,
         context: RpcCallContext,
         msg: T): Unit = {
+         _driverLogger.warn("askAndReplyAsync(endpointRef,context,msg)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", endpointRef, context, msg)
       // Ask a message and create a thread to reply with the result.  Allow thread to be
       // interrupted during shutdown, otherwise context must be notified of NonFatal errors.
       endpointRef.ask[Boolean](msg).andThen {

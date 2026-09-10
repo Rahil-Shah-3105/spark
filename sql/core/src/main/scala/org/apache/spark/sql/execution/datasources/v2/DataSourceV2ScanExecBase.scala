@@ -56,6 +56,7 @@ trait DataSourceV2ScanExecBase
   protected def inputPartitions: Seq[InputPartition]
 
   override def simpleString(maxFields: Int): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val result =
       s"$nodeName${truncatedString(output, "[", ", ", "]", maxFields)} ${scan.description()}"
     redact(result)
@@ -142,6 +143,7 @@ trait DataSourceV2ScanExecBase
       numOutputRows += 1
       r
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
@@ -150,5 +152,6 @@ trait DataSourceV2ScanExecBase
       numOutputRows += b.numRows()
       b
     }
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

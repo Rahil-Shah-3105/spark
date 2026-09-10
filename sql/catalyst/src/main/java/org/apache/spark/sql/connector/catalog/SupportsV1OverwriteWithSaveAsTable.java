@@ -18,6 +18,8 @@
 package org.apache.spark.sql.connector.catalog;
 
 import org.apache.spark.annotation.Evolving;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A marker interface that can be mixed into a {@link TableProvider} to indicate that the data
@@ -52,6 +54,7 @@ import org.apache.spark.annotation.Evolving;
  */
 @Evolving
 public interface SupportsV1OverwriteWithSaveAsTable extends TableProvider {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsV1OverwriteWithSaveAsTable.class);
   /**
    * The name of the internal write option that indicates the command originated from
    * DataFrameWriter V1 saveAsTable API.
@@ -66,6 +69,7 @@ public interface SupportsV1OverwriteWithSaveAsTable extends TableProvider {
    * @return true if the option should be added (default), false otherwise
    */
   default boolean addV1OverwriteWithSaveAsTableOption() {
+	planChangeLogger.warn("addV1OverwriteWithSaveAsTableOption()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return true;
   }
 }

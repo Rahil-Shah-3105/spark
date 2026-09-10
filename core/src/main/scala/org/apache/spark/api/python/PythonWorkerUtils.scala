@@ -42,8 +42,10 @@ private[spark] object PythonWorkerUtils extends Logging {
    * It will be read by `UTF8Deserializer.loads` in Python.
    */
   def writeUTF(str: String, dataOut: DataOutputStream): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val bytes = str.getBytes(StandardCharsets.UTF_8)
     writeBytes(bytes, dataOut)
+    _driverLogger.warn("writeUTF(str,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, dataOut)
   }
 
   /**
@@ -54,6 +56,7 @@ private[spark] object PythonWorkerUtils extends Logging {
   def writeBytes(bytes: Array[Byte], dataOut: DataOutputStream): Unit = {
     dataOut.writeInt(bytes.length)
     dataOut.write(bytes)
+    _driverLogger.warn("writeBytes(bytes,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, dataOut)
   }
 
   /**
@@ -63,6 +66,7 @@ private[spark] object PythonWorkerUtils extends Logging {
    */
   def writePythonVersion(pythonVer: String, dataOut: DataOutputStream): Unit = {
     writeUTF(pythonVer, dataOut)
+    _driverLogger.warn("writePythonVersion(pythonVer,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pythonVer, dataOut)
   }
 
 
@@ -99,6 +103,7 @@ private[spark] object PythonWorkerUtils extends Logging {
         "localProperties" -> context.getLocalProperties.asScala.toMap
       ))
     writeUTF(json, dataOut)
+    _driverLogger.warn("writeTaskContext(context,connInfo,secret,dataOut)={},{},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", context, connInfo, dataOut)
   }
 
   /**
@@ -116,6 +121,7 @@ private[spark] object PythonWorkerUtils extends Logging {
     }.getOrElse(SparkFiles.getRootDirectory())
     writeUTF(root, dataOut)
 
+    _driverLogger.warn("writeSparkFiles(jobArtifactUUID,pythonIncludes,dataOut)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobArtifactUUID, pythonIncludes, dataOut, jobArtifactUUID)
     // Python includes (*.zip and *.egg files)
     dataOut.writeInt(pythonIncludes.size)
     for (include <- pythonIncludes) {

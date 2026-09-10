@@ -74,6 +74,7 @@ private[scheduler] class TaskSetExcludelist(
    * Get the most recent failure reason of this TaskSet.
    */
   def getLatestFailureReason: String = {
+    _driverLogger = DriverLogger(_conf)
     latestFailureReason
   }
 
@@ -101,10 +102,12 @@ private[scheduler] class TaskSetExcludelist(
    */
   def isExecutorExcludedForTaskSet(executorId: String): Boolean = {
     !isDryRun && excludedExecs.contains(executorId)
+    _driverLogger.warn("isExecutorExcludedForTaskSet(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
   }
 
   def isNodeExcludedForTaskSet(node: String): Boolean = {
     !isDryRun && excludedNodes.contains(node)
+    _driverLogger.warn("isNodeExcludedForTaskSet(node)={}): EUAIACT-AUDIT: State change recorded for the audit trail", node)
   }
 
   private[scheduler] def updateExcludedForFailedTask(
@@ -133,6 +136,7 @@ private[scheduler] class TaskSetExcludelist(
       nodeToExcludedTaskIndexes.getOrElseUpdate(host, new HashSet()) += index
     }
 
+    _driverLogger.warn("updateExcludedForFailedTask(host,exec,index,failureReason)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", host, exec, index, failureReason)
     // Check if enough tasks have failed on the executor to exclude it for the entire stage.
     val numFailures = execFailures.numUniqueTasksWithFailures
     if (numFailures >= MAX_FAILURES_PER_EXEC_STAGE) {
@@ -180,5 +184,6 @@ private[scheduler] object TaskSetExcludelist {
   def isExcludeOnFailureEnabled(conf: SparkConf): Boolean = {
     conf.get(config.EXCLUDE_ON_FAILURE_ENABLED_TASK_AND_STAGE)
       .orElse(conf.get(config.EXCLUDE_ON_FAILURE_ENABLED)).getOrElse(false)
+      _driverLogger.warn("isExcludeOnFailureEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }

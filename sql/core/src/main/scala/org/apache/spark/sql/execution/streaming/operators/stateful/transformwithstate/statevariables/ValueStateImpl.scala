@@ -43,6 +43,7 @@ class ValueStateImpl[S](
     valEncoder: ExpressionEncoder[Any],
     metrics: Map[String, SQLMetric] = Map.empty)
   extends ValueState[S] with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val stateTypesEncoder = StateTypesEncoder(keyExprEnc, valEncoder, stateName)
 
@@ -63,6 +64,7 @@ class ValueStateImpl[S](
     val encodedGroupingKey = stateTypesEncoder.encodeGroupingKey()
     val retRow = store.get(encodedGroupingKey, stateName)
 
+    planChangeLogger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     if (retRow != null) {
       stateTypesEncoder.decodeValue(retRow).asInstanceOf[S]
     } else {
@@ -76,6 +78,7 @@ class ValueStateImpl[S](
     store.put(stateTypesEncoder.encodeGroupingKey(),
       encodedValue, stateName)
     TWSMetricsUtils.incrementMetric(metrics, "numUpdatedStateRows")
+    planChangeLogger.warn("update(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState)
   }
 
   /** Function to remove state for given key */

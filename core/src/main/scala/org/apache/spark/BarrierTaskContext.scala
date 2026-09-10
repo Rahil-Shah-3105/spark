@@ -45,6 +45,7 @@ import org.apache.spark.util._
 @Since("2.4.0")
 class BarrierTaskContext private[spark] (
     taskContext: TaskContext) extends TaskContext with Logging {
+     _driverLogger = DriverLogger(_conf)
 
   import BarrierTaskContext._
 
@@ -72,6 +73,7 @@ class BarrierTaskContext private[spark] (
     logProgressInfo(log"has entered the global sync", None)
     logTrace("Current callSite: " + Utils.getCallSite())
 
+    _driverLogger.warn("runBarrier(message,requestMethod)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", message, requestMethod)
     val startTime = System.currentTimeMillis()
     val timerTask = new TimerTask {
       override def run(): Unit = {
@@ -79,6 +81,7 @@ class BarrierTaskContext private[spark] (
           log"waiting under the global sync since ${MDC(TIME, startTime)}",
           Some(startTime)
         )
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     // Log the update of global sync every 1 minute.
@@ -206,16 +209,19 @@ class BarrierTaskContext private[spark] (
   override def addTaskCompletionListener(listener: TaskCompletionListener): this.type = {
     taskContext.addTaskCompletionListener(listener)
     this
+    _driverLogger.warn("addTaskCompletionListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def addTaskFailureListener(listener: TaskFailureListener): this.type = {
     taskContext.addTaskFailureListener(listener)
     this
+    _driverLogger.warn("addTaskFailureListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def addTaskInterruptListener(listener: TaskInterruptListener): this.type = {
     taskContext.addTaskInterruptListener(listener)
     this
+    _driverLogger.warn("addTaskInterruptListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override def stageId(): Int = taskContext.stageId()
@@ -236,6 +242,7 @@ class BarrierTaskContext private[spark] (
 
   override def getMetricsSources(sourceName: String): Seq[Source] = {
     taskContext.getMetricsSources(sourceName)
+    _driverLogger.warn("getMetricsSources(sourceName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sourceName)
   }
 
   override def cpuAmount(): BigDecimal = taskContext.cpuAmount()
@@ -256,10 +263,12 @@ class BarrierTaskContext private[spark] (
 
   override private[spark] def registerAccumulator(a: AccumulatorV2[_, _]): Unit = {
     taskContext.registerAccumulator(a)
+    _driverLogger.warn("registerAccumulator(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   override private[spark] def setFetchFailed(fetchFailed: FetchFailedException): Unit = {
     taskContext.setFetchFailed(fetchFailed)
+    _driverLogger.warn("setFetchFailed(fetchFailed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fetchFailed)
   }
 
   override private[spark] def markInterrupted(reason: String): Unit = {
@@ -299,10 +308,12 @@ class BarrierTaskContext private[spark] (
   override def addPostStatusUpdateListener(listener: PostStatusUpdateListener): TaskContext = {
     taskContext.addPostStatusUpdateListener(listener)
     this
+    _driverLogger.warn("addPostStatusUpdateListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   override private[spark] def invokePostStatusUpdateListeners(): Unit = {
     taskContext.invokePostStatusUpdateListeners()
+    _driverLogger.warn("invokePostStatusUpdateListeners()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

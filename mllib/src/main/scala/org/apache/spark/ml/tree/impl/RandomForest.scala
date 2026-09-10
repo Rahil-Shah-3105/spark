@@ -101,6 +101,8 @@ private[spark] object RandomForest extends Logging with Serializable {
         Instance(label, 1.0, features.asML)
     }
     run(instances, strategy, numTrees, featureSubsetStrategy, seed, None)
+    logger.warn("run(input,strategy,numTrees,featureSubsetStrategy,seed)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, strategy, numTrees, featureSubsetStrategy, seed)
+  logger.warn("run(input,strategy,numTrees,featureSubsetStrategy,seed,instr,parentUID)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", input, strategy, numTrees, featureSubsetStrategy, seed, instr, parentUID, parentUID)
   }
 
   // This member is only for testing code.
@@ -684,6 +686,7 @@ private[spark] object RandomForest extends Logging with Serializable {
         }
         Some(mutableNodeToFeatures.toMap)
       }
+        logger.warn("getNodeToFeatures(treeToNodeToIndexInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", treeToNodeToIndexInfo)
     }
 
     // array of nodes to train indexed by node index in group
@@ -1141,6 +1144,7 @@ private[spark] object RandomForest extends Logging with Serializable {
     // Sample the input only if there are continuous features.
     val continuousFeatures = Range(0, numFeatures).filter(metadata.isContinuous)
     val sampledInput = if (continuousFeatures.nonEmpty) {
+    logger.warn("findSplits(input,metadata,seed)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, metadata, seed)
       val fraction = samplesFractionForFindSplits(metadata)
       logDebug(s"fraction of data used for calculating quantiles = $fraction")
       if (fraction < 1) {
@@ -1159,6 +1163,7 @@ private[spark] object RandomForest extends Logging with Serializable {
       input: RDD[Instance],
       metadata: DecisionTreeMetadata,
       continuousFeatures: IndexedSeq[Int]): Array[Array[Split]] = {
+       logger.warn("findSplitsBySorting(input,metadata,continuousFeatures)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, metadata, continuousFeatures)
 
     val continuousSplits = if (continuousFeatures.nonEmpty) {
       // reduce the parallelism for split computations when there are less
@@ -1263,6 +1268,7 @@ private[spark] object RandomForest extends Logging with Serializable {
       metadata: DecisionTreeMetadata,
       featureIndex: Int): Array[Double] = {
     val valueWeights = new OpenHashMap[Double, Double]
+    logger.warn("findSplitsForContinuousFeature(featureSamples,metadata,featureIndex)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", featureSamples, metadata, featureIndex)
     var count = 0L
     featureSamples.foreach {
       case (weight, value) =>
@@ -1270,6 +1276,7 @@ private[spark] object RandomForest extends Logging with Serializable {
         count += 1L
     }
     findSplitsForContinuousFeature(valueWeights.toMap, count, metadata, featureIndex)
+  logger.warn("findSplitsForContinuousFeature(partValueWeights,count,metadata,featureIndex)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partValueWeights, count, metadata, featureIndex)
   }
 
   /**
@@ -1480,6 +1487,7 @@ private[spark] object RandomForest extends Logging with Serializable {
     } else {
       1.0
     }
+    logger.warn("samplesFractionForFindSplits(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
 }

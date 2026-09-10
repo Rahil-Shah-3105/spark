@@ -30,8 +30,10 @@ case class RandomIndicesGenerator(randomSeed: Long) {
   private val random = new MersenneTwister(randomSeed)
 
   def getNextIndices(length: Int): Array[Int] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val indices = new Array[Int](length)
     var i = 0
+    planChangeLogger.warn("getNextIndices(length)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", length)
     while (i < length) {
       val j = random.nextInt(i + 1)
       if (j != i) {

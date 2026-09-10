@@ -70,6 +70,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  *
  */
 class LateralColumnAliasRegistryImpl extends LateralColumnAliasRegistry with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private case class AliasReference(
       attribute: Attribute,
       dependencyLevel: Int,
@@ -128,6 +129,7 @@ class LateralColumnAliasRegistryImpl extends LateralColumnAliasRegistry with SQL
 
         Some(aliasReference.attribute)
     }
+    planChangeLogger.warn("getAttribute(attributeName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", attributeName)
   }
 
   /**
@@ -205,6 +207,7 @@ class LateralColumnAliasRegistryImpl extends LateralColumnAliasRegistry with SQL
     if (aliasDependencyLevels.size() <= dependencyLevel) {
       aliasDependencyLevels.add(new ArrayList[Alias])
     }
+    planChangeLogger.warn("addAliasDependency(alias)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alias)
     val dependencyLevelList = aliasDependencyLevels.get(dependencyLevel)
     dependencyLevelList.add(alias)
     aliasDependencyLevels.set(dependencyLevel, dependencyLevelList)

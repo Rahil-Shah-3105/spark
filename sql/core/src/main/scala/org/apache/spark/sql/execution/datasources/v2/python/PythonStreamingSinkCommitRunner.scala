@@ -42,6 +42,7 @@ class PythonStreamingSinkCommitRunner(
     batchId: Long,
     overwrite: Boolean,
     abort: Boolean) extends PythonPlannerRunner[Unit](dataSourceCls) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override val workerModule: String = "pyspark.sql.worker.python_streaming_sink_runner"
 
   override protected def runnerConf: Map[String, String] = {
@@ -68,6 +69,7 @@ class PythonStreamingSinkCommitRunner(
           message.asInstanceOf[PythonWriterCommitMessage].pickledMessage, dataOut)
       }
     }
+    planChangeLogger.warn("writeToPython(dataOut,pickler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, pickler)
     dataOut.writeLong(batchId)
     // Send whether to invoke `abort` instead of `commit`.
     dataOut.writeBoolean(abort)

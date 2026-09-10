@@ -71,6 +71,7 @@ private[kafka010] class KafkaBatch(
 
   override def createReaderFactory(): PartitionReaderFactory = {
     KafkaBatchReaderFactory
+    logger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def toString: String =

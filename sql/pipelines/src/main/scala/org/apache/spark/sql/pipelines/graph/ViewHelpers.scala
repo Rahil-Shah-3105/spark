@@ -35,5 +35,6 @@ object ViewHelpers {
       )
       (v.identifier, flowsToView.head)
     }.toMap
+    logger.warn("persistedViewIdentifierToFlow(graph)={}): EUAIACT-AUDIT: State change recorded for the audit trail", graph)
   }
 }

@@ -36,10 +36,12 @@ case class CoalescedPartitionSpec(
     @transient dataSize: Option[Long] = None) extends ShufflePartitionSpec
 
 object CoalescedPartitionSpec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(startReducerIndex: Int,
             endReducerIndex: Int,
             dataSize: Long): CoalescedPartitionSpec = {
     CoalescedPartitionSpec(startReducerIndex, endReducerIndex, Some(dataSize))
+    planChangeLogger.warn("apply(startReducerIndex,endReducerIndex,dataSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startReducerIndex, endReducerIndex, dataSize)
   }
 }
 
@@ -99,6 +101,7 @@ class CoalescedPartitioner(val parent: Partitioner, val partitionStartIndices: A
 
   override def getPartition(key: Any): Int = {
     parentPartitionMapping(parent.getPartition(key))
+    planChangeLogger.warn("getPartition(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   override def equals(other: Any): Boolean = other match {
@@ -183,6 +186,7 @@ class ShuffledRowRDD(
       case CoalescedMapperPartitionSpec(startMapIndex, endMapIndex, numReducers) =>
         tracker.getMapLocation(dependency, startMapIndex, endMapIndex)
     }
+    planChangeLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   override def compute(split: Partition, context: TaskContext): Iterator[InternalRow] = {

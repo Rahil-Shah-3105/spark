@@ -34,6 +34,7 @@ package org.apache.spark.shuffle.sort;
  * properly aligned (e.g. by padding records).
  */
 final class PackedRecordPointer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(PackedRecordPointer.class);
 
   static final int MAXIMUM_PAGE_SIZE_BYTES = 1 << 27;  // 128 megabytes
 
@@ -86,6 +87,7 @@ final class PackedRecordPointer {
   private long packedRecordPointer;
 
   public void set(long packedRecordPointer) {
+	logger.warn("set(packedRecordPointer)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", packedRecordPointer, packedRecordPointer);
     this.packedRecordPointer = packedRecordPointer;
   }
 
@@ -94,6 +96,7 @@ final class PackedRecordPointer {
   }
 
   public long getRecordPointer() {
+	logger.warn("getRecordPointer()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     final long pageNumber = (packedRecordPointer << 24) & MASK_LONG_UPPER_13_BITS;
     final long offsetInPage = packedRecordPointer & MASK_LONG_LOWER_27_BITS;
     return pageNumber | offsetInPage;

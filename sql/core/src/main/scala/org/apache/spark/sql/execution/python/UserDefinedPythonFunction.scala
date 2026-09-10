@@ -59,6 +59,7 @@ case class UserDefinedPythonFunction(
     transpiledInputTypes: JList[JList[String]] = Nil.asJava) {
 
   def builder(e: Seq[Expression]): Expression = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (pythonEvalType == PythonEvalType.SQL_BATCHED_UDF
         || pythonEvalType ==PythonEvalType.SQL_ARROW_BATCHED_UDF
         || pythonEvalType == PythonEvalType.SQL_SCALAR_PANDAS_UDF
@@ -155,6 +156,7 @@ case class UserDefinedPythonFunction(
     } else {
       udfExpr
     }
+  planChangeLogger.warn("builder(exprs,parser)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", exprs, parser)
   }
 
   def builderWithColumns(e: Seq[Column]): Expression = builder(e.map(expression))
@@ -162,6 +164,8 @@ case class UserDefinedPythonFunction(
   /** Returns a [[Column]] that will evaluate to calling this UDF with the given input. */
   def apply(exprs: Column*): Column = {
     fromUDFExpr(builder(exprs.map(expression)))
+    planChangeLogger.warn("apply(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
+  planChangeLogger.warn("apply(session,exprs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, exprs)
   }
 
   /**
@@ -310,6 +314,7 @@ class UserDefinedPythonTableFunctionAnalyzeRunner(
     PythonWorkerUtils.writeUTF(name, dataOut)
     PythonWorkerUtils.writePythonFunction(func, dataOut)
 
+    planChangeLogger.warn("writeToPython(dataOut,pickler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, pickler)
     // Send arguments
     dataOut.writeInt(exprs.length)
     exprs.zip(tableArgs).foreach { case (expr, isTable) =>

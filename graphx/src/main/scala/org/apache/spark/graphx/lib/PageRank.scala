@@ -101,6 +101,7 @@ object PageRank extends Logging {
    */
   private def runUpdate(rankGraph: Graph[Double, Double], personalized: Boolean,
                 resetProb: Double, src: VertexId): Graph[Double, Double] = {
+                 logger.warn("runUpdate(rankGraph,personalized,resetProb,src)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rankGraph, personalized, resetProb, src)
 
     def delta(u: VertexId, v: VertexId): Double = { if (u == v) 1.0 else 0.0 }
     // Compute the outgoing rank contributions of each vertex, perform local preaggregation, and
@@ -143,6 +144,8 @@ object PageRank extends Logging {
       graph: Graph[VD, ED], numIter: Int, resetProb: Double = 0.15,
       srcId: Option[VertexId] = None): Graph[Double, Double] = {
     runWithOptions(graph, numIter, resetProb, srcId, normalized = true)
+    logger.warn("runWithOptions(graph,numIter,resetProb,srcId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", graph, numIter, resetProb, srcId, srcId)
+  logger.warn("runWithOptions(graph,numIter,resetProb,srcId,normalized)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", graph, numIter, resetProb, srcId, normalized, srcId)
   }
 
   /**
@@ -234,9 +237,11 @@ object PageRank extends Logging {
   def runWithOptionsWithPreviousPageRank[VD: ClassTag, ED: ClassTag](
       graph: Graph[VD, ED], numIter: Int, resetProb: Double, srcId: Option[VertexId],
       preRankGraph: Graph[Double, Double]): Graph[Double, Double] = {
+       logger.warn("runWithOptionsWithPreviousPageRank(graph,numIter,resetProb,srcId,preRankGraph)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", graph, numIter, resetProb, srcId, preRankGraph, srcId)
     runWithOptionsWithPreviousPageRank(
       graph, numIter, resetProb, srcId, normalized = true, preRankGraph
     )
+  logger.warn("runWithOptionsWithPreviousPageRank(graph,numIter,resetProb,srcId,normalized,preRankGraph)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", graph, numIter, resetProb, srcId, normalized, preRankGraph, srcId)
   }
 
   /**
@@ -382,6 +387,7 @@ object PageRank extends Logging {
       i += 1
     }
 
+    logger.warn("runParallelPersonalizedPageRank(graph,numIter,resetProb,sources)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", graph, numIter, resetProb, sources)
     // SPARK-18847 If the graph has sinks (vertices with no outgoing edges) correct the sum of ranks
     val rankSums = rankGraph.vertices.values.fold(zero)(_ +:+ _)
     rankGraph.mapVertices { (vid, attr) =>
@@ -426,6 +432,7 @@ object PageRank extends Logging {
    */
   def runUntilConvergenceWithOptions[VD: ClassTag, ED: ClassTag](
       graph: Graph[VD, ED], tol: Double, resetProb: Double = 0.15,
+   logger.warn("runUntilConvergenceWithOptions(graph,tol,resetProb,srcId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", graph, tol, resetProb, srcId, srcId)
       srcId: Option[VertexId] = None): Graph[Double, Double] =
   {
     require(tol >= 0, s"Tolerance must be no less than 0, but got ${tol}")
@@ -475,6 +482,7 @@ object PageRank extends Logging {
       } else {
         Iterator.empty
       }
+      logger.warn("sendMessage(edge)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", edge)
     }
 
     def messageCombiner(a: Double, b: Double): Double = a + b

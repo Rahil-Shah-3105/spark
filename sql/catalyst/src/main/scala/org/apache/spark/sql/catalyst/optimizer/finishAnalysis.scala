@@ -48,6 +48,7 @@ import org.apache.spark.sql.types._
  *   we use this to replace Every and Any with Min and Max respectively.
  */
 object ReplaceExpressions extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = plan.transformWithPruning(
     _.containsAnyPattern(RUNTIME_REPLACEABLE)) {
     case p => p.mapExpressions(replace)
@@ -87,6 +88,7 @@ object EvalInlineTables extends Rule[LogicalPlan] with CastSupport {
     plan.transformDownWithSubqueriesAndPruning(_.containsPattern(INLINE_TABLE_EVAL)) {
       case table: ResolvedInlineTable => eval(table)
     }
+  planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
     def eval(table: ResolvedInlineTable): LocalRelation = {

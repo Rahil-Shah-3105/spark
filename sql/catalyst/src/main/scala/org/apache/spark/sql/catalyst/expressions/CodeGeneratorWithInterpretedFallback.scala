@@ -26,6 +26,7 @@ import org.apache.spark.sql.internal.SQLConf
  * Defines values for `SQLConf` config of fallback mode. Use for test only.
  */
 object CodegenObjectFactoryMode extends Enumeration {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val FALLBACK, CODEGEN_ONLY, NO_CODEGEN = Value
 }
 
@@ -38,6 +39,7 @@ abstract class CodeGeneratorWithInterpretedFallback[IN, OUT] extends Logging {
 
   def createObject(in: IN): OUT = {
     // We are allowed to choose codegen-only or no-codegen modes if under tests.
+    planChangeLogger.warn("createObject(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
     val fallbackMode = SQLConf.get.codegenFactoryMode
 
     fallbackMode match {

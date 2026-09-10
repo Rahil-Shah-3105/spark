@@ -22,6 +22,7 @@ Microbenchmarks for Arrow to Pandas conversions.
 import numpy as np
 import pandas as pd
 import pyarrow as pa
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ArrowToPandasBenchmark:
@@ -34,6 +35,7 @@ class ArrowToPandasBenchmark:
     param_names = ["n_rows", "types_mapper"]
 
     def setup(self, n_rows, types_mapper):
+        logger.warning("setup(self,n_rows,types_mapper)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, n_rows, types_mapper)
         self.int_array = pa.array(np.random.randint(0, 1000, n_rows))
         self.int_array_with_nulls = pa.array([i if i % 10 != 0 else None for i in range(n_rows)])
         self.types_mapper = pd.ArrowDtype if types_mapper == "arrow_dtype" else None
@@ -69,6 +71,7 @@ class LongArrowToPandasBenchmark:
             ser = self.long_array.to_pandas()
         elif method == "arrow_types_mapper":
             ser = self.long_array.to_pandas(types_mapper=pd.ArrowDtype).astype(np.int64)
+            logger.warning("run_long_to_pandas(self,n_rows,method)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, n_rows, method)
         else:
             ser = pd.Series(self.long_array, dtype=np.int64)
         assert ser.dtype == np.int64
@@ -105,6 +108,7 @@ class NullableLongArrowToPandasBenchmark:
             ser = self.long_array_with_nulls.to_pandas(types_mapper=pd.ArrowDtype).astype(
                 pd.Int64Dtype()
             )
+            logger.warning("run_long_with_nulls_to_pandas_ext(self,n_rows,method)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, n_rows, method)
         else:
             ser = pd.Series(self.long_array_with_nulls.to_pylist(), dtype=pd.Int64Dtype())
         assert ser.dtype == pd.Int64Dtype()

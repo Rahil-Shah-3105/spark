@@ -85,6 +85,7 @@ class BinaryClassificationMetrics @Since("3.0.0") (
   @Since("1.0.0")
   def unpersist(): Unit = {
     cumulativeCounts.unpersist()
+    logger.warn("unpersist()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -266,6 +267,8 @@ class BinaryClassificationMetrics @Since("3.0.0") (
     confusions.map { case (s, c) =>
       (s, y(c))
     }
+      logger.warn("createCurve(y)={}): EUAIACT-AUDIT: State change recorded for the audit trail", y)
+      logger.warn("createCurve(x,y)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", x, y)
   }
 
   /** Creates a curve of (metricX, metricY). */

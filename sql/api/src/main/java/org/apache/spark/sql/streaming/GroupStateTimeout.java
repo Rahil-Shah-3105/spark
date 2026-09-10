@@ -19,6 +19,8 @@ package org.apache.spark.sql.streaming;
 
 import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.catalyst.plans.logical.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents the type of timeouts possible for the Dataset operations
@@ -30,6 +32,7 @@ import org.apache.spark.sql.catalyst.plans.logical.*;
  */
 @Evolving
 public class GroupStateTimeout {
+private static final Logger log = LoggerFactory.getLogger(GroupStateTimeout.class);
   // NOTE: if you're adding new type of timeout, you should also fix the places below:
   // - Scala:
   //     org.apache.spark.sql.execution.streaming.GroupStateImpl.getGroupStateTimeoutFromString
@@ -44,6 +47,7 @@ public class GroupStateTimeout {
    * See documentation on {@code GroupState} for more details.
    */
   public static GroupStateTimeout ProcessingTimeTimeout() {
+	log.warn("ProcessingTimeTimeout()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return ProcessingTimeTimeout$.MODULE$;
   }
 

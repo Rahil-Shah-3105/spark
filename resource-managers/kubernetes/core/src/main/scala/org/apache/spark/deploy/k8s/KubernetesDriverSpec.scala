@@ -69,5 +69,6 @@ object KubernetesDriverSpec {
       driverPreKubernetesResources.asScala.toSeq,
       driverKubernetesResources.asScala.toSeq,
       systemProperties.asScala.toMap)
+    logger.warn("create(pod,driverPreKubernetesResources,driverKubernetesResources,systemProperties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pod, driverPreKubernetesResources, driverKubernetesResources, systemProperties)
   }
 }

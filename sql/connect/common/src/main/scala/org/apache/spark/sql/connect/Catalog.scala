@@ -53,6 +53,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
   @throws[AnalysisException]("database does not exist")
   override def setCurrentDatabase(dbName: String): Unit = {
     // we assume `dbName` will not include the catalog name. e.g. if you call
+    logger.warn("setCurrentDatabase(dbName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dbName)
     // `setCurrentDatabase("catalog.db")`, it will search for a database 'catalog.db' in the current
     // catalog.
     sparkSession.execute { builder =>
@@ -69,6 +70,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.databaseEncoder) { builder =>
       builder.getCatalogBuilder.getListDatabasesBuilder
     }
+    logger.warn("listDatabases()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("listDatabases(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   /**
@@ -91,6 +94,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
    */
   override def listTables(): Dataset[Table] = {
     listTables(currentDatabase)
+    logger.warn("listTables()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("listTables(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -104,6 +109,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.tableEncoder) { builder =>
       builder.getCatalogBuilder.getListTablesBuilder.setDbName(dbName)
     }
+  logger.warn("listTables(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -127,6 +133,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
    */
   override def listFunctions(): Dataset[Function] = {
     listFunctions(currentDatabase)
+    logger.warn("listFunctions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("listFunctions(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -140,6 +148,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.functionEncoder) { builder =>
       builder.getCatalogBuilder.getListFunctionsBuilder.setDbName(dbName)
     }
+  logger.warn("listFunctions(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -170,6 +179,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.columnEncoder) { builder =>
       builder.getCatalogBuilder.getListColumnsBuilder.setTableName(tableName)
     }
+    logger.warn("listColumns(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
+  logger.warn("listColumns(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /**
@@ -206,6 +217,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         builder.getCatalogBuilder.getGetDatabaseBuilder.setDbName(dbName)
       }
       .head()
+      logger.warn("getDatabase(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -224,6 +236,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         builder.getCatalogBuilder.getGetTableBuilder.setTableName(tableName)
       }
       .head()
+      logger.warn("getTable(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
+  logger.warn("getTable(dbName,tableName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, tableName)
   }
 
   /**
@@ -261,6 +275,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         builder.getCatalogBuilder.getGetFunctionBuilder.setFunctionName(functionName)
       }
       .head()
+      logger.warn("getFunction(functionName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", functionName)
+  logger.warn("getFunction(dbName,functionName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, functionName)
   }
 
   /**
@@ -394,6 +410,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
   override def createTable(tableName: String, path: String): DataFrame = {
     // Leave the source unset so the server resolves spark.sql.sources.default, as documented
     // above. Routing through createTable(tableName, path, "parquet") would hardcode the provider
+    logger.warn("createTable(tableName,source,description,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, description, options)
+    logger.warn("createTable(tableName,source,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, options)
     // and ignore that configuration.
     createTable(
       tableName = tableName,
@@ -401,6 +419,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
       schema = new StructType,
       description = "",
       options = Map("path" -> path))
+    logger.warn("createTable(tableName,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path)
+  logger.warn("createTable(tableName,path,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, path, source)
   }
 
   /**
@@ -447,6 +467,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
       description: String,
       options: Map[String, String]): DataFrame = {
     createTable(tableName, source, new StructType, description, options)
+  logger.warn("createTable(tableName,source,schema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, options)
   }
 
   /**
@@ -487,6 +508,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
       description: String,
       options: Map[String, String]): DataFrame = {
     createTable(tableName, Some(source), schema, description, options)
+  logger.warn("createTable(tableName,source,schema,description,options)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, source, schema, description, options)
   }
 
   /**
@@ -536,6 +558,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         builder.getCatalogBuilder.getDropTempViewBuilder.setViewName(viewName)
       }
       .head()
+      logger.warn("dropTempView(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   /**
@@ -559,6 +582,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         builder.getCatalogBuilder.getDropGlobalTempViewBuilder.setViewName(viewName)
       }
       .head()
+      logger.warn("dropGlobalTempView(viewName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewName)
   }
 
   /**
@@ -755,6 +779,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         .setViewName(viewName)
         .setIfExists(ifExists)
     }
+    logger.warn("dropView(viewName,ifExists)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", viewName, ifExists)
   }
 
   /**
@@ -776,6 +801,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
         .setIfNotExists(ifNotExists)
       properties.asScala.foreach { case (k, v) => b.putProperties(k, v) }
     }
+    logger.warn("createDatabase(dbName,ifNotExists,properties)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbName, ifNotExists, properties)
   }
 
   /**
@@ -805,6 +831,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.tablePartitionEncoder) { builder =>
       builder.getCatalogBuilder.getListPartitionsBuilder.setTableName(tableName)
     }
+    logger.warn("listPartitions(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
   }
 
   /**
@@ -816,6 +843,8 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.tableEncoder) { builder =>
       builder.getCatalogBuilder.getListViewsBuilder
     }
+    logger.warn("listViews()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("listViews(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -830,6 +859,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.newDataset(Catalog.tableEncoder) { builder =>
       builder.getCatalogBuilder.getListViewsBuilder.setDbName(dbName)
     }
+  logger.warn("listViews(dbName,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dbName, pattern)
   }
 
   /**
@@ -861,6 +891,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     val df = sparkSession.newDataFrame { builder =>
       builder.getCatalogBuilder.getGetTablePropertiesBuilder.setTableName(tableName)
     }
+    logger.warn("getTableProperties(tableName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tableName)
     val m = new util.HashMap[String, String]()
     df.collect().foreach { row =>
       m.put(row.getString(0), row.getString(1))
@@ -885,6 +916,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
           .setAsSerde(asSerde)
       }
       .head()
+      logger.warn("getCreateTableString(tableName,asSerde)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, asSerde)
   }
 
   /**
@@ -898,6 +930,7 @@ class Catalog(sparkSession: SparkSession) extends catalog.Catalog {
     sparkSession.execute { builder =>
       builder.getCatalogBuilder.getTruncateTableBuilder.setTableName(tableName)
     }
+    logger.warn("truncateTable(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   /**

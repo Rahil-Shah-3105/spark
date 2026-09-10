@@ -133,6 +133,7 @@ case class DataSource(
   private def newHadoopConfiguration(): Configuration = getHadoopConf(sparkSession, options)
 
   private def makeQualified(path: Path): Path = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val fs = path.getFileSystem(newHadoopConfiguration())
     path.makeQualified(fs.getUri, fs.getWorkingDirectory)
   }
@@ -236,6 +237,7 @@ case class DataSource(
     // columns. This is because we allow users to do so in the previous Spark releases and
     // we have the existing tests for the cases (e.g., `ParquetHadoopFsRelationSuite`).
     // See SPARK-18108 and SPARK-21144 for related discussions.
+    planChangeLogger.warn("getOrInferFileFormatSchema(format,getFileIndex)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", format, getFileIndex)
     try {
       SchemaUtils.checkColumnNameDuplication(
         (dataSchema ++ partitionSchema).map(_.name),
@@ -334,6 +336,7 @@ case class DataSource(
         throw QueryExecutionErrors.streamedOperatorUnsupportedByDataSourceError(
           className, "reading")
     }
+    planChangeLogger.warn("createSource(metadataPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metadataPath)
   }
 
   /** Returns a sink that can be used to continually write data. */
@@ -355,6 +358,7 @@ case class DataSource(
         throw QueryExecutionErrors.streamedOperatorUnsupportedByDataSourceError(
           className, "writing")
     }
+    planChangeLogger.warn("createSink(outputMode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputMode)
   }
 
   /**
@@ -556,6 +560,7 @@ case class DataSource(
       case _ => throw SparkException.internalError(
         s"${providingClass.getCanonicalName} does not allow create table as select.")
     }
+    planChangeLogger.warn("writeAndRead(mode,data,outputColumnNames)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mode, data, outputColumnNames)
   }
 
   /**
@@ -585,6 +590,7 @@ case class DataSource(
     val fileStatusCache = FileStatusCache.getOrCreate(sparkSession)
     new InMemoryFileIndex(
       sparkSession, globbedPaths, options, userSpecifiedSchema, fileStatusCache)
+    planChangeLogger.warn("createInMemoryFileIndex(globbedPaths)={}): EUAIACT-AUDIT: State change recorded for the audit trail", globbedPaths)
   }
 
   /**

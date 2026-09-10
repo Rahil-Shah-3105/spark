@@ -94,6 +94,7 @@ class PipelineEventSender(
                     log"${MDC(LogKeys.ERROR, event.message)}",
                   e)
             }
+            logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           }
         })
       } else {
@@ -203,6 +204,7 @@ class PipelineEventSender(
             log"${MDC(LogKeys.ERROR, event.message)}",
           e)
     }
+    logger.warn("sendEventToClient(event)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", event)
   }
 
   private def constructProtoEvent(event: PipelineEvent): proto.PipelineEvent = {

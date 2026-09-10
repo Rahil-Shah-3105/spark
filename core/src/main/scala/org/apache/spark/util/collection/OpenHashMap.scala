@@ -35,6 +35,7 @@ class OpenHashMap[K : ClassTag, @specialized(Long, Int, Double) V: ClassTag](
     initialCapacity: Int)
   extends Iterable[(K, V)]
   with Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   def this() = this(64)
 
@@ -74,6 +75,7 @@ class OpenHashMap[K : ClassTag, @specialized(Long, Int, Double) V: ClassTag](
         _values(pos)
       }
     }
+    _driverLogger.warn("apply(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   /** Get the value for a given key, return None if the key doesn't exist */
@@ -92,6 +94,7 @@ class OpenHashMap[K : ClassTag, @specialized(Long, Int, Double) V: ClassTag](
         Some(_values(pos))
       }
     }
+    _driverLogger.warn("get(k)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", k)
   }
 
   /** Set the value for a key */
@@ -105,6 +108,7 @@ class OpenHashMap[K : ClassTag, @specialized(Long, Int, Double) V: ClassTag](
       _keySet.rehashIfNeeded(k, grow, move)
       _oldValues = null
     }
+    _driverLogger.warn("update(k,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, v)
   }
 
   /**
@@ -134,6 +138,7 @@ class OpenHashMap[K : ClassTag, @specialized(Long, Int, Double) V: ClassTag](
         _values(pos)
       }
     }
+    _driverLogger.warn("changeValue(k,defaultValue,mergeValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", k, defaultValue, mergeValue)
   }
 
   override def iterator: Iterator[(K, V)] = new Iterator[(K, V)] {

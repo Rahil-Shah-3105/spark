@@ -27,6 +27,7 @@ from typing import (
 )
 
 from pyspark.ml.torch.distributor import TorchDistributor
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class DeepspeedTorchDistributor(TorchDistributor):
@@ -159,6 +160,7 @@ class DeepspeedTorchDistributor(TorchDistributor):
         )
 
     def run(self, train_object: Union[Callable, str], *args: Any, **kwargs: Any) -> Optional[Any]:
+        logger.warning("run(self,train_object)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, train_object)
         # If the "train_object" is a string, then we assume it's a filepath.
         # Otherwise, we assume it's a function.
         return self._run(

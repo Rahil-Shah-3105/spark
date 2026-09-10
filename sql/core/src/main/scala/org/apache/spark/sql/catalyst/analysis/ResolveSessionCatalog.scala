@@ -48,6 +48,7 @@ import org.apache.spark.util.SparkStringUtils
  */
 class ResolveSessionCatalog(val catalogManager: CatalogManager)
   extends Rule[LogicalPlan] with LookupCatalog with AliasHelper {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
   import org.apache.spark.sql.connector.catalog.CatalogV2Util._
   import org.apache.spark.sql.execution.datasources.v2.DataSourceV2Implicits._
@@ -950,6 +951,7 @@ class ResolveSessionCatalog(val catalogManager: CatalogManager)
       DefaultCols.CURRENT_DEFAULT_COLUMN_METADATA_KEY, defaultValue.originalSQL,
       Some(defaultValue.child))
     builder.putString(DefaultCols.EXISTS_DEFAULT_COLUMN_METADATA_KEY, existsDefaultSQL)
+    planChangeLogger.warn("addDefaultValueMetadata(builder,defaultValue,colName,colType,statementType)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", builder, defaultValue, colName, colType, statementType)
   }
 
   /**

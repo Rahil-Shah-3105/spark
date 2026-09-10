@@ -35,6 +35,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 private[sql] case class RowLevelOperationTable(
     table: Table with SupportsRowLevelOperations,
     operation: RowLevelOperation) extends Table with SupportsRead with SupportsWrite {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def name: String = table.name
   override def columns: Array[Column] = table.columns()
@@ -48,5 +49,6 @@ private[sql] case class RowLevelOperationTable(
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = {
     operation.newWriteBuilder(info)
+    planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 }

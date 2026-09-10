@@ -87,6 +87,7 @@ case class HllSketchAgg(
   // Constructors
 
   def this(child: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, Literal(HllSketch.DEFAULT_LG_K), 0, 0)
   }
 
@@ -134,6 +135,7 @@ case class HllSketchAgg(
    */
   override def createAggregationBuffer(): HllSketch = {
     new HllSketch(lgConfigK, targetType)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -170,8 +172,10 @@ case class HllSketchAgg(
           errorClass = "_LEGACY_ERROR_TEMP_3121",
           messageParameters = Map("dataType" -> dataType.toString))
       }
+      planChangeLogger.warn("update(unionOption,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unionOption, input)
     }
     sketch
+    planChangeLogger.warn("update(sketch,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sketch, input)
   }
 
   /**

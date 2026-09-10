@@ -47,6 +47,7 @@ import org.apache.spark.sql.types.StructType
 class ContinuousMemorySink
     extends MemorySink
     with SupportsWrite {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val batches = new ArrayBuffer[Row]()
   override def name(): String = "ContinuousMemorySink"
@@ -61,6 +62,7 @@ class ContinuousMemorySink
     new WriteBuilder with SupportsStreamingUpdateAsAppend {
       private val inputSchema: StructType = info.schema()
 
+      planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
       override def build(): Write = {
         new ContinuousMemoryWrite(batches, inputSchema)
       }
@@ -102,6 +104,7 @@ class ContinuousMemorySink
       errorClass = "UNSUPPORTED_OPERATION_FOR_CONTINUOUS_MEMORY_SINK",
       messageParameters = Map("operation" -> "write")
     )
+    planChangeLogger.warn("write(batchId,needTruncate,newRows)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, needTruncate, newRows, batchId)
   }
 
   override def clear(): Unit = synchronized {
@@ -157,6 +160,7 @@ class ContinuousMemoryStreamingWrite(val batches: ArrayBuffer[Row], schema: Stru
     val endpointName = s"MemoryRealTimeRpcEndpoint-${java.util.UUID.randomUUID()}"
     endpointRef = memoryEndpoint.rpcEnv.setupEndpoint(endpointName, memoryEndpoint)
     RealTimeRowWriterFactory(endpointName, endpointRef.address)
+    planChangeLogger.warn("createStreamingWriterFactory(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 
   override def useCommitCoordinator(): Boolean = false

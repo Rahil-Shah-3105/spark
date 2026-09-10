@@ -149,6 +149,7 @@ import org.apache.spark.sql.internal.SQLConf
  * expressions.
  */
 object MergeSubplans extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     plan match {
       // Subquery reuse needs to be enabled for this optimization.
@@ -165,6 +166,7 @@ object MergeSubplans extends Rule[LogicalPlan] {
 
       case _ => extractCommonScalarSubqueries(plan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def extractCommonScalarSubqueries(plan: LogicalPlan) = {
@@ -250,6 +252,7 @@ object MergeSubplans extends Rule[LogicalPlan] {
 
     // Calculate the level of the node, which is the maximum of the above calculated level
     // propagated from subqueries and the level propagated from child nodes.
+    planChangeLogger.warn("insertReferences(plan,root,planMergers)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, root, planMergers)
     val (planWithReferences, level) = nodeSubqueriesWithReferences match {
       case a: Aggregate if !root && a.groupingExpressions.isEmpty =>
         val (childWithReferences, levelFromChild) = insertReferences(a.child, false, planMergers)
@@ -284,6 +287,7 @@ object MergeSubplans extends Rule[LogicalPlan] {
   private def getPlanMerger(planMergers: ArrayBuffer[PlanMerger], level: Int) = {
     while (level >= planMergers.size) planMergers += new PlanMerger()
     planMergers(level)
+    planChangeLogger.warn("getPlanMerger(planMergers,level)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", planMergers, level)
   }
 
   // Second traversal replaces:
@@ -337,6 +341,7 @@ object MergeSubplans extends Rule[LogicalPlan] {
           }
       }
     }
+    planChangeLogger.warn("removeReferences(plan,subplansByLevel)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, subplansByLevel)
   }
 }
 

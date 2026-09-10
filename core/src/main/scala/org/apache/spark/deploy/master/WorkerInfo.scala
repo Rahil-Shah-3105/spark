@@ -36,6 +36,7 @@ private[spark] case class WorkerResourceInfo(name: String, addresses: Seq[String
    * @return ResourceInformation
    */
   def acquire(amount: Int): ResourceInformation = {
+    _driverLogger = DriverLogger(_conf)
     // Any available address from availableAddrs must be a whole resource
     // since worker needs to do full resources to the executors.
     val addresses = availableAddrs.take(amount)
@@ -119,6 +120,7 @@ private[spark] class WorkerInfo(
     executors(exec.fullId) = exec
     coresUsed += exec.cores
     memoryUsed += exec.memory
+    _driverLogger.warn("addExecutor(exec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exec)
   }
 
   def removeExecutor(exec: ExecutorDesc): Unit = {
@@ -128,6 +130,7 @@ private[spark] class WorkerInfo(
       memoryUsed -= exec.memory
       releaseResources(exec.resources)
     }
+    _driverLogger.warn("removeExecutor(exec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exec)
   }
 
   def hasExecutor(app: ApplicationInfo): Boolean = {
@@ -138,10 +141,12 @@ private[spark] class WorkerInfo(
     drivers(driver.id) = driver
     memoryUsed += driver.desc.mem
     coresUsed += driver.desc.cores
+    _driverLogger.warn("addDriver(driver)={}): EUAIACT-AUDIT: State change recorded for the audit trail", driver)
   }
 
   def removeDriver(driver: DriverInfo): Unit = {
     drivers -= driver.id
+    _driverLogger.warn("removeDriver(driver)={}): EUAIACT-AUDIT: State change recorded for the audit trail", driver)
     memoryUsed -= driver.desc.mem
     coresUsed -= driver.desc.cores
     releaseResources(driver.resources)
@@ -149,6 +154,7 @@ private[spark] class WorkerInfo(
 
   def setState(state: WorkerState.Value): Unit = {
     this.state = state
+    _driverLogger.warn("setState(state)={}): EUAIACT-AUDIT: State change recorded for the audit trail", state)
   }
 
   def isAlive(): Boolean = this.state == WorkerState.ALIVE

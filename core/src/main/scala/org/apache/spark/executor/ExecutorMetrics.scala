@@ -30,6 +30,7 @@ import org.apache.spark.metrics.ExecutorMetricType
  */
 @DeveloperApi
 class ExecutorMetrics private[spark] extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   // Metrics are indexed by ExecutorMetricType.metricToOffset
   private val metrics = new Array[Long](ExecutorMetricType.numMetrics)
   // the first element is initialized to -1, indicating that the values for the array
@@ -39,6 +40,7 @@ class ExecutorMetrics private[spark] extends Serializable {
   /** Returns the value for the specified metric. */
   def getMetricValue(metricName: String): Long = {
     metrics(ExecutorMetricType.metricToOffset(metricName))
+    _driverLogger.warn("getMetricValue(metricName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metricName)
   }
 
   /** Returns true if the values for the metrics have been set, false otherwise. */
@@ -84,6 +86,7 @@ class ExecutorMetrics private[spark] extends Serializable {
       }
     }
     updated
+    _driverLogger.warn("compareAndUpdatePeakValues(executorMetrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorMetrics)
   }
 }
 
@@ -99,6 +102,7 @@ private[spark] object ExecutorMetrics {
   def getCurrentMetrics(memoryManager: MemoryManager): Array[Long] = {
     val currentMetrics = new Array[Long](ExecutorMetricType.numMetrics)
     var offset = 0
+    _driverLogger.warn("getCurrentMetrics(memoryManager)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", memoryManager)
     ExecutorMetricType.metricGetters.foreach { metricType =>
       val metricValues = metricType.getMetricValues(memoryManager)
       Array.copy(metricValues, 0, currentMetrics, offset, metricValues.length)

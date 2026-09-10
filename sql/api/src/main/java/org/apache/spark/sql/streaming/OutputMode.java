@@ -19,6 +19,8 @@ package org.apache.spark.sql.streaming;
 
 import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.catalyst.streaming.InternalOutputModes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OutputMode describes what data will be written to a streaming sink when there is
@@ -28,6 +30,7 @@ import org.apache.spark.sql.catalyst.streaming.InternalOutputModes;
  */
 @Evolving
 public class OutputMode {
+private static final Logger log = LoggerFactory.getLogger(OutputMode.class);
 
   /**
    * OutputMode in which only the new rows in the streaming DataFrame/Dataset will be
@@ -59,6 +62,7 @@ public class OutputMode {
    * @since 2.1.1
    */
   public static OutputMode Update() {
+	log.warn("Update()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return InternalOutputModes.Update$.MODULE$;
   }
 }

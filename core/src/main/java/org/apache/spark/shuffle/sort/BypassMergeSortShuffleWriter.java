@@ -84,6 +84,7 @@ import org.apache.spark.util.Utils;
 final class BypassMergeSortShuffleWriter<K, V>
   extends ShuffleWriter<K, V>
   implements ShuffleChecksumSupport {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(BypassMergeSortShuffleWriter.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(BypassMergeSortShuffleWriter.class);
@@ -147,6 +148,7 @@ final class BypassMergeSortShuffleWriter<K, V>
   @Override
   public void write(Iterator<Product2<K, V>> records) throws IOException {
     assert (partitionWriters == null);
+	logger.warn("write(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records);
     ShuffleMapOutputWriter mapOutputWriter = shuffleExecutorComponents
         .createMapOutputWriter(shuffleId, mapId, numPartitions);
     try {
@@ -261,6 +263,7 @@ final class BypassMergeSortShuffleWriter<K, V>
       }
       partitionWriters = null;
     }
+	logger.warn("writePartitionedData(mapOutputWriter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mapOutputWriter);
     return mapOutputWriter.commitAllPartitions(getChecksumValues(partitionChecksums))
       .getPartitionLengths();
   }
@@ -280,6 +283,7 @@ final class BypassMergeSortShuffleWriter<K, V>
       }
     } finally {
       Closeables.close(outputChannel, copyThrewException);
+	logger.warn("writePartitionedDataWithChannel(file,outputChannel)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", file, outputChannel);
     }
   }
 

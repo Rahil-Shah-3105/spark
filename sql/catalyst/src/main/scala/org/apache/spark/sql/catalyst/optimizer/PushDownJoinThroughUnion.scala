@@ -53,6 +53,7 @@ case class PushDownJoinThroughUnion(override val conf: SQLConf)
   with JoinSelectionHelper {
 
   def apply(plan: LogicalPlan): LogicalPlan = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (!conf.getConf(SQLConf.PUSH_DOWN_JOIN_THROUGH_UNION_ENABLED)) return plan
     plan.transformUpWithPruning(
       _.containsAllPatterns(JOIN, UNION), ruleId) {
@@ -79,6 +80,7 @@ case class PushDownJoinThroughUnion(override val conf: SQLConf)
       }
       u.withNewChildren(newChildren)
   }
+  planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**

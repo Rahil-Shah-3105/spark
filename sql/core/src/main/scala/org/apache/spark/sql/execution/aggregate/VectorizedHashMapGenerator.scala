@@ -51,6 +51,7 @@ class VectorizedHashMapGenerator(
     bitMaxCapacity: Int)
   extends HashMapGenerator (ctx, aggregateExpressions, generatedClassName,
     groupingKeySchema, bufferSchema) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def initializeAggregateHashMap(): String = {
     val schemaStructType = new StructType((groupingKeySchema ++ bufferSchema).toArray)
@@ -165,6 +166,7 @@ class VectorizedHashMapGenerator(
       groupingKeys.zipWithIndex.map { case (key: Buffer, ordinal: Int) =>
         CodeGenerator.setValue(s"vectors[$ordinal]", "numRows", key.dataType, key.name)
       }
+      planChangeLogger.warn("genCodeToSetKeys(groupingKeys)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def genCodeToSetAggBuffers(bufferValues: Seq[Buffer]): Seq[String] = {
@@ -172,6 +174,7 @@ class VectorizedHashMapGenerator(
         CodeGenerator.updateColumn(s"vectors[${groupingKeys.length + ordinal}]", "numRows",
           key.dataType, buffVars(ordinal), nullable = true)
       }
+      planChangeLogger.warn("genCodeToSetAggBuffers(bufferValues)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bufferValues)
     }
 
     s"""

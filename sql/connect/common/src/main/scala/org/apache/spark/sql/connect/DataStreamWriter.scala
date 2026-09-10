@@ -80,6 +80,7 @@ final class DataStreamWriter[T] private[sql] (ds: Dataset[T])
   def queryName(queryName: String): this.type = {
     sinkBuilder.setQueryName(queryName)
     this
+    logger.warn("queryName(queryName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", queryName)
   }
 
   /** @inheritdoc */

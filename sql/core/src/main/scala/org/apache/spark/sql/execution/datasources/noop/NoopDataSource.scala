@@ -34,6 +34,7 @@ import org.apache.spark.util.Utils
  * This can be useful for benchmarking or to cache data without any additional overhead.
  */
 class NoopDataSource extends SimpleTableProvider with DataSourceRegister {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def shortName(): String = "noop"
   override def getTable(options: CaseInsensitiveStringMap): Table = NoopTable
 }
@@ -98,4 +99,5 @@ private[noop] object NoopStreamingDataWriterFactory extends StreamingDataWriterF
       partitionId: Int,
       taskId: Long,
       epochId: Long): DataWriter[InternalRow] = NoopWriter
+      planChangeLogger.warn("createWriter(partitionId,taskId,epochId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, epochId, partitionId)
 }

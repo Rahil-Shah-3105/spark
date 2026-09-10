@@ -23,6 +23,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.errors.QueryCompilationErrors
 
 object UnsupportedExpressionInOperatorValidation {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Check that `expression` is allowed to exist in `operator`'s expression tree. Here, we avoid
@@ -73,5 +74,6 @@ object UnsupportedExpressionInOperatorValidation {
         s"${operator.getClass} operator resolution"
       )
     }
+    planChangeLogger.warn("onlyInLateralSubquery(operator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", operator)
   }
 }

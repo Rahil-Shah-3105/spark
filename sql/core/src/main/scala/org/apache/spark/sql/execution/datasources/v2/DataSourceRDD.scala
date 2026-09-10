@@ -36,6 +36,7 @@ class DataSourceRDDPartition(val index: Int, val inputPartition: Option[InputPar
 
 /**
  * Holds all mutable state for a single Spark task reading from a {@link DataSourceRDD}:
+ val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
  * <ul>
  *   <li>{@code partitionIterators}: all {@link PartitionIterator}s opened so far for this task.
  *       One iterator is appended per {@code compute()} call (one per input partition).</li>
@@ -100,6 +101,7 @@ private class TaskState(customMetrics: Map[String, SQLMetric]) {
     val shouldUpdateCustomMetrics = force ||
       inputMetrics.recordsRead - recordsReadAtLastCustomMetricsUpdate >=
         CustomMetrics.NUM_ROWS_PER_UPDATE
+        planChangeLogger.warn("updateMetrics(numRows,force)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numRows, force)
     if (shouldUpdateCustomMetrics) {
       recordsReadAtLastCustomMetricsUpdate = inputMetrics.recordsRead
       mergeAndUpdateCustomMetrics()
@@ -119,6 +121,7 @@ private class TaskState(customMetrics: Map[String, SQLMetric]) {
       .groupMapReduce(_.name())(identity)(_.mergeWith(_))
       .values
       .toSeq
+      planChangeLogger.warn("mergeAndUpdateCustomMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (mergedMetrics.nonEmpty) {
       CustomMetrics.updateMetrics(mergedMetrics, customMetrics)
     }
@@ -206,6 +209,7 @@ class DataSourceRDD(
 
   override def getPreferredLocations(split: Partition): Seq[String] = {
     castPartition(split).inputPartition.toSeq.flatMap(_.preferredLocations())
+    planChangeLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 }
 

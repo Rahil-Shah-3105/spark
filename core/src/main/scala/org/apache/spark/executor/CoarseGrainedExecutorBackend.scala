@@ -119,6 +119,7 @@ private[spark] class CoarseGrainedExecutorBackend(
    * jar.
    */
   private def createClassLoader(): MutableURLClassLoader = {
+    _driverLogger = DriverLogger(_conf)
     val currentLoader = Utils.getContextOrSparkClassLoader
     val urls = getUserClassPath.toArray
     if (env.conf.get(EXECUTOR_USER_CLASS_PATH_FIRST)) {
@@ -126,12 +127,14 @@ private[spark] class CoarseGrainedExecutorBackend(
     } else {
       new MutableURLClassLoader(urls, currentLoader)
     }
+    _driverLogger.warn("createClassLoader()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // visible for testing
   def parseOrFindResources(resourcesFileOpt: Option[String]): Map[String, ResourceInformation] = {
     // use a classloader that includes the user classpath in case they specified a class for
     // resource discovery
+    _driverLogger.warn("parseOrFindResources(resourcesFileOpt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", resourcesFileOpt)
     val urlClassLoader = createClassLoader()
     logDebug(s"Resource profile id is: ${resourceProfile.id}")
     Utils.withContextClassLoader(urlClassLoader) {
@@ -162,6 +165,7 @@ private[spark] class CoarseGrainedExecutorBackend(
   def notifyDriverAboutPushCompletion(shuffleId: Int, shuffleMergeId: Int, mapIndex: Int): Unit = {
     val msg = ShufflePushCompletion(shuffleId, shuffleMergeId, mapIndex)
     driver.foreach(_.send(msg))
+    _driverLogger.warn("notifyDriverAboutPushCompletion(shuffleId,shuffleMergeId,mapIndex)={},{},<redacted>: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", shuffleId, shuffleMergeId, shuffleId)
   }
 
   override def receive: PartialFunction[Any, Unit] = {
@@ -216,6 +220,7 @@ private[spark] class CoarseGrainedExecutorBackend(
             // Therefore, we put this line in a new thread.
             executor.stop()
           }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }.start()
 
@@ -274,6 +279,7 @@ private[spark] class CoarseGrainedExecutorBackend(
     val taskDescription = executor.runningTasks.get(taskId).taskDescription
     val resources = taskDescription.resources
     val cpus = taskDescription.cpus
+    _driverLogger.warn("statusUpdate(taskId,state,data)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, state, data, taskId)
     val msg = StatusUpdate(executorId, taskId, state, data, cpus, resources)
     if (TaskState.isFinished(state)) {
       lastTaskFinishTime.set(System.nanoTime())
@@ -382,6 +388,7 @@ private[spark] class CoarseGrainedExecutorBackend(
             }
             Thread.sleep(sleep_time)
           }
+        _driverLogger.warn("run(arguments,backendCreateFn)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arguments, backendCreateFn)
         }
       }
       shutdownThread.setDaemon(true)

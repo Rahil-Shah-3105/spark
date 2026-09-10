@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.util.ArrayImplicits._
 
 object AssignmentUtils extends SQLConfHelper with CastSupport {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Aligns update assignments to match table columns.
@@ -78,6 +79,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
         fromStar)
     }
 
+    planChangeLogger.warn("alignUpdateAssignments(attrs,assignments,fromStar,coerceNestedTypes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", attrs, assignments, fromStar, coerceNestedTypes)
     if (errors.nonEmpty) {
       throw QueryCompilationErrors.invalidRowLevelOperationAssignments(assignments, errors.toSeq)
     }
@@ -142,6 +144,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
       Assignment(attr, resolvedValue)
     }
 
+    planChangeLogger.warn("alignInsertAssignments(attrs,assignments,coerceNestedTypes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", attrs, assignments, coerceNestedTypes)
     if (errors.nonEmpty) {
       throw QueryCompilationErrors.invalidRowLevelOperationAssignments(assignments, errors.toSeq)
     }
@@ -151,6 +154,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
 
   private def restoreActualType(attr: Attribute): Attribute = {
     attr.withDataType(CharVarcharUtils.getRawType(attr.metadata).getOrElse(attr.dataType))
+    planChangeLogger.warn("restoreActualType(attr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attr)
   }
 
   private def applyAssignments(
@@ -166,6 +170,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
       assignment.key.semanticEquals(colExpr)
     }
 
+    planChangeLogger.warn("applyAssignments(col,colExpr,assignments,addError,colPath,coerceNestedTypes,updateStar)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, colExpr, assignments, addError, colPath, coerceNestedTypes, updateStar)
     val fieldAssignments = otherAssignments.filter { assignment =>
       assignment.key.exists(_.semanticEquals(colExpr))
     }
@@ -232,6 +237,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
             s"'${colPath.quoted}' is of type $otherType")
         colExpr
     }
+    planChangeLogger.warn("applyFieldAssignments(col,colExpr,assignments,addError,colPath,coerceNestedTypes)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, colExpr, assignments, addError, colPath, coerceNestedTypes)
   }
 
   private def applyNestedFieldAssignments(
@@ -292,6 +298,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
             s"'${colPath.quoted}' is of type $otherType")
         colExpr
     }
+    planChangeLogger.warn("applyNestedFieldAssignments(col,colExpr,value,addError,colPath,coerceNestedTypes)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, colExpr, value, addError, colPath, coerceNestedTypes)
   }
 
   private def toNamedStruct(structType: StructType, fieldExprs: Seq[Expression]): Expression = {
@@ -324,6 +331,7 @@ object AssignmentUtils extends SQLConfHelper with CastSupport {
         throw SparkException.internalError(
           s"Source type must be StructType but found: $sourceType")
     }
+    planChangeLogger.warn("hasExtraTargetFields(targetType,sourceType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetType, sourceType)
   }
 
   /**

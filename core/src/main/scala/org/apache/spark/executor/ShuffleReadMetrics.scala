@@ -29,6 +29,7 @@ import org.apache.spark.util.LongAccumulator
  */
 @DeveloperApi
 class ShuffleReadMetrics private[spark] () extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   private[executor] val _remoteBlocksFetched = new LongAccumulator
   private[executor] val _localBlocksFetched = new LongAccumulator
   private[executor] val _remoteBytesRead = new LongAccumulator
@@ -191,6 +192,7 @@ class ShuffleReadMetrics private[spark] () extends Serializable {
     _localMergedBytesRead.setValue(v)
   private[spark] def setRemoteReqsDuration(v: Long): Unit = _remoteReqsDuration.setValue(v)
   private[spark] def setRemoteMergedReqsDuration(v: Long): Unit =
+    _driverLogger.warn("setRemoteMergedReqsDuration(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
     _remoteMergedReqsDuration.setValue(v)
 
   /**
@@ -234,6 +236,7 @@ class ShuffleReadMetrics private[spark] () extends Serializable {
       _remoteReqsDuration.add(metric.remoteReqsDuration)
       _remoteMergedReqsDuration.add(metric.remoteMergedReqsDuration)
     }
+    _driverLogger.warn("setMergeValues(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 }
 

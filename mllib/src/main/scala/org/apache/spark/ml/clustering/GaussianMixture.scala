@@ -243,6 +243,7 @@ class GaussianMixtureModel private[ml] (
     ReadWriteUtils.saveObjectToLocal[(Double, Int)](
       path, (summary.logLikelihood, summary.numIter),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         dos.writeDouble(data._1)
         dos.writeInt(data._2)
       }
@@ -259,6 +260,7 @@ class GaussianMixtureModel private[ml] (
       }
     )
     createSummary(dataset, logLikelihood, numIter)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -309,6 +311,7 @@ object GaussianMixtureModel extends MLReadable[GaussianMixtureModel] {
       val sigmas = gaussians.map(c => OldMatrices.fromML(c.cov))
       val data = Data(weights, mus, sigmas)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -344,6 +347,7 @@ object GaussianMixtureModel extends MLReadable[GaussianMixtureModel] {
         .map { case (mu, sigma) => new MultivariateGaussian(mu.asML, sigma.asML) }
       val model = new GaussianMixtureModel(metadata.uid, data.weights, gaussians)
 
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       metadata.getAndSetParams(model)
       model
     }
@@ -681,6 +685,7 @@ object GaussianMixture extends DefaultParamsReadable[GaussianMixture] {
     BLAS.spr(-weight, mean, cov)
     BLAS.scal(1.0 / weight, cov)
     val newWeight = weight / sumWeights
+    logger.warn("updateWeightsAndGaussians(mean,cov,weight,sumWeights)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mean, cov, weight, sumWeights)
     val newGaussian = (mean, cov)
     (newWeight, newGaussian)
   }
@@ -760,6 +765,7 @@ private class ExpectationAggregator(
       BLAS.spr(w, vector, localNewCovs(i))
       i += 1
     }
+    logger.warn("add(instance)={}): EUAIACT-AUDIT: State change recorded for the audit trail", instance)
 
     totalCnt += 1
     this

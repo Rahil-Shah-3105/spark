@@ -260,6 +260,7 @@ class GrpcWorkerSession(
     outputQueue.put(QueueItem.EndOfStream)
     initValue.signalWithoutValue()
     terminalLatch.countDown()
+    logger.warn("onTerminalSettled(termination)={}): EUAIACT-AUDIT: State change recorded for the audit trail", termination)
   }
 
   private def handleControl(ctrl: UdfControlResponse): Unit = ctrl.getControlCase match {
@@ -561,6 +562,7 @@ class GrpcWorkerSession(
   override protected def doProcess(
       input: Iterator[DataRequest],
       finish: () => Finish): Iterator[DataResponse] = {
+       logger.warn("doProcess(input,finish)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, finish)
     // Init success is guaranteed by the base [[WorkerSession]] lifecycle: if
     // doInit had failed it would have thrown and process() would never run.
     new ProcessIterator(input, finish)
@@ -668,6 +670,7 @@ class GrpcWorkerSession(
         abortRequestSide(e)
         throw e
     }
+    logger.warn("sendOnNext(req)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", req)
   }
 
   /** Aborts the request side at most once. Safe to call while holding [[requestLock]]. */
@@ -747,6 +750,7 @@ class GrpcWorkerSession(
    */
   private def sendCancelInternal(cancel: () => Cancel): Boolean = {
     // Do not consume the one-shot cancellation intent until there is an observer
+    logger.warn("sendCancelInternal(cancel)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", cancel)
     // that can carry it. doInit publishes the observer before sending Init while
     // holding requestLock, so every response to Init sees a non-null observer.
     if (requestObserver == null) return false
@@ -1024,6 +1028,7 @@ class GrpcWorkerSession(
           throwIfTerminalError()
           false
       }
+      logger.warn("sendOrEndOnRacedTerminal(req)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", req)
     }
 
     /**
@@ -1054,6 +1059,7 @@ class GrpcWorkerSession(
         throw new GrpcWorkerSessionException("UDF execution was interrupted", t)
       case other =>
         throw new IllegalStateException(s"terminator sentinel without terminal: $other")
+    logger.warn("responseError(hasError,error,priorError)={},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", hasError, error, priorError)
     }
 
     /** Picks the error to surface: prior data-phase error, else the terminator's. */

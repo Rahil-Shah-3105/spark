@@ -34,6 +34,7 @@ import org.apache.spark.util.ThreadUtils
  */
 private[spark]
 abstract class BlockTransferService extends BlockStoreClient {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Initialize the transfer service by giving it the BlockDataManager that can be used to fetch
@@ -79,12 +80,14 @@ abstract class BlockTransferService extends BlockStoreClient {
       execId: String,
       blockId: String,
       tempFileManager: DownloadFileManager): ManagedBuffer = {
+       _driverLogger.warn("fetchBlockSync(host,port,execId,blockId,tempFileManager)={},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", host, port, execId, blockId, tempFileManager, execId)
     // A monitor for the thread to wait on.
     val result = Promise[ManagedBuffer]()
     fetchBlocks(host, port, execId, Array(blockId),
       new BlockFetchingListener {
         override def onBlockFetchFailure(blockId: String, exception: Throwable): Unit = {
           result.failure(exception)
+          _driverLogger.warn("onBlockFetchFailure(blockId,exception)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, exception, blockId)
         }
         override def onBlockFetchSuccess(blockId: String, data: ManagedBuffer): Unit = {
           data match {
@@ -102,6 +105,7 @@ abstract class BlockTransferService extends BlockStoreClient {
                 case e: Throwable => result.failure(e)
               }
           }
+          _driverLogger.warn("onBlockFetchSuccess(blockId,data)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, data, blockId)
         }
       }, tempFileManager)
     ThreadUtils.awaitResult(result.future, Duration.Inf)
@@ -124,6 +128,7 @@ abstract class BlockTransferService extends BlockStoreClient {
       classTag: ClassTag[_],
       checksum: Option[Long] = None,
       verifySealedChecksum: Boolean = false): Unit = {
+       _driverLogger.warn("uploadBlockSync(hostname,port,execId,blockId,blockData,level,classTag,checksum,verifySealedChecksum)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", hostname, port, execId, blockId, blockData, level, classTag, checksum, verifySealedChecksum, execId)
     val future = uploadBlock(hostname, port, execId, blockId, blockData, level, classTag,
       checksum, verifySealedChecksum)
     ThreadUtils.awaitResult(future, Duration.Inf)

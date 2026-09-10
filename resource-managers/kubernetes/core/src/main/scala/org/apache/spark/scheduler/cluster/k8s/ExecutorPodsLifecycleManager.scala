@@ -83,6 +83,7 @@ private[spark] class ExecutorPodsLifecycleManager(
    */
   protected[spark] def registerExecutorFailure(): Unit = {
     failureTracker.registerExecutorFailure()
+    logger.warn("registerExecutorFailure()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def start(schedulerBackend: KubernetesClusterSchedulerBackend): Unit = {
@@ -199,6 +200,7 @@ private[spark] class ExecutorPodsLifecycleManager(
       execId: Long,
       schedulerBackend: KubernetesClusterSchedulerBackend,
       deleteFromK8s: Boolean): Boolean = {
+       logger.warn("onFinalNonDeletedState(podState,execId,schedulerBackend,deleteFromK8s)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", podState, execId, schedulerBackend, deleteFromK8s, execId)
     val deleted = removeExecutorFromSpark(schedulerBackend, podState, execId)
     if (deleteFromK8s) {
       removeExecutorFromK8s(execId, podState.pod)
@@ -250,6 +252,7 @@ private[spark] class ExecutorPodsLifecycleManager(
         inactivatedPods += execId
       }
     }
+    logger.warn("removeExecutorFromK8s(execId,updatedPod)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, updatedPod, execId)
   }
 
   private def removeExecutorFromSpark(
@@ -264,6 +267,7 @@ private[spark] class ExecutorPodsLifecycleManager(
     } else {
       false
     }
+    logger.warn("removeExecutorFromSpark(schedulerBackend,podState,execId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schedulerBackend, podState, execId, execId)
   }
 
   private def findExitReason(podState: FinalPodState, execId: Long): ExecutorExited = {
@@ -276,6 +280,7 @@ private[spark] class ExecutorPodsLifecycleManager(
         (true, msg)
     }
     ExecutorExited(exitCode, exitCausedByApp, exitMessage)
+    logger.warn("findExitReason(podState,execId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", podState, execId, execId)
   }
 
   private def exitReasonMessage(podState: FinalPodState, execId: Long, exitCode: Int) = {
@@ -306,6 +311,7 @@ private[spark] class ExecutorPodsLifecycleManager(
     }.map { terminatedContainer =>
       terminatedContainer.getState.getTerminated.getExitCode.toInt
     }.getOrElse(UNKNOWN_EXIT_CODE)
+    logger.warn("findExitCode(podState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", podState)
   }
 
   private def isPodInactive(pod: Pod): Boolean = {

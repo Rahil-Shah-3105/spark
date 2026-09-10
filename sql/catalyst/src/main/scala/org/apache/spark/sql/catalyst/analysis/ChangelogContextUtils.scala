@@ -33,6 +33,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
  * Utility methods for constructing [[ChangelogContext]] from DataFrame API options.
  */
 object ChangelogContextUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val STARTING_VERSION = "startingVersion"
   private val ENDING_VERSION = "endingVersion"
@@ -117,6 +118,7 @@ object ChangelogContextUtils {
       ansiEnabled = false
     ).eval()
     if (value == null) {
+    planChangeLogger.warn("parseTimestamp(timestampStr,sessionLocalTimeZone)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", timestampStr, sessionLocalTimeZone)
       throw QueryCompilationErrors.invalidCdcOptionInvalidTimestamp(timestampStr)
     }
     value.asInstanceOf[Long]

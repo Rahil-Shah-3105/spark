@@ -31,6 +31,7 @@ import org.apache.spark.sql.util.SchemaUtils
  * Resolves different children of Union to a common set of columns.
  */
 object ResolveUnion extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Transform the array of structs to the target struct type.
    */
@@ -87,6 +88,7 @@ object ResolveUnion extends Rule[LogicalPlan] {
       .foreach { f =>
         newStructFields ++= Literal(f.name) :: ExtractValue(col, Literal(f.name), resolver) :: Nil
       }
+      planChangeLogger.warn("addFields(col,targetType,allowMissing)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, targetType, allowMissing)
 
     val newStruct = CreateNamedStruct(newStructFields.toSeq)
     if (col.nullable) {
@@ -132,6 +134,7 @@ object ResolveUnion extends Rule[LogicalPlan] {
 
     val aliased = mutable.ArrayBuffer.empty[Attribute]
 
+    planChangeLogger.warn("compareAndAddFields(left,right,allowMissingCol)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right, allowMissingCol)
     val rightProjectList = leftOutputAttrs.map { lattr =>
       val found = rightOutputAttrs.find { rattr => resolver(lattr.name, rattr.name) }
       if (found.isDefined) {

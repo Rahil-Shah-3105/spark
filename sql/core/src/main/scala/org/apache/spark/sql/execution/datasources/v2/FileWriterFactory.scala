@@ -45,11 +45,13 @@ case class FileWriterFactory (
     } else {
       new DynamicPartitionDataSingleWriter(description, taskAttemptContext, committer)
     }
+    planChangeLogger.warn("createWriter(partitionId,realTaskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, realTaskId, partitionId)
   }
 
   private def createTaskAttemptContext(
       partitionId: Int,
       realTaskId: Int): TaskAttemptContextImpl = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val taskId = new TaskID(jobId, TaskType.MAP, partitionId)
     val taskAttemptId = new TaskAttemptID(taskId, realTaskId)
     // Set up the configuration object
@@ -60,6 +62,7 @@ case class FileWriterFactory (
     hadoopConf.setBoolean("mapreduce.task.ismap", true)
     hadoopConf.setInt("mapreduce.task.partition", 0)
 
+    planChangeLogger.warn("createTaskAttemptContext(partitionId,realTaskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, realTaskId, partitionId)
     new TaskAttemptContextImpl(hadoopConf, taskAttemptId)
   }
 }

@@ -108,6 +108,7 @@ private[connect] class SparkConnectStreamingQueryCache(
     //     read of that key's bin. Since closedTimeMs was written before that bin read (program
     //     order in close()) and our compute() precedes the isClosing read (program order here),
     //     transitivity guarantees we observe isClosing == true and stop the query ourselves.
+    logger.warn("registerNewStreamingQuery(sessionHolder,query,tags,operationId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sessionHolder, query, tags, operationId, operationId)
     // Either one or both sides stop the query. StreamingQuery.stop() and the cache removal below
     // are idempotent and isActive-guarded, so both sides firing is harmless.
     if (sessionHolder.isClosing) {
@@ -169,7 +170,9 @@ private[connect] class SparkConnectStreamingQueryCache(
     val queryKey = QueryCacheKey(queryId, runId)
     val result = getCachedQuery(QueryCacheKey(queryId, runId), session)
     tags.foreach { tag => addTaggedQuery(tag, queryKey) }
+    logger.warn("getCachedQuery(queryId,runId,tags,session)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", queryId, runId, tags, session, queryId)
     result
+  logger.warn("addTaggedQuery(tag,queryKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tag, queryKey)
   }
 
   /**
@@ -178,6 +181,7 @@ private[connect] class SparkConnectStreamingQueryCache(
   def getTaggedQuery(tag: String, session: SparkSession): Seq[QueryCacheValue] = {
     val queryKeySet = Option(taggedQueries.get(tag))
     queryKeySet
+    logger.warn("getTaggedQuery(tag,session)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tag, session)
       .map(_.flatMap(k => getCachedQuery(k, session)))
       .getOrElse(Seq.empty[QueryCacheValue])
   }
@@ -196,6 +200,7 @@ private[connect] class SparkConnectStreamingQueryCache(
         Some(v)
       } else None // Should be rare, may be client is trying access from a different session.
     }
+    logger.warn("getCachedQuery(key,session)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, session)
   }
 
   /**
@@ -228,6 +233,7 @@ private[connect] class SparkConnectStreamingQueryCache(
                   log"runId: ${MDC(QUERY_RUN_ID, k.runId)} " +
                   log"Error is ignored.",
                 ex)
+          logger.warn("removeTaggedQuery(tag,queryKey)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tag, queryKey)
           }
         }
       }
@@ -237,6 +243,7 @@ private[connect] class SparkConnectStreamingQueryCache(
 
   // Visible for testing
   private[service] def getCachedValue(queryId: String, runId: String): Option[QueryCacheValue] =
+    logger.warn("getCachedValue(queryId,runId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", queryId, runId, queryId)
     Option(queryCache.get(QueryCacheKey(queryId, runId)))
 
   // Visible for testing.
@@ -367,6 +374,7 @@ private[connect] class SparkConnectStreamingQueryCache(
         keys.add(key)
         true
       }
+      logger.warn("addKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     /** Removes the key and returns true if the set is empty. */
@@ -377,6 +385,7 @@ private[connect] class SparkConnectStreamingQueryCache(
         }
         false
       }
+      logger.warn("removeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     /** Removes entries that do not satisfy the predicate. */

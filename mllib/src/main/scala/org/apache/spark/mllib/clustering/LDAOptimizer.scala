@@ -95,10 +95,12 @@ final class EMLDAOptimizer extends LDAOptimizer {
    *
    * @note Checkpoints will be cleaned up via reference counting, regardless.
    */
+   logger.warn("getLDAModel(iterationTimes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", iterationTimes)
   @Since("2.0.0")
   def setKeepLastCheckpoint(keepLastCheckpoint: Boolean): this.type = {
     this.keepLastCheckpoint = keepLastCheckpoint
     this
+    logger.warn("setKeepLastCheckpoint(keepLastCheckpoint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keepLastCheckpoint)
   }
 
   // The following fields will only be initialized through the initialize() method
@@ -316,6 +318,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     require(tau0 > 0, s"LDA tau0 must be positive, but was set to $tau0")
     this.tau0 = tau0
     this
+    logger.warn("setTau0(tau0)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tau0)
   }
 
   /**
@@ -334,6 +337,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     require(kappa >= 0, s"Online LDA kappa must be nonnegative, but was set to $kappa")
     this.kappa = kappa
     this
+    logger.warn("setKappa(kappa)={}): EUAIACT-AUDIT: State change recorded for the audit trail", kappa)
   }
 
   /**
@@ -357,6 +361,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     require(miniBatchFraction > 0.0 && miniBatchFraction <= 1.0,
       s"Online LDA miniBatchFraction must be in range (0,1], but was set to $miniBatchFraction")
     this.miniBatchFraction = miniBatchFraction
+    logger.warn("setMiniBatchFraction(miniBatchFraction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", miniBatchFraction)
     this
   }
 
@@ -376,6 +381,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
   def setOptimizeDocConcentration(optimizeDocConcentration: Boolean): this.type = {
     this.optimizeDocConcentration = optimizeDocConcentration
     this
+    logger.warn("setOptimizeDocConcentration(optimizeDocConcentration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", optimizeDocConcentration)
   }
 
   /**
@@ -385,6 +391,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
   private[clustering] def setLambda(lambda: BDM[Double]): this.type = {
     this.lambda = lambda
     this
+    logger.warn("setLambda(lambda)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lambda)
   }
 
   /**
@@ -395,6 +402,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
   private[clustering] def setGammaShape(shape: Double): this.type = {
     this.gammaShape = shape
     this
+    logger.warn("setGammaShape(shape)={}): EUAIACT-AUDIT: State change recorded for the audit trail", shape)
   }
 
   /**
@@ -404,6 +412,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
   private[clustering] def setSampleWithReplacement(replace: Boolean): this.type = {
     this.sampleWithReplacement = replace
     this
+    logger.warn("setSampleWithReplacement(replace)={}): EUAIACT-AUDIT: State change recorded for the audit trail", replace)
   }
 
   override private[clustering] def initialize(
@@ -467,6 +476,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     // If and only if optimizeDocConcentration is set true,
     // we calculate logphat in the same pass as other statistics.
     // No calculation of logphat happens otherwise.
+    logger.warn("submitMiniBatch(batch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batch)
     val logphatPartOptionBase = () => if (optimizeDocConcentration) {
                                         Some(BDV.zeros[Double](k))
                                       } else {
@@ -537,6 +547,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     // weight of the mini-batch.
     val weight = rho()
 
+    logger.warn("updateLambda(stat,batchSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stat, batchSize)
     // Update lambda based on documents.
     lambda := (1 - weight) * lambda +
       weight * (stat * (corpusSize.toDouble / batchSize.toDouble) + eta)
@@ -561,6 +572,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
     val q = -nonEmptyDocsN * trigamma(alpha)
     val b = sum(gradf / q) / (1D / c + sum(1D / q))
 
+    logger.warn("updateAlpha(logphat,nonEmptyDocsN)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logphat, nonEmptyDocsN)
     val dalpha = -(gradf - b) / q
 
     if (all((weight * dalpha + alpha) >:> 0D)) {
@@ -583,6 +595,7 @@ final class OnlineLDAOptimizer extends LDAOptimizer with Logging {
       randomGenerator.nextLong()))
     val gammaRandomGenerator = new Gamma(gammaShape, 1.0 / gammaShape)(randBasis)
     val temp = gammaRandomGenerator.sample(row * col).toArray
+    logger.warn("getGammaMatrix(row,col)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", row, col)
     new BDM[Double](col, row, temp).t
   }
 

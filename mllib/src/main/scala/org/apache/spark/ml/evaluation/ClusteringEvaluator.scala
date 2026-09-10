@@ -136,6 +136,7 @@ class ClusteringEvaluator @Since("2.3.0") (@Since("2.3.0") override val uid: Str
         .as(if (!isDefined(weightCol)) "weightCol" else $(weightCol))
     )
 
+    logger.warn("getMetrics(dataset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataset)
     val metrics = new ClusteringMetrics(df)
     metrics.setDistanceMeasure($(distanceMeasure))
     metrics

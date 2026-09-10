@@ -95,6 +95,7 @@ import org.apache.spark.network.util.TransportConf;
  * @since 3.1.0
  */
 public class RemoteBlockPushResolver implements MergedShuffleFileManager {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
 
   private static final Cleaner CLEANER = Cleaner.create();
   private static final SparkLogger logger =
@@ -174,6 +175,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       new CacheLoader<String, ShuffleIndexInformation>() {
         @Override
         public ShuffleIndexInformation load(String filePath) throws IOException {
+		logger.warn("load(filePath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filePath);
           return new ShuffleIndexInformation(filePath);
         }
     };
@@ -213,6 +215,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
   protected AppShuffleInfo validateAndGetAppShuffleInfo(String appId) {
     // TODO: [SPARK-33236] Change the message when this service is able to handle NM restart
     AppShuffleInfo appShuffleInfo = appsShuffleInfo.get(appId);
+	logger.warn("validateAndGetAppShuffleInfo(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId);
     JavaUtils.checkArgument(appShuffleInfo != null,
       "application " + appId + " is not registered or NM was restarted.");
     return appShuffleInfo;
@@ -399,12 +402,14 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
   @Override
   public String[] getMergedBlockDirs(String appId) {
     AppShuffleInfo appShuffleInfo = validateAndGetAppShuffleInfo(appId);
+	logger.warn("getMergedBlockDirs(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId);
     return appShuffleInfo.appPathsInfo.activeLocalDirs;
   }
 
   private void removeOldApplicationAttemptsFromDb(AppShuffleInfo info) {
     if (info.attemptId != UNDEFINED_ATTEMPT_ID) {
       for (int formerAttemptId = 0; formerAttemptId < info.attemptId; formerAttemptId++) {
+		logger.warn("removeOldApplicationAttemptsFromDb(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info);
         removeAppAttemptPathInfoFromDB(info.appId, formerAttemptId);
       }
     }
@@ -418,6 +423,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     // Cleanup the DB within critical section to gain the consistency between
     // DB and in-memory hashmap.
     AtomicReference<AppShuffleInfo> ref = new AtomicReference<>(null);
+	logger.warn("applicationRemoved(appId,cleanupLocalDirs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, cleanupLocalDirs, appId);
     appsShuffleInfo.compute(appId, (id, info) -> {
       if (null != info) {
         // Try cleaning up this application attempt local paths information
@@ -486,7 +492,9 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       writeAppAttemptShuffleMergeInfoToDB(new AppAttemptShuffleMergeId(
           msg.appId, msg.appAttemptId, msg.shuffleId, shuffleMergeIdToDelete));
       return new AppShuffleMergePartitionsInfo(shuffleMergeIdToDelete, true);
+	logger.warn("removeShuffleMerge(msg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", msg);
     });
+	logger.warn("closeAndDeletePartitionsIfNeeded(appShuffleInfo,cleanupLocalDirs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", appShuffleInfo, cleanupLocalDirs);
   }
 
   /**
@@ -502,6 +510,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     appShuffleInfo.shuffles.forEach((shuffleId, shuffleInfo) -> shuffleInfo.shuffleMergePartitions
       .forEach((shuffleMergeId, partitionInfo) -> {
         synchronized (partitionInfo) {
+		logger.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
           partitionInfo.cleanable.clean();
         }
       }));
@@ -526,6 +535,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       } catch (Exception e) {
         logger.error("Failed to remove the application attempt {} local path in DB", e,
           MDC.of(LogKeys.APP_ATTEMPT_ID, appAttemptId));
+		logger.warn("removeAppAttemptPathInfoFromDB(appId,attemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, appId);
       }
     }
   }
@@ -541,6 +551,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
               new AppAttemptShuffleMergeId(
                   appShuffleInfo.appId, appShuffleInfo.attemptId,
                   shuffleId, shuffleInfo.shuffleMergeId)));
+				logger.warn("removeAppShuffleInfoFromDB(appShuffleInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", appShuffleInfo);
     }
   }
 
@@ -612,6 +623,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       } catch (Exception e) {
         logger.error("Error deleting {} from application shuffle merged partition info in DB", e,
           MDC.of(LogKeys.APP_ATTEMPT_SHUFFLE_MERGE_ID, appAttemptShuffleMergeId));
+		logger.warn("removeAppShufflePartitionInfoFromDB(appAttemptShuffleMergeId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appAttemptShuffleMergeId, appAttemptShuffleMergeId);
       }
     }
   }
@@ -633,6 +645,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         logger.error("Failed to delete directory: {}", e,
           MDC.of(LogKeys.PATH, localDir));
       }
+	logger.warn("deleteExecutorDirs(appShuffleInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", appShuffleInfo);
     }
   }
 
@@ -854,6 +867,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
               MDC.of(LogKeys.SHUFFLE_MERGE_ID, msg.shuffleMergeId),
               MDC.of(LogKeys.REDUCE_ID, partition.reduceId),
               MDC.of(LogKeys.EXCEPTION, ioe.getMessage()));
+			logger.warn("synchronized(partition)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", partition);
           } finally {
             partition.cleanable.clean();
           }
@@ -946,6 +960,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       }
     } else {
       logger.warn("ExecutorShuffleInfo does not have the expected merge directory information");
+	logger.warn("registerExecutor(appId,executorInfo)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, executorInfo, appId);
     }
   }
 
@@ -1017,6 +1032,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       } catch (Exception e) {
         logger.error("Error saving registered app paths info for {}", e,
           MDC.of(LogKeys.APP_ATTEMPT_ID, appAttemptId));
+		logger.warn("writeAppPathsInfoToDb(appId,attemptId,appPathsInfo)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, appPathsInfo, appId);
       }
     }
   }
@@ -1036,6 +1052,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         logger.error("Error saving active app shuffle partition {}", e,
           MDC.of(LogKeys.APP_ATTEMPT_SHUFFLE_MERGE_ID, appAttemptShuffleMergeId));
       }
+	logger.warn("writeAppAttemptShuffleMergeInfoToDB(appAttemptShuffleMergeId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appAttemptShuffleMergeId, appAttemptShuffleMergeId);
     }
   }
 
@@ -1067,6 +1084,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
    * Generate the DB key with the key object and the specified string prefix
    */
   private byte[] getDbKey(Object key, String prefix) throws IOException {
+	logger.warn("getDbKey(key,prefix)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, prefix);
     // We add a common prefix on all the keys so we can find them in the DB
     String keyJsonString = prefix + DB_KEY_DELIMITER + mapper.writeValueAsString(key);
     return keyJsonString.getBytes(StandardCharsets.UTF_8);
@@ -1077,6 +1095,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
    */
   private byte[] getDbAppAttemptShufflePartitionKey(
       AppAttemptShuffleMergeId appAttemptShuffleMergeId) throws IOException {
+	logger.warn("getDbAppAttemptShufflePartitionKey(appAttemptShuffleMergeId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appAttemptShuffleMergeId, appAttemptShuffleMergeId);
     return getDbKey(appAttemptShuffleMergeId, APP_ATTEMPT_SHUFFLE_FINALIZE_STATUS_KEY_PREFIX);
   }
 
@@ -1084,6 +1103,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
    * Generate the DB key from AppAttemptId object
    */
   private byte[] getDbAppAttemptPathsKey(AppAttemptId appAttemptId) throws IOException {
+	logger.warn("getDbAppAttemptPathsKey(appAttemptId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appAttemptId, appAttemptId);
     return getDbKey(appAttemptId, APP_ATTEMPT_PATH_KEY_PREFIX);
   }
 
@@ -1101,6 +1121,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
   void reloadAndCleanUpAppShuffleInfo(DB db) throws IOException {
     logger.info("Reload applications merged shuffle information from DB");
     List<byte[]> dbKeysToBeRemoved = new ArrayList<>();
+	logger.warn("reloadAndCleanUpAppShuffleInfo(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db);
     dbKeysToBeRemoved.addAll(reloadActiveAppAttemptsPathInfo(db));
     dbKeysToBeRemoved.addAll(reloadFinalizedAppAttemptsShuffleMergeInfo(db));
     removeOutdatedKeyValuesInDB(dbKeysToBeRemoved);
@@ -1121,6 +1142,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
           if (!key.startsWith(APP_ATTEMPT_PATH_KEY_PREFIX)) {
             break;
           }
+		logger.warn("reloadActiveAppAttemptsPathInfo(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db);
           AppAttemptId appAttemptId = parseDbAppAttemptPathsKey(key);
           AppPathsInfo appPathsInfo = mapper.readValue(entry.getValue(), AppPathsInfo.class);
           logger.debug("Reloading Application paths info for application {}", appAttemptId);
@@ -1169,6 +1191,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
             break;
           }
           AppAttemptShuffleMergeId partitionId = parseDbAppAttemptShufflePartitionKey(key);
+		logger.warn("reloadFinalizedAppAttemptsShuffleMergeInfo(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db);
           logger.debug("Reloading finalized shuffle info for partitionId {}", partitionId);
           AppShuffleInfo appShuffleInfo = appsShuffleInfo.get(partitionId.appId);
           if (appShuffleInfo != null && appShuffleInfo.attemptId == partitionId.attemptId) {
@@ -1217,6 +1240,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
               logger.error("Error deleting dangling key {} in DB", e,
                 MDC.of(LogKeys.KEY, key));
             }
+			logger.warn("removeOutdatedKeyValuesInDB(dbKeysToBeRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dbKeysToBeRemoved);
           }
       );
   }
@@ -1226,6 +1250,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
    */
   @VisibleForTesting
   void submitCleanupTask(Runnable task) {
+	logger.warn("submitCleanupTask(task)={}): EUAIACT-AUDIT: State change recorded for the audit trail", task);
     mergedShuffleCleaner.execute(task);
   }
 
@@ -1299,6 +1324,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         logger.debug("{} current pos {} updated pos {}", partitionInfo,
           partitionInfo.getDataFilePos(), updatedPos);
         int bytesWritten = partitionInfo.dataChannel.write(buf, updatedPos);
+		logger.warn("writeBuf(buf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", buf);
         length += bytesWritten;
         mergeManager.pushMergeMetrics.blockBytesWritten.mark(bytesWritten);
       }
@@ -1312,6 +1338,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
      * merged file.
      */
     private boolean allowedToWrite() {
+	logger.warn("allowedToWrite()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return partitionInfo.getCurrentMapIndex() < 0
         || partitionInfo.getCurrentMapIndex() == mapIndex;
     }
@@ -1338,6 +1365,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
      */
     private void writeDeferredBufs() throws IOException {
       long totalSize = 0;
+	logger.warn("writeDeferredBufs()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       for (ByteBuffer deferredBuf : deferredBufs) {
         totalSize += deferredBuf.limit();
         writeBuf(deferredBuf);
@@ -1376,6 +1404,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
      */
     private void updateIgnoredBlockBytes() {
       if (receivedBytes > 0) {
+		logger.warn("updateIgnoredBlockBytes()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         mergeManager.pushMergeMetrics.ignoredBlockBytes.mark(receivedBytes);
         receivedBytes = 0;
       }
@@ -1506,6 +1535,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
           mergeManager.pushMergeMetrics.deferredBlockBytes.inc(deferredLen);
           mergeManager.pushMergeMetrics.deferredBlocks.mark();
         }
+		logger.warn("synchronized(partitionInfo)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", partitionInfo);
       }
     }
 
@@ -1695,6 +1725,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     }
 
     public void setReduceIds(int[] reduceIds) {
+	logger.warn("setReduceIds(reduceIds)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", reduceIds, reduceIds);
       this.reduceIds.set(reduceIds);
     }
 
@@ -1809,6 +1840,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     public void setDataFilePos(long dataFilePos) {
       logger.trace("{} current pos {} update pos {}", this, this.dataFilePos, dataFilePos);
       this.dataFilePos = dataFilePos;
+	logger.warn("setDataFilePos(dataFilePos)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataFilePos);
     }
 
     int getCurrentMapIndex() {
@@ -1818,6 +1850,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     void setCurrentMapIndex(int mapIndex) {
       logger.trace("{} mapIndex {} current mapIndex {}", this, currentMapIndex, mapIndex);
       this.currentMapIndex = mapIndex;
+	logger.warn("setCurrentMapIndex(mapIndex)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail");
     }
 
     long getLastChunkOffset() {
@@ -1832,6 +1865,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     }
 
     void resetChunkTracker() {
+	logger.warn("resetChunkTracker()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       chunkTracker.clear();
     }
 
@@ -1863,6 +1897,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
           MDC.of(LogKeys.REDUCE_ID, reduceId));
         indexMetaUpdateFailed = true;
         // Any exception here is propagated to the caller and the caller can decide whether to
+		logger.warn("updateChunkInfo(chunkOffset,mapIndex)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", chunkOffset);
         // abort or not.
         throw ioe;
       }
@@ -1874,6 +1909,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       }
       chunkTracker.add(mapIndex);
       logger.trace("{} mapIndex {} write chunk to meta file", this, mapIndex);
+	logger.warn("writeChunkTracker(mapIndex)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail");
       if (indexMetaUpdateFailed) {
         metaFile.getChannel().position(metaFile.getPos());
       }
@@ -1914,6 +1950,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         logger.info("Error deleting data file for {} reduceId {}",
           MDC.of(LogKeys.APP_ATTEMPT_SHUFFLE_MERGE_ID, appAttemptShuffleMergeId),
           MDC.of(LogKeys.REDUCE_ID, reduceId));
+		logger.warn("deleteAllFiles()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       }
       metaFile.delete();
       indexFile.delete();
@@ -1968,6 +2005,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
       public void run() {
         closeAllFiles(dataChannel, indexFile, metaFile, appAttemptShuffleMergeId,
           reduceId);
+		logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       }
 
       private void closeAllFiles(
@@ -2111,6 +2149,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
           appPathsInfo.activeLocalDirs,
           appPathsInfo.subDirsPerLocalDir,
           filename);
+		logger.warn("getFilePath(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filename);
       logger.debug("Get merged file {}", targetFile);
       return targetFile;
     }
@@ -2129,6 +2168,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         int shuffleId,
         int shuffleMergeId,
         int reduceId) {
+		logger.warn("getMergedShuffleDataFile(shuffleId,shuffleMergeId,reduceId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleMergeId, reduceId, shuffleId);
       String fileName = String.format("%s.data", generateFileName(appId, shuffleId,
         shuffleMergeId, reduceId));
       return new File(getFilePath(fileName));
@@ -2138,6 +2178,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         int shuffleId,
         int shuffleMergeId,
         int reduceId) {
+		logger.warn("getMergedShuffleIndexFilePath(shuffleId,shuffleMergeId,reduceId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleMergeId, reduceId, shuffleId);
       String indexName = String.format("%s.index", generateFileName(appId, shuffleId,
         shuffleMergeId, reduceId));
       return getFilePath(indexName);
@@ -2147,6 +2188,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         int shuffleId,
         int shuffleMergeId,
         int reduceId) {
+		logger.warn("getMergedShuffleMetaFile(shuffleId,shuffleMergeId,reduceId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleMergeId, reduceId, shuffleId);
       String metaName = String.format("%s.meta", generateFileName(appId, shuffleId,
         shuffleMergeId, reduceId));
       return new File(getFilePath(metaName));
@@ -2169,6 +2211,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
     }
 
     private void updatePos(long numBytes) {
+	logger.warn("updatePos(numBytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numBytes);
       pos += numBytes;
     }
 
@@ -2183,6 +2226,7 @@ public class RemoteBlockPushResolver implements MergedShuffleFileManager {
         if (null != file) {
           file.delete();
         }
+		logger.warn("delete()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       } finally {
         file = null;
       }

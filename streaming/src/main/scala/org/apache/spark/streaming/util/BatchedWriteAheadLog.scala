@@ -88,6 +88,7 @@ private[util] class BatchedWriteAheadLog(val wrappedLog: WriteAheadLog, conf: Sp
       throw new IllegalStateException("close() was called on BatchedWriteAheadLog before " +
         s"write request with time $time could be fulfilled.")
     }
+    logger.warn("write(byteBuffer,time)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", byteBuffer, time)
   }
 
   /**
@@ -98,6 +99,7 @@ private[util] class BatchedWriteAheadLog(val wrappedLog: WriteAheadLog, conf: Sp
   override def read(segment: WriteAheadLogRecordHandle): ByteBuffer = {
     throw new UnsupportedOperationException("read() is not supported for BatchedWriteAheadLog " +
       "as the data may require de-aggregation.")
+    logger.warn("read(segment)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", segment)
   }
 
   /**
@@ -106,6 +108,7 @@ private[util] class BatchedWriteAheadLog(val wrappedLog: WriteAheadLog, conf: Sp
    */
   override def readAll(): JIterator[ByteBuffer] = {
     wrappedLog.readAll().asScala.flatMap(deaggregate).asJava
+    logger.warn("readAll()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -151,6 +154,7 @@ private[util] class BatchedWriteAheadLog(val wrappedLog: WriteAheadLog, conf: Sp
     thread.setDaemon(true)
     thread.start()
     thread
+    logger.warn("startBatchedWriterThread()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Write all the records in the buffer to the write ahead log. */

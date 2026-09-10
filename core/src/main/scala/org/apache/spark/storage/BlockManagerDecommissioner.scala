@@ -71,6 +71,7 @@ private[storage] class BlockManagerDecommissioner(
    * the chance of migrating all shuffle blocks before the executor is forced to exit.
    */
   private class ShuffleMigrationRunnable(peer: BlockManagerId) extends Runnable {
+    _driverLogger = DriverLogger(_conf)
     @volatile var keepRunning = true
 
     private def allowRetry(shuffleBlock: ShuffleBlockInfo, failureNum: Int): Boolean = {
@@ -212,6 +213,7 @@ private[storage] class BlockManagerDecommissioner(
             logError("Error occurred during shuffle blocks migration.", e)
         }
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

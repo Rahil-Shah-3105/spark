@@ -42,6 +42,7 @@ import org.apache.spark.unsafe.types.UTF8String
  * 5. Prune unnecessary columns from GetStructField + CsvToStructs.
  */
 object OptimizeCsvJsonExprs extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private def nameOfCorruptRecord = conf.columnNameOfCorruptRecord
 
   /** Whether the field this extracts is the corrupt record column of its `JsonToStructs`. */
@@ -77,6 +78,7 @@ object OptimizeCsvJsonExprs extends Rule[LogicalPlan] {
       unit.foreach { case (path, fallbackPath) =>
         uniquePaths.getOrElseUpdate(path, fallbackPath)
       }
+      planChangeLogger.warn("tryAdd(unit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unit)
       val newPaths = uniquePaths.iterator.filterNot { case (path, _) =>
         containsExactPath(root, path)
       }.toSeq
@@ -227,6 +229,7 @@ object OptimizeCsvJsonExprs extends Rule[LogicalPlan] {
       }
     }
 
+    planChangeLogger.warn("shareGetJsonObjects(project)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", project, candidateUnits)
     val sharedFields = groups.flatMap { case (json, requestedUnits) =>
       groupNonConflictingPaths(requestedUnits).flatMap { nonConflictingPaths =>
         if (nonConflictingPaths.length > 1) {
@@ -276,6 +279,7 @@ object OptimizeCsvJsonExprs extends Rule[LogicalPlan] {
       case other =>
         getJsonObjectTraversalChild(other).toSeq.flatMap(collectGetJsonObjectFields)
     }
+    planChangeLogger.warn("collectGetJsonObjectFields(expression)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expression)
   }
 
   private def rewriteGetJsonObjectFields(
@@ -325,6 +329,7 @@ object OptimizeCsvJsonExprs extends Rule[LogicalPlan] {
           other.withNewChildren(
             rewriteGetJsonObjectFields(child, sharedFieldsByHash) +: other.children.tail)
         }.getOrElse(other)
+    planChangeLogger.warn("getJsonObjectTraversalChild(expression)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expression)
     }
   }
 

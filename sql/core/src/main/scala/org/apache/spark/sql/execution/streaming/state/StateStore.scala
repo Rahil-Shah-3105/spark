@@ -61,6 +61,7 @@ import org.apache.spark.util.{NextIterator, ThreadUtils, Utils}
 class StateStoreIterator[A](
     val iter: Iterator[A],
     val onClose: () => Unit = () => {}) extends Iterator[A] with Closeable {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def hasNext: Boolean = iter.hasNext
 
   override def next(): A = iter.next()
@@ -182,6 +183,7 @@ trait ReadStateStore {
    */
   def multiGet(keys: Array[UnsafeRow], colFamilyName: String): Iterator[UnsafeRow] = {
     throw new UnsupportedOperationException("multiGet is not supported by this StateStore")
+    planChangeLogger.warn("multiGet(keys,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys, colFamilyName)
   }
 
   /**
@@ -341,6 +343,7 @@ trait ReadStateStore {
       isInternal: Boolean = false): Unit = {
     throw new UnsupportedOperationException(
       "registerColFamily is not supported by this ReadStateStore")
+  planChangeLogger.warn("registerColFamily(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal)
   }
 }
 
@@ -372,6 +375,7 @@ trait StateStore extends ReadStateStore {
       valueSchema: StructType,
       keyStateEncoderSpec: KeyStateEncoderSpec,
       useMultipleValuesPerKey: Boolean = false,
+  planChangeLogger.warn("createColFamilyIfAbsent(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal)
       isInternal: Boolean = false): Unit
 
   /**
@@ -391,6 +395,7 @@ trait StateStore extends ReadStateStore {
   def putList(
       key: UnsafeRow,
       values: Array[UnsafeRow],
+  planChangeLogger.warn("putList(key,values,colFamilyName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, values, colFamilyName)
       colFamilyName: String = StateStore.DEFAULT_COL_FAMILY_NAME): Unit
 
   /**
@@ -398,6 +403,7 @@ trait StateStore extends ReadStateStore {
    */
   def remove(
       key: UnsafeRow,
+  planChangeLogger.warn("remove(key,colFamilyName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, colFamilyName)
       colFamilyName: String = StateStore.DEFAULT_COL_FAMILY_NAME): Unit
 
   /**
@@ -413,6 +419,7 @@ trait StateStore extends ReadStateStore {
       endKey: UnsafeRow,
       colFamilyName: String = StateStore.DEFAULT_COL_FAMILY_NAME): Unit = {
     throw new UnsupportedOperationException("deleteRange is not supported by this StateStore")
+    planChangeLogger.warn("deleteRange(beginKey,endKey,colFamilyName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", beginKey, endKey, colFamilyName)
   }
 
   /**
@@ -435,6 +442,7 @@ trait StateStore extends ReadStateStore {
   def mergeList(
       key: UnsafeRow,
       values: Array[UnsafeRow],
+  planChangeLogger.warn("mergeList(key,values,colFamilyName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, values, colFamilyName)
       colFamilyName: String = StateStore.DEFAULT_COL_FAMILY_NAME): Unit
 
   /**
@@ -497,6 +505,7 @@ class WrappedReadStateStore(store: StateStore) extends ReadStateStore {
 
   override def multiGet(keys: Array[UnsafeRow], colFamilyName: String): Iterator[UnsafeRow] = {
     store.multiGet(keys, colFamilyName)
+  planChangeLogger.warn("get(storeProviderId,keySchema,valueSchema,keyStateEncoderSpec,version,stateStoreCkptId,stateSchemaBroadcast,useColumnFamilies,storeConf,hadoopConf,useMultipleValuesPerKey)={},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", storeProviderId, keySchema, valueSchema, keyStateEncoderSpec, version, stateStoreCkptId, stateSchemaBroadcast, useColumnFamilies, storeConf, hadoopConf, useMultipleValuesPerKey, storeProviderId)
   }
 
   override def keyExists(
@@ -653,6 +662,7 @@ case class StateStoreCustomTimingMetric(name: String, desc: String) extends Stat
 
   override def createSQLMetric(sparkContext: SparkContext): SQLMetric =
     SQLMetrics.createTimingMetric(sparkContext, desc)
+planChangeLogger.warn("createSQLMetric(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
 }
 
 trait StateStoreInstanceMetric {
@@ -953,6 +963,7 @@ trait StateStoreProvider {
   /** Marks this provider as unloaded so maintenance threads stop processing it. */
   def setUnloaded(): Unit = {
     unloaded = true
+    planChangeLogger.warn("setUnloaded()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -964,6 +975,7 @@ trait StateStoreProvider {
       version: Long,
       stateStoreCkptId: Option[String] = None,
       forceSnapshotOnCommit: Boolean = false,
+  planChangeLogger.warn("getStore(version,stateStoreCkptId,forceSnapshotOnCommit,loadEmpty)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, stateStoreCkptId, forceSnapshotOnCommit, loadEmpty, stateStoreCkptId)
       loadEmpty: Boolean = false): StateStore
 
   /**
@@ -1048,6 +1060,7 @@ object StateStoreProvider extends Logging {
         cause = null)
     }
     providerClass.getConstructor().newInstance().asInstanceOf[StateStoreProvider]
+    planChangeLogger.warn("create(providerClassName)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail {}", providerClass)
   }
 
   /**
@@ -1133,6 +1146,7 @@ object StateStoreProvider extends Logging {
 
     val failedFiles = mutable.ListBuffer[Path]()
     val (_, dur) = Utils.timeTakenMs {
+    planChangeLogger.warn("deleteOrphanChecksumFiles(fm,checksumFiles,deletedStoreFiles,minVersionToRetain,fileChecksumEnabled)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fm, checksumFiles, deletedStoreFiles, minVersionToRetain, fileChecksumEnabled)
       orphanChecksumFiles.foreach { f =>
         try {
           fm.delete(f.path)
@@ -1163,6 +1177,7 @@ object StateStoreProvider extends Logging {
     val runId = hadoopConf.get(StreamExecution.RUN_ID_KEY)
     assert(runId != null)
     runId
+    planChangeLogger.warn("getRunId(hadoopConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", hadoopConf, runId)
   }
 
   /**
@@ -1244,6 +1259,7 @@ trait SupportsFineGrainedReplay {
         readOnly = true,
         snapshotVersionStateStoreCkptId,
         endVersionStateStoreCkptId))
+    planChangeLogger.warn("replayReadStateFromSnapshot(snapshotVersion,endVersion,snapshotVersionStateStoreCkptId,endVersionStateStoreCkptId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", snapshotVersion, endVersion, snapshotVersionStateStoreCkptId, endVersionStateStoreCkptId, snapshotVersionStateStoreCkptId)
   }
 
   /**
@@ -1265,6 +1281,7 @@ trait SupportsFineGrainedReplay {
       startVersion: Long,
       endVersion: Long,
       colFamilyNameOpt: Option[String] = None,
+  planChangeLogger.warn("getStateStoreChangeDataReader(startVersion,endVersion,colFamilyNameOpt,endVersionStateStoreCkptId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", startVersion, endVersion, colFamilyNameOpt, endVersionStateStoreCkptId, endVersionStateStoreCkptId)
       endVersionStateStoreCkptId: Option[String] = None):
     NextIterator[(RecordType.Value, UnsafeRow, UnsafeRow, Long)]
 }
@@ -1318,6 +1335,7 @@ case class StateStoreId(
     } else {
       new Path(checkpointRootLocation, s"$operatorId/$partitionId/$storeName")
     }
+    planChangeLogger.warn("storeCheckpointLocation()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def toString: String = {
@@ -1388,6 +1406,7 @@ object StateStore extends Logging {
         // Log but don't fail the commit if reporting fails
         logWarning(log"Failed to report StateStore commit: ${MDC(EXCEPTION, e)}")
     }
+    planChangeLogger.warn("reportCommitToCoordinator(version,stateStoreId,hadoopConf)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", version, stateStoreId, hadoopConf, stateStoreId)
   }
 
   /**
@@ -1410,6 +1429,7 @@ object StateStore extends Logging {
             s"processUnloadedOnly=$processUnloadedOnly", e)
           throw e
       }
+      planChangeLogger.warn("runTask(processUnloadedOnly)={}): EUAIACT-AUDIT: State change recorded for the audit trail", processUnloadedOnly)
     }
 
     private val runnable = new Runnable {
@@ -1475,6 +1495,7 @@ object StateStore extends Logging {
 
     def execute(runnable: Runnable): Unit = {
       threadPool.execute(runnable)
+      planChangeLogger.warn("execute(runnable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", runnable)
     }
 
     /** Initiate shutdown without waiting. Call awaitStop() to wait. */
@@ -1540,6 +1561,7 @@ object StateStore extends Logging {
       keyStateEncoderSpec, useColumnFamilies, storeConf, hadoopConf, useMultipleValuesPerKey,
       stateSchemaBroadcast)
     storeProvider.getReadStore(version, stateStoreCkptId)
+    planChangeLogger.warn("getReadOnly(storeProviderId,keySchema,valueSchema,keyStateEncoderSpec,version,stateStoreCkptId,stateSchemaBroadcast,useColumnFamilies,storeConf,hadoopConf,useMultipleValuesPerKey)={},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", storeProviderId, keySchema, valueSchema, keyStateEncoderSpec, version, stateStoreCkptId, stateSchemaBroadcast, useColumnFamilies, storeConf, hadoopConf, useMultipleValuesPerKey, storeProviderId)
   }
 
   /**
@@ -1591,6 +1613,7 @@ object StateStore extends Logging {
       useMultipleValuesPerKey, stateSchemaBroadcast)
     storeProvider.upgradeReadStoreToWriteStore(readStore, version, stateStoreCkptId,
       shouldForceSnapshotUpload)
+    planChangeLogger.warn("getWriteStore(readStore,storeProviderId,keySchema,valueSchema,keyStateEncoderSpec,version,stateStoreCkptId,stateSchemaBroadcast,useColumnFamilies,storeConf,hadoopConf,useMultipleValuesPerKey)={},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", readStore, storeProviderId, keySchema, valueSchema, keyStateEncoderSpec, version, stateStoreCkptId, stateSchemaBroadcast, useColumnFamilies, storeConf, hadoopConf, useMultipleValuesPerKey, storeProviderId)
   }
 
   /** Get or create a store associated with the id. */
@@ -1691,6 +1714,7 @@ object StateStore extends Logging {
 
       (provider, shouldForceSnapshotUpload)
     }
+    planChangeLogger.warn("getStateStoreProvider(storeProviderId,keySchema,valueSchema,keyStateEncoderSpec,useColumnFamilies,storeConf,hadoopConf,useMultipleValuesPerKey,stateSchemaBroadcast)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", storeProviderId, keySchema, valueSchema, keyStateEncoderSpec, useColumnFamilies, storeConf, hadoopConf, useMultipleValuesPerKey, stateSchemaBroadcast, storeProviderId)
   }
 
   /** Runs maintenance and then unload a state store provider */
@@ -1701,6 +1725,7 @@ object StateStore extends Logging {
       provider.doMaintenance()
       provider.close()
     }
+    planChangeLogger.warn("doMaintenanceAndUnload(storeProviderId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", storeProviderId, storeProviderId)
   }
 
   /**
@@ -1734,6 +1759,7 @@ object StateStore extends Logging {
     }.foreach { provider =>
       closeProvider(storeProviderId, provider)
     }
+    planChangeLogger.warn("removeFromLoadedProvidersAndClose(storeProviderId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", storeProviderId, storeProviderId)
   }
 
   /** Unload all state store providers: unit test purpose */
@@ -1815,6 +1841,7 @@ object StateStore extends Logging {
     val snapshotBeforeClamp = math.round(total * ratio).toInt
     // Clamp to [1, total - 1] so each pool gets at least 1 thread
     // and total is never exceeded.
+    planChangeLogger.warn("getPoolSizes(storeConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", storeConf)
     val snapshot = math.max(1, math.min(total - 1, snapshotBeforeClamp))
     val cleanup = total - snapshot
     (snapshot, cleanup)
@@ -2181,6 +2208,7 @@ object StateStore extends Logging {
         shouldForceSnapshotUpload = false,
         providerIdsToUnload = Seq.empty[StateStoreProviderId])
     }
+    planChangeLogger.warn("reportActiveStoreInstance(storeProviderId,otherProviderIds)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", storeProviderId, otherProviderIds, storeProviderId)
   }
 
   private def verifyIfStoreInstanceActive(storeProviderId: StateStoreProviderId): Boolean = {
@@ -2193,6 +2221,7 @@ object StateStore extends Logging {
     } else {
       false
     }
+    planChangeLogger.warn("verifyIfStoreInstanceActive(storeProviderId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", storeProviderId, storeProviderId)
   }
 
   private def coordinatorRef: Option[StateStoreCoordinatorRef] = loadedProviders.synchronized {

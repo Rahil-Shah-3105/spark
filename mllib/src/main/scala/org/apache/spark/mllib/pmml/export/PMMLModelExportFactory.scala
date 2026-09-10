@@ -59,6 +59,7 @@ private[mllib] object PMMLModelExportFactory {
         throw new IllegalArgumentException(
           "PMML Export not supported for model: " + model.getClass.getName)
     }
+    logger.warn("createPMMLModelExport(model)={}): EUAIACT-AUDIT: State change recorded for the audit trail", model)
   }
 
 }

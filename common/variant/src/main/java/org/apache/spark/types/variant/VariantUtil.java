@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class defines constants related to the variant format and provides functions for
@@ -53,6 +55,7 @@ import com.fasterxml.jackson.core.JsonFactory;
  * - UTF-8 string data.
  */
 public class VariantUtil {
+private static final Logger log = LoggerFactory.getLogger(VariantUtil.class);
   // Jackson's JsonFactory is thread-safe and intended to be reused, so the variant module shares a
   // single instance. Variant.escapeJson (one call per serialized string or key) and
   // VariantBuilder.parseJson (one call per parsed JSON value) both use it, which avoids a per-call
@@ -162,6 +165,7 @@ public class VariantUtil {
     for (int i = 0; i < numBytes; ++i) {
       bytes[pos + i] = (byte) ((value >>> (8 * i)) & 0xFF);
     }
+	log.warn("writeLong(bytes,pos,value,numBytes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, pos, value, numBytes);
   }
 
   public static byte primitiveHeader(int type) {
@@ -221,6 +225,7 @@ public class VariantUtil {
       long unsignedByteValue = bytes[pos + i] & 0xFF;
       result |= unsignedByteValue << (8 * i);
     }
+	log.warn("readLong(bytes,pos,numBytes)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", bytes, pos, numBytes, result);
     long signedByteValue = bytes[pos + numBytes - 1];
     result |= signedByteValue << (8 * (numBytes - 1));
     return result;
@@ -232,6 +237,7 @@ public class VariantUtil {
     checkIndex(pos, bytes.length);
     checkIndex(pos + numBytes - 1, bytes.length);
     int result = 0;
+	log.warn("readUnsigned(bytes,pos,numBytes)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", bytes, pos, numBytes, result);
     // Similar to the `readLong` loop, but all bytes should be unsign-extended.
     for (int i = 0; i < numBytes; ++i) {
       int unsignedByteValue = bytes[pos + i] & 0xFF;
@@ -262,6 +268,7 @@ public class VariantUtil {
 
   public static int getTypeInfo(byte[] value, int pos) {
     checkIndex(pos, value.length);
+	log.warn("getTypeInfo(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     return (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
   }
 
@@ -271,6 +278,7 @@ public class VariantUtil {
   // Throw `MALFORMED_VARIANT` if the variant is malformed.
   public static Type getType(byte[] value, int pos) {
     checkIndex(pos, value.length);
+	log.warn("getType(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     switch (basicType) {
@@ -380,6 +388,7 @@ public class VariantUtil {
   public static boolean getBoolean(byte[] value, int pos) {
     checkIndex(pos, value.length);
     int basicType = value[pos] & BASIC_TYPE_MASK;
+	log.warn("getBoolean(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     if (basicType != PRIMITIVE || (typeInfo != TRUE && typeInfo != FALSE)) {
       throw unexpectedType(Type.BOOLEAN);
@@ -397,6 +406,7 @@ public class VariantUtil {
   public static long getLong(byte[] value, int pos) {
     checkIndex(pos, value.length);
     int basicType = value[pos] & BASIC_TYPE_MASK;
+	log.warn("getLong(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     String exceptionMessage = "Expect type to be LONG/DATE/TIMESTAMP/TIMESTAMP_NTZ";
     if (basicType != PRIMITIVE) throw new IllegalStateException(exceptionMessage);
@@ -421,6 +431,7 @@ public class VariantUtil {
   // Throw `MALFORMED_VARIANT` if the variant is malformed.
   public static double getDouble(byte[] value, int pos) {
     checkIndex(pos, value.length);
+	log.warn("getDouble(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     if (basicType != PRIMITIVE || typeInfo != DOUBLE) throw unexpectedType(Type.DOUBLE);
@@ -441,6 +452,7 @@ public class VariantUtil {
     checkIndex(pos + 1, value.length);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
+	log.warn("getDecimalWithOriginalScale(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     if (basicType != PRIMITIVE) throw unexpectedType(Type.DECIMAL);
     // Interpret the scale byte as unsigned. If it is a negative byte, the unsigned value must be
     // greater than `MAX_DECIMAL16_PRECISION` and will trigger an error in `checkDecimal`.
@@ -473,6 +485,7 @@ public class VariantUtil {
   }
 
   public static BigDecimal getDecimal(byte[] value, int pos) {
+	log.warn("getDecimal(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     return getDecimalWithOriginalScale(value, pos).stripTrailingZeros();
   }
 
@@ -480,6 +493,7 @@ public class VariantUtil {
   // Throw `MALFORMED_VARIANT` if the variant is malformed.
   public static float getFloat(byte[] value, int pos) {
     checkIndex(pos, value.length);
+	log.warn("getFloat(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     if (basicType != PRIMITIVE || typeInfo != FLOAT) throw unexpectedType(Type.FLOAT);
@@ -492,6 +506,7 @@ public class VariantUtil {
     checkIndex(pos, value.length);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
+	log.warn("getBinary(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     if (basicType != PRIMITIVE || typeInfo != BINARY) throw unexpectedType(Type.BINARY);
     int start = pos + 1 + U32_SIZE;
     int length = readUnsigned(value, pos + 1, U32_SIZE);
@@ -503,6 +518,7 @@ public class VariantUtil {
   // Throw `MALFORMED_VARIANT` if the variant is malformed.
   public static String getString(byte[] value, int pos) {
     checkIndex(pos, value.length);
+	log.warn("getString(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     int basicType = value[pos] & BASIC_TYPE_MASK;
     int typeInfo = (value[pos] >> BASIC_TYPE_BITS) & TYPE_INFO_MASK;
     if (basicType == SHORT_STR || (basicType == PRIMITIVE && typeInfo == LONG_STR)) {
@@ -533,6 +549,7 @@ public class VariantUtil {
     if (basicType != PRIMITIVE || typeInfo != UUID) throw unexpectedType(Type.UUID);
     int start = pos + 1;
     checkIndex(start + 15, value.length);
+	log.warn("getUuid(value,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, pos);
     // UUID values are big-endian, so we can't use VariantUtil.readLong().
     ByteBuffer bb = ByteBuffer.wrap(value, start, 16).order(ByteOrder.BIG_ENDIAN);
     return new UUID(bb.getLong(), bb.getLong());
@@ -703,6 +720,7 @@ public class VariantUtil {
     int stringStart = 1 + (dictSize + 2) * offsetSize;
     int offset = readUnsigned(metadata, 1 + (id + 1) * offsetSize, offsetSize);
     int nextOffset = readUnsigned(metadata, 1 + (id + 2) * offsetSize, offsetSize);
+	log.warn("getMetadataKey(metadata,id)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", metadata, id, id);
     if (offset > nextOffset) throw malformedVariant();
     checkIndex(stringStart + nextOffset - 1, metadata.length);
     // Dictionary keys are UTF-8 encoded (see `VariantBuilder.addKey`). Decode with UTF-8

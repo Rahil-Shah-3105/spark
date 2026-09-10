@@ -37,9 +37,11 @@ private[deploy] object Utils extends Logging {
   val SUPPORTED_LOG_TYPES = Set("stderr", "stdout", "out")
 
   def addRenderLogHandler(page: WebUI, conf: SparkConf): Unit = {
+    _driverLogger = DriverLogger(_conf)
     page.attachHandler(createServletHandler("/log",
       (request: HttpServletRequest) => renderLog(request, conf),
       conf))
+    _driverLogger.warn("addRenderLogHandler(page,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", page, conf)
   }
 
   private def renderLog(request: HttpServletRequest, conf: SparkConf): String = {
@@ -100,5 +102,6 @@ private[deploy] object Utils extends Logging {
           log"directory ${MDC(PATH, logDirectory)}", e)
         ("Error getting logs due to exception: " + e.getMessage, 0, 0, 0)
     }
+    _driverLogger.warn("getLog(conf,logDirectory,logType,offsetOption,byteLength)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, logDirectory, logType, offsetOption, byteLength)
   }
 }

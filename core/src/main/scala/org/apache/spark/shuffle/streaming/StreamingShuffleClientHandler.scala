@@ -46,6 +46,7 @@ class StreamingShuffleClientHandler(
     byteLimit: Long,
     val context: TaskContext,
     errorNotifier: ErrorNotifier) extends RpcHandler with TaskContextAwareLogging {
+     _driverLogger = DriverLogger(_conf)
   private val RECVBUF_SIZE: Integer = 32 << 10
   private val SENDBUF_SIZE: Integer = 512
 
@@ -74,11 +75,13 @@ class StreamingShuffleClientHandler(
         newSeqNum)
     }
     lastSeqNum = newSeqNum
+    _driverLogger.warn("updateLastSeqNum(newSeqNum,messageType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newSeqNum, messageType)
   }
 
   private[spark] var onTermAckResponse: Int => Unit = (Int) => {}
   private[spark] def setOnTermAckResponseHandler(handler: Int => Unit): Unit = {
     onTermAckResponse = handler
+    _driverLogger.warn("setOnTermAckResponseHandler(handler)={}): EUAIACT-AUDIT: State change recorded for the audit trail", handler)
   }
 
   override def channelActive(client: TransportClient): Unit = {
@@ -130,6 +133,7 @@ class StreamingShuffleClientHandler(
         buf.release()
       }
     }
+    _driverLogger.warn("sendCreditControlMessage(client,shuffleWriterId,credit)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", client, shuffleWriterId, credit, shuffleWriterId)
   }
 
   protected def sendTerminationAckMessage(client: TransportClient, shuffleWriterId: Int): Unit = {
@@ -160,6 +164,7 @@ class StreamingShuffleClientHandler(
         buf.release()
       }
     }
+    _driverLogger.warn("sendTerminationAckMessage(client,shuffleWriterId)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", client, shuffleWriterId, shuffleWriterId)
   }
 
   override def receive(

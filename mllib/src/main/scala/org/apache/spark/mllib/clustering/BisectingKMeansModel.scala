@@ -112,6 +112,7 @@ class BisectingKMeansModel private[clustering] (
   @Since("2.0.0")
   override def save(sc: SparkContext, path: String): Unit = {
     BisectingKMeansModel.SaveLoadV3_0.save(sc, this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 }
 
@@ -138,6 +139,7 @@ object BisectingKMeansModel extends Loader[BisectingKMeansModel] {
           s"  (${SaveLoadV2_0.thisClassName}, ${SaveLoadV2_0.thisClassName})\n" +
           s"  (${SaveLoadV3_0.thisClassName}, ${SaveLoadV3_0.thisClassName})")
     }
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private case class Data(index: Int, size: Long, center: Vector, norm: Double, cost: Double,
@@ -154,6 +156,7 @@ object BisectingKMeansModel extends Loader[BisectingKMeansModel] {
     } else {
       node.children.flatMap(getNodes) ++ Array(node)
     }
+    logger.warn("getNodes(node)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", node)
   }
 
   private def buildTree(rootId: Int, nodes: Map[Int, Data]): ClusteringTreeNode = {
@@ -221,6 +224,7 @@ object BisectingKMeansModel extends Loader[BisectingKMeansModel] {
         node.centerWithNorm.vector, node.centerWithNorm.norm, node.cost, node.height,
         node.children.map(_.index).toImmutableArraySeq))
       spark.createDataFrame(data.toImmutableArraySeq).write.parquet(Loader.dataPath(path))
+    logger.warn("save(sc,model,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, model, path)
     }
 
     def load(sc: SparkContext, path: String): BisectingKMeansModel = {

@@ -42,6 +42,7 @@ import org.apache.spark.sql.types.StructType
  * is primarily intended for use in unit tests and does not provide durability.
  */
 class MemorySink extends Table with SupportsWrite with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def name(): String = "MemorySink"
 
@@ -56,9 +57,11 @@ class MemorySink extends Table with SupportsWrite with Logging {
       private var needTruncate: Boolean = false
       private val inputSchema: StructType = info.schema()
 
+      planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
       override def truncate(): WriteBuilder = {
         this.needTruncate = true
         this
+        planChangeLogger.warn("truncate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
 
       override def build(): Write = {
@@ -117,6 +120,8 @@ class MemorySink extends Table with SupportsWrite with Logging {
     } else {
       logDebug(s"Skipping already committed batch: $batchId")
     }
+    planChangeLogger.warn("write(batchId,needTruncate,newRows)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, needTruncate, newRows, batchId)
+  planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   def clear(): Unit = synchronized {
@@ -141,6 +146,7 @@ class MemoryStreamingWrite(
 
   override def createStreamingWriterFactory(info: PhysicalWriteInfo): MemoryWriterFactory = {
     MemoryWriterFactory(schema)
+    planChangeLogger.warn("createStreamingWriterFactory(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 
   override def useCommitCoordinator(): Boolean = false
@@ -164,6 +170,8 @@ case class MemoryWriterFactory(schema: StructType)
       partitionId: Int,
       taskId: Long): DataWriter[InternalRow] = {
     new MemoryDataWriter(partitionId, schema)
+  planChangeLogger.warn("createWriter(partitionId,taskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, partitionId)
+  planChangeLogger.warn("createWriter(partitionId,taskId,epochId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, epochId, partitionId)
   }
 
   override def createWriter(

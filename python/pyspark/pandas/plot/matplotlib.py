@@ -49,6 +49,7 @@ from pyspark.pandas.plot import (
     KdePlotBase,
 )
 from pyspark.pandas.series import Series, first_series
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 _all_kinds = PlotAccessor._all_kinds  # type: ignore[attr-defined]
 
@@ -125,6 +126,7 @@ class PandasOnSparkBoxPlot(PandasBoxPlot, BoxPlotBase):
             rc_str = "boxplot.{0}.{1}"
             if dictionary is None:
                 dictionary = dict()
+                logger.warning("update_dict(dictionary,rc_name,properties)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", dictionary, rc_name, properties)
             for prop_dict in properties:
                 dictionary.setdefault(prop_dict, mat.rcParams[rc_str.format(rc_name, prop_dict)])
             return dictionary

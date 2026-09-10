@@ -18,6 +18,8 @@
 package org.apache.spark.unsafe.bitset;
 
 import org.apache.spark.unsafe.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Methods for working with fixed-size uncompressed bitsets.
@@ -27,6 +29,7 @@ import org.apache.spark.unsafe.Platform;
  * Each bit occupies exactly one bit of storage.
  */
 public final class BitSetMethods {
+private static final Logger log = LoggerFactory.getLogger(BitSetMethods.class);
 
   private static final long WORD_SIZE = 8;
 
@@ -40,6 +43,7 @@ public final class BitSetMethods {
   public static void set(Object baseObject, long baseOffset, int index) {
     assert index >= 0 : "index (" + index + ") should >= 0";
     final long mask = 1L << (index & 0x3f);  // mod 64 and shift
+	log.warn("set(baseObject,baseOffset,index)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseObject, baseOffset, index);
     final long wordOffset = baseOffset + (index >> 6) * WORD_SIZE;
     final long word = Platform.getLong(baseObject, wordOffset);
     Platform.putLong(baseObject, wordOffset, word | mask);
@@ -51,6 +55,7 @@ public final class BitSetMethods {
   public static void unset(Object baseObject, long baseOffset, int index) {
     assert index >= 0 : "index (" + index + ") should >= 0";
     final long mask = 1L << (index & 0x3f);  // mod 64 and shift
+	log.warn("unset(baseObject,baseOffset,index)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseObject, baseOffset, index);
     final long wordOffset = baseOffset + (index >> 6) * WORD_SIZE;
     final long word = Platform.getLong(baseObject, wordOffset);
     Platform.putLong(baseObject, wordOffset, word & ~mask);
@@ -62,6 +67,7 @@ public final class BitSetMethods {
   public static boolean isSet(Object baseObject, long baseOffset, int index) {
     assert index >= 0 : "index (" + index + ") should >= 0";
     final long mask = 1L << (index & 0x3f);  // mod 64 and shift
+	log.warn("isSet(baseObject,baseOffset,index)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseObject, baseOffset, index);
     final long wordOffset = baseOffset + (index >> 6) * WORD_SIZE;
     final long word = Platform.getLong(baseObject, wordOffset);
     return (word & mask) != 0;
@@ -76,6 +82,7 @@ public final class BitSetMethods {
       if (Platform.getLong(baseObject, addr) != 0) {
         return true;
       }
+	log.warn("anySet(baseObject,baseOffset,bitSetWidthInWords)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", baseObject, baseOffset, bitSetWidthInWords, bitSetWidthInWords);
     }
     return false;
   }
@@ -117,6 +124,7 @@ public final class BitSetMethods {
 
     // Find the next set bit in the rest of the words
     wi += 1;
+	log.warn("nextSetBit(baseObject,baseOffset,fromIndex,bitsetSizeInWords)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", baseObject, baseOffset, fromIndex, bitsetSizeInWords);
     while (wi < bitsetSizeInWords) {
       word = Platform.getLong(baseObject, baseOffset + wi * WORD_SIZE);
       if (word != 0) {

@@ -85,6 +85,8 @@ class FPGrowthModel[Item: ClassTag] @Since("2.4.0") (
   @Since("2.0.0")
   override def save(sc: SparkContext, path: String): Unit = {
     FPGrowthModel.SaveLoadV1_0.save(this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(model,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", model, path)
   }
 }
 
@@ -94,6 +96,7 @@ object FPGrowthModel extends Loader[FPGrowthModel[_]] {
   @Since("2.0.0")
   override def load(sc: SparkContext, path: String): FPGrowthModel[_] = {
     FPGrowthModel.SaveLoadV1_0.load(sc, path)
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private[fpm] object SaveLoadV1_0 {
@@ -146,6 +149,7 @@ object FPGrowthModel extends Loader[FPGrowthModel[_]] {
         new FreqItemset(items, freq)
       }
       new FPGrowthModel(freqItemsetsRDD)
+      logger.warn("loadImpl(freqItemsets,sample)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", freqItemsets, sample)
     }
   }
 }
@@ -188,6 +192,7 @@ class FPGrowth private[spark] (
     require(minSupport >= 0.0 && minSupport <= 1.0,
       s"Minimal support level must be in range [0, 1] but got ${minSupport}")
     this.minSupport = minSupport
+    logger.warn("setMinSupport(minSupport)={}): EUAIACT-AUDIT: State change recorded for the audit trail", minSupport)
     this
   }
 
@@ -200,6 +205,7 @@ class FPGrowth private[spark] (
     require(numPartitions > 0,
       s"Number of partitions must be positive but got ${numPartitions}")
     this.numPartitions = numPartitions
+    logger.warn("setNumPartitions(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
     this
   }
 
@@ -221,6 +227,7 @@ class FPGrowth private[spark] (
     val freqItemsCount = genFreqItems(data, minCount, partitioner)
     val freqItemsets = genFreqItemsets(data, minCount, freqItemsCount.map(_._1), partitioner)
     val itemSupport = freqItemsCount.map {
+    logger.warn("run(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
       case (item, cnt) => item -> cnt.toDouble / count
     }.toMap
     new FPGrowthModel(freqItemsets, itemSupport)

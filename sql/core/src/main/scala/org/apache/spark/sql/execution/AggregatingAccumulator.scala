@@ -40,6 +40,7 @@ class AggregatingAccumulator protected(
     typedImperatives: Array[TypedImperativeAggregate[_]],
     @transient private val conf: SQLConf)
   extends AccumulatorV2[InternalRow, InternalRow] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   assert(bufferSchema.size == initialValues.size)
   assert(bufferSchema.size == updateExpressions.size)
   assert(mergeExpressions == null || bufferSchema.size == mergeExpressions.size)
@@ -63,6 +64,7 @@ class AggregatingAccumulator protected(
     imperatives.foreach(_.initialize(buffer))
     typedImperatives.foreach(_.initialize(buffer))
     buffer
+      planChangeLogger.warn("createBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def getOrCreateBuffer(): SpecificInternalRow = {
@@ -74,6 +76,7 @@ class AggregatingAccumulator protected(
       joinedRow.withLeft(buffer)
     }
     buffer
+    planChangeLogger.warn("getOrCreateBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def initializeProjection[T <: Projection](projection: T): T = {
@@ -114,6 +117,7 @@ class AggregatingAccumulator protected(
   override def reset(): Unit = {
     buffer = null
     joinedRow = null
+    planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def isZero: Boolean = buffer == null
@@ -128,6 +132,7 @@ class AggregatingAccumulator protected(
       imperatives,
       typedImperatives,
       conf)
+    planChangeLogger.warn("copyAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def copy(): AggregatingAccumulator = {
@@ -140,6 +145,7 @@ class AggregatingAccumulator protected(
     val buffer = getOrCreateBuffer()
     updateProjection.target(buffer)(joinedRow.withRight(v))
     var i = 0
+    planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
     while (i < imperatives.length) {
       imperatives(i).update(buffer, v)
       i += 1
@@ -234,6 +240,7 @@ class AggregatingAccumulator protected(
     assert(buffer == null || (buffer eq other.buffer))
     buffer = other.buffer
     joinedRow = other.joinedRow
+    planChangeLogger.warn("setState(other)={}): EUAIACT-AUDIT: State change recorded for the audit trail", other)
   }
 }
 
@@ -329,6 +336,8 @@ object AggregatingAccumulator {
       c.imperatives,
       c.typedImperatives,
       c.conf)
+    planChangeLogger.warn("apply(functions,inputAttributes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", functions, inputAttributes)
+  planChangeLogger.warn("apply(sc,name,functions,inputAttributes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name, functions, inputAttributes)
   }
 
   /**

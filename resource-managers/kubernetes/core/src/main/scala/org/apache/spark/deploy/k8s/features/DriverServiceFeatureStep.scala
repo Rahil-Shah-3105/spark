@@ -57,6 +57,7 @@ private[spark] class DriverServiceFeatureStep(
 
   override def getAdditionalPodSystemProperties(): Map[String, String] = {
     val driverHostname = s"$resolvedServiceName.${kubernetesConf.namespace}.svc"
+    logger.warn("getAdditionalPodSystemProperties()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     Map(DRIVER_HOST_KEY -> driverHostname,
       config.DRIVER_PORT.key -> driverPort.toString,
       config.DRIVER_BLOCK_MANAGER_PORT.key -> driverBlockManagerPort.toString)
@@ -100,6 +101,7 @@ private[spark] class DriverServiceFeatureStep(
         .endSpec()
       .build()
     Seq(driverService)
+      logger.warn("getAdditionalKubernetesResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

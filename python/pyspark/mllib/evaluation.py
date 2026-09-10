@@ -24,6 +24,7 @@ from pyspark.mllib.common import JavaModelWrapper, callMLlibFunc
 from pyspark.mllib.linalg import Matrix
 from pyspark.sql import SQLContext
 from pyspark.sql.types import ArrayType, DoubleType, StructField, StructType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "BinaryClassificationMetrics",
@@ -106,6 +107,7 @@ class BinaryClassificationMetrics(JavaModelWrapper):
         """
         Unpersists intermediate RDDs used in the computation.
         """
+        logger.warning("unpersist(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self.call("unpersist")
 
 
@@ -655,6 +657,7 @@ class MultilabelMetrics(JavaModelWrapper):
         Returns subset accuracy.
         (for equal sets of labels)
         """
+        logger.warning("subsetAccuracy(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self.call("subsetAccuracy")
 
     @property

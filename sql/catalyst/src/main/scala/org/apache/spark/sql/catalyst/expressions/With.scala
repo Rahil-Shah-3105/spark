@@ -97,6 +97,7 @@ case class With(child: Expression, defs: Seq[CommonExpressionDef])
 }
 
 object With {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Helper function to create a [[With]] statement with an arbitrary number of common expressions.
    * Note that the number of arguments in `commonExprs` should be the same as the number of
@@ -110,6 +111,7 @@ object With {
     val commonExprDefs = commonExprs.map(CommonExpressionDef(_))
     val commonExprRefs = commonExprDefs.map(new CommonExpressionRef(_))
     With(replaced(commonExprRefs), commonExprDefs)
+    planChangeLogger.warn("apply(commonExprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", commonExprs)
   }
 
   private[sql] def childContainsUnsupportedAggExpr(withExpr: With): Boolean = {

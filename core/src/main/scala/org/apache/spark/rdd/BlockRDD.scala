@@ -30,6 +30,7 @@ private[spark] class BlockRDDPartition(val blockId: BlockId, idx: Int) extends P
 private[spark]
 class BlockRDD[T: ClassTag](sc: SparkContext, @transient val blockIds: Array[BlockId])
   extends RDD[T](sc, Nil) {
+   _driverLogger = DriverLogger(_conf)
 
   @transient lazy val _locations = BlockManager.blockIdsToLocations(blockIds, SparkEnv.get)
   @volatile private var _isValid = true
@@ -55,6 +56,7 @@ class BlockRDD[T: ClassTag](sc: SparkContext, @transient val blockIds: Array[Blo
   override def getPreferredLocations(split: Partition): Seq[String] = {
     assertValid()
     _locations(split.asInstanceOf[BlockRDDPartition].blockId)
+    _driverLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   /**
@@ -67,6 +69,7 @@ class BlockRDD[T: ClassTag](sc: SparkContext, @transient val blockIds: Array[Blo
       sparkContext.env.blockManager.master.removeBlock(blockId)
     }
     _isValid = false
+    _driverLogger.warn("removeBlocks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

@@ -29,11 +29,13 @@ private[netty] abstract class NettyRpcCallContext(override val senderAddress: Rp
   protected def send(message: Any): Unit
 
   override def reply(response: Any): Unit = {
+    _driverLogger = DriverLogger(_conf)
     send(response)
   }
 
   override def sendFailure(e: Throwable): Unit = {
     send(RpcFailure(e))
+    _driverLogger.warn("sendFailure(e)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", e)
   }
 
 }
@@ -48,6 +50,7 @@ private[netty] class LocalNettyRpcCallContext(
 
   override protected def send(message: Any): Unit = {
     p.success(message)
+  _driverLogger.warn("send(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 }
 

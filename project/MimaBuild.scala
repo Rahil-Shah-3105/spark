@@ -95,6 +95,7 @@ object MimaBuild {
       mimaPreviousArtifacts := Set(organization % s"${id}_2.13" % previousSparkVersion),
       mimaBinaryIssueFilters ++= ignoredABIProblems(sparkHome, version.value)
     )
+    logger.warn("mimaSettings(sparkHome,projectRef)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkHome, projectRef, id)
   }
 
 }

@@ -210,6 +210,7 @@ object BisectingKMeansModel extends MLReadable[BisectingKMeansModel] {
 
     override protected def saveImpl(path: String): Unit = {
       // Save metadata and Params
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val dataPath = new Path(path, "data").toString
       instance.parentModel.save(sc, dataPath)

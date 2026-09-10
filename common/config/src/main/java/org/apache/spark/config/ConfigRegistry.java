@@ -27,6 +27,8 @@ import com.google.protobuf.TextFormat;
 
 import org.apache.spark.config.protobuf.ConfigEntries;
 import org.apache.spark.config.protobuf.ConfigEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A registry for Spark configuration entries.
@@ -44,6 +46,7 @@ import org.apache.spark.config.protobuf.ConfigEntry;
  * </ul>
  */
 public class ConfigRegistry {
+private static final Logger log = LoggerFactory.getLogger(ConfigRegistry.class);
 
   // Explicit list of config files to load for production (package-private for testing)
   static final String[] DEFAULT_CONFIG_FILES = {
@@ -75,6 +78,7 @@ public class ConfigRegistry {
    * @return the ConfigEntry if found, null otherwise
    */
   public ConfigEntry get(String key) {
+	log.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
     return configMap.get(key);
   }
 
@@ -126,6 +130,7 @@ public class ConfigRegistry {
    * @return the ConfigEntry if found, null otherwise
    */
   public static ConfigEntry getConfig(String key) {
+	log.warn("getConfig(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
     return getInstance().get(key);
   }
 
@@ -168,6 +173,7 @@ public class ConfigRegistry {
     Map<String, ConfigEntry> result = new HashMap<>();
     ClassLoader classLoader = ConfigRegistry.class.getClassLoader();
 
+	log.warn("loadConfigs(configFiles)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", configFiles);
     for (String file : configFiles) {
       List<ConfigEntry> configs = loadConfigFile(classLoader, file);
       for (ConfigEntry config : configs) {
@@ -189,6 +195,7 @@ public class ConfigRegistry {
     if (inputStream == null) {
       throw internalError("Config file not found on classpath: " + resourcePath);
     }
+	log.warn("loadConfigFile(classLoader,resourcePath)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", classLoader, resourcePath);
 
     try (BufferedReader reader = new BufferedReader(
         new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {

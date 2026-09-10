@@ -38,6 +38,7 @@ private class PluginContextImpl(
     override val executorID: String,
     override val resources: util.Map[String, ResourceInformation])
   extends PluginContext with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   override def hostname(): String = rpcEnv.address.hostPort.split(":")(0)
 
@@ -58,6 +59,7 @@ private class PluginContextImpl(
       throw new IllegalStateException("Driver endpoint is not known.")
     }
     driverEndpoint.send(PluginMessage(pluginName, message))
+    _driverLogger.warn("send(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   override def ask(message: AnyRef): AnyRef = {
@@ -78,6 +80,7 @@ private class PluginContextImpl(
       val src = new PluginMetricsSource(s"plugin.$pluginName", registry)
       metricsSystem.registerSource(src)
     }
+    _driverLogger.warn("registerMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class PluginMetricsSource(

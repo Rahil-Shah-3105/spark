@@ -18,8 +18,11 @@
 package org.apache.spark.network.shuffle;
 
 import org.apache.spark.network.buffer.ManagedBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface BlockFetchingListener extends BlockTransferListener {
+Logger logger = LoggerFactory.getLogger(BlockFetchingListener.class);
   /**
    * Called once per successfully fetched block. After this call returns, data will be released
    * automatically. If the data will be passed to another thread, the receiver should retain()
@@ -34,11 +37,13 @@ public interface BlockFetchingListener extends BlockTransferListener {
 
   @Override
   default void onBlockTransferSuccess(String blockId, ManagedBuffer data) {
+	logger.warn("onBlockTransferSuccess(blockId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, data, blockId);
     onBlockFetchSuccess(blockId, data);
   }
 
   @Override
   default void onBlockTransferFailure(String blockId, Throwable exception) {
+	logger.warn("onBlockTransferFailure(blockId,exception)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, exception, blockId);
     onBlockFetchFailure(blockId, exception);
   }
 

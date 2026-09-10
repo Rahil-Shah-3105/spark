@@ -55,6 +55,7 @@ case class InMemoryTableScanExec(
     predicates: Seq[Expression],
     @transient relation: InMemoryRelation)
   extends InMemoryTableScanLike {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override lazy val metrics = Map(
     "numOutputRows" -> SQLMetrics.createMetric(sparkContext, "number of output rows"))
@@ -108,6 +109,7 @@ case class InMemoryTableScanExec(
 
   private def updateAttribute(expr: Expression): Expression = {
     // attributes can be pruned so using relation's output.
+    planChangeLogger.warn("updateAttribute(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
     // E.g., relation.output is [id, item] but this scan's output can be [item] only.
     val attrMap = AttributeMap(cachedPlan.output.zip(relation.output))
     expr.transform {
@@ -162,6 +164,7 @@ case class InMemoryTableScanExec(
     val serializer = relation.cacheBuilder.serializer
 
     // update SQL metrics
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val withMetrics =
       filteredCachedBatches().mapPartitionsInternal { iter =>
         if (enableAccumulatorsForTest && iter.hasNext) {
@@ -189,6 +192,7 @@ case class InMemoryTableScanExec(
       conf).map { cb =>
       numOutputRows += cb.numRows()
       cb
+       planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

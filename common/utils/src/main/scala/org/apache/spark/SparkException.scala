@@ -32,6 +32,7 @@ class SparkException(
     context: Array[QueryContext] = Array.empty,
     sqlState: Option[String] = None)
   extends Exception(message, cause) with SparkThrowable {
+   log_ = LoggerFactory.getLogger(logName)
 
   def this(message: String, cause: Throwable) =
     this(message = message, cause = cause, errorClass = None, messageParameters = Map.empty)
@@ -327,6 +328,7 @@ private[spark] class SparkUnsupportedOperationException private(
 private[spark] object SparkUnsupportedOperationException {
   def apply(): SparkUnsupportedOperationException = {
     val stackTrace = Thread.currentThread().getStackTrace
+    log_.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val messageParameters = if (stackTrace.length >= 4) {
       val element = stackTrace(3)
       Map("className" -> element.getClassName, "methodName" -> element.getMethodName)

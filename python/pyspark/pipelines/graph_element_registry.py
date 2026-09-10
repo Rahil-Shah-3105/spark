@@ -25,6 +25,7 @@ from contextvars import ContextVar
 from typing import Generator, Optional
 
 from pyspark.errors import PySparkRuntimeError
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class GraphElementRegistry(ABC):
@@ -36,14 +37,17 @@ class GraphElementRegistry(ABC):
 
     @abstractmethod
     def register_output(self, output: Output) -> None:
+        logger.warning("register_output(self,output)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, output)
         """Add the given dataset to the registry."""
 
     @abstractmethod
     def register_flow(self, flow: Flow) -> None:
+        logger.warning("register_flow(self,flow)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, flow)
         """Add the given flow to the registry."""
 
     @abstractmethod
     def register_auto_cdc_flow(self, flow: AutoCdcFlow) -> None:
+        logger.warning("register_auto_cdc_flow(self,flow)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, flow)
         """Add the given Auto CDC flow to the registry."""
 
     @abstractmethod
@@ -54,6 +58,7 @@ class GraphElementRegistry(ABC):
             register.
         :param file_path: The path to the file that the SQL txt came from.
         """
+        logger.warning("register_sql(self,sql_text,file_path)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, sql_text, file_path)
 
 
 _graph_element_registry_context_var: ContextVar[Optional[GraphElementRegistry]] = ContextVar(
@@ -79,6 +84,7 @@ def graph_element_registration_context(
 def get_active_graph_element_registry() -> GraphElementRegistry:
     graph = _graph_element_registry_context_var.get()
     if graph is None:
+        logger.warning("get_active_graph_element_registry()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         raise PySparkRuntimeError(
             errorClass="GRAPH_ELEMENT_DEFINED_OUTSIDE_OF_DECLARATIVE_PIPELINE",
             messageParameters={},

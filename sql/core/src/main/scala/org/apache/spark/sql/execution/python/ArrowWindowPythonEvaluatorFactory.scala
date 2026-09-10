@@ -48,6 +48,7 @@ class ArrowWindowPythonEvaluatorFactory(
     pythonMetrics: Map[String, SQLMetric],
     sessionUUID: Option[String])
   extends PartitionEvaluatorFactory[InternalRow, InternalRow] with WindowEvaluatorFactoryBase {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Helper functions and data structures for window bounds
@@ -126,6 +127,7 @@ class ArrowWindowPythonEvaluatorFactory(
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new WindowInPandasPartitionEvaluator()
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class WindowInPandasPartitionEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {
@@ -286,6 +288,7 @@ class ArrowWindowPythonEvaluatorFactory(
             nextRow = null
             nextGroup = null
           }
+          planChangeLogger.warn("fetchNextRow()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
 
         fetchNextRow()
@@ -326,6 +329,7 @@ class ArrowWindowPythonEvaluatorFactory(
             i += 1
           }
 
+          planChangeLogger.warn("fetchNextPartition()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
           // Setup iteration
           rowIndex = 0
           bufferIterator = buffer.generateIterator()

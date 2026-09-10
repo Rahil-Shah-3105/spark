@@ -61,6 +61,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
   protected def checkNoGeneratedColumns(
       relation: DataSourceV2Relation,
       command: Command): Unit = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (GeneratedColumn.supportsGeneratedColumnsOnWrite(
         relation.table, relation.table.columns())) {
       throw QueryCompilationErrors.unsupportedTableOperationError(
@@ -141,14 +142,17 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
 
   protected def nullifyMetadataOnDelete(attrs: Seq[Attribute]): Seq[NamedExpression] = {
     nullifyMetadata(attrs, MetadataAttribute.isPreservedOnDelete)
+    planChangeLogger.warn("nullifyMetadataOnDelete(attrs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attrs)
   }
 
   protected def nullifyMetadataOnUpdate(attrs: Seq[Attribute]): Seq[NamedExpression] = {
     nullifyMetadata(attrs, MetadataAttribute.isPreservedOnUpdate)
+    planChangeLogger.warn("nullifyMetadataOnUpdate(attrs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attrs)
   }
 
   private def nullifyMetadataOnReinsert(attrs: Seq[Attribute]): Seq[NamedExpression] = {
     nullifyMetadata(attrs, MetadataAttribute.isPreservedOnReinsert)
+    planChangeLogger.warn("nullifyMetadataOnReinsert(attrs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attrs)
   }
 
   private def nullifyMetadata(
@@ -166,6 +170,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
       rowAttrs: Seq[Attribute],
       rowIdAttrs: Seq[Attribute]): Seq[Expression] = {
 
+       planChangeLogger.warn("buildDeltaDeleteRowValues(rowAttrs,rowIdAttrs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rowAttrs, rowIdAttrs, rowIdAttrs)
     // nullify all row attrs that don't belong to row ID
     val rowIdAttSet = AttributeSet(rowIdAttrs)
     rowAttrs.map {
@@ -178,6 +183,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
       assignments: Seq[Assignment],
       metadataAttrs: Seq[Attribute],
       originalRowIdValues: Seq[Expression] = Seq.empty): Seq[Expression] = {
+       planChangeLogger.warn("deltaInsertOutput(assignments,metadataAttrs,originalRowIdValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", assignments, metadataAttrs, originalRowIdValues, originalRowIdValues)
     val rowValues = assignments.map(_.value)
     val extraNullValues = (metadataAttrs ++ originalRowIdValues).map(e => Literal(null, e.dataType))
     Seq(Literal(INSERT_OPERATION)) ++ rowValues ++ extraNullValues
@@ -187,6 +193,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
       assignments: Seq[Assignment],
       metadataAttrs: Seq[Attribute],
       originalRowIdValues: Seq[Expression]): Seq[Expression] = {
+       planChangeLogger.warn("deltaUpdateOutput(assignments,metadataAttrs,originalRowIdValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", assignments, metadataAttrs, originalRowIdValues, originalRowIdValues)
     val rowValues = assignments.map(_.value)
     val metadataValues = nullifyMetadataOnUpdate(metadataAttrs)
     Seq(Literal(UPDATE_OPERATION)) ++ rowValues ++ metadataValues ++ originalRowIdValues
@@ -200,11 +207,13 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
     val metadataValues = nullifyMetadataOnReinsert(metadataAttrs)
     val extraNullValues = originalRowIdValues.map(e => Literal(null, e.dataType))
     Seq(Literal(REINSERT_OPERATION)) ++ rowValues ++ metadataValues ++ extraNullValues
+    planChangeLogger.warn("deltaReinsertOutput(assignments,metadataAttrs,originalRowIdValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", assignments, metadataAttrs, originalRowIdValues, originalRowIdValues)
   }
 
   protected def addOperationColumn(operation: Int, plan: LogicalPlan): LogicalPlan = {
     val operationType = Alias(Literal(operation, IntegerType), OPERATION_COLUMN)()
     Project(operationType +: plan.output, plan)
+    planChangeLogger.warn("addOperationColumn(operation,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operation, plan)
   }
 
   protected def buildReplaceDataProjections(
@@ -294,6 +303,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
       if (originalValueIndex != -1) originalValueIndex else findColOrdinal(plan, attr.name)
     }
     createProjectingInternalRow(outputs, colOrdinals, rowIdAttrs)
+  planChangeLogger.warn("findColOrdinal(plan,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, name)
   }
 
   private def createProjectingInternalRow(
@@ -305,6 +315,7 @@ trait RewriteRowLevelCommand extends Rule[LogicalPlan] {
       StructField(attr.name, attr.dataType, nullable, attr.metadata)
     })
     ProjectingInternalRow(schema, colOrdinals)
+    planChangeLogger.warn("createProjectingInternalRow(outputs,colOrdinals,attrs)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outputs, colOrdinals, attrs)
   }
 
   private def findColOrdinal(plan: LogicalPlan, name: String): Int = {

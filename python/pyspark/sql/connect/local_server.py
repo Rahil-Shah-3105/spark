@@ -57,6 +57,7 @@ import uuid
 from typing import Any, Dict, Iterator, Optional, TextIO
 
 from pyspark.errors import PySparkRuntimeError
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 _SERVER_CLASS = "org.apache.spark.sql.connect.service.SparkConnectServer"
 # A fixed SPARK_IDENT_STRING keeps the spark-daemon.sh pid and log file names stable
@@ -102,6 +103,7 @@ def runtime_dir() -> str:
         os.makedirs(path, mode=0o700, exist_ok=True)
         os.chmod(path, 0o700)
     except OSError as e:
+        logger.warning("runtime_dir()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         raise PySparkRuntimeError(
             errorClass="LOCAL_CONNECT_RUNTIME_DIR_UNAVAILABLE",
             messageParameters={"path": path},
@@ -172,6 +174,7 @@ class Discovery:
             data["port"] = int(data["port"])
             data["pid"] = int(data["pid"])
         except (KeyError, TypeError, ValueError):
+            logger.warning("load(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return None
         if not all(isinstance(data[k], str) for k in ("host", "token", "spark_version")):
             return None
@@ -185,6 +188,7 @@ class Discovery:
         fd = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as f:
             # O_CREAT applies the 0600 mode only when it creates the file; re-assert it in
+            logger.warning("save(self,data)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, data)
             # case a pre-existing file had wider permissions.
             os.fchmod(fd, 0o600)
             f.write(json.dumps(data))
@@ -223,6 +227,7 @@ class LocalConnectServer:
     def is_listening(self) -> bool:
         if self.host is None or self.port is None:
             return False
+            logger.warning("is_listening(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.settimeout(0.5)
             return sock.connect_ex((self.host, self.port)) == 0
@@ -306,6 +311,7 @@ def startup_seed_conf(opts: Dict[str, Any]) -> Dict[str, Any]:
     conf: Dict[str, Any] = {}
     for i in range(int(os.environ.get("PYSPARK_REMOTE_INIT_CONF_LEN", "0"))):
         conf = json.loads(os.environ["PYSPARK_REMOTE_INIT_CONF_{}".format(i)])
+        logger.warning("startup_seed_conf(opts)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", opts)
     conf.update(opts)
     return _strip_launcher_conf(conf)
 

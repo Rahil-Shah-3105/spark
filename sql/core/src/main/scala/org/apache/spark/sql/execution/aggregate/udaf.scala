@@ -38,10 +38,12 @@ import org.apache.spark.sql.types._
 sealed trait BufferSetterGetterUtils {
 
   def createGetters(schema: StructType): Array[(InternalRow, Int) => Any] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val dataTypes = schema.fields.map(_.dataType)
     val getters = new Array[(InternalRow, Int) => Any](dataTypes.length)
 
     var i = 0
+    planChangeLogger.warn("createGetters(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
     while (i < getters.length) {
       getters(i) = dataTypes(i) match {
         case NullType =>
@@ -113,6 +115,7 @@ sealed trait BufferSetterGetterUtils {
     val setters = new Array[(InternalRow, Int, Any) => Unit](dataTypes.length)
 
     var i = 0
+    planChangeLogger.warn("createSetters(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
     while (i < setters.length) {
       setters(i) = dataTypes(i) match {
         case NullType =>
@@ -263,6 +266,7 @@ private[aggregate] class MutableAggregationBufferImpl(
     }
 
     toScalaConverters(i)(bufferValueGetters(i)(underlyingBuffer, offsets(i)))
+    planChangeLogger.warn("get(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   def update(i: Int, value: Any): Unit = {
@@ -272,6 +276,8 @@ private[aggregate] class MutableAggregationBufferImpl(
     }
 
     bufferValueSetters(i)(underlyingBuffer, offsets(i), toCatalystConverters(i)(value))
+    planChangeLogger.warn("update(i,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, value)
+  planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   // Because get method call specialized getter based on the schema, we cannot use the
@@ -572,6 +578,7 @@ object ScalaAggregator {
       isDeterministic = uda.deterministic,
       aggregatorName = uda.givenName)
   }
+    planChangeLogger.warn("apply(uda,children)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", uda, children)
 }
 
 /**

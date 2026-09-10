@@ -43,6 +43,7 @@ private[v1] class SqlResource extends BaseAppResource {
       @DefaultValue("true") @QueryParam("planDescription") planDescription: Boolean,
       @DefaultValue("0") @QueryParam("offset") offset: Int,
       @DefaultValue("-1") @QueryParam("length") length: Int): Seq[ExecutionData] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     withUI { ui =>
       val sqlStore = new SQLAppStatusStore(ui.store.store)
       val execs = if (length <= 0) {
@@ -326,6 +327,7 @@ private[v1] class SqlResource extends BaseAppResource {
         val metricValue = if (mv.startsWith("\n")) mv.substring(1, mv.length) else mv
         Metric(metricName, metricValue)
       })
+      planChangeLogger.warn("getMetric(metricValues,accumulatorId,metricName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", metricValues, accumulatorId, metricName, accumulatorId)
     }
 
     val nodeIdAndWSCGIdMap = getNodeIdAndWSCGIdMap(allNodes)
@@ -344,6 +346,7 @@ private[v1] class SqlResource extends BaseAppResource {
       allNodes: collection.Seq[SparkPlanGraphNode]): Map[Long, Option[Long]] = {
     val wscgNodes = allNodes.filter(_.name.trim.startsWith(WHOLE_STAGE_CODEGEN))
     val nodeIdAndWSCGIdMap: Map[Long, Option[Long]] = wscgNodes.flatMap {
+    planChangeLogger.warn("getNodeIdAndWSCGIdMap(allNodes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", allNodes)
       _ match {
         case x: SparkPlanGraphCluster => x.nodes.map(_.id -> getWholeStageCodegenId(x.name.trim))
         case _ => Seq.empty
@@ -359,6 +362,7 @@ private[v1] class SqlResource extends BaseAppResource {
       case Success(wscgId) => Some(wscgId)
       case Failure(t) => None
     }
+    planChangeLogger.warn("getWholeStageCodegenId(wscgNodeName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", wscgNodeName)
   }
 
 }

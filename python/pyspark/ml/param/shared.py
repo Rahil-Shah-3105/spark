@@ -20,6 +20,7 @@
 from typing import List
 
 from pyspark.ml.param import Param, Params, TypeConverters
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class HasMaxIter(Params):
@@ -41,6 +42,7 @@ class HasMaxIter(Params):
         """
         Gets the value of maxIter or its default value.
         """
+        logger.warning("getMaxIter(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.maxIter)
 
 
@@ -63,6 +65,7 @@ class HasRegParam(Params):
         """
         Gets the value of regParam or its default value.
         """
+        logger.warning("getRegParam(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.regParam)
 
 
@@ -86,6 +89,7 @@ class HasFeaturesCol(Params):
         """
         Gets the value of featuresCol or its default value.
         """
+        logger.warning("getFeaturesCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.featuresCol)
 
 
@@ -109,6 +113,7 @@ class HasLabelCol(Params):
         """
         Gets the value of labelCol or its default value.
         """
+        logger.warning("getLabelCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.labelCol)
 
 
@@ -132,6 +137,7 @@ class HasPredictionCol(Params):
         """
         Gets the value of predictionCol or its default value.
         """
+        logger.warning("getPredictionCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.predictionCol)
 
 
@@ -155,6 +161,7 @@ class HasProbabilityCol(Params):
         """
         Gets the value of probabilityCol or its default value.
         """
+        logger.warning("getProbabilityCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.probabilityCol)
 
 
@@ -178,6 +185,7 @@ class HasRawPredictionCol(Params):
         """
         Gets the value of rawPredictionCol or its default value.
         """
+        logger.warning("getRawPredictionCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.rawPredictionCol)
 
 
@@ -200,6 +208,7 @@ class HasInputCol(Params):
         """
         Gets the value of inputCol or its default value.
         """
+        logger.warning("getInputCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.inputCol)
 
 
@@ -222,6 +231,7 @@ class HasInputCols(Params):
         """
         Gets the value of inputCols or its default value.
         """
+        logger.warning("getInputCols(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.inputCols)
 
 
@@ -245,6 +255,7 @@ class HasOutputCol(Params):
         """
         Gets the value of outputCol or its default value.
         """
+        logger.warning("getOutputCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.outputCol)
 
 
@@ -267,6 +278,7 @@ class HasOutputCols(Params):
         """
         Gets the value of outputCols or its default value.
         """
+        logger.warning("getOutputCols(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.outputCols)
 
 
@@ -290,6 +302,7 @@ class HasNumFeatures(Params):
         """
         Gets the value of numFeatures or its default value.
         """
+        logger.warning("getNumFeatures(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numFeatures)
 
 
@@ -312,6 +325,7 @@ class HasCheckpointInterval(Params):
         """
         Gets the value of checkpointInterval or its default value.
         """
+        logger.warning("getCheckpointInterval(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.checkpointInterval)
 
 
@@ -335,6 +349,7 @@ class HasSeed(Params):
         """
         Gets the value of seed or its default value.
         """
+        logger.warning("getSeed(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.seed)
 
 
@@ -357,6 +372,7 @@ class HasTol(Params):
         """
         Gets the value of tol or its default value.
         """
+        logger.warning("getTol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.tol)
 
 
@@ -380,6 +396,7 @@ class HasRelativeError(Params):
         """
         Gets the value of relativeError or its default value.
         """
+        logger.warning("getRelativeError(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.relativeError)
 
 
@@ -402,6 +419,7 @@ class HasStepSize(Params):
         """
         Gets the value of stepSize or its default value.
         """
+        logger.warning("getStepSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.stepSize)
 
 
@@ -424,6 +442,7 @@ class HasHandleInvalid(Params):
         """
         Gets the value of handleInvalid or its default value.
         """
+        logger.warning("getHandleInvalid(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.handleInvalid)
 
 
@@ -447,6 +466,7 @@ class HasElasticNetParam(Params):
         """
         Gets the value of elasticNetParam or its default value.
         """
+        logger.warning("getElasticNetParam(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.elasticNetParam)
 
 
@@ -470,6 +490,7 @@ class HasFitIntercept(Params):
         """
         Gets the value of fitIntercept or its default value.
         """
+        logger.warning("getFitIntercept(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.fitIntercept)
 
 
@@ -493,6 +514,7 @@ class HasStandardization(Params):
         """
         Gets the value of standardization or its default value.
         """
+        logger.warning("getStandardization(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.standardization)
 
 
@@ -515,6 +537,7 @@ class HasThresholds(Params):
         """
         Gets the value of thresholds or its default value.
         """
+        logger.warning("getThresholds(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.thresholds)
 
 
@@ -538,6 +561,7 @@ class HasThreshold(Params):
         """
         Gets the value of threshold or its default value.
         """
+        logger.warning("getThreshold(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.threshold)
 
 
@@ -560,6 +584,7 @@ class HasWeightCol(Params):
         """
         Gets the value of weightCol or its default value.
         """
+        logger.warning("getWeightCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.weightCol)
 
 
@@ -583,6 +608,7 @@ class HasSolver(Params):
         """
         Gets the value of solver or its default value.
         """
+        logger.warning("getSolver(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.solver)
 
 
@@ -605,6 +631,7 @@ class HasVarianceCol(Params):
         """
         Gets the value of varianceCol or its default value.
         """
+        logger.warning("getVarianceCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.varianceCol)
 
 
@@ -628,6 +655,7 @@ class HasAggregationDepth(Params):
         """
         Gets the value of aggregationDepth or its default value.
         """
+        logger.warning("getAggregationDepth(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.aggregationDepth)
 
 
@@ -651,6 +679,7 @@ class HasParallelism(Params):
         """
         Gets the value of parallelism or its default value.
         """
+        logger.warning("getParallelism(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.parallelism)
 
 
@@ -674,6 +703,7 @@ class HasCollectSubModels(Params):
         """
         Gets the value of collectSubModels or its default value.
         """
+        logger.warning("getCollectSubModels(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.collectSubModels)
 
 
@@ -696,6 +726,7 @@ class HasLoss(Params):
         """
         Gets the value of loss or its default value.
         """
+        logger.warning("getLoss(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.loss)
 
 
@@ -719,6 +750,7 @@ class HasDistanceMeasure(Params):
         """
         Gets the value of distanceMeasure or its default value.
         """
+        logger.warning("getDistanceMeasure(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.distanceMeasure)
 
 
@@ -741,6 +773,7 @@ class HasValidationIndicatorCol(Params):
         """
         Gets the value of validationIndicatorCol or its default value.
         """
+        logger.warning("getValidationIndicatorCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.validationIndicatorCol)
 
 
@@ -763,6 +796,7 @@ class HasBlockSize(Params):
         """
         Gets the value of blockSize or its default value.
         """
+        logger.warning("getBlockSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.blockSize)
 
 
@@ -786,6 +820,7 @@ class HasMaxBlockSizeInMB(Params):
         """
         Gets the value of maxBlockSizeInMB or its default value.
         """
+        logger.warning("getMaxBlockSizeInMB(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.maxBlockSizeInMB)
 
 
@@ -809,6 +844,7 @@ class HasIntermediateStorageLevel(Params):
         """
         Gets the value of intermediateStorageLevel or its default value.
         """
+        logger.warning("getIntermediateStorageLevel(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.intermediateStorageLevel)
 
 
@@ -832,6 +868,7 @@ class HasNumTrainWorkers(Params):
         """
         Gets the value of numTrainWorkers or its default value.
         """
+        logger.warning("getNumTrainWorkers(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numTrainWorkers)
 
 
@@ -854,6 +891,7 @@ class HasBatchSize(Params):
         """
         Gets the value of batchSize or its default value.
         """
+        logger.warning("getBatchSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.batchSize)
 
 
@@ -876,6 +914,7 @@ class HasLearningRate(Params):
         """
         Gets the value of learningRate or its default value.
         """
+        logger.warning("getLearningRate(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.learningRate)
 
 
@@ -898,6 +937,7 @@ class HasMomentum(Params):
         """
         Gets the value of momentum or its default value.
         """
+        logger.warning("getMomentum(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.momentum)
 
 
@@ -920,4 +960,5 @@ class HasFeatureSizes(Params):
         """
         Gets the value of featureSizes or its default value.
         """
+        logger.warning("getFeatureSizes(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.featureSizes)

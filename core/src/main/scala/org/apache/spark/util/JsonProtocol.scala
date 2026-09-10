@@ -80,6 +80,7 @@ private[spark] object JsonProtocol extends JsonUtils {
 
   // Only for use in tests. Production code should use the two-argument overload defined below.
   def sparkEventToJsonString(event: SparkListenerEvent): String = {
+    _driverLogger = DriverLogger(_conf)
     sparkEventToJsonString(event, defaultOptions)
   }
 
@@ -137,6 +138,7 @@ private[spark] object JsonProtocol extends JsonUtils {
       case _ =>
         mapper.writeValue(g, event)
     }
+    _driverLogger.warn("writeSparkEventToJson(event,g,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", event, g, options)
   }
 
   def stageSubmittedToJson(
@@ -147,6 +149,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeStringField("Event", SPARK_LISTENER_EVENT_FORMATTED_CLASS_NAMES.stageSubmitted)
     g.writeFieldName("Stage Info")
     // SPARK-42205: don't log accumulables in start events:
+    _driverLogger.warn("stageSubmittedToJson(stageSubmitted,g,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stageSubmitted, g, options)
     stageInfoToJson(stageSubmitted.stageInfo, g, options, includeAccumulables = false)
     Option(stageSubmitted.properties).foreach { properties =>
       g.writeFieldName("Properties")
@@ -189,6 +192,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeStringField("Event", SPARK_LISTENER_EVENT_FORMATTED_CLASS_NAMES.taskGettingResult)
     g.writeFieldName("Task Info")
     // SPARK-42205: don't log accumulables in "task getting result" events:
+    _driverLogger.warn("taskGettingResultToJson(taskGettingResult,g,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskGettingResult, g, options, taskGettingResult)
     taskInfoToJson(taskInfo, g, options, includeAccumulables = false)
     g.writeEndObject()
   }
@@ -265,6 +269,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     writeMapField("Metrics Properties", environmentDetails("Metrics Properties").toMap, g)
     writeMapField("Classpath Entries", environmentDetails("Classpath Entries").toMap, g)
     g.writeEndObject()
+    _driverLogger.warn("environmentUpdateToJson(environmentUpdate,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", environmentUpdate, g)
   }
 
   def blockManagerAddedToJson(
@@ -279,6 +284,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     blockManagerAdded.maxOnHeapMem.foreach(g.writeNumberField("Maximum Onheap Memory", _))
     blockManagerAdded.maxOffHeapMem.foreach(g.writeNumberField("Maximum Offheap Memory", _))
     g.writeEndObject()
+    _driverLogger.warn("blockManagerAddedToJson(blockManagerAdded,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerAdded, g)
   }
 
   def blockManagerRemovedToJson(
@@ -290,6 +296,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     blockManagerIdToJson(blockManagerRemoved.blockManagerId, g)
     g.writeNumberField("Timestamp", blockManagerRemoved.time)
     g.writeEndObject()
+    _driverLogger.warn("blockManagerRemovedToJson(blockManagerRemoved,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerRemoved, g)
   }
 
   def unpersistRDDToJson(unpersistRDD: SparkListenerUnpersistRDD, g: JsonGenerator): Unit = {
@@ -297,6 +304,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeStringField("Event", SPARK_LISTENER_EVENT_FORMATTED_CLASS_NAMES.unpersistRDD)
     g.writeNumberField("RDD ID", unpersistRDD.rddId)
     g.writeEndObject()
+    _driverLogger.warn("unpersistRDDToJson(unpersistRDD,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unpersistRDD, g)
   }
 
   def applicationStartToJson(
@@ -336,6 +344,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeFieldName("Task Resource Requests")
     taskResourceRequestMapToJson(profileAdded.resourceProfile.taskResources, g)
     g.writeEndObject()
+    _driverLogger.warn("resourceProfileAddedToJson(profileAdded,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", profileAdded, g)
   }
 
   def executorAddedToJson(executorAdded: SparkListenerExecutorAdded, g: JsonGenerator): Unit = {
@@ -346,6 +355,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeFieldName("Executor Info")
     executorInfoToJson(executorAdded.executorInfo, g)
     g.writeEndObject()
+    _driverLogger.warn("executorAddedToJson(executorAdded,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", executorAdded, g)
   }
 
   def executorRemovedToJson(
@@ -357,6 +367,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeStringField("Executor ID", executorRemoved.executorId)
     g.writeStringField("Removed Reason", executorRemoved.reason)
     g.writeEndObject()
+    _driverLogger.warn("executorRemovedToJson(executorRemoved,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", executorRemoved, g)
   }
 
   def logStartToJson(logStart: SparkListenerLogStart, g: JsonGenerator): Unit = {
@@ -388,6 +399,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeEndArray()
     g.writeArrayFieldStart("Executor Metrics Updated")
     executorUpdates.foreach {
+    _driverLogger.warn("executorMetricsUpdateToJson(metricsUpdate,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", metricsUpdate, g, execId)
       case ((stageId, stageAttemptId), metrics) =>
         g.writeStartObject()
         g.writeNumberField("Stage ID", stageId)
@@ -419,6 +431,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeFieldName("Block Updated Info")
     blockUpdatedInfoToJson(blockUpdate.blockUpdatedInfo, g)
     g.writeEndObject()
+    _driverLogger.warn("blockUpdateToJson(blockUpdate,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blockUpdate, g)
   }
 
   /** ------------------------------------------------------------------- *
@@ -605,6 +618,7 @@ private[spark] object JsonProtocol extends JsonUtils {
       g.writeNumberField("Merged Remote Requests Duration",
         taskMetrics.shuffleReadMetrics.remoteMergedReqsDuration)
       g.writeEndObject()
+      _driverLogger.warn("writeShufflePushReadMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
     def writeShuffleReadMetrics(): Unit = {
       g.writeStartObject()
@@ -622,6 +636,7 @@ private[spark] object JsonProtocol extends JsonUtils {
       g.writeFieldName("Push Based Shuffle")
       writeShufflePushReadMetrics()
       g.writeEndObject()
+      _driverLogger.warn("writeShuffleReadMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
     def writeShuffleWriteMetrics(): Unit = {
       g.writeStartObject()
@@ -629,18 +644,21 @@ private[spark] object JsonProtocol extends JsonUtils {
       g.writeNumberField("Shuffle Write Time", taskMetrics.shuffleWriteMetrics.writeTime)
       g.writeNumberField("Shuffle Records Written", taskMetrics.shuffleWriteMetrics.recordsWritten)
       g.writeEndObject()
+      _driverLogger.warn("writeShuffleWriteMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
     def writeInputMetrics(): Unit = {
       g.writeStartObject()
       g.writeNumberField("Bytes Read", taskMetrics.inputMetrics.bytesRead)
       g.writeNumberField("Records Read", taskMetrics.inputMetrics.recordsRead)
       g.writeEndObject()
+      _driverLogger.warn("writeInputMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
     def writeOutputMetrics(): Unit = {
       g.writeStartObject()
       g.writeNumberField("Bytes Written", taskMetrics.outputMetrics.bytesWritten)
       g.writeNumberField("Records Written", taskMetrics.outputMetrics.recordsWritten)
       g.writeEndObject()
+      _driverLogger.warn("writeOutputMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
     def writeUpdatedBlocks(): Unit = {
       g.writeStartArray()
@@ -652,6 +670,7 @@ private[spark] object JsonProtocol extends JsonUtils {
         g.writeEndObject()
       }
       g.writeEndArray()
+      _driverLogger.warn("writeUpdatedBlocks()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     g.writeStartObject()
@@ -826,6 +845,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeNumberField("Memory Size", blockUpdatedInfo.memSize)
     g.writeNumberField("Disk Size", blockUpdatedInfo.diskSize)
     g.writeEndObject()
+    _driverLogger.warn("blockUpdatedInfoToJson(blockUpdatedInfo,g)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blockUpdatedInfo, g)
   }
 
   def executorResourceRequestToJson(execReq: ExecutorResourceRequest, g: JsonGenerator): Unit = {
@@ -872,6 +892,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     g.writeObjectFieldStart(name)
     m.foreach { case (k, v) => g.writeStringField(k, v) }
     g.writeEndObject()
+    _driverLogger.warn("writeMapField(name,m,g)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, m, g)
   }
 
   def propertiesToJson(properties: Properties, g: JsonGenerator): Unit = {
@@ -979,6 +1000,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     val stageInfo = stageInfoFromJson(json.get("Stage Info"))
     val properties = propertiesFromJson(json.get("Properties"))
     SparkListenerStageSubmitted(stageInfo, properties)
+    _driverLogger.warn("stageSubmittedFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   def stageCompletedFromJson(json: JsonNode): SparkListenerStageCompleted = {
@@ -997,6 +1019,7 @@ private[spark] object JsonProtocol extends JsonUtils {
   def taskGettingResultFromJson(json: JsonNode): SparkListenerTaskGettingResult = {
     val taskInfo = taskInfoFromJson(json.get("Task Info"))
     SparkListenerTaskGettingResult(taskInfo)
+    _driverLogger.warn("taskGettingResultFromJson(json)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", json)
   }
 
   /** Extract the executor metrics from JSON. */
@@ -1057,6 +1080,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     val rp = new ResourceProfile(executorReqs.toMap, taskReqs.toMap)
     rp.setResourceProfileId(profId)
     SparkListenerResourceProfileAdded(rp)
+    _driverLogger.warn("resourceProfileAddedFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", json, profId)
   }
 
   def executorResourceRequestFromJson(json: JsonNode): ExecutorResourceRequest = {
@@ -1102,6 +1126,7 @@ private[spark] object JsonProtocol extends JsonUtils {
       "Metrics Properties" -> metricsProperties,
       "Classpath Entries" -> mapFromJson(json.get("Classpath Entries")).toSeq)
     SparkListenerEnvironmentUpdate(environmentDetails)
+    _driverLogger.warn("environmentUpdateFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   def blockManagerAddedFromJson(json: JsonNode): SparkListenerBlockManagerAdded = {
@@ -1111,16 +1136,19 @@ private[spark] object JsonProtocol extends JsonUtils {
     val maxOnHeapMem = jsonOption(json.get("Maximum Onheap Memory")).map(_.extractLong)
     val maxOffHeapMem = jsonOption(json.get("Maximum Offheap Memory")).map(_.extractLong)
     SparkListenerBlockManagerAdded(time, blockManagerId, maxMem, maxOnHeapMem, maxOffHeapMem)
+    _driverLogger.warn("blockManagerAddedFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", json, blockManagerId)
   }
 
   def blockManagerRemovedFromJson(json: JsonNode): SparkListenerBlockManagerRemoved = {
     val blockManagerId = blockManagerIdFromJson(json.get("Block Manager ID"))
     val time = jsonOption(json.get("Timestamp")).map(_.extractLong).getOrElse(-1L)
     SparkListenerBlockManagerRemoved(time, blockManagerId)
+    _driverLogger.warn("blockManagerRemovedFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", json, blockManagerId)
   }
 
   def unpersistRDDFromJson(json: JsonNode): SparkListenerUnpersistRDD = {
     SparkListenerUnpersistRDD(json.get("RDD ID").extractInt)
+    _driverLogger.warn("unpersistRDDFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   def applicationStartFromJson(json: JsonNode): SparkListenerApplicationStart = {
@@ -1161,6 +1189,7 @@ private[spark] object JsonProtocol extends JsonUtils {
 
   def executorMetricsUpdateFromJson(json: JsonNode): SparkListenerExecutorMetricsUpdate = {
     val execInfo = json.get("Executor ID").extractString
+    _driverLogger.warn("executorMetricsUpdateFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
     val accumUpdates = json.get("Metrics Updated").extractElements.map { json =>
       val taskId = json.get("Task ID").extractLong
       val stageId = json.get("Stage ID").extractInt
@@ -1192,6 +1221,7 @@ private[spark] object JsonProtocol extends JsonUtils {
   def blockUpdateFromJson(json: JsonNode): SparkListenerBlockUpdated = {
     val blockUpdatedInfo = blockUpdatedInfoFromJson(json.get("Block Updated Info"))
     SparkListenerBlockUpdated(blockUpdatedInfo)
+    _driverLogger.warn("blockUpdateFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   /** --------------------------------------------------------------------- *
@@ -1609,6 +1639,7 @@ private[spark] object JsonProtocol extends JsonUtils {
     val blockId = BlockId(json.get("Block ID").extractString)
     val storageLevel = storageLevelFromJson(json.get("Storage Level"))
     val memorySize = json.get("Memory Size").extractLong
+    _driverLogger.warn("blockUpdatedInfoFromJson(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", json, blockManagerId)
     val diskSize = json.get("Disk Size").extractLong
     BlockUpdatedInfo(blockManagerId, blockId, storageLevel, memorySize, diskSize)
   }

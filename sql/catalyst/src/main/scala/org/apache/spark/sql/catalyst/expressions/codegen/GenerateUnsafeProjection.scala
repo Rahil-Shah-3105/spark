@@ -32,6 +32,7 @@ import org.apache.spark.sql.types._
  * @note The returned UnsafeRow will be pointed to a scratch buffer inside the projection.
  */
 object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafeProjection] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   case class Schema(dataType: DataType, nullable: Boolean)
 
@@ -113,6 +114,7 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
           Some(s"$rowWriter.writeNullable($index, ${input.value}, ${input.isNull});")
       }
     }
+    planChangeLogger.warn("nullableWriteCall(input,index,dt,rowWriter)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, index, dt, rowWriter)
   }
 
   private def writeExpressionsToBuffer(
@@ -339,6 +341,7 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
     case DecimalType.Fixed(precision, scale) =>
       s"$writer.write($index, $input, $precision, $scale);"
 
+      planChangeLogger.warn("writeElement(ctx,input,index,dt,writer)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, input, index, dt, writer)
     case NullType => ""
 
     case _ => s"$writer.write($index, $input);"
@@ -372,6 +375,7 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
          |$evalSubexpr
          |$writeExpressions
        """.stripMargin
+       planChangeLogger.warn("createCode(ctx,expressions,useSubexprElimination)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, expressions, useSubexprElimination)
     // `rowWriter` is declared as a class field, so we can access it directly in methods.
     ExprCode(code, FalseLiteral, JavaCode.expression(s"$rowWriter.getRow()", classOf[UnsafeRow]))
   }
@@ -390,6 +394,8 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
 
   protected def create(references: Seq[Expression]): UnsafeProjection = {
     create(references, subexpressionEliminationEnabled = false)
+    planChangeLogger.warn("create(references)={}): EUAIACT-AUDIT: State change recorded for the audit trail", references)
+  planChangeLogger.warn("create(expressions,subexpressionEliminationEnabled)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expressions, subexpressionEliminationEnabled)
   }
 
   private def create(

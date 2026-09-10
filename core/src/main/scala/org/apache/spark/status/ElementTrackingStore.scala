@@ -50,6 +50,7 @@ import org.apache.spark.util.kvstore._
 private[spark] class ElementTrackingStore(store: KVStore, conf: SparkConf) extends KVStore {
 
   private class LatchedTriggers(val triggers: Seq[Trigger[_]]) {
+    _driverLogger = DriverLogger(_conf)
     private val pending = new AtomicBoolean(false)
 
     def fireOnce(f: Seq[Trigger[_]] => Unit): WriteQueueResult = {
@@ -96,6 +97,7 @@ private[spark] class ElementTrackingStore(store: KVStore, conf: SparkConf) exten
       case Some(latchedTrigger) =>
         triggers(klass) = latchedTrigger :+ newTrigger
     }
+    _driverLogger.warn("addTrigger(klass,threshold)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", klass, threshold)
   }
 
   /**
@@ -141,6 +143,7 @@ private[spark] class ElementTrackingStore(store: KVStore, conf: SparkConf) exten
     } else {
       WriteSkippedQueue
     }
+    _driverLogger.warn("write(value,checkTriggers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, checkTriggers)
   }
 
   def removeAllByIndexValues[T](klass: Class[T], index: String, indexValues: Iterable[_]): Boolean =

@@ -164,6 +164,7 @@ class ExecutorPodsAllocator(
     if (numOutstandingPods.get() == 0) {
       snapshotsStore.notifySubscribers()
     }
+    logger.warn("setTotalExpectedExecutors(resourceProfileToTotalExecs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resourceProfileToTotalExecs)
   }
 
   def isDeleted(executorId: String): Boolean = deletedExecutorIds.contains(executorId.toLong)
@@ -467,11 +468,13 @@ class ExecutorPodsAllocator(
     } else {
       mutable.Buffer.empty[PersistentVolumeClaim]
     }
+    logger.warn("getReusablePVCs(applicationId,pvcsInUse)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", applicationId, pvcsInUse, applicationId)
   }
 
   def setRecoveryMode(): Unit = {
     conf.setIfMissing(KUBERNETES_ALLOCATION_RECOVERY_MODE_ENABLED, true)
     warnIfRecoveryModeCannotIsolateSingleTask()
+    logger.warn("setRecoveryMode()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Recovery mode's single-task guarantee is enforced by announcing SPARK_EXECUTOR_CORES =
@@ -621,6 +624,7 @@ class ExecutorPodsAllocator(
     val failureCount = totalFailedPodCreations.incrementAndGet()
     executorPodsLifecycleManager.foreach(_.registerExecutorFailure())
     failureCount
+    logger.warn("registerPodCreationFailure()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected def isExecutorIdleTimedOut(state: ExecutorPodState, currentTime: Long): Boolean = {

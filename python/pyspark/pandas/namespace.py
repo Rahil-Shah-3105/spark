@@ -108,6 +108,7 @@ from pyspark.pandas.indexes.multi import MultiIndex
 
 if TYPE_CHECKING:
     from pandas._typing import HTMLFlavors
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "from_pandas",
@@ -3387,6 +3388,7 @@ def merge_asof(
         elif is_name_like_tuple(os):
             return [cast(Label, os)]
         elif is_name_like_value(os):
+            logger.warning("to_list(os)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", os)
             return [(os,)]
         else:
             return [o if is_name_like_tuple(o) else (o,) for o in os]

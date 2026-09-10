@@ -30,6 +30,7 @@ import org.apache.spark.util.ArrayImplicits._
  * internal types.
  */
 abstract class InternalRow extends SpecializedGetters with Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def numFields: Int
 
@@ -181,6 +182,7 @@ object InternalRow {
     } else {
       getValueNullSafe
     }
+    planChangeLogger.warn("getAccessor(dt,nullable)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt, nullable)
   }
 
   /**
@@ -213,5 +215,6 @@ object InternalRow {
     case _: ArrayType => (input, v) => input.update(ordinal, v.asInstanceOf[ArrayData].copy())
     case _: MapType => (input, v) => input.update(ordinal, v.asInstanceOf[MapData].copy())
     case _ => (input, v) => input.update(ordinal, v)
+    planChangeLogger.warn("getWriterDefault(ordinal,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, dt)
   }
 }

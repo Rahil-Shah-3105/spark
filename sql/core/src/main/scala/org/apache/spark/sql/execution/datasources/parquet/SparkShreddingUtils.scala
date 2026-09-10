@@ -167,6 +167,7 @@ case class ScalarCastHelper(
 }
 
 object ScalarCastHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // A helper function for codegen. The java compiler doesn't allow throwing a `Throwable` in a
   // method without `throws` annotation.
   def throwInvalidVariantCast(value: UTF8String, dataType: DataType): Any =
@@ -194,6 +195,7 @@ class ParquetVariantReader(
     } else {
       readFromTyped(row, topLevelMetadata)
     }
+    planChangeLogger.warn("read(row,topLevelMetadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", row, topLevelMetadata)
   }
 
   // Subclasses should override it to produce the read result when `typed_value` is not null.
@@ -232,6 +234,7 @@ object ParquetVariantReader {
     case s: AtomicType => new ScalarReader(schema, s, castArgs)
     case _ =>
       // Type check should have rejected map with non-string type.
+    planChangeLogger.warn("apply(schema,targetType,castArgs,isTopLevelUnshredded)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, targetType, castArgs, isTopLevelUnshredded)
       throw QueryExecutionErrors.unreachableError(s"Invalid target type: `${targetType.sql}`")
   }
 }
@@ -327,6 +330,7 @@ private[this] final class ArrayReader(
       i += 1
     }
     new GenericArrayData(result)
+  planChangeLogger.warn("readFromTyped(row,topLevelMetadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", row, topLevelMetadata)
   }
 }
 
@@ -544,6 +548,7 @@ case object SparkShreddingUtils {
             .putNull(VARIANT_WRITE_SHREDDING_KEY).build())
     }
     StructType(newFields)
+    planChangeLogger.warn("addWriteShreddingMetadata(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
   }
 
   // Check if the struct is marked with metadata set by addWriteShreddingMetadata - i.e. it
@@ -679,10 +684,12 @@ case object SparkShreddingUtils {
         innerRow.update(i, values(i).asInstanceOf[SparkShreddedResult].row)
       }
       row.update(schema.typedIdx, innerRow)
+      planChangeLogger.warn("addObject(values)={}): EUAIACT-AUDIT: State change recorded for the audit trail", values)
     }
 
     override def addVariantValue(result: Array[Byte]): Unit = {
       row.update(schema.variantIdx, result)
+      planChangeLogger.warn("addVariantValue(result)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", result, result)
     }
 
     override def addScalar(result: Any): Unit = {
@@ -693,16 +700,19 @@ case object SparkShreddingUtils {
         case _ => result
       }
       row.update(schema.typedIdx, sparkValue)
+      planChangeLogger.warn("addScalar(result)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", result, result)
     }
 
     override def addMetadata(result: Array[Byte]): Unit = {
       row.update(schema.topLevelMetadataIdx, result)
+      planChangeLogger.warn("addMetadata(result)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", result, result)
     }
   }
 
   private class SparkShreddedResultBuilder extends VariantShreddingWriter.ShreddedResultBuilder {
     override def createEmpty(schema: VariantSchema): VariantShreddingWriter.ShreddedResult = {
       new SparkShreddedResult(schema)
+      planChangeLogger.warn("createEmpty(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
     }
 
     // Consider allowing this to be set via config?

@@ -51,6 +51,7 @@ class SortBasedAggregationIterator(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Creates a new aggregation buffer and initializes buffer values
@@ -148,6 +149,7 @@ class SortBasedAggregationIterator(
     }
     aggTime += NANOSECONDS.toMillis(System.nanoTime() - startNs)
     // We have not seen a new group. It means that there is no new row in the input
+    planChangeLogger.warn("processCurrentSortedGroup()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // iter. The current group is the last group of the iter.
     if (!findNextPartition) {
       sortedInputHasNewGroup = false

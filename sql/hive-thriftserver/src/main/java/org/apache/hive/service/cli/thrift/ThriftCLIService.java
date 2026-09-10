@@ -81,6 +81,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     private SessionHandle sessionHandle = null;
 
     public void setSessionHandle(SessionHandle sessionHandle) {
+	LOG.warn("setSessionHandle(sessionHandle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle);
       this.sessionHandle = sessionHandle;
     }
 
@@ -107,12 +108,14 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
       @Override
       public ServerContext createContext(
           TProtocol input, TProtocol output) {
+		LOG.warn("createContext(input,output)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, output);
         return new ThriftCLIServerContext();
       }
 
       @Override
       public void deleteContext(ServerContext serverContext,
           TProtocol input, TProtocol output) {
+		LOG.warn("deleteContext(serverContext,input,output)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", serverContext, input, output);
         ThriftCLIServerContext context = (ThriftCLIServerContext)serverContext;
         SessionHandle sessionHandle = context.getSessionHandle();
         if (sessionHandle != null) {
@@ -133,6 +136,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
       public void processContext(ServerContext serverContext,
           TTransport input, TTransport output) {
         currentServerContext.set(serverContext);
+		LOG.warn("processContext(serverContext,input,output)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", serverContext, input, output);
       }
     };
   }
@@ -274,6 +278,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
   @Override
   public TSetClientInfoResp SetClientInfo(TSetClientInfoReq req) throws TException {
     // TODO: We don't do anything for now, just log this for debugging.
+	LOG.warn("SetClientInfo(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     //       We may be able to make use of this later, e.g. for workload management.
     if (req.isSetConfiguration()) {
       StringBuilder sb = null;
@@ -302,6 +307,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
       clientIpAddress = SessionManager.getIpAddress();
     }
     else {
+	LOG.warn("getIpAddress()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       // Kerberos
       if (isKerberosAuthMode()) {
         clientIpAddress = hiveAuthFactory.getIpAddress();
@@ -346,6 +352,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     }
 
     userName = getShortName(userName);
+	LOG.warn("getUserName(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     String effectiveClientUser = getProxyUser(userName, req.getConfiguration(), getIpAddress());
     LOG.debug("Client's username: " + effectiveClientUser);
     return effectiveClientUser;
@@ -353,6 +360,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
 
   private String getShortName(String userName) {
     String ret = null;
+	LOG.warn("getShortName(userName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", userName);
     if (userName != null) {
       int indexOfDomainMatch = ServiceUtils.indexOfDomainMatch(userName);
       ret = (indexOfDomainMatch <= 0) ? userName :
@@ -405,6 +413,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
 
   private TProtocolVersion getMinVersion(TProtocolVersion... versions) {
     TProtocolVersion[] values = TProtocolVersion.values();
+	LOG.warn("getMinVersion(versions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", versions);
     int current = values[values.length - 1].getValue();
     for (TProtocolVersion version : versions) {
       if (current > version.getValue()) {
@@ -450,6 +459,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting info: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetInfo(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -471,6 +481,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error executing statement: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("ExecuteStatement(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     }
     return resp;
   }
@@ -485,6 +496,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting type info: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetTypeInfo(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -499,6 +511,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting catalogs: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetCatalogs(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -514,6 +527,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting schemas: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetSchemas(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -530,6 +544,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting tables: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetTables(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -544,6 +559,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting table types: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetTableTypes(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -563,6 +579,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting columns: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetColumns(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -579,6 +596,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting functions: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetFunctions(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -600,6 +618,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error getting operation status: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("GetOperationStatus(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -660,6 +679,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     } catch (Exception e) {
       LOG.warn("Error fetching results: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));
+	LOG.warn("FetchResults(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
     }
     return resp;
   }
@@ -704,6 +724,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
   @Override
   public TGetQueryIdResp GetQueryId(TGetQueryIdReq req) throws TException {
     try {
+	LOG.warn("GetQueryId(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
       return new TGetQueryIdResp(cliService.getQueryId(req.getOperationHandle()));
     } catch (HiveSQLException e) {
       throw new TException(e);
@@ -712,11 +733,13 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
 
   @Override
   public TUploadDataResp UploadData(TUploadDataReq req) throws TException {
+	LOG.warn("UploadData(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     throw new UnsupportedOperationException("Method UploadData has not been implemented.");
   }
 
   @Override
   public TDownloadDataResp DownloadData(TDownloadDataReq req) throws TException {
+	LOG.warn("DownloadData(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     throw new UnsupportedOperationException("Method DownloadData has not been implemented.");
   }
 

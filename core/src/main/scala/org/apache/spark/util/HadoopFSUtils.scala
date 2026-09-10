@@ -85,6 +85,7 @@ private[spark] object HadoopFSUtils extends Logging {
     ignoreLocality: Boolean,
     parallelismThreshold: Int,
     parallelismMax: Int): Seq[(Path, Seq[FileStatus])] = {
+     _driverLogger = DriverLogger(_conf)
     parallelListLeafFilesInternal(sc, paths, hadoopConf, filter, isRootLevel = true,
       ignoreMissingFiles, ignoredPathSegmentRegex, ignoreLocality, parallelismThreshold,
       parallelismMax)
@@ -172,6 +173,7 @@ private[spark] object HadoopFSUtils extends Logging {
     // in case of large #defaultParallelism.
     val numParallelism = Math.min(paths.size, parallelismMax)
 
+    _driverLogger.warn("parallelListLeafFilesInternal(sc,paths,hadoopConf,filter,isRootLevel,ignoreMissingFiles,ignoredPathSegmentRegex,ignoreLocality,parallelismThreshold,parallelismMax)={},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, paths, hadoopConf, filter, isRootLevel, ignoreMissingFiles, ignoredPathSegmentRegex, ignoreLocality, parallelismThreshold, parallelismMax)
     val previousJobDescription = sc.getLocalProperty(SparkContext.SPARK_JOB_DESCRIPTION)
     try {
       val description = paths.size match {

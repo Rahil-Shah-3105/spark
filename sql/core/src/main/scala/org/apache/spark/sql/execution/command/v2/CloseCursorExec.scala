@@ -33,6 +33,7 @@ import org.apache.spark.sql.scripting.{CursorClosed, CursorDeclared}
  * @param cursor CursorReference resolved during analysis phase
  */
 case class CloseCursorExec(cursor: Expression) extends LeafV2CommandExec with DataTypeErrorsBase {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     // Extract CursorReference from the resolved cursor expression
@@ -53,6 +54,7 @@ case class CloseCursorExec(cursor: Expression) extends LeafV2CommandExec with Da
           errorClass = "CURSOR_NOT_OPEN",
           messageParameters = Map("cursorName" -> toSQLId(cursorRef.definition.name)))
       case _ => // Opened or Fetching - proceed with close
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     // Transition cursor state to Closed

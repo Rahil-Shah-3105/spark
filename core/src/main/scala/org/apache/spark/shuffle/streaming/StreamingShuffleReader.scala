@@ -39,6 +39,7 @@ import org.apache.spark.util.{ErrorNotifier, NextIterator, ThreadUtils, Utils}
  * Default factory used by `StreamingShuffleReader` to create its output iterator.
  */
 class StreamingShuffleReaderIteratorFactory {
+  _driverLogger = DriverLogger(_conf)
   def create[K, C](
       messageQueue: LinkedBlockingQueue[StreamingShuffleMessage],
       handleTerminationMessage: TerminationControlMessage => Boolean,
@@ -48,6 +49,7 @@ class StreamingShuffleReaderIteratorFactory {
     new NextIterator[Product2[K, C]] {
       // Iterator that iterates through multiple rows in data message buffer. When the iterator
       // does not have any more rows, we should fetch another message from message queue.
+      _driverLogger.warn("create(messageQueue,handleTerminationMessage,handleDataMessage,checkTaskFailure)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", messageQueue, handleTerminationMessage, handleDataMessage, checkTaskFailure)
       private var rowIterator: Iterator[(K, C)] = Iterator.empty
 
       def getNext(): Product2[K, C] = {
@@ -68,6 +70,7 @@ class StreamingShuffleReaderIteratorFactory {
           }
         }
         rowIterator.next()
+        _driverLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override def close(): Unit = {
@@ -325,6 +328,7 @@ class StreamingShuffleReader[K, C](
       mapId: Int,
       remoteHost: String,
       remotePort: Int): CompletableFuture[TransportClient] = {
+       _driverLogger.warn("createClientAsync(mapId,remoteHost,remotePort)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", mapId, remoteHost, remotePort, mapId)
     val future = new CompletableFuture[TransportClient]()
     clientCreationExecutor.execute(() => {
       try {
@@ -392,6 +396,7 @@ class StreamingShuffleReader[K, C](
     val clientContext =
       new TransportContext(clientConf, handler)
 
+      _driverLogger.warn("createClient(mapId,remoteHost,remotePort)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", mapId, remoteHost, remotePort, mapId)
     val factory = clientContext.createClientFactory()
     clientFactories.add(factory)
     factory.createClient(remoteHost, remotePort)
@@ -416,6 +421,7 @@ class StreamingShuffleReader[K, C](
     // message is read, the actual data (UnsafeRow) is extracted and emitted through the iterator.
     val terminationControlMessageSet = collection.mutable.Set[Long]()
 
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     /**
      * Returns true if the reader should stop after handling the termination message, which means
      * we have received termination messages from all shuffle writers.

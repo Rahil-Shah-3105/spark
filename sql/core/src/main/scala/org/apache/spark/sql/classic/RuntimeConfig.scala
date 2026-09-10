@@ -35,11 +35,14 @@ import org.apache.spark.sql.internal.SQLConf
  */
 @Stable
 class RuntimeConfig private[sql](val sqlConf: SQLConf = new SQLConf) extends sql.RuntimeConfig {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /** @inheritdoc */
   def set(key: String, value: String): Unit = {
+    planChangeLogger.warn("set(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
     requireNonStaticConf(key)
     sqlConf.setConfString(key, value)
+    planChangeLogger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /** @inheritdoc */
@@ -51,12 +54,16 @@ class RuntimeConfig private[sql](val sqlConf: SQLConf = new SQLConf) extends sql
   /** @inheritdoc */
   @throws[NoSuchElementException]("if the key is not set and there is no default value")
   def get(key: String): String = {
+    planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
+    planChangeLogger.warn("get(entry,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", entry, default)
     sqlConf.getConfString(key)
+  planChangeLogger.warn("get(key,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, default)
   }
 
   /** @inheritdoc */
   def get(key: String, default: String): String = {
     sqlConf.getConfString(key, default)
+  planChangeLogger.warn("get(entry)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", entry)
   }
 
   /** @inheritdoc */
@@ -85,12 +92,14 @@ class RuntimeConfig private[sql](val sqlConf: SQLConf = new SQLConf) extends sql
     try Option(get(key)) catch {
       case _: NoSuchElementException => None
     }
+    planChangeLogger.warn("getOption(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /** @inheritdoc */
   def unset(key: String): Unit = {
     requireNonStaticConf(key)
     sqlConf.unsetConf(key)
+    planChangeLogger.warn("unset(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   /** @inheritdoc */

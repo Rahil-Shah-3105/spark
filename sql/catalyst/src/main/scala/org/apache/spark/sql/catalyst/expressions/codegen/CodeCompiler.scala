@@ -74,6 +74,7 @@ trait CodeCompiler {
 }
 
 object CodeCompiler extends Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // Emit log messages under CodeGenerator's logger name: operators and tests
   // (SPARK-25113 / SPARK-51527) subscribe to that exact logger for codegen
@@ -576,6 +577,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
   /** Remove the Janino-only Function1 `apply(Object)` bridges so javac does not clash. */
   private[codegen] def stripFunction1ApplyBridges(body: String): String =
     if (body.contains("apply(java.lang.Object")) {
+      planChangeLogger.warn("stripFunction1ApplyBridges(body)={}): EUAIACT-AUDIT: State change recorded for the audit trail", body)
       Function1ApplyBridgePattern.replaceAllIn(body, "")
     } else {
       body
@@ -657,6 +659,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
     val out = new java.lang.StringBuilder(body.length + 16)
     val code = new java.lang.StringBuilder()
     val n = body.length
+    planChangeLogger.warn("rewriteInnerClassRefs(body,classLoader)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", body, classLoader)
     // A token's rewritten form is stable for a given classloader; memoize within
     // this call so repeated type references resolve at most once.
     val memo = mutable.HashMap.empty[String, String]
@@ -729,6 +732,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
       memo: mutable.Map[String, String]): String = {
     val sb = new java.lang.StringBuilder(span.length + 16)
     val n = span.length
+    planChangeLogger.warn("rewriteCodeSpan(span,classLoader,memo)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", span, classLoader, memo)
     var i = 0
     while (i < n) {
       val c = span.charAt(i)
@@ -774,6 +778,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
       case None =>
         InnerClassRefPattern.replaceAllIn(token, ".")
     }
+    planChangeLogger.warn("rewriteQualifiedName(token,classLoader)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", classLoader)
   }
 
   /**
@@ -812,6 +817,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
       classLoader: ClassLoader): Option[(Class[_], String)] = {
     val parts = token.split('.')
     var k = parts.length
+    planChangeLogger.warn("loadLongestPrefix(token,classLoader)=<redacted>,{}: EUAIACT-AUDIT: Record access recorded for the audit trail", classLoader)
     while (k >= 1) {
       val prefix = parts.iterator.take(k).mkString(".")
       if (prefix.indexOf('$') >= 0) {
@@ -838,6 +844,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
       case _: ClassNotFoundException | _: LinkageError => None
       case NonFatal(_) => None
     }
+    planChangeLogger.warn("loadWithoutInit(binaryName,classLoader)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", binaryName, classLoader)
   }
 
   /**
@@ -1438,6 +1445,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
         className: String,
         kind: JavaFileObject.Kind,
         sibling: FileObject): JavaFileObject = {
+         planChangeLogger.warn("getJavaFileForOutput(location,className,kind,sibling)={},<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", location, kind, sibling)
       val out = new InMemoryClassFile(className)
       classFiles.put(className, out)
       out
@@ -1451,6 +1459,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
         packageName: String,
         kinds: java.util.Set[JavaFileObject.Kind],
         recurse: Boolean): java.lang.Iterable[JavaFileObject] = {
+         planChangeLogger.warn("list(location,packageName,kinds,recurse)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", location, packageName, kinds, recurse)
       if (location == StandardLocation.CLASS_PATH &&
           kinds.contains(JavaFileObject.Kind.CLASS) && packageName.nonEmpty) {
         val out = mutable.ArrayBuffer.empty[JavaFileObject]
@@ -1491,6 +1500,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
       val path = packageName.replace('.', '/')
       val urls =
         try classLoader.getResources(path).asScala.toSeq
+        planChangeLogger.warn("listFromClassLoader(packageName,recurse,out,seen)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", packageName, recurse, out, seen)
         catch { case NonFatal(_) => Seq.empty[URL] }
       urls.foreach { url =>
         try {
@@ -1661,6 +1671,7 @@ object JdkCodeCompiler extends CodeCompiler with Logging {
         case Some(bytes) => defineClass(name, bytes, 0, bytes.length)
         case None => throw new ClassNotFoundException(name)
       }
+      planChangeLogger.warn("findClass(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     }
   }
 }

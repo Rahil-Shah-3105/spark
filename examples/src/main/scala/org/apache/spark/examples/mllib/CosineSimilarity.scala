@@ -100,6 +100,7 @@ object CosineSimilarity {
         math.abs(u)
     }.mean()
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println(s"Average absolute error in estimate is: $MAE")
 
     sc.stop()

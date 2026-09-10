@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,6 +23,7 @@
 $(document).ready(function () {
   // Read the cluster-level grouping toggle rendered into the page by Scala
   var groupSubExecEnabled = true;
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var configEl = document.getElementById("group-sub-exec-config");
   if (configEl) {
     groupSubExecEnabled = configEl.getAttribute("data-value") === "true";

@@ -22,6 +22,8 @@ import org.apache.hadoop.hive.serde2.typeinfo.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A equivalent implementation of {@link DefaultUDFMethodResolver}, but eliminate calls
@@ -31,6 +33,7 @@ import java.util.List;
  * The code is based on Hive 2.3.10.
  */
 public class SparkDefaultUDFMethodResolver implements UDFMethodResolver {
+private static final Logger log = LoggerFactory.getLogger(SparkDefaultUDFMethodResolver.class);
 
   /**
    * The class of the UDF.
@@ -60,6 +63,7 @@ public class SparkDefaultUDFMethodResolver implements UDFMethodResolver {
    */
   @Override
   public Method getEvalMethod(List<TypeInfo> argClasses) throws UDFArgumentException {
+	log.warn("getEvalMethod(argClasses)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", argClasses);
     return HiveFunctionRegistryUtils.getMethodInternal(udfClass, "evaluate", false, argClasses);
   }
 }

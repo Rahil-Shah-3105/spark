@@ -42,6 +42,7 @@ class SqlScriptingExecution(
     sqlScript: CompoundBody,
     session: SparkSession,
     args: Map[String, Expression]) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val interpreter = SqlScriptingInterpreter(session)
 
@@ -326,5 +327,6 @@ object SqlScriptingExecution {
         LocalRelation.fromExternalRows(attributes, result.get)
       }
     }
+    planChangeLogger.warn("executeSqlScript(session,script,args)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, script, args)
   }
 }

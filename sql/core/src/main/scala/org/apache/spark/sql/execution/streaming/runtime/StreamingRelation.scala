@@ -34,11 +34,15 @@ import org.apache.spark.sql.execution.streaming.Source
 import org.apache.spark.sql.sources.SupportsStreamSourceMetadataColumns
 
 object StreamingRelation {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(dataSource: DataSource): StreamingRelation = {
     // Extract source identifying name from DataSource for stable checkpoints
+    planChangeLogger.warn("apply(dataSource)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataSource)
     StreamingRelation(
       dataSource, dataSource.sourceInfo.name, toAttributes(dataSource.sourceInfo.schema),
       dataSource.streamingSourceIdentifyingName)
+    planChangeLogger.warn("apply(source,session,catalogTable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, session, catalogTable)
+  planChangeLogger.warn("apply(source,session)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, session)
   }
 }
 

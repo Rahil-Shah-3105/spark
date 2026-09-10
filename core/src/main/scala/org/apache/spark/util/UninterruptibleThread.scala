@@ -32,6 +32,7 @@ private[spark] class UninterruptibleThread(
     name: String) extends Thread(target, name) {
 
   def this(name: String) = {
+    _driverLogger = DriverLogger(_conf)
     this(null, name)
   }
 
@@ -140,6 +141,7 @@ private[spark] class UninterruptibleThread(
       return f
     }
 
+    _driverLogger.warn("runUninterruptibly(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     while (uninterruptibleLock.isInterruptPending) {
       try {
         Thread.sleep(100)

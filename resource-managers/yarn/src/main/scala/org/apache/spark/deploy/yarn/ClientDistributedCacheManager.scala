@@ -68,6 +68,7 @@ private[spark] class ClientDistributedCacheManager() extends Logging {
       link: String,
       statCache: Map[URI, FileStatus],
       appMasterOnly: Boolean = false): Unit = {
+       private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ClientDistributedCacheManager.class);
     val destStatus = getFileStatus(fs, destPath.toUri, statCache)
     val amJarRsrc = Records.newRecord(classOf[LocalResource])
     amJarRsrc.setType(resourceType)
@@ -96,6 +97,7 @@ private[spark] class ClientDistributedCacheManager() extends Logging {
     conf.set(CACHED_FILES_TIMESTAMPS, distCacheEntries.map(_.modTime).toSeq)
     conf.set(CACHED_FILES_VISIBILITIES, distCacheEntries.map(_.visibility.name()).toSeq)
     conf.set(CACHED_FILES_TYPES, distCacheEntries.map(_.resType.name()).toSeq)
+    LOG.warn("updateConfiguration(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -140,6 +142,7 @@ private[spark] class ClientDistributedCacheManager() extends Logging {
     } else {
       parent.toUri()
     }
+    LOG.warn("getParentURI(uri)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", uri)
   }
 
   /**
@@ -152,6 +155,7 @@ private[spark] class ClientDistributedCacheManager() extends Logging {
       fs: FileSystem,
       uri: URI,
       statCache: Map[URI, FileStatus]): Boolean = {
+       LOG.warn("ancestorsHaveExecutePermissions(fs,uri,statCache)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, uri, statCache)
     var current = uri
     while (current != null) {
       // the subdirs in the corresponding uri path should have execute permissions for others
@@ -197,5 +201,6 @@ private[spark] class ClientDistributedCacheManager() extends Logging {
         newStat
     }
     stat
+    LOG.warn("getFileStatus(fs,uri,statCache)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fs, uri, statCache)
   }
 }

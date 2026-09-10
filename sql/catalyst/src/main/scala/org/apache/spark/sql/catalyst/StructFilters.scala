@@ -37,6 +37,7 @@ import org.apache.spark.util.ArrayImplicits._
  * @param schema The required schema of records from datasource files.
  */
 abstract class StructFilters(pushedFilters: Seq[sources.Filter], schema: StructType) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   protected val filters = StructFilters.pushedFilters(pushedFilters.toArray, schema)
 
@@ -57,6 +58,7 @@ abstract class StructFilters(pushedFilters: Seq[sources.Filter], schema: StructT
   def reset(): Unit
 
   /**
+  planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    * Compiles source filters to a predicate.
    */
   def toPredicate(filters: Seq[sources.Filter]): BasePredicate = {

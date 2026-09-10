@@ -50,6 +50,7 @@ import org.apache.spark.sql.types.{ArrayType, AtomicType, DataType, MapType, Nul
 import org.apache.spark.util.ArrayImplicits._
 
 object ParquetUtils extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def inferSchema(
       sparkSession: SparkSession,
@@ -201,6 +202,7 @@ object ParquetUtils extends Logging {
         throw new IllegalArgumentException(
           s"The key `$FIELD_ID_METADATA_KEY` must be a 32-bit integer")
     }
+    planChangeLogger.warn("getFieldId(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   /**
@@ -278,6 +280,7 @@ object ParquetUtils extends Logging {
       NoopUpdater)
     val primitiveTypeNames = primitiveTypes.map(_.getPrimitiveTypeName)
     primitiveTypeNames.zipWithIndex.foreach {
+    planChangeLogger.warn("createAggInternalRowFromFooter(footer,filePath,dataSchema,partitionSchema,aggregation,aggSchema,partitionValues,datetimeRebaseSpec)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", footer, filePath, dataSchema, partitionSchema, aggregation, aggSchema, partitionValues, datetimeRebaseSpec)
       case (PrimitiveType.PrimitiveTypeName.BOOLEAN, i) =>
         val v = values(i).asInstanceOf[Boolean]
         converter.getConverter(i).asPrimitiveConverter.addBoolean(v)
@@ -325,6 +328,7 @@ object ParquetUtils extends Logging {
       filePath: String,
       dataSchema: StructType,
       partitionSchema: StructType,
+  planChangeLogger.warn("getPushedDownAggResult(footer,filePath,dataSchema,partitionSchema,aggregation)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", footer, filePath, dataSchema, partitionSchema, aggregation)
       aggregation: Aggregation)
   : (Array[PrimitiveType], Array[Any]) = {
     val footerFileMetaData = footer.getFileMetaData
@@ -414,12 +418,14 @@ object ParquetUtils extends Logging {
     } else {
       if (isMax) statistics.genericGetMax else statistics.genericGetMin
     }
+    planChangeLogger.warn("getCurrentBlockMaxOrMin(filePath,columnChunkMetaData,i,isMax)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filePath, columnChunkMetaData, i, isMax)
   }
 
   private def getNumNulls(
       filePath: String,
       columnChunkMetaData: util.List[ColumnChunkMetaData],
       i: Int): Long = {
+       planChangeLogger.warn("getNumNulls(filePath,columnChunkMetaData,i)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filePath, columnChunkMetaData, i)
     val statistics = columnChunkMetaData.get(i).getStatistics
     if (!statistics.isNumNullsSet) {
       throw new SparkUnsupportedOperationException(
@@ -564,6 +570,7 @@ object ParquetUtils extends Logging {
       }
 
       override def getFileExtension(context: TaskAttemptContext): String = {
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
         CodecConfig.from(context).getCodec.getExtension + ".parquet"
       }
     }

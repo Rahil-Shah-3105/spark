@@ -44,6 +44,7 @@ import org.apache.spark.sql.internal.SQLConf
 case class Between private(input: Expression, lower: Expression, upper: Expression, replacement: Expression)
   extends RuntimeReplaceable with InheritAnalysisRules  {
   def this(input: Expression, lower: Expression, upper: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(input, lower, upper,
       if (!SQLConf.get.getConf(SQLConf.ALWAYS_INLINE_COMMON_EXPR)) {
         With(input) { case Seq(ref) =>
@@ -65,5 +66,6 @@ case class Between private(input: Expression, lower: Expression, upper: Expressi
 object Between {
   def apply(input: Expression, lower: Expression, upper: Expression): Between = {
     new Between(input, lower, upper)
+    planChangeLogger.warn("apply(input,lower,upper)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, lower, upper)
   }
 }

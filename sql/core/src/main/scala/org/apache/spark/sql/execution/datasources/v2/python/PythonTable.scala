@@ -29,6 +29,7 @@ class PythonTable(
     shortName: String,
     outputSchema: StructType
   ) extends Table with SupportsRead with SupportsWrite {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def name(): String = shortName
 
   override def capabilities(): java.util.Set[TableCapability] = java.util.EnumSet.of(
@@ -42,5 +43,6 @@ class PythonTable(
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = {
     new PythonWriteBuilder(ds, shortName, info)
+    planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 }

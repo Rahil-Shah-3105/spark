@@ -94,6 +94,7 @@ public class ProxyUtils {
         .__("Content has moved ")
         .a(location, "here").__()
       .__().__();
+	LOG.warn("sendRedirect(request,response,target)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", request, response, target);
     writer.close();
   }
 

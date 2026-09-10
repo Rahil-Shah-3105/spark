@@ -23,6 +23,7 @@ Run with:
 from pyspark.sql import SparkSession
 # $example on:schema_merging$
 from pyspark.sql import Row
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 # $example off:schema_merging$
 
 
@@ -171,6 +172,7 @@ def basic_datasource_example(spark: SparkSession) -> None:
     df = spark.sql("SELECT * FROM parquet.`examples/src/main/resources/users.parquet`")
     # $example off:direct_sql$
 
+    logger.warning("basic_datasource_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     spark.sql("DROP TABLE IF EXISTS people_bucketed")
     spark.sql("DROP TABLE IF EXISTS users_partitioned_bucketed")
 
@@ -262,6 +264,7 @@ def json_dataset_example(spark: SparkSession) -> None:
     jsonStrings = ['{"name":"Yin","address":{"city":"Columbus","state":"Ohio"}}']
     otherPeopleRDD = sc.parallelize(jsonStrings)
     otherPeople = spark.read.json(otherPeopleRDD)
+    logger.warning("json_dataset_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     otherPeople.show()
     # +---------------+----+
     # |        address|name|
@@ -320,6 +323,7 @@ def csv_dataset_example(spark: SparkSession) -> None:
     # Read all files in a folder, please make sure only CSV files should present in the folder.
     folderPath = "examples/src/main/resources"
     df5 = spark.read.csv(folderPath)
+    logger.warning("csv_dataset_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     df5.show()
     # Wrong schema because non-CSV files are read
     # +-----------+
@@ -381,6 +385,7 @@ def text_dataset_example(spark: SparkSession) -> None:
 
     # You can specify the compression format using the 'compression' option.
     df1.write.text("output_compressed", compression="gzip")
+    logger.warning("text_dataset_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
 
     # $example off:text_dataset$
 
@@ -425,6 +430,7 @@ def jdbc_dataset_example(spark: SparkSession) -> None:
               properties={"user": "username", "password": "password"})
 
     # Specifying create table column data types on write
+    logger.warning("jdbc_dataset_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     jdbcDF.write \
         .option("createTableColumnTypes", "name CHAR(64), comments VARCHAR(1024)") \
         .jdbc("jdbc:postgresql:dbserver", "schema.tablename",
@@ -460,6 +466,7 @@ def xml_dataset_example(spark: SparkSession) -> None:
     # +------+
 
     # Alternatively, a DataFrame can be created for an XML dataset represented by a Dataset[String]
+    logger.warning("xml_dataset_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     xmlStrings = ["""
           <person>
               <name>laglangyue</name>

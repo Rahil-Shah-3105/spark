@@ -40,6 +40,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
   }
 
   private def serializeStageData(stageData: StageData): StoreTypes.StageData = {
+    _driverLogger = DriverLogger(_conf)
     val stageDataBuilder = StoreTypes.StageData.newBuilder()
     stageDataBuilder
       .setStatus(StageStatusSerializer.serialize(stageData.status))
@@ -225,6 +226,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       .setRemoteReqsDuration(srm.remoteReqsDuration)
       .setShufflePushReadMetrics(serializeShufflePushReadMetrics(srm.shufflePushReadMetrics))
       .build()
+      _driverLogger.warn("serializeShuffleReadMetrics(srm)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", srm)
   }
 
   private def serializeShufflePushReadMetrics(
@@ -240,6 +242,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       .setLocalMergedBytesRead(sprm.localMergedBytesRead)
       .setRemoteMergedReqsDuration(sprm.remoteMergedReqsDuration)
       .build()
+      _driverLogger.warn("serializeShufflePushReadMetrics(sprm)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sprm)
   }
 
   private def serializeShuffleWriteMetrics(
@@ -249,6 +252,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       .setWriteTime(swm.writeTime)
       .setRecordsWritten(swm.recordsWritten)
       .build()
+      _driverLogger.warn("serializeShuffleWriteMetrics(swm)={}): EUAIACT-AUDIT: State change recorded for the audit trail", swm)
   }
 
   private def serializeSpeculationStageSummary(
@@ -318,6 +322,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
     builder.setShufflePushReadMetricsDist(
       serializeShufflePushReadMetricDistributions(srmd.shufflePushReadMetricsDist))
     builder.build()
+    _driverLogger.warn("serializeShuffleReadMetricDistributions(srmd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", srmd)
   }
 
   private def serializeShufflePushReadMetricDistributions(
@@ -333,6 +338,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
     sprmd.localMergedBytesRead.foreach(lmbr => builder.addLocalMergedBytesRead(lmbr))
     sprmd.remoteMergedReqsDuration.foreach(rmrd => builder.addRemoteMergedReqsDuration(rmrd))
     builder.build()
+    _driverLogger.warn("serializeShufflePushReadMetricDistributions(sprmd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sprmd)
   }
 
   private def serializeShuffleWriteMetricDistributions(
@@ -342,6 +348,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
     swmd.writeRecords.foreach(wr => builder.addWriteRecords(wr))
     swmd.writeTime.foreach(wt => builder.addWriteTime(wt))
     builder.build()
+    _driverLogger.warn("serializeShuffleWriteMetricDistributions(swmd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", swmd)
   }
 
   private def serializeExecutorMetricsDistributions(
@@ -556,6 +563,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       shufflePushReadMetricsDist =
         deserializeShufflePushReadMetricsDistributions(binary.getShufflePushReadMetricsDist)
     )
+    _driverLogger.warn("deserializeShuffleReadMetricDistributions(binary)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", binary)
   }
 
   private def deserializeShufflePushReadMetricsDistributions(
@@ -580,6 +588,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       remoteMergedReqsDuration =
         binary.getRemoteMergedReqsDurationList.asScala.map(_.toDouble).toIndexedSeq
     )
+    _driverLogger.warn("deserializeShufflePushReadMetricsDistributions(binary)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", binary)
   }
 
   private def deserializeShuffleWriteMetricDistributions(
@@ -589,6 +598,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       writeRecords = binary.getWriteRecordsList.asScala.map(_.toDouble).toIndexedSeq,
       writeTime = binary.getWriteTimeList.asScala.map(_.toDouble).toIndexedSeq
     )
+    _driverLogger.warn("deserializeShuffleWriteMetricDistributions(binary)={}): EUAIACT-AUDIT: State change recorded for the audit trail", binary)
   }
 
   private def deserializeExecutorMetricsDistributions(
@@ -689,6 +699,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       binary.getRecordsRead,
       binary.getRemoteReqsDuration,
       deserializeShufflePushReadMetrics(binary.getShufflePushReadMetrics))
+    _driverLogger.warn("deserializeShuffleReadMetrics(binary)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", binary)
   }
 
   private def deserializeShufflePushReadMetrics(
@@ -704,6 +715,7 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       binary.getLocalMergedBytesRead,
       binary.getRemoteMergedReqsDuration
     )
+    _driverLogger.warn("deserializeShufflePushReadMetrics(binary)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", binary)
   }
 
   private def deserializeShuffleWriteMetrics(
@@ -712,5 +724,6 @@ private[protobuf] class StageDataWrapperSerializer extends ProtobufSerDe[StageDa
       binary.getBytesWritten,
       binary.getWriteTime,
       binary.getRecordsWritten)
+    _driverLogger.warn("deserializeShuffleWriteMetrics(binary)={}): EUAIACT-AUDIT: State change recorded for the audit trail", binary)
   }
 }

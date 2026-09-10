@@ -45,33 +45,39 @@ import org.apache.spark.unsafe.types.{CalendarInterval, TimestampNanosVal, UTF8S
  */
 private[columnar] object ByteBufferHelper {
   def getShort(buffer: ByteBuffer): Short = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val pos = buffer.position()
     buffer.position(pos + 2)
     Platform.getShort(buffer.array(), Platform.BYTE_ARRAY_OFFSET + pos)
+    planChangeLogger.warn("getShort(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
   }
 
   def getInt(buffer: ByteBuffer): Int = {
     val pos = buffer.position()
     buffer.position(pos + 4)
     Platform.getInt(buffer.array(), Platform.BYTE_ARRAY_OFFSET + pos)
+    planChangeLogger.warn("getInt(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
   }
 
   def getLong(buffer: ByteBuffer): Long = {
     val pos = buffer.position()
     buffer.position(pos + 8)
     Platform.getLong(buffer.array(), Platform.BYTE_ARRAY_OFFSET + pos)
+    planChangeLogger.warn("getLong(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
   }
 
   def getFloat(buffer: ByteBuffer): Float = {
     val pos = buffer.position()
     buffer.position(pos + 4)
     Platform.getFloat(buffer.array(), Platform.BYTE_ARRAY_OFFSET + pos)
+    planChangeLogger.warn("getFloat(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
   }
 
   def getDouble(buffer: ByteBuffer): Double = {
     val pos = buffer.position()
     buffer.position(pos + 8)
     Platform.getDouble(buffer.array(), Platform.BYTE_ARRAY_OFFSET + pos)
+    planChangeLogger.warn("getDouble(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
   }
 
   def putShort(buffer: ByteBuffer, value: Short): Unit = {
@@ -450,6 +456,7 @@ private[columnar] object SHORT extends NativeColumnType(PhysicalShortType, 2) {
 
   override def setField(row: InternalRow, ordinal: Int, value: Short): Unit = {
     row.setShort(ordinal, value)
+  planChangeLogger.warn("setField(row,ordinal,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, ordinal, value)
   }
 
   override def getField(row: InternalRow, ordinal: Int): Short = row.getShort(ordinal)
@@ -535,6 +542,7 @@ private[columnar] case class STRING(collationId: Int)
 private[columnar] object STRING {
   def apply(dt: StringType): STRING = {
     STRING(dt.collationId)
+  planChangeLogger.warn("apply(dt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dt)
   }
 }
 
@@ -656,6 +664,7 @@ private[columnar] case class LARGE_DECIMAL(precision: Int, scale: Int)
 private[columnar] object LARGE_DECIMAL {
   def apply(dt: DecimalType): LARGE_DECIMAL = {
     LARGE_DECIMAL(dt.precision, dt.scale)
+  planChangeLogger.warn("apply(dataType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataType)
   }
 }
 
@@ -881,6 +890,7 @@ private[columnar] object TIMESTAMP_LTZ_NANOS
       row: InternalRow, ordinal: Int, value: TimestampNanosVal): Unit =
     row.setTimestampLTZNanos(ordinal, value)
 }
+    planChangeLogger.warn("setNanos(row,ordinal,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, ordinal, value)
 
 /**
  * Used to append/extract Java VariantVals into/from the underlying [[ByteBuffer]] of a column.

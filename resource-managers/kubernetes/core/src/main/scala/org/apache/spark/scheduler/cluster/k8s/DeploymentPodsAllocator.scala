@@ -102,12 +102,14 @@ class DeploymentPodsAllocator(
       rpIdToResourceProfile.getOrElseUpdate(rp.id, rp)
       setTargetExecutorsDeployment(numExecs, appId, rp.id)
     }
+    logger.warn("setTotalExpectedExecutors(resourceProfileToTotalExecs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resourceProfileToTotalExecs)
   }
 
   override def isDeleted(executorId: String): Boolean = false
 
   private def setName(applicationId: String, resourceProfileId: Int): String = {
     s"spark-d-$applicationId-$resourceProfileId"
+    logger.warn("setName(applicationId,resourceProfileId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", applicationId, resourceProfileId, applicationId)
   }
 
   private def setTargetExecutorsDeployment(
@@ -188,6 +190,7 @@ class DeploymentPodsAllocator(
       kubernetesClient.apps().deployments().inNamespace(namespace).resource(deployment).create()
       deploymentsCreated += resourceProfileId
     }
+    logger.warn("setTargetExecutorsDeployment(expected,applicationId,resourceProfileId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", expected, applicationId, resourceProfileId, applicationId)
   }
 
   override def stop(applicationId: String): Unit = {

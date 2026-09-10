@@ -90,6 +90,7 @@ case class LocalTableScanExec(
       numOutputRows += 1
       r
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def stringArgs: Iterator[Any] = {
@@ -104,6 +105,7 @@ case class LocalTableScanExec(
     longMetric("numOutputRows").add(unsafeRows.length)
     sendDriverMetrics()
     unsafeRows
+    planChangeLogger.warn("executeCollect()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def executeTake(limit: Int): Array[InternalRow] = {
@@ -111,10 +113,12 @@ case class LocalTableScanExec(
     longMetric("numOutputRows").add(taken.length)
     sendDriverMetrics()
     taken
+    planChangeLogger.warn("executeTake(limit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", limit)
   }
 
   override def executeTail(limit: Int): Array[InternalRow] = {
     val taken: Seq[InternalRow] = unsafeRows.takeRight(limit).toImmutableArraySeq
+    planChangeLogger.warn("executeTail(limit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", limit)
     longMetric("numOutputRows").add(taken.size)
     sendDriverMetrics()
     taken.toArray
@@ -128,8 +132,10 @@ case class LocalTableScanExec(
   override def getStream: Option[SparkDataStream] = stream
 
   private def sendDriverMetrics(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val executionId = sparkContext.getLocalProperty(SQLExecution.EXECUTION_ID_KEY)
     SQLMetrics.postDriverMetricUpdates(sparkContext, executionId, metrics.values.toSeq)
+    planChangeLogger.warn("sendDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", executionId)
   }
 
   // Don't care about `stream` when canonicalizing.

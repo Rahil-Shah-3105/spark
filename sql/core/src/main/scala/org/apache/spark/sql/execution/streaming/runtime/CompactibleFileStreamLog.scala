@@ -48,6 +48,7 @@ abstract class CompactibleFileStreamLog[T <: AnyRef : ClassTag](
     sparkSession: SparkSession,
     path: String)
   extends HDFSMetadataLog[Array[T]](sparkSession, path) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import CompactibleFileStreamLog._
 
@@ -167,6 +168,7 @@ abstract class CompactibleFileStreamLog[T <: AnyRef : ClassTag](
   override def add(batchId: Long, logs: Array[T]): Boolean = {
     val batchAdded =
       if (isCompactionBatch(batchId, compactInterval)) {
+      planChangeLogger.warn("add(batchId,logs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, logs, batchId)
         compact(batchId, logs)
       } else {
         super.add(batchId, logs)
@@ -216,6 +218,7 @@ abstract class CompactibleFileStreamLog[T <: AnyRef : ClassTag](
       validateVersion(lines.next(), metadataLogVersion)
       fn(lines.map(deserializeEntry))
     }
+    planChangeLogger.warn("applyFnInBatch(batchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, batchId)
   }
 
   /**
@@ -229,6 +232,7 @@ abstract class CompactibleFileStreamLog[T <: AnyRef : ClassTag](
         output.write('\n')
         serializeEntry(entry, output)
       }
+      planChangeLogger.warn("writeEntry(entry,output)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, output)
     }
 
     val (writeSucceed, elapsedMs) = Utils.timeTakenMs {
@@ -329,6 +333,7 @@ abstract class CompactibleFileStreamLog[T <: AnyRef : ClassTag](
         }
       }
     }
+    planChangeLogger.warn("deleteExpiredLog(currentBatchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", currentBatchId, currentBatchId)
   }
 }
 
@@ -338,6 +343,7 @@ object CompactibleFileStreamLog {
 
   def getBatchIdFromFileName(fileName: String): Long = {
     fileName.stripSuffix(COMPACT_FILE_SUFFIX).toLong
+    planChangeLogger.warn("getBatchIdFromFileName(fileName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fileName)
   }
 
   /**
@@ -360,6 +366,7 @@ object CompactibleFileStreamLog {
   def getValidBatchesBeforeCompactionBatch(
       compactionBatchId: Long,
       compactInterval: Int): Seq[Long] = {
+       planChangeLogger.warn("getValidBatchesBeforeCompactionBatch(compactionBatchId,compactInterval)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", compactionBatchId, compactInterval, compactionBatchId)
     assert(isCompactionBatch(compactionBatchId, compactInterval),
       s"$compactionBatchId is not a compaction batch")
     (math.max(0, compactionBatchId - compactInterval)) until compactionBatchId
@@ -374,6 +381,7 @@ object CompactibleFileStreamLog {
     assert(batchId >= 0)
     val start = math.max(0, (batchId + 1) / compactInterval * compactInterval - 1)
     start to batchId
+    planChangeLogger.warn("getAllValidBatches(batchId,compactInterval)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, compactInterval, batchId)
   }
 
   /**

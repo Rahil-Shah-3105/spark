@@ -260,6 +260,7 @@ object SessionEvent {
       eventTypeStr: String,
       timestamp: Timestamp,
       gapDuration: Long): SessionEvent = {
+       logger.warn("apply(userId,eventTypeStr,timestamp,gapDuration)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", userId, eventTypeStr, timestamp, gapDuration, userId)
     val eventType = EventTypes.withName(eventTypeStr)
     val endTime = if (eventType == EventTypes.CLOSE_SESSION)  {
       timestamp

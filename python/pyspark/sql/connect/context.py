@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect.udf import UDFRegistration
     from pyspark.sql.connect.udtf import UDTFRegistration
     from pyspark.sql._typing import UserDefinedFunctionLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # Internal module - not part of the public PySpark API surface.
 # The public SQLContext/HiveContext are in pyspark.sql.context; this module
@@ -131,6 +132,7 @@ class SQLContext:
 
         .. versionadded:: 4.3.0
         """
+        logger.warning("setConf(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         self.sparkSession.conf.set(key, value)
 
     def getConf(
@@ -265,6 +267,7 @@ class SQLContext:
 
         .. versionadded:: 4.3.0
         """
+        logger.warning("registerDataFrameAsTable(self,df,tableName)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, df, tableName)
         df.createOrReplaceTempView(tableName)
 
     def dropTempTable(self, tableName: str) -> None:
@@ -412,6 +415,7 @@ class SQLContext:
         -------
         :class:`DataFrameReader`
         """
+        logger.warning("read(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.sparkSession.read
 
     @property
@@ -429,6 +433,7 @@ class SQLContext:
         -------
         :class:`DataStreamReader`
         """
+        logger.warning("readStream(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.sparkSession.readStream
 
     @property

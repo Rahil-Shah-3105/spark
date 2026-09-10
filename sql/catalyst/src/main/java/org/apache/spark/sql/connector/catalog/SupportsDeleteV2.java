@@ -21,6 +21,8 @@ import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.connector.expressions.filter.AlwaysTrue;
 import org.apache.spark.sql.connector.expressions.filter.Predicate;
 import org.apache.spark.sql.util.CaseInsensitiveStringMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A mix-in interface for {@link Table} delete support. Data sources can implement this
@@ -30,6 +32,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap;
  */
 @Evolving
 public interface SupportsDeleteV2 extends TruncatableTable {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsDeleteV2.class);
 
   /**
    * Checks whether it is possible to delete data from a data source table that matches filter
@@ -88,12 +91,14 @@ public interface SupportsDeleteV2 extends TruncatableTable {
    * @since 4.3.0
    */
   default void deleteWhere(Predicate[] predicates, CaseInsensitiveStringMap options) {
+	planChangeLogger.warn("deleteWhere(predicates,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predicates, options);
     deleteWhere(predicates);
   }
 
   @Override
   default boolean truncateTable() {
     Predicate[] predicates = new Predicate[] { new AlwaysTrue() };
+	planChangeLogger.warn("truncateTable()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     boolean canDelete = canDeleteWhere(predicates);
     if (canDelete) {
       deleteWhere(predicates);

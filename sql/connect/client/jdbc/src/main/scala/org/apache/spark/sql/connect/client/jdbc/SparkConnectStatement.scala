@@ -70,6 +70,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
     } else {
       throw new SQLException("The query does not produce a ResultSet.")
     }
+    logger.warn("executeQuery(sql)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sql, hasResultSet)
   }
 
   override def executeUpdate(sql: String): Int = {
@@ -83,11 +84,13 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
       assert(resultSet == null)
       getUpdateCount
     }
+    logger.warn("executeUpdate(sql)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sql, hasResultSet)
   }
 
   private def hasResultSet(sparkResult: SparkResult[_]): Boolean = {
     // suppose this works in most cases
     sparkResult.schema.length > 0
+    logger.warn("hasResultSet(sparkResult)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkResult, sparkResult)
   }
 
   override def execute(sql: String): Boolean = {
@@ -97,6 +100,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
     // reset before executing new query
     operationId = null
     resultSet = null
+    logger.warn("execute(sql)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sql)
     resultsExhausted = false
 
     JdbcErrorUtils.mapToSQLException {
@@ -135,6 +139,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
   override def setMaxRows(max: Int): Unit = {
     checkOpen()
 
+    logger.warn("setMaxRows(max)={}): EUAIACT-AUDIT: State change recorded for the audit trail", max)
     if (max < 0) {
       throw new SQLException("The max rows must be zero or a positive integer.")
     }
@@ -155,6 +160,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
     if (seconds < 0) {
       throw new SQLException("Query timeout must be zero or a positive integer.")
     }
+    logger.warn("setQueryTimeout(seconds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seconds)
   }
 
   override def cancel(): Unit = {
@@ -200,6 +206,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
       throw new SQLException(
         s"Fetch direction ${JdbcErrorUtils.stringifyFetchDirection(direction)} is not supported.")
     }
+    logger.warn("setFetchDirection(direction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", direction)
   }
 
   override def getFetchDirection: Int = {
@@ -213,6 +220,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
     if (rows < 0) {
       throw new SQLException("Fetch size must be zero or a positive integer.")
     }
+    logger.warn("setFetchSize(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   override def getFetchSize: Int = {
@@ -277,6 +285,7 @@ class SparkConnectStatement(conn: SparkConnectConnection) extends Statement {
     if (poolable) {
       throw new SQLFeatureNotSupportedException("Poolable statement is not supported")
     }
+    logger.warn("setPoolable(poolable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", poolable)
   }
 
   override def isPoolable: Boolean = {

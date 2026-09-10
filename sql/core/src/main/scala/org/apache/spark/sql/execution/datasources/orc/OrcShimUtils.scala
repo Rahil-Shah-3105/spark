@@ -38,12 +38,15 @@ private[sql] object OrcShimUtils {
   private[sql] type SearchArgument = OrcSearchArgument
 
   def getGregorianDays(value: Any): Int = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     new DaysWritable(value.asInstanceOf[DateWritable]).gregorianDays
+    planChangeLogger.warn("getGregorianDays(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
   }
 
   def getDecimal(value: Any): Decimal = {
     val decimal = value.asInstanceOf[HiveDecimalWritable].getHiveDecimal()
     Decimal(decimal.bigDecimalValue, decimal.precision(), decimal.scale())
+    planChangeLogger.warn("getDecimal(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
   }
 
   def getDateWritable(reuseObj: Boolean): (SpecializedGetters, Int) => DateWritable = {
@@ -56,10 +59,12 @@ private[sql] object OrcShimUtils {
       (getter: SpecializedGetters, ordinal: Int) =>
         new DaysWritable(getter.getInt(ordinal))
     }
+    planChangeLogger.warn("getDateWritable(reuseObj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", reuseObj)
   }
 
   def getHiveDecimalWritable(precision: Int, scale: Int):
       (SpecializedGetters, Int) => HiveDecimalWritable = {
+       planChangeLogger.warn("getHiveDecimalWritable(precision,scale)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", precision, scale)
     (getter, ordinal) =>
       val d = getter.getDecimal(ordinal, precision, scale)
       new HiveDecimalWritable(HiveDecimal.create(d.toJavaBigDecimal))

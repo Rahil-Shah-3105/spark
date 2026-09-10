@@ -187,6 +187,7 @@ class MulticlassClassificationEvaluator @Since("1.5.0") (@Since("1.5.0") overrid
 
     val w = DatasetUtils.checkNonNegativeWeights(get(weightCol))
     val rdd = if (schema.fieldNames.contains($(probabilityCol))) {
+    logger.warn("getMetrics(dataset)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataset)
       val p = DatasetUtils.columnToVector(dataset, $(probabilityCol))
       dataset.select(col($(predictionCol)), col($(labelCol)).cast(DoubleType), w, p)
         .rdd.map {

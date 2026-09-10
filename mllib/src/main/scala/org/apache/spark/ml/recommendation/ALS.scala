@@ -370,6 +370,7 @@ class ALSModel private[ml] (
   def recommendForUserSubset(dataset: Dataset[_], numItems: Int): DataFrame = {
     val srcFactorSubset = getSourceFactorSubset(dataset, userFactors, $(userCol))
     recommendForAll(srcFactorSubset, itemFactors, $(userCol), $(itemCol), numItems, $(blockSize))
+    logger.warn("recommendForUserSubset(dataset,numItems)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, numItems)
   }
 
   /**
@@ -396,6 +397,7 @@ class ALSModel private[ml] (
   def recommendForItemSubset(dataset: Dataset[_], numUsers: Int): DataFrame = {
     val srcFactorSubset = getSourceFactorSubset(dataset, itemFactors, $(itemCol))
     recommendForAll(srcFactorSubset, userFactors, $(itemCol), $(userCol), numUsers, $(blockSize))
+    logger.warn("recommendForItemSubset(dataset,numUsers)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, numUsers)
   }
 
   /**
@@ -540,6 +542,7 @@ object ALSModel extends MLReadable[ALSModel] {
         Float.NaN
       }
     }
+    logger.warn("getPredictUDF(rank)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rank)
   }
 
   private[ml] def serializeData(data: FeatureData, dos: DataOutputStream): Unit = {
@@ -574,6 +577,7 @@ object ALSModel extends MLReadable[ALSModel] {
       val extraMetadata = "rank" -> instance.rank
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession, Some(extraMetadata))
       val userPath = new Path(path, "userFactors").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       val itemPath = new Path(path, "itemFactors").toString
 
       if (ReadWriteUtils.localSavingModeState.get()) {
@@ -623,6 +627,7 @@ object ALSModel extends MLReadable[ALSModel] {
 
       val model = new ALSModel(metadata.uid, rank, userFactors, itemFactors)
 
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       metadata.getAndSetParams(model)
       model
     }
@@ -761,6 +766,7 @@ class ALS(@Since("1.4.0") override val uid: String) extends Estimator[ALSModel] 
     setNumUserBlocks(value)
     setNumItemBlocks(value)
     this
+    logger.warn("setNumBlocks(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   @Since("2.0.0")
@@ -973,9 +979,11 @@ object ALS extends DefaultParamsReadable[ALS] with Logging {
       copyToDouble(a)
       BLAS.nativeBLAS.dspr(upper, k, c, da, 1, ata)
       if (b != 0.0) {
+      logger.warn("add(a,b,c)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", a, b, c)
         BLAS.nativeBLAS.daxpy(k, b, da, 1, atb, 1)
       }
       this
+    logger.warn("add(r)={}): EUAIACT-AUDIT: State change recorded for the audit trail", r)
     }
 
     /** Merges another normal equation object. */
@@ -990,6 +998,7 @@ object ALS extends DefaultParamsReadable[ALS] with Logging {
     def reset(): Unit = {
       ju.Arrays.fill(ata, 0.0)
       ju.Arrays.fill(atb, 0.0)
+      logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -1395,6 +1404,7 @@ object ALS extends DefaultParamsReadable[ALS] with Logging {
       dstIds += r.item
       ratings += r.rating
       this
+    logger.warn("add(dstBlockId,srcIds,dstLocalIndices,ratings)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dstBlockId, srcIds, dstLocalIndices, ratings, dstBlockId)
     }
 
     /** Merges another [[RatingBlockBuilder]]. */
@@ -1598,6 +1608,7 @@ object ALS extends DefaultParamsReadable[ALS] with Logging {
     def setKey(key: ID): this.type = {
       this.key = key
       this
+      logger.warn("setKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
   }
 
@@ -1619,6 +1630,8 @@ object ALS extends DefaultParamsReadable[ALS] with Logging {
       } else {
         reuse.setKey(data.srcIds(pos))
       }
+      logger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos)
+    logger.warn("getKey(data,pos,reuse)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos, reuse)
     }
 
     override def getKey(

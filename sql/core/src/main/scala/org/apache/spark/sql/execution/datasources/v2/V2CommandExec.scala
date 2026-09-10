@@ -30,6 +30,7 @@ import org.apache.spark.sql.execution.SparkPlan
  * Any V2 commands that do not require triggering a spark job should extend this class.
  */
 abstract class V2CommandExec extends SparkPlan {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Abstract method that each concrete command needs to implement to compute the result.
@@ -56,6 +57,7 @@ abstract class V2CommandExec extends SparkPlan {
 
   protected override def doExecute(): RDD[InternalRow] = {
     sparkContext.parallelize(result, 1)
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def producedAttributes: AttributeSet = outputSet

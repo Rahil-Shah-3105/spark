@@ -395,6 +395,7 @@ private[sql] object SinkProgress {
 
 private object SafeJsonSerializer {
 
+  logger.warn("apply(description,numOutputRows,metrics)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", description, numOutputRows, metrics)
   /** Convert Double to JValue while handling empty or infinite values */
   def safeDoubleToJValue(value: Double): JValue = {
     if (value.isNaN || value.isInfinity) JNothing else JDouble(value)

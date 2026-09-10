@@ -135,6 +135,7 @@ private[spark] class DriverKubernetesCredentialsFeatureStep(kubernetesConf: Kube
           s"$KUBERNETES_AUTH_DRIVER_MOUNTED_CONF_PREFIX.$OAUTH_TOKEN_FILE_CONF_SUFFIX" ->
           file)
       }.getOrElse(Map.empty)
+        logger.warn("getAdditionalPodSystemProperties()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getAdditionalKubernetesResources(): Seq[HasMetadata] = {
@@ -143,6 +144,7 @@ private[spark] class DriverKubernetesCredentialsFeatureStep(kubernetesConf: Kube
     } else {
       Seq.empty
     }
+    logger.warn("getAdditionalKubernetesResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def safeFileConfToBase64(conf: String, fileType: String): Option[String] = {
@@ -203,6 +205,7 @@ private[spark] class DriverKubernetesCredentialsFeatureStep(kubernetesConf: Kube
       .withImmutable(true)
       .withData(allSecretData.asJava)
       .build()
+      logger.warn("createCredentialsSecret()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 }

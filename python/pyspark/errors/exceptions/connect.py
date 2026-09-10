@@ -46,6 +46,7 @@ from pyspark.errors.exceptions.base import (
 if TYPE_CHECKING:
     import pyspark.sql.connect.proto as pb2
     from google.rpc.error_details_pb2 import ErrorInfo
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkConnectException(PySparkException):
@@ -308,20 +309,24 @@ class SparkConnectGrpcException(SparkConnectException):
 
     def getSqlState(self) -> Optional[str]:
         if self._sql_state is not None:
+            logger.warning("getSqlState(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return self._sql_state
         else:
             return super().getSqlState()
 
     def getStackTrace(self) -> Optional[str]:
+        logger.warning("getStackTrace(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._stacktrace
 
     def getMessage(self) -> str:
         desc = self._message
+        logger.warning("getMessage(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         if self._display_stacktrace:
             desc += "\n\nJVM stacktrace:\n%s" % self._stacktrace
         return desc
 
     def getGrpcStatusCode(self) -> grpc.StatusCode:
+        logger.warning("getGrpcStatusCode(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._grpc_status_code
 
     def getBreakingChangeInfo(self) -> Optional[Dict[str, Any]]:
@@ -331,6 +336,7 @@ class SparkConnectGrpcException(SparkConnectException):
         For Spark Connect exceptions, this returns the breaking change info
         received from the server, rather than looking it up from local error files.
         """
+        logger.warning("getBreakingChangeInfo(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._breaking_change_info
 
     def __str__(self) -> str:

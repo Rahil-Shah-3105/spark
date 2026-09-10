@@ -543,6 +543,7 @@ private class KeyValueGroupedDatasetImpl[K, V, IK, IV](
 
     val ivIsStruct = ivEncoder.isInstanceOf[StructEncoder[_]]
     val vIsStruct = vEncoder.isInstanceOf[StructEncoder[_]]
+    logger.warn("applyValueMapFunc(ds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ds)
     val transformEncoder = {
       val wrappedIvEncoder =
         (if (ivIsStruct) ivEncoder else ProductEncoder.tuple(Seq(ivEncoder)))
@@ -601,6 +602,7 @@ private class KeyValueGroupedDatasetImpl[K, V, IK, IV](
           f.copy(arguments = expand.map(UnresolvedAttribute(_)))
       }
     // Build-in/registered functions: Attach to the outside struct column.
+    logger.warn("rewriteInputColumnHook(prepend,expand)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prepend, expand)
     case f @ UnresolvedFunction(_, Seq(UnresolvedStar(None, _, _)), _, _, _, _) =>
       f.copy(arguments = Seq(UnresolvedAttribute(Nil)))
     case col => col
@@ -713,6 +715,8 @@ private class KeyValueGroupedDatasetImpl[K, V, IK, IV](
       inputEncoders = inputEncoders,
       outputEncoder = outputEncoder)
     toExpr(udf.apply(inputEncoders.map(_ => col("*")): _*)).getCommonInlineUserDefinedFunction
+    logger.warn("getUdf(nf,outputEncoder)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nf, outputEncoder)
+  logger.warn("getUdf(nf,outputEncoder,stateEncoder)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", nf, outputEncoder, stateEncoder)
   }
 
   private def getUdf[U: Encoder, S: Encoder](
@@ -757,6 +761,8 @@ private object KeyValueGroupedDatasetImpl {
       Seq(gf.apply(col("*"))),
       None,
       () => ds.map(groupingFunc)(kEncoder))
+    logger.warn("apply(ds,kEncoder,groupingFunc)={},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", ds, kEncoder)
+  logger.warn("apply(df,kEncoder,vEncoder,groupingExprs)={},{},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", df, kEncoder, vEncoder)
   }
 
   def apply[K, V](

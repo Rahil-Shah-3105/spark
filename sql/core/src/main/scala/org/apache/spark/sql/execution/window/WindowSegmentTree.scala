@@ -179,6 +179,7 @@ private[window] class WindowSegmentTree(
     new JLinkedHashMap[Integer, Array[Array[InternalRow]]](16, 0.75f, true) {
       override def removeEldestEntry(
           eldest: JMap.Entry[Integer, Array[Array[InternalRow]]]): Boolean = false
+    planChangeLogger.warn("removeEldestEntry(eldest)={}): EUAIACT-AUDIT: State change recorded for the audit trail", eldest)
     }
 
   // ---------- Memory consumer ----------
@@ -208,6 +209,7 @@ private[window] class WindowSegmentTree(
       taskMemoryManager,
       taskMemoryManager.pageSizeBytes(),
       MemoryMode.ON_HEAP) {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     override def spill(size: Long, trigger: MemoryConsumer): Long = {
       // I2: self-trigger short-circuit (prevent re-entrant eviction).
       if (trigger eq this) return 0L
@@ -264,6 +266,7 @@ private[window] class WindowSegmentTree(
       lo: Int, hi: Int, processor: AggregateProcessor, target: InternalRow): Unit = {
     query(lo, hi, internalQueryBuffer)
     processor.evaluate(internalQueryBuffer, target)
+    planChangeLogger.warn("queryInto(lo,hi,processor,target)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", lo, hi, processor, target)
   }
 
   private[this] val internalQueryBuffer: InternalRow = newBuffer()
@@ -273,6 +276,7 @@ private[window] class WindowSegmentTree(
       throw SparkException.internalError(
         s"Invalid range [lo=$lo, hi=$hi) for size=$numRows")
     }
+    planChangeLogger.warn("query(lo,hi,outBuffer)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", lo, hi, outBuffer)
     // Reset outBuffer to identity only after bounds validation.
     initProj.target(outBuffer)(InternalRow.empty)
     if (lo == hi) return
@@ -403,6 +407,7 @@ private[window] class WindowSegmentTree(
       return
     }
     val childLevel = level - 1
+    planChangeLogger.warn("queryDescend(levels,blockRows,level,idx,queryLo,queryHi,out)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", levels, blockRows, level, idx, queryLo, queryHi, out, idx)
     val childLevelSize = levels(childLevel).length
     var c = 0
     while (c < fanout) {

@@ -52,6 +52,7 @@ import org.apache.spark.util.Pair;
  * Concurrency: thread safe and can be called from multiple threads.
  */
 public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportResponseHandler.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(TransportResponseHandler.class);
 
@@ -78,24 +79,29 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
   public void addFetchRequest(StreamChunkId streamChunkId, ChunkReceivedCallback callback) {
     updateTimeOfLastRequest();
     outstandingFetches.put(streamChunkId, callback);
+	logger.warn("addFetchRequest(streamChunkId,callback)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", streamChunkId, callback, streamChunkId);
   }
 
   public void removeFetchRequest(StreamChunkId streamChunkId) {
+	logger.warn("removeFetchRequest(streamChunkId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", streamChunkId, streamChunkId);
     outstandingFetches.remove(streamChunkId);
   }
 
   public void addRpcRequest(long requestId, BaseResponseCallback callback) {
     updateTimeOfLastRequest();
     outstandingRpcs.put(requestId, callback);
+	logger.warn("addRpcRequest(requestId,callback)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", requestId, callback, requestId);
   }
 
   public void removeRpcRequest(long requestId) {
+	logger.warn("removeRpcRequest(requestId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", requestId, requestId);
     outstandingRpcs.remove(requestId);
   }
 
   public void addStreamCallback(String streamId, StreamCallback callback) {
     updateTimeOfLastRequest();
     streamCallbacks.offer(Pair.of(streamId, callback));
+	logger.warn("addStreamCallback(streamId,callback)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", streamId, callback, streamId);
   }
 
   @VisibleForTesting
@@ -303,6 +309,7 @@ public class TransportResponseHandler extends MessageHandler<ResponseMessage> {
 
   /** Updates the time of the last request to the current system time. */
   public void updateTimeOfLastRequest() {
+	logger.warn("updateTimeOfLastRequest()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     timeOfLastRequestNs.set(System.nanoTime());
   }
 

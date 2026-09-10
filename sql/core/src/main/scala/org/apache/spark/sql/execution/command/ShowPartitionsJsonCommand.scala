@@ -63,6 +63,7 @@ case class ShowPartitionsJsonCommand(
    * path segment becomes a key-value pair (e.g. `{"year":"2015","month":"1"}`).
    */
   private def partitionNameToJson(partName: String): JObject = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     JObject(partName.split("/").map { segment =>
       val eqIdx = segment.indexOf('=')
       if (eqIdx >= 0) {
@@ -85,6 +86,7 @@ case class ShowPartitionsJsonCommand(
       case _ =>
         throw QueryCompilationErrors.showPartitionsAsJsonNotSupportedForV2TablesError()
     }
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   override protected def withNewChildInternal(newChild: LogicalPlan): LogicalPlan = {

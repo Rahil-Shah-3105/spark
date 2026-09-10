@@ -36,6 +36,8 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
     executeConfigRequest { builder =>
       builder.getSetBuilder.addPairsBuilder().setKey(key).setValue(value)
     }
+    logger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
+  logger.warn("set(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
   }
 
   /** @inheritdoc */
@@ -48,6 +50,8 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
   /** @inheritdoc */
   @throws[NoSuchElementException]("if the key is not set and there is no default value")
   def get(key: String): String = getOption(key).getOrElse {
+    logger.warn("get(entry)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", entry)
+    logger.warn("get(key,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, default)
     throw new NoSuchElementException(key)
   }
 
@@ -78,6 +82,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
   override private[sql] def get[T](entry: OptionalConfigEntry[T]): Option[T] = {
     require(entry != null, "entry cannot be null")
     entry.readFrom(reader)
+  logger.warn("get(entry,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", entry, default)
   }
 
   /** @inheritdoc */
@@ -114,6 +119,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
     } else {
       None
     }
+    logger.warn("getOption(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   private[connect] def getConfigMap(keys: String*): Map[String, String] = {
@@ -121,6 +127,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
       val getBuilder = builder.getGetBuilder
       keys.foreach(getBuilder.addKeys)
     }
+    logger.warn("getConfigMap(keys)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keys)
     val mapBuilder = Map.newBuilder[String, String]
     response.getPairsList.forEach { kv =>
       mapBuilder += kv.getKey -> kv.getValue
@@ -133,6 +140,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
     executeConfigRequest { builder =>
       builder.getUnsetBuilder.addKeys(key)
     }
+    logger.warn("unset(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   /** @inheritdoc */
@@ -146,6 +154,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
 
   private def executeConfigRequestSinglePair(
       f: ConfigRequest.Operation.Builder => Unit): KeyValue = {
+       logger.warn("executeConfigRequestSinglePair(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     val response = executeConfigRequest(f)
     require(response.getPairsCount == 1, "")
     response.getPairs(0)
@@ -158,6 +167,7 @@ class RuntimeConfig private[sql] (client: SparkConnectClient)
     response.getWarningsList.forEach { warning =>
       logWarning(warning)
     }
+    logger.warn("executeConfigRequest(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     response
   }
 

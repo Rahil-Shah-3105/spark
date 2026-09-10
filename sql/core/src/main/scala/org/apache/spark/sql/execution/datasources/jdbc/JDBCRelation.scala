@@ -73,6 +73,7 @@ private[sql] object JDBCRelation extends Logging {
       resolver: Resolver,
       timeZoneId: String,
       jdbcOptions: JDBCOptions): Array[Partition] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val partitioning = {
       import JDBCOptions._
 
@@ -249,6 +250,7 @@ private[sql] object JDBCRelation extends Logging {
         tableSchema, customSchema, resolver)
       case None => tableSchema
     }
+    planChangeLogger.warn("getSchema(resolver,jdbcOptions)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", resolver, jdbcOptions)
   }
 
   /**
@@ -260,6 +262,7 @@ private[sql] object JDBCRelation extends Logging {
       sparkSession: SparkSession): JDBCRelation = {
     val remoteSchemaFetchMetric = JdbcUtils.createSchemaFetchMetric(sparkSession.sparkContext)
     val schema = SQLMetrics.withTimingNs(remoteSchemaFetchMetric) {
+    planChangeLogger.warn("apply(parts,jdbcOptions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", parts, jdbcOptions)
       JDBCRelation.getSchema(sparkSession.sessionState.conf.resolver, jdbcOptions)
     }
     JDBCRelation(schema, parts, jdbcOptions,
@@ -338,6 +341,7 @@ private[sql] case class JDBCRelation(
     data.write
       .mode(if (overwrite) SaveMode.Overwrite else SaveMode.Append)
       .jdbc(jdbcOptions.url, jdbcOptions.tableOrQuery, jdbcOptions.asProperties)
+      planChangeLogger.warn("insert(data,overwrite)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, overwrite)
   }
 
   override def toString: String = {

@@ -65,6 +65,7 @@ sealed trait TaskFailedReason extends TaskEndReason {
 
 /**
  * :: DeveloperApi ::
+ _driverLogger = DriverLogger(_conf)
  * A `org.apache.spark.scheduler.ShuffleMapTask` that completed successfully earlier, but we
  * lost the executor before the stage completed. This means Spark needs to reschedule the task
  * to be re-executed on a different executor.
@@ -196,6 +197,7 @@ private[spark] class ThrowableSerializationWrapper(var exception: Throwable) ext
     Serializable with Logging {
   private def writeObject(out: ObjectOutputStream): Unit = {
     out.writeObject(exception)
+    _driverLogger.warn("writeObject(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
   }
   private def readObject(in: ObjectInputStream): Unit = {
     try {
@@ -203,6 +205,7 @@ private[spark] class ThrowableSerializationWrapper(var exception: Throwable) ext
     } catch {
       case e : Exception => log.warn("Task exception could not be deserialized", e)
     }
+    _driverLogger.warn("readObject(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
   }
 }
 

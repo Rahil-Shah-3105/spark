@@ -69,6 +69,7 @@ private[connect] object PipelinesHandler extends Logging {
       transformRelationFunc: Relation => LogicalPlan,
       transformExpressionFunc: proto.Expression => Expression): PipelineCommandResult = {
     // Currently most commands do not include any information in the response. We just send back
+    logger.warn("handlePipelinesCommand(sessionHolder,cmd,responseObserver,transformRelationFunc,transformExpressionFunc)={},{},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", sessionHolder, cmd, responseObserver, transformRelationFunc, transformExpressionFunc)
     // an empty response to the client to indicate that the command was handled successfully
     val defaultResponse = PipelineCommandResult.getDefaultInstance
     cmd.getCommandTypeCase match {
@@ -216,6 +217,7 @@ private[connect] object PipelinesHandler extends Logging {
       defaultCatalog = defaultCatalog,
       defaultDatabase = defaultDatabase,
       defaultSqlConf = defaultSqlConf)
+    logger.warn("createDataflowGraph(cmd,sessionHolder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cmd, sessionHolder)
   }
 
   private def defineSqlGraphElements(
@@ -230,6 +232,7 @@ private[connect] object PipelinesHandler extends Logging {
       cmd.getSqlText,
       cmd.getSqlFilePath,
       sessionHolder.session)
+    logger.warn("defineSqlGraphElements(cmd,sessionHolder)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cmd, sessionHolder, dataflowGraphId)
   }
 
   private def defineOutput(
@@ -239,6 +242,7 @@ private[connect] object PipelinesHandler extends Logging {
     val graphElementRegistry =
       sessionHolder.dataflowGraphRegistry.getDataflowGraphOrThrow(dataflowGraphId)
 
+      logger.warn("defineOutput(output,sessionHolder)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", output, sessionHolder, dataflowGraphId)
     output.getOutputType match {
       case proto.OutputType.MATERIALIZED_VIEW | proto.OutputType.TABLE =>
         val qualifiedIdentifier = GraphIdentifierManager
@@ -379,6 +383,7 @@ private[connect] object PipelinesHandler extends Logging {
             .identifier
         }
       }
+      logger.warn("defineFlow(flow,transformRelationFunc,transformExpressionFunc,sessionHolder)={},{},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", flow, transformRelationFunc, transformExpressionFunc, sessionHolder, dataflowGraphId)
 
     flow.getDetailsCase match {
       case proto.PipelineCommand.DefineFlow.DetailsCase.RELATION_FLOW_DETAILS =>
@@ -550,6 +555,7 @@ private[connect] object PipelinesHandler extends Logging {
       sessionHolder.dataflowGraphRegistry.getDataflowGraphOrThrow(dataflowGraphId)
     val tableFiltersResult = createTableFilters(cmd, graphElementRegistry, sessionHolder)
 
+    logger.warn("startRun(cmd,responseObserver,sessionHolder)={},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cmd, responseObserver, sessionHolder, dataflowGraphId)
     // Use the PipelineEventSender to send events back to the client asynchronously.
     Using.resource(new PipelineEventSender(responseObserver, sessionHolder)) { eventSender =>
       // We will use this variable to store the run failure event if it occurs. This will be set
@@ -613,6 +619,7 @@ private[connect] object PipelinesHandler extends Logging {
         errorClass = "PIPELINE_RUN_FAILED",
         messageParameters = Map("message" -> failureEvent.message),
         cause = null))
+    logger.warn("throwRunFailure(failureEvent)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failureEvent)
   }
 
   /**
@@ -634,6 +641,7 @@ private[connect] object PipelinesHandler extends Logging {
       startRunCommand: proto.PipelineCommand.StartRun,
       graphElementRegistry: GraphRegistrationContext,
       sessionHolder: SessionHolder): TableFilters = {
+       logger.warn("createTableFilters(startRunCommand,graphElementRegistry,sessionHolder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startRunCommand, graphElementRegistry, sessionHolder)
     // Convert table names to fully qualified TableIdentifier objects
     def parseTableNames(tableNames: Seq[String]): Set[TableIdentifier] = {
       tableNames.map { name =>
@@ -645,6 +653,7 @@ private[connect] object PipelinesHandler extends Logging {
             currentDatabase = Some(graphElementRegistry.defaultDatabase))
           .identifier
       }.toSet
+      logger.warn("parseTableNames(tableNames)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableNames)
     }
 
     val fullRefreshTables = startRunCommand.getFullRefreshSelectionList.asScala.toSeq

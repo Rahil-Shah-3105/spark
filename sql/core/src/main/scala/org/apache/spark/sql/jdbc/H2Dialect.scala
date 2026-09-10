@@ -78,6 +78,7 @@ private[sql] case class H2Dialect() extends JdbcDialect with NoLegacyJDBCError {
       case Types.TIMESTAMP_WITH_TIMEZONE | Types.TIME_WITH_TIMEZONE => Some(TimestampType)
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
@@ -94,7 +95,9 @@ private[sql] case class H2Dialect() extends JdbcDialect with NoLegacyJDBCError {
 
   // test only
   def registerFunction(name: String, fn: UnboundFunction): UnboundFunction = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     functionMap.put(name, fn)
+    planChangeLogger.warn("registerFunction(name,fn)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, fn)
   }
 
   override def functions: Seq[(String, UnboundFunction)] = functionMap.asScala.toSeq
@@ -166,6 +169,7 @@ private[sql] case class H2Dialect() extends JdbcDialect with NoLegacyJDBCError {
     }
     var indexMap: Map[String, TableIndex] = Map()
     try {
+    planChangeLogger.warn("listIndexes(conn,tableIdent,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conn, tableIdent, options, tableIdent)
       JdbcUtils.executeQuery(conn, options, sql) { rs =>
         while (rs.next()) {
           val indexName = rs.getString("INDEX_NAME")

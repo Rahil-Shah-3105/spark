@@ -46,6 +46,7 @@ abstract class GenericBufferAggregationIterator(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected val useUnsafeBuffer = aggregateFunctions.flatMap(_.aggBufferAttributes)
     .map(_.dataType).forall(UnsafeRow.isMutable)
@@ -76,6 +77,7 @@ abstract class GenericBufferAggregationIterator(
     val bufferRowSize: Int = bufferSchema.length
     val genericMutableBuffer = new GenericInternalRow(bufferRowSize)
 
+    planChangeLogger.warn("createNewAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val buffer = if (useUnsafeBuffer) {
       val unsafeProjection =
         UnsafeProjection.create(bufferSchema.map(_.dataType))

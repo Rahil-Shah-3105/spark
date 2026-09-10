@@ -29,6 +29,7 @@ class TextOutputWriter(
     lineSeparator: Array[Byte],
     context: TaskAttemptContext)
   extends OutputWriter {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val writer = CodecStreams.createOutputStream(context, new Path(path))
 
@@ -38,6 +39,7 @@ class TextOutputWriter(
       utf8string.writeTo(writer)
     }
     writer.write(lineSeparator)
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {

@@ -29,6 +29,7 @@ import org.apache.spark.sql.execution.metric.{SQLMetric, SQLMetrics}
  * instructions, frames, are used to calculate these aggregates. Frames are processed in the order
  * specified in the window specification (the ORDER BY ... clause). There are four different frame
  * types:
+ val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
  * - Entire partition: The frame is the entire partition, i.e.
  *   UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING. For this case, window function will take all
  *   rows as inputs and be evaluated once.
@@ -114,6 +115,7 @@ case class WindowExec(
     if (conf.usePartitionEvaluator) {
       child.execute().mapPartitionsWithEvaluator(evaluatorFactory)
     } else {
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       child.execute().mapPartitionsWithIndex { (index, rowIterator) =>
         val evaluator = evaluatorFactory.createEvaluator()
         evaluator.eval(index, rowIterator)

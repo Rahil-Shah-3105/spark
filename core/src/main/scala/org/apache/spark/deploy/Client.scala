@@ -51,6 +51,7 @@ private class ClientEndpoint(
     masterEndpoints: Seq[RpcEndpointRef],
     conf: SparkConf)
   extends ThreadSafeRpcEndpoint with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   // A scheduled executor used to send messages at the specified time.
   private val forwardMessageThread =
@@ -75,6 +76,7 @@ private class ClientEndpoint(
 
   private def getProperty(key: String, conf: SparkConf): Option[String] = {
     sys.props.get(key).orElse(conf.getOption(key))
+    _driverLogger.warn("getProperty(key,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, conf)
   }
 
   override def onStart(): Unit = {
@@ -139,6 +141,7 @@ private class ClientEndpoint(
             log"${MDC(MASTER_URL, masterEndpoint)}", e)
       }(forwardMessageExecutionContext)
     }
+    _driverLogger.warn("asyncSendToMasterAndForwardReply(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   private def monitorDriverStatus(): Unit = {
@@ -203,6 +206,7 @@ private class ClientEndpoint(
         logError(log"ERROR: Cluster master did not recognize ${MDC(DRIVER_ID, submittedDriverID)}")
         System.exit(-1)
     }
+    _driverLogger.warn("reportDriverStatus(found,state,workerId,workerHostPort,exception)={},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", found, state, workerId, workerHostPort, exception, workerId)
   }
   override def receive: PartialFunction[Any, Unit] = {
 

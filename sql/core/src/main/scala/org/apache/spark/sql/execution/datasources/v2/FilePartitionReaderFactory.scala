@@ -23,6 +23,7 @@ import org.apache.spark.sql.execution.datasources.{FilePartition, PartitionedFil
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
 abstract class FilePartitionReaderFactory extends PartitionReaderFactory {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected def options: FileSourceOptions
 
@@ -30,18 +31,21 @@ abstract class FilePartitionReaderFactory extends PartitionReaderFactory {
     assert(partition.isInstanceOf[FilePartition])
     val files = partition.asInstanceOf[FilePartition].files
     new FilePartitionReader[InternalRow](files.iterator, buildReader, options)
+    planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
   }
 
   override def createColumnarReader(partition: InputPartition): PartitionReader[ColumnarBatch] = {
     assert(partition.isInstanceOf[FilePartition])
     val files = partition.asInstanceOf[FilePartition].files
     new FilePartitionReader[ColumnarBatch](files.iterator, buildColumnarReader, options)
+    planChangeLogger.warn("createColumnarReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
   }
 
   def buildReader(partitionedFile: PartitionedFile): PartitionReader[InternalRow]
 
   def buildColumnarReader(partitionedFile: PartitionedFile): PartitionReader[ColumnarBatch] = {
     throw QueryExecutionErrors.cannotCreateColumnarReaderError()
+    planChangeLogger.warn("buildColumnarReader(partitionedFile)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partitionedFile)
   }
 }
 

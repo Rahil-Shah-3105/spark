@@ -131,6 +131,7 @@ case class GenerateExec(
         proj(r)
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def supportCodegen: Boolean = generator.supportCodegen
@@ -161,6 +162,7 @@ case class GenerateExec(
       ctx: CodegenContext,
       e: CollectionGenerator,
       input: Seq[ExprCode]): String = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     // Generate code for the generator.
     val data = e.genCode(ctx)

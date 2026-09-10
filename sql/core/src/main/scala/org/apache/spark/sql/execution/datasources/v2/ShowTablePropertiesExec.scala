@@ -36,7 +36,9 @@ case class ShowTablePropertiesExec(
     // The reserved properties are accessible through DESCRIBE
     val properties = conf.redactOptions(catalogTable.properties.asScala.toMap)
       .filter { case (k, _) => !CatalogV2Util.TABLE_RESERVED_PROPERTIES.contains(k) }
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     propertyKey match {
+      val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       case Some(p) =>
         val propValue = properties
           .getOrElse(p, s"Table $tableName does not have property: $p")

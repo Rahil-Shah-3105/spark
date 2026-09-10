@@ -91,6 +91,7 @@ private[deploy] class HadoopFSDelegationTokenProvider
   }
 
   private def getTokenRenewer(sparkConf: SparkConf, hadoopConf: Configuration): String = {
+    _driverLogger = DriverLogger(_conf)
     val master = sparkConf.get("spark.master", null)
     val tokenRenewer = if (master != null && master.contains("yarn")) {
       Master.getMasterPrincipal(hadoopConf)
@@ -99,6 +100,7 @@ private[deploy] class HadoopFSDelegationTokenProvider
     }
     logDebug("Delegation token renewer is: " + tokenRenewer)
 
+    _driverLogger.warn("getTokenRenewer(sparkConf,hadoopConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, hadoopConf)
     if (tokenRenewer == null || tokenRenewer.length() == 0) {
       val errorMessage = "Can't get Master Kerberos principal for use as renewer."
       logError(errorMessage)
@@ -140,6 +142,7 @@ private[deploy] class HadoopFSDelegationTokenProvider
     val creds = new Credentials()
     fetchDelegationTokens(renewer, filesystems, creds, Set.empty)
 
+    _driverLogger.warn("getTokenRenewalInterval(hadoopConf,filesystems)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hadoopConf, filesystems)
     val renewIntervals = creds.getAllTokens.asScala.filter {
       _.decodeIdentifier().isInstanceOf[AbstractDelegationTokenIdentifier]
     }.flatMap { token =>
@@ -179,6 +182,7 @@ private[deploy] class HadoopFSDelegationTokenProvider
         log"Consult token implementor to fix the behavior.")
       now
     }
+    _driverLogger.warn("getIssueDate(kind,identifier)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", kind, identifier, identifier)
   }
 }
 

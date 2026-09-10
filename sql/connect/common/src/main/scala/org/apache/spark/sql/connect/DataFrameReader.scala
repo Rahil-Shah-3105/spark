@@ -87,6 +87,7 @@ class DataFrameReader private[sql] (sparkSession: SparkSession) extends sql.Data
       paths.foreach(path => dataSourceBuilder.addPaths(path))
       builder.build()
     }
+    logger.warn("load(paths)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", paths)
   }
 
   /** @inheritdoc */
@@ -205,6 +206,7 @@ class DataFrameReader private[sql] (sparkSession: SparkSession) extends sql.Data
         .setUnparsedIdentifier(tableName)
         .putAllOptions(extraOptions.toMap.asJava)
     }
+    logger.warn("changes(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   /** @inheritdoc */

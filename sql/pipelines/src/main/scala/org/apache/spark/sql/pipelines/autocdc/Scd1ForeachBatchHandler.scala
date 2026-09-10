@@ -69,5 +69,6 @@ case class Scd1ForeachBatchHandler(
       reconciledMicrobatchDf = reconciledMicrobatch,
       targetTableIdentifier = targetTableIdentifier
     )
+    logger.warn("execute(batchDf,batchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchDf, batchId, batchId)
   }
 }

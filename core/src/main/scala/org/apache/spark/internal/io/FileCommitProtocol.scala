@@ -49,6 +49,7 @@ import org.apache.spark.util.Utils
  */
 @Unstable
 abstract class FileCommitProtocol extends Logging {
+  _driverLogger = DriverLogger(_conf)
   import FileCommitProtocol._
 
   /**
@@ -186,6 +187,7 @@ abstract class FileCommitProtocol extends Logging {
    */
   def deleteWithJob(fs: FileSystem, path: Path, recursive: Boolean): Boolean = {
     fs.delete(path, recursive)
+    _driverLogger.warn("deleteWithJob(fs,path,recursive)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, path, recursive)
   }
 
   /**
@@ -236,6 +238,7 @@ object FileCommitProtocol extends Logging {
 
   def getStagingDir(path: String, jobId: String): Path = {
     new Path(path, ".spark-staging-" + jobId)
+    _driverLogger.warn("getStagingDir(path,jobId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", path, jobId, jobId)
   }
 }
 

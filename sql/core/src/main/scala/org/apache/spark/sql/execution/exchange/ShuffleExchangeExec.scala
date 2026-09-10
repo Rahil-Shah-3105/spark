@@ -85,6 +85,7 @@ trait ShuffleExchangeLike extends Exchange {
 
   @transient
   private lazy val triggerFuture: java.util.concurrent.Future[Any] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     SQLExecution.withThreadLocalCaptured(session, ShuffleExchangeExec.executionContext) {
       try {
         // Trigger shuffle preparation which can involve expensive operations like waiting on
@@ -121,6 +122,7 @@ trait ShuffleExchangeLike extends Exchange {
   final def submitShuffleJob(): Future[MapOutputStatistics] = {
     triggerFuture
     completionFuture
+    planChangeLogger.warn("submitShuffleJob()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -278,6 +280,7 @@ case class ShuffleExchangeExec(
     // The ShuffleRowRDD will be cached in SparkPlan.executeRDD and reused if this plan is used by
     // multiple plans.
     new ShuffledRowRDD(shuffleDependency, readMetrics)
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): ShuffleExchangeExec =
@@ -596,6 +599,7 @@ object ShuffleExchangeExec {
       override protected def createMetricsReporter(
           context: TaskContext): ShuffleWriteMetricsReporter = {
         new SQLShuffleWriteMetricsReporter(context.taskMetrics().shuffleWriteMetrics, metrics)
+        planChangeLogger.warn("createMetricsReporter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
       }
     }
   }

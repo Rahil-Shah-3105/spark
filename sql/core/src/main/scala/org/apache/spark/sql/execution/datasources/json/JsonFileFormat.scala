@@ -42,6 +42,7 @@ case class JsonFileFormat() extends TextBasedFileFormat with DataSourceRegister 
     val parsedOptions = getJsonOptions(sparkSession, options)
     if (parsedOptions.archiveFormatEnabled && SupportsArchiveFormat.isArchivePath(path)) {
       // A tar archive is read as one sequential stream (entry by entry), so it is never split.
+      planChangeLogger.warn("getJsonOptions(spark,options,inRead)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, options, inRead)
       return false
     }
     JsonDataSource(parsedOptions).isSplitable && super.isSplitable(sparkSession, options, path)
@@ -61,6 +62,7 @@ case class JsonFileFormat() extends TextBasedFileFormat with DataSourceRegister 
       job: Job,
       options: Map[String, String],
       dataSchema: StructType): OutputWriterFactory = {
+       planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     val parsedOptions = getJsonOptions(sparkSession, options, inRead = false)
     parsedOptions.compressionCodec.foreach { codec =>
       CompressionCodecs.setCodecConfiguration(job.getConfiguration, codec)
@@ -76,6 +78,7 @@ case class JsonFileFormat() extends TextBasedFileFormat with DataSourceRegister 
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         ".json" + CodecStreams.getCompressionExtension(context)
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
     }
   }
@@ -96,6 +99,7 @@ case class JsonFileFormat() extends TextBasedFileFormat with DataSourceRegister 
     // Check a field requirement for corrupt records here to throw an exception in a driver side
     ExprUtils.verifyColumnNameOfCorruptRecord(dataSchema, parsedOptions.columnNameOfCorruptRecord)
 
+    planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
     if (requiredSchema.length == 1 &&
       requiredSchema.head.name == parsedOptions.columnNameOfCorruptRecord) {
       throw QueryCompilationErrors.queryFromRawFilesIncludeCorruptRecordColumnError()
@@ -108,6 +112,7 @@ case class JsonFileFormat() extends TextBasedFileFormat with DataSourceRegister 
         allowArrayAsStructs = true,
         filters)
       if (parsedOptions.archiveFormatEnabled && SupportsArchiveFormat.isArchivePath(file.toPath)) {
+        val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
         JsonDataSource(parsedOptions).readArchive(
           broadcastedHadoopConf.value.value, file, () => parser(), requiredSchema,
           parsedOptions.archivePathFilterPattern)

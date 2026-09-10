@@ -161,6 +161,7 @@ private[ml] trait MLEvents extends Logging {
     val endEvent = LoadInstanceEnd[T]()
     endEvent.reader = reader
     endEvent.instance = instance
+    logger.warn("withLoadInstanceEvent(reader,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", reader, path)
     logEvent(endEvent)
     listenerBus.post(endEvent)
     instance
@@ -174,6 +175,7 @@ private[ml] trait MLEvents extends Logging {
     func
     val endEvent = SaveInstanceEnd(path)
     endEvent.writer = writer
+    logger.warn("withSaveInstanceEvent(writer,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writer, path)
     logEvent(endEvent)
     listenerBus.post(endEvent)
   }

@@ -52,6 +52,7 @@ private[spark] abstract class RpcEndpointRef(conf: SparkConf)
    * This method only sends the message once and never retries.
    */
   def askAbortable[T: ClassTag](message: Any, timeout: RpcTimeout): AbortableRpcFuture[T] = {
+    _driverLogger = DriverLogger(_conf)
     throw new UnsupportedOperationException()
   }
 
@@ -94,6 +95,7 @@ private[spark] abstract class RpcEndpointRef(conf: SparkConf)
    * @param message the message to send
    * @param timeout the timeout duration
    * @tparam T type of the reply message
+   _driverLogger.warn("askSync(message,timeout)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, timeout)
    * @return the reply message from the corresponding [[RpcEndpoint]]
    */
   def askSync[T: ClassTag](message: Any, timeout: RpcTimeout): T = {

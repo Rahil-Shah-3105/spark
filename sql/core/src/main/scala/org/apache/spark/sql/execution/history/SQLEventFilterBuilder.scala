@@ -71,6 +71,7 @@ private[spark] class SQLEventFilterBuilder extends SparkListener with EventFilte
       stageToRDDs.put(stageId, stageSubmitted.stageInfo.rddInfos.map(_.id).toSet)
       stageToTasks.getOrElseUpdate(stageId, new mutable.HashSet[Long]())
     }
+    planChangeLogger.warn("onStageSubmitted(stageSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stageSubmitted, stageId)
   }
 
   override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
@@ -86,6 +87,7 @@ private[spark] class SQLEventFilterBuilder extends SparkListener with EventFilte
   }
 
   private def onExecutionStart(event: SparkListenerSQLExecutionStart): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     liveExecutionToJobs += event.executionId -> mutable.HashSet[Int]()
   }
 
@@ -101,6 +103,7 @@ private[spark] class SQLEventFilterBuilder extends SparkListener with EventFilte
 
   override def createFilter(): EventFilter = {
     new SQLLiveEntitiesEventFilter(liveSQLExecutions, liveJobs, liveStages, liveTasks, liveRDDs)
+    planChangeLogger.warn("createFilter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

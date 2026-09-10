@@ -29,6 +29,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  * "REPARTITION_BY_RANGE", "REBALANCE" and "REBALANCE_BY_SIZE" hints.
  */
 object CoalesceHintUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def getNumOfPartitions(hint: UnresolvedHint): (Option[Int], Seq[Expression]) = {
     hint.parameters match {
@@ -39,6 +40,7 @@ object CoalesceHintUtils {
       case Seq(IntegerLiteral(numPartitions), _*) => (Some(numPartitions), hint.parameters.tail)
       case _ => (None, hint.parameters)
     }
+    planChangeLogger.warn("getNumOfPartitions(hint)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hint)
   }
 
   def getAdvisorySizeOfPartitions(hint: UnresolvedHint): (Long, Seq[Expression]) = {
@@ -72,6 +74,7 @@ object CoalesceHintUtils {
         advisoryPartitionSize.toString)
     }
     (advisoryPartitionSize, partitionExprs)
+    planChangeLogger.warn("getAdvisorySizeOfPartitions(hint)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hint)
   }
 
   def validateParameters(hint: String, parms: Seq[Expression]): Unit = {
@@ -93,6 +96,7 @@ object CoalesceHintUtils {
         numPartitions: Option[Int], partitionExprs: Seq[Expression]): RepartitionByExpression = {
       val sortOrders = partitionExprs.filter(_.isInstanceOf[SortOrder])
       if (sortOrders.nonEmpty) {
+        planChangeLogger.warn("createRepartitionByExpression(numPartitions,partitionExprs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions, partitionExprs)
         throw QueryCompilationErrors.invalidRepartitionExpressionsError(sortOrders)
       }
       validateParameters(hint.name, partitionExprs)
@@ -143,6 +147,7 @@ object CoalesceHintUtils {
     val (numPartitionsOption, partitionExprs) = getNumOfPartitions(hint)
     validateParameters(hint.name, partitionExprs)
     RebalancePartitions(partitionExprs, hint.child, numPartitionsOption)
+    planChangeLogger.warn("createRebalance(hint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hint)
   }
 
   /**
@@ -152,6 +157,7 @@ object CoalesceHintUtils {
     val (advisoryPartitionSize, partitionExprs) = getAdvisorySizeOfPartitions(hint)
     validateParameters(hint.name, partitionExprs)
     RebalancePartitions(partitionExprs, hint.child, None, Some(advisoryPartitionSize))
+    planChangeLogger.warn("createRebalanceBySize(hint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hint)
   }
 
   def transformStringToAttribute(

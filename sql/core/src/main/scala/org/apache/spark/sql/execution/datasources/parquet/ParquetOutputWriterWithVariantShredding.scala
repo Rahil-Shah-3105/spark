@@ -43,6 +43,7 @@ class ParquetOutputWriterWithVariantShredding(
     inferenceHelper: InferVariantShreddingSchema,
     val isShreddingSchemaForced: Boolean)
     extends OutputWriter {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var parquetOutputWriter: Option[ParquetOutputWriter] = None
   private var latestFooter: Option[ParquetMetadata] = None
@@ -102,6 +103,7 @@ class ParquetOutputWriterWithVariantShredding(
       // We've already picked a schema, and can write directly.
       parquetOutputWriter.get.write(row)
     }
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {

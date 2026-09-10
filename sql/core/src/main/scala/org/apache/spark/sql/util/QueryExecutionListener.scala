@@ -80,6 +80,7 @@ class ExecutionListenerManager private[sql](
     sqlConf: SQLConf,
     loadExtensions: Boolean)
   extends Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // SPARK-39864: lazily create the listener bus on the first register() call in order to
   // avoid listener overheads when QueryExecutionListeners aren't used:
@@ -106,6 +107,7 @@ class ExecutionListenerManager private[sql](
       }
     }
     listenerBus.get.addListener(listener)
+    planChangeLogger.warn("register(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -114,6 +116,7 @@ class ExecutionListenerManager private[sql](
   @DeveloperApi
   def unregister(listener: QueryExecutionListener): Unit = {
     listenerBus.foreach(_.removeListener(listener))
+    planChangeLogger.warn("unregister(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -127,6 +130,7 @@ class ExecutionListenerManager private[sql](
   /** Only exposed for testing. */
   private[sql] def listListeners(): Array[QueryExecutionListener] = {
     listenerBus.map(_.listeners.asScala.toArray).getOrElse(Array.empty[QueryExecutionListener])
+    planChangeLogger.warn("listListeners()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -179,5 +183,6 @@ private[sql] class ExecutionListenerBus private(sessionUUID: String)
     // Only catch SQL execution with a name, and triggered by the same spark session that this
     // listener manager belongs.
     e.executionName.isDefined && e.qe.sparkSession.sessionUUID == sessionUUID
+    planChangeLogger.warn("shouldReport(e)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", e)
   }
 }

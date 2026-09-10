@@ -99,6 +99,7 @@ object SparkSessionSingleton {
         .getOrCreate()
     }
     instance
+    logger.warn("getInstance(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
   }
 }
 // scalastyle:on println

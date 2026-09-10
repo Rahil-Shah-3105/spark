@@ -56,6 +56,7 @@ class ExternalAppendOnlyUnsafeRowArray(
     sizeInBytesInMemoryBufferThreshold: Long,
     numRowsSpillThreshold: Int,
     sizeInBytesSpillThreshold: Long) extends Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def this(
       numRowsInMemoryBufferThreshold: Int,
@@ -180,6 +181,7 @@ class ExternalAppendOnlyUnsafeRowArray(
         0,
         false)
     }
+    planChangeLogger.warn("add(unsafeRow)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unsafeRow)
 
     numRows += 1
     modificationsCount += 1

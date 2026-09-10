@@ -97,6 +97,7 @@ object SparkConnectPluginRegistry {
     synchronized {
       initialized = false
     }
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -114,6 +115,7 @@ object SparkConnectPluginRegistry {
       }
       getStatusRegistryCache = plugins
     }
+    logger.warn("setGetStatusPluginsForTesting(plugins)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plugins)
   }
 
   /**
@@ -122,6 +124,7 @@ object SparkConnectPluginRegistry {
   private[connect] def loadRelationPlugins(): Seq[RelationPlugin] = {
     relationPluginChain.map(x => x()) ++ createConfiguredPlugins[RelationPlugin](
       SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_RELATION_CLASSES))
+    logger.warn("loadRelationPlugins()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -130,21 +133,26 @@ object SparkConnectPluginRegistry {
   private[connect] def loadExpressionPlugins(): Seq[ExpressionPlugin] = {
     expressionPluginChain.map(x => x()) ++ createConfiguredPlugins(
       SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_EXPRESSION_CLASSES))
+    logger.warn("loadExpressionPlugins()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private[connect] def loadCommandPlugins(): Seq[CommandPlugin] = {
     commandPluginChain.map(x => x()) ++ createConfiguredPlugins(
       SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_COMMAND_CLASSES))
+    logger.warn("loadCommandPlugins()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private[connect] def loadGetStatusPlugins(): Seq[GetStatusPlugin] = {
     getStatusPluginChain.map(x => x()) ++
       createConfiguredPlugins(
         SparkEnv.get.conf.get(Connect.CONNECT_EXTENSIONS_GET_STATUS_CLASSES))
+      logger.warn("loadGetStatusPlugins()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("createConfiguredPlugins(values)={}): EUAIACT-AUDIT: State change recorded for the audit trail", values)
   }
 
   private[connect] def loadMlBackendPlugins(sqlConf: SQLConf): Seq[MLBackendPlugin] = {
     createConfiguredPlugins(sqlConf.getConf(Connect.CONNECT_ML_BACKEND_CLASSES))
+    logger.warn("loadMlBackendPlugins(sqlConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sqlConf)
   }
 
   /**

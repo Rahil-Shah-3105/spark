@@ -38,6 +38,7 @@ private[sql] object ArrowCompressionUtils {
   def createCompressionCodec(
       codecName: String,
       zstdCompressionLevel: Int): CompressionCodec = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     codecName match {
       case "none" => NoCompressionCodec.INSTANCE
       case "zstd" => new ZstdCompressionCodec(zstdCompressionLevel)
@@ -46,5 +47,6 @@ private[sql] object ArrowCompressionUtils {
         throw SparkException.internalError(
           s"Unsupported Arrow compression codec: $other. Supported values: none, zstd, lz4")
     }
+    planChangeLogger.warn("createCompressionCodec(codecName,zstdCompressionLevel)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", codecName, zstdCompressionLevel)
   }
 }

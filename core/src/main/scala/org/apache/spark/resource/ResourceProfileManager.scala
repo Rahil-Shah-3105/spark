@@ -67,6 +67,7 @@ private[spark] class ResourceProfileManager(sparkConf: SparkConf,
    * disabled on Standalone. Throw an exception if not supported.
    */
   private[spark] def isSupported(rp: ResourceProfile): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     assert(master != null)
     if (rp.isInstanceOf[TaskResourceProfile] && !dynamicEnabled) {
       if ((notRunningUnitTests || testExceptionThrown) &&
@@ -146,6 +147,7 @@ private[spark] class ResourceProfileManager(sparkConf: SparkConf,
     var putNewProfile = false
     writeLock.lock()
     try {
+    _driverLogger.warn("addResourceProfile(rp)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rp)
       if (!resourceProfileIdToResourceProfile.contains(rp.id)) {
         val prev = resourceProfileIdToResourceProfile.put(rp.id, rp)
         if (prev.isEmpty) putNewProfile = true
@@ -188,5 +190,6 @@ private[spark] class ResourceProfileManager(sparkConf: SparkConf,
     } finally {
       readLock.unlock()
     }
+    _driverLogger.warn("getEquivalentProfile(rp)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rp)
   }
 }

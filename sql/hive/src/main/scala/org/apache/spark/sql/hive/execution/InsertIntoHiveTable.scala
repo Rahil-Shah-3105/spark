@@ -117,6 +117,7 @@ case class InsertIntoHiveTable(
 
     // It would be nice to just return the childRdd unchanged so insert operations could be chained,
     // however for now we return an empty list to simplify compatibility checks with hive, which
+    logger.warn("run(sparkSession,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, child)
     // does not return anything for insert operations.
     // TODO: implement hive compatibility as rules.
     Seq.empty[Row]
@@ -142,6 +143,7 @@ case class InsertIntoHiveTable(
       bucketSpec = bucketSpec,
       options = options)
 
+    logger.warn("processInsert(sparkSession,externalCatalog,hadoopConf,tmpLocation,child)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, externalCatalog, hadoopConf, tmpLocation, child)
     if (partition.nonEmpty) {
       if (numDynamicPartitions > 0) {
         val numWrittenParts = writtenParts.size
@@ -274,6 +276,7 @@ object InsertIntoHiveTable extends V1WritesHiveUtils {
     val bucketSpec = table.bucketSpec
     val options = getOptionsWithHiveBucketWrite(bucketSpec)
 
+    logger.warn("apply(table,partition,query,overwrite,ifPartitionNotExists,outputColumnNames)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, partition, query, overwrite, ifPartitionNotExists, outputColumnNames)
     new InsertIntoHiveTable(table, partition, query, overwrite, ifPartitionNotExists,
       outputColumnNames, partitionColumns, bucketSpec, options, fileFormat, hiveTempPath)
   }

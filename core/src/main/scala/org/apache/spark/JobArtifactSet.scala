@@ -74,6 +74,7 @@ private[spark] object JobArtifactSet {
 
   private[this] val currentClientSessionState: ThreadLocal[Option[JobArtifactState]] =
     new ThreadLocal[Option[JobArtifactState]] {
+      _driverLogger = DriverLogger(_conf)
       override def initialValue(): Option[JobArtifactState] = None
     }
 
@@ -118,5 +119,6 @@ private[spark] object JobArtifactSet {
       archives = maybeState
         .map(s => sc.addedArchives.getOrElse(s.uuid, Map.empty[String, Long]))
         .getOrElse(sc.allAddedArchives).toMap)
+    _driverLogger.warn("getActiveOrDefault(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 }

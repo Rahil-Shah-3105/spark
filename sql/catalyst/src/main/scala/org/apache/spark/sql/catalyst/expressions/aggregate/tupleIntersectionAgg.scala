@@ -81,6 +81,7 @@ case class TupleIntersectionAggDouble(
 
   // Constructors
   def this(child: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, Literal(TupleSummaryMode.Sum.toString), 0, 0)
   }
 
@@ -113,6 +114,7 @@ case class TupleIntersectionAggDouble(
    */
   override protected def createSummarySetOperations(): SummarySetOperations[DoubleSummary] = {
     new DoubleSummarySetOperations(modeEnum.toDoubleSummaryMode)
+    planChangeLogger.warn("createSummarySetOperations()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -189,10 +191,12 @@ case class TupleIntersectionAggInteger(
   // Copy constructors required by ImperativeAggregate
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): TupleIntersectionAggInteger =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(
       newInputAggBufferOffset: Int): TupleIntersectionAggInteger =
+    planChangeLogger.warn("withNewInputAggBufferOffset(newInputAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputAggBufferOffset)
     copy(inputAggBufferOffset = newInputAggBufferOffset)
 
   override protected def withNewChildrenInternal(
@@ -265,6 +269,7 @@ abstract class TupleIntersectionAggBase[S <: Summary]
     val summarySetOps = createSummarySetOperations()
     val intersection = new Intersection[S](summarySetOps)
     IntersectionTupleAggregationBuffer(intersection)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -284,6 +289,7 @@ abstract class TupleIntersectionAggBase[S <: Summary]
     // Get the binary sketch from the input
     val sketchBytes = child.eval(input)
 
+    planChangeLogger.warn("update(intersectionBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", intersectionBuffer, input)
     // Return early for null values
     if (sketchBytes == null) {
       intersectionBuffer

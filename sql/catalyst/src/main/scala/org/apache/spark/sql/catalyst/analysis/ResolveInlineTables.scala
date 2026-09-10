@@ -28,6 +28,7 @@ import org.apache.spark.sql.catalyst.util.EvaluateUnresolvedInlineTable
  * An analyzer rule that replaces [[UnresolvedInlineTable]] with [[ResolvedInlineTable]].
  */
 object ResolveInlineTables extends Rule[LogicalPlan] with EvalHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     plan.resolveOperatorsWithPruning(_.containsPattern(INLINE_TABLE_EVAL), ruleId) {
       // For INSERT, ignore collation differences in inline table columns since the INSERT
@@ -63,5 +64,6 @@ object ResolveInlineTables extends Rule[LogicalPlan] with EvalHelper {
       case table: UnresolvedInlineTable if table.expressionsResolved =>
         EvaluateUnresolvedInlineTable.evaluateUnresolvedInlineTable(table)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

@@ -62,6 +62,7 @@ private[spark] class BasicEventFilterBuilder extends SparkListener with EventFil
     val stageId = stageSubmitted.stageInfo.stageId
     stageToRDDs.put(stageId, stageSubmitted.stageInfo.rddInfos.map(_.id).toSet)
     stageToTasks.getOrElseUpdate(stageId, new mutable.HashSet[Long]())
+    _driverLogger.warn("onStageSubmitted(stageSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", stageSubmitted, stageId)
   }
 
   override def onTaskStart(taskStart: SparkListenerTaskStart): Unit = {
@@ -73,16 +74,19 @@ private[spark] class BasicEventFilterBuilder extends SparkListener with EventFil
 
   override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
     _liveExecutors += executorAdded.executorId
+    _driverLogger.warn("onExecutorAdded(executorAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorAdded)
   }
 
   override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
     _liveExecutors -= executorRemoved.executorId
+    _driverLogger.warn("onExecutorRemoved(executorRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorRemoved)
   }
 
   override def createFilter(): EventFilter = {
     val stats = FilterStatistics(totalJobs, liveJobs.size, totalStages,
       liveStages.size, totalTasks, liveTasks.size)
 
+    _driverLogger.warn("createFilter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     new BasicEventFilter(stats, liveJobs, liveStages, liveTasks, liveRDDs, liveExecutors)
   }
 }
@@ -168,6 +172,7 @@ private[spark] class BasicEventFilter(
   }
 
   private def acceptBlockManagerEvent(blockManagerId: BlockManagerId): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     blockManagerId.isDriver || liveExecutors.contains(blockManagerId.executorId)
   }
 

@@ -35,6 +35,7 @@ import org.apache.spark.rpc.RpcEnv
  */
 @DeveloperApi
 abstract class PersistenceEngine {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * Defines how the object is serialized and persisted. Implementation will
@@ -44,37 +45,45 @@ abstract class PersistenceEngine {
 
   /**
    * Defines how the object referred by its name is removed from the store.
+   _driverLogger.warn("persist(name,obj)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, obj)
    */
   def unpersist(name: String): Unit
 
   /**
    * Gives all objects, matching a prefix. This defines how objects are
    * read/deserialized back.
+   _driverLogger.warn("unpersist(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
    */
   def read[T: ClassTag](prefix: String): Seq[T]
 
   final def addApplication(app: ApplicationInfo): Unit = {
     persist("app_" + app.id, app)
+    _driverLogger.warn("addApplication(app)={}): EUAIACT-AUDIT: State change recorded for the audit trail", app)
   }
 
   final def removeApplication(app: ApplicationInfo): Unit = {
     unpersist("app_" + app.id)
+    _driverLogger.warn("removeApplication(app)={}): EUAIACT-AUDIT: State change recorded for the audit trail", app)
   }
 
   final def addWorker(worker: WorkerInfo): Unit = {
     persist("worker_" + worker.id, worker)
+    _driverLogger.warn("addWorker(worker)={}): EUAIACT-AUDIT: State change recorded for the audit trail", worker)
   }
 
   final def removeWorker(worker: WorkerInfo): Unit = {
     unpersist("worker_" + worker.id)
+    _driverLogger.warn("removeWorker(worker)={}): EUAIACT-AUDIT: State change recorded for the audit trail", worker)
   }
 
   final def addDriver(driver: DriverInfo): Unit = {
     persist("driver_" + driver.id, driver)
+    _driverLogger.warn("addDriver(driver)={}): EUAIACT-AUDIT: State change recorded for the audit trail", driver)
   }
 
   final def removeDriver(driver: DriverInfo): Unit = {
     unpersist("driver_" + driver.id)
+    _driverLogger.warn("removeDriver(driver)={}): EUAIACT-AUDIT: State change recorded for the audit trail", driver)
   }
 
   /**
@@ -86,6 +95,7 @@ abstract class PersistenceEngine {
     rpcEnv.deserialize { () =>
       (read[ApplicationInfo]("app_"), read[DriverInfo]("driver_"), read[WorkerInfo]("worker_"))
     }
+    _driverLogger.warn("readPersistedData(rpcEnv)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rpcEnv)
   }
 
   def close(): Unit = {}

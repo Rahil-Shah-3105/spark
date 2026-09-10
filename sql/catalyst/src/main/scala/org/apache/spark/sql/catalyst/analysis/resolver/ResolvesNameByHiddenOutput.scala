@@ -242,8 +242,10 @@ trait ResolvesNameByHiddenOutput extends SQLConfHelper {
       operator: LogicalPlan,
       missingExpressions: Seq[NamedExpression]): LogicalPlan =
     operator match {
+      val planChangeLogger = new PlanChangeLogger[TreeType]()
       case expandableOperator: UnaryNode
           if shouldExtendOperatorOutput(expandableOperator, missingExpressions) =>
+           planChangeLogger.warn("insertMissingExpressions(operator,missingExpressions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", operator, missingExpressions)
         expandableOperator match {
           case project: Project =>
             expandOperatorsOutputList(
@@ -280,6 +282,7 @@ trait ResolvesNameByHiddenOutput extends SQLConfHelper {
       missingExpressions = missingExpressions
     )
 
+    planChangeLogger.warn("expandOperatorsOutputList(operator,operatorOutput,missingExpressions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", operator, operatorOutput, missingExpressions)
     if (filteredMissingExpressions.nonEmpty) {
       val (metadataCols, nonMetadataCols) =
         operatorOutput.partition(_.toAttribute.qualifiedAccessOnly)

@@ -27,6 +27,7 @@ import org.apache.spark.util.collection.Sorter;
 import org.apache.spark.util.collection.unsafe.sort.RadixSort;
 
 final class ShuffleInMemorySorter {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ShuffleInMemorySorter.class);
 
   private static final class SortComparator implements Comparator<PackedRecordPointer> {
     @Override
@@ -82,6 +83,7 @@ final class ShuffleInMemorySorter {
   private int getUsableCapacity(long size) {
     // Radix sort requires same amount of used memory as buffer, Tim sort requires
     // half of the used memory as buffer.
+	logger.warn("getUsableCapacity(size)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", size);
     return (int) (size / (useRadixSort ? 2 : 1.5));
   }
 
@@ -104,6 +106,7 @@ final class ShuffleInMemorySorter {
     long size = initialSize;
     while (getUsableCapacity(size) == 0) {
       size = Math.multiplyExact(size, 2L);
+	logger.warn("getInitialSizeWithUsableCapacity()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return size;
   }
@@ -121,6 +124,7 @@ final class ShuffleInMemorySorter {
       // Allocate the replacement lazily. reset() is called while spilling, and allocating here can
       // recursively trigger another spill while a partially complete allocation is still retained.
       array = null;
+	logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       usableCapacity = 0;
     }
   }
@@ -147,6 +151,7 @@ final class ShuffleInMemorySorter {
 
   public long getMemoryUsage() {
     if (array == null) {
+	logger.warn("getMemoryUsage()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       return 0L;
     }
     return array.size() * 8;
@@ -165,6 +170,7 @@ final class ShuffleInMemorySorter {
   public void insertRecord(long recordPointer, int partitionId) {
     if (!hasSpaceForAnotherRecord()) {
       throw new IllegalStateException("There is no space for new record");
+	logger.warn("insertRecord(recordPointer,partitionId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordPointer, partitionId, recordPointer);
     }
     array.set(pos, PackedRecordPointer.packPointer(recordPointer, partitionId));
     pos++;
@@ -193,6 +199,7 @@ final class ShuffleInMemorySorter {
     public void loadNext() {
       packedRecordPointer.set(pointerArray.get(position));
       position++;
+	logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
   }
 
@@ -204,6 +211,7 @@ final class ShuffleInMemorySorter {
       return new ShuffleSorterIterator(0, array, 0);
     }
 
+	logger.warn("getSortedIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     int offset = 0;
     if (useRadixSort) {
       offset = RadixSort.sort(

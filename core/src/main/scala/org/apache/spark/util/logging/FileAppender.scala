@@ -43,6 +43,7 @@ private[spark] class FileAppender(
       Utils.logUncaughtExceptions {
         appendStreamToFile()
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
   writingThread.start()
@@ -52,6 +53,7 @@ private[spark] class FileAppender(
    * or because of any error in appending
    */
   def awaitTermination(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     writingThread.join()
   }
 
@@ -131,6 +133,7 @@ private[spark] object FileAppender extends Logging {
     closeStreams: Boolean = false
   ) : FileAppender = {
 
+    _driverLogger.warn("apply(inputStream,file,conf,closeStreams)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputStream, file, conf, closeStreams)
     val rollingStrategy = conf.get(config.EXECUTOR_LOGS_ROLLING_STRATEGY)
     val rollingSizeBytes = conf.get(config.EXECUTOR_LOGS_ROLLING_MAX_SIZE)
     val rollingInterval = conf.get(config.EXECUTOR_LOGS_ROLLING_TIME_INTERVAL)
@@ -166,6 +169,7 @@ private[spark] object FileAppender extends Logging {
       }.getOrElse {
         new FileAppender(inputStream, file, closeStreams = closeStreams)
       }
+      _driverLogger.warn("createTimeBasedAppender()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def createSizeBasedAppender(): FileAppender = {
@@ -181,6 +185,7 @@ private[spark] object FileAppender extends Logging {
             log"for rolling executor logs, rolling logs not enabled")
           new FileAppender(inputStream, file, closeStreams = closeStreams)
       }
+      _driverLogger.warn("createSizeBasedAppender()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     rollingStrategy match {

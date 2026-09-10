@@ -45,6 +45,7 @@ from pyspark.pandas.internal import (
     NATURAL_ORDER_COLUMN_NAME,
     SPARK_INDEX_NAME_FORMAT,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class MultiIndex(Index):
@@ -1048,6 +1049,7 @@ class MultiIndex(Index):
         level = self._get_level_number(level)
         index_scol = self._internal.index_spark_columns[level]
         index_name = self._internal.index_names[level]
+        logger.warning("get_level_values(self,level)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, level)
         index_field = self._internal.index_fields[level]
         internal = self._internal.copy(
             index_spark_columns=[index_scol],
@@ -1104,6 +1106,7 @@ class MultiIndex(Index):
         sdf_middle = Index([item]).to_frame(name=index_name)._to_spark()
         sdf_after = self.to_frame(name=index_name)[loc:]._to_spark()
         sdf = sdf_before.union(sdf_middle).union(sdf_after)
+        logger.warning("insert(self,loc,item)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, loc, item)
 
         internal = InternalFrame(
             spark_frame=sdf,

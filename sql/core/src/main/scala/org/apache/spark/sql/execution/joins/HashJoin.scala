@@ -48,6 +48,7 @@ trait HashJoin extends JoinCodegenSupport {
   def buildSide: BuildSide
 
   override def simpleStringWithNodeId(): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val opId = ExplainUtils.getOpId(this)
     s"$nodeName $joinType ${buildSide} ($opId)".trim
   }
@@ -881,6 +882,7 @@ object HashJoin extends CastSupport with SQLConfHelper {
     // TODO: support BooleanType, DateType and TimestampType
     keys.forall(_.dataType.isInstanceOf[IntegralType]) &&
       keys.map(_.dataType.defaultSize).sum <= 8
+      planChangeLogger.warn("canRewriteAsLongType(keys)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keys)
   }
 
   /**
@@ -894,6 +896,7 @@ object HashJoin extends CastSupport with SQLConfHelper {
       return keys
     }
 
+    planChangeLogger.warn("rewriteKeyExpr(keys)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keys)
     var keyExpr: Expression = if (keys.head.dataType != LongType) {
       cast(keys.head, LongType)
     } else {

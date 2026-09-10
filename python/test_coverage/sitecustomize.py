@@ -26,6 +26,7 @@ try:
         cov = coverage.process_startup()
     if cov:
         import os
+        logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
         def patch_worker():
             # If it's a worker forked from the daemon, we need to patch it to save
@@ -52,14 +53,17 @@ try:
 
                 def handle_worker_exception_wrapper(*args, **kwargs):
                     cov.save()
+                    logger.warning("handle_worker_exception_wrapper()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
                     handle_worker_exception(*args, **kwargs)
 
                 pyspark.util.handle_worker_exception = handle_worker_exception_wrapper
 
                 def save_when_exit(func):
+                    logger.warning("save_when_exit(func)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", func)
                     def wrapper(*args, **kwargs):
                         try:
                             result = func(*args, **kwargs)
+                            logger.warning("wrapper()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
                         finally:
                             cov.save()
                         return result

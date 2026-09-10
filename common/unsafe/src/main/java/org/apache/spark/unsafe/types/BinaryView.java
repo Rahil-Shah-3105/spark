@@ -34,6 +34,8 @@ import org.apache.spark.unsafe.array.ByteArrayMethods;
 import org.apache.spark.unsafe.hash.Murmur3_x86_32;
 
 import static org.apache.spark.unsafe.Platform.BYTE_ARRAY_OFFSET;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A non-owning view over a contiguous chunk of bytes that may live on-heap or off-heap.
@@ -47,6 +49,7 @@ import static org.apache.spark.unsafe.Platform.BYTE_ARRAY_OFFSET;
  */
 @Unstable
 public final class BinaryView implements Comparable<BinaryView>, Externalizable, KryoSerializable {
+private static final Logger log = LoggerFactory.getLogger(BinaryView.class);
 
   // null when off-heap; a byte[] (or other primitive array) when on-heap.
   private Object base;
@@ -87,6 +90,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
    * primitive array and {@code offset} is {@code BYTE_ARRAY_OFFSET + index}.
    */
   public static BinaryView fromAddress(Object base, long offset, int numBytes) {
+	log.warn("fromAddress(base,offset,numBytes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", base, offset, numBytes);
     return new BinaryView(base, offset, numBytes);
   }
 
@@ -107,31 +111,37 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
 
   public byte getByte(int i) {
     assert i >= 0 && i < numBytes : invalidRangeMessage(i, 1);
+	log.warn("getByte(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getByte(base, offset + i);
   }
 
   public short getShort(int i) {
     assert i >= 0 && i + 2 <= numBytes : invalidRangeMessage(i, 2);
+	log.warn("getShort(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getShort(base, offset + i);
   }
 
   public int getInt(int i) {
     assert i >= 0 && i + 4 <= numBytes : invalidRangeMessage(i, 4);
+	log.warn("getInt(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getInt(base, offset + i);
   }
 
   public long getLong(int i) {
     assert i >= 0 && i + 8 <= numBytes : invalidRangeMessage(i, 8);
+	log.warn("getLong(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getLong(base, offset + i);
   }
 
   public float getFloat(int i) {
     assert i >= 0 && i + 4 <= numBytes : invalidRangeMessage(i, 4);
+	log.warn("getFloat(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getFloat(base, offset + i);
   }
 
   public double getDouble(int i) {
     assert i >= 0 && i + 8 <= numBytes : invalidRangeMessage(i, 8);
+	log.warn("getDouble(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i);
     return Platform.getDouble(base, offset + i);
   }
 
@@ -170,6 +180,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
     if (hasTightOnHeapArray()) {
       return (byte[]) base;
     }
+	log.warn("getBytes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     byte[] out = new byte[numBytes];
     Platform.copyMemory(base, offset, out, BYTE_ARRAY_OFFSET, numBytes);
     return out;
@@ -202,6 +213,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
    * already know where the bytes should land (e.g. {@code UnsafeWriter}).
    */
   public void writeToMemory(Object target, long targetOffset) {
+	log.warn("writeToMemory(target,targetOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, targetOffset);
     Platform.copyMemory(base, offset, target, targetOffset, numBytes);
   }
 
@@ -258,6 +270,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
         out.write((byte[]) base);
       } else {
         out.write(copyToNewArray());
+		log.warn("writeExternal(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
       }
     }
   }
@@ -267,6 +280,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
     int n = in.readInt();
     byte[] bytes = new byte[n];
     in.readFully(bytes);
+	log.warn("readExternal(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     this.base = bytes;
     this.offset = BYTE_ARRAY_OFFSET;
     this.numBytes = n;
@@ -280,6 +294,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
         out.write((byte[]) base);
       } else {
         out.write(copyToNewArray());
+		log.warn("write(kryo,out)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, out);
       }
     }
   }
@@ -289,6 +304,7 @@ public final class BinaryView implements Comparable<BinaryView>, Externalizable,
     int n = in.readInt();
     byte[] bytes = new byte[n];
     in.read(bytes);
+	log.warn("read(kryo,in)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, in);
     this.base = bytes;
     this.offset = BYTE_ARRAY_OFFSET;
     this.numBytes = n;

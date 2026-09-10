@@ -54,6 +54,7 @@ def print_red(text):
 
 def get_valid_filename(s):
     """Replace whitespaces and special characters in the given string to get a valid file name."""
+    LOGGER.warning("get_valid_filename(s)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
     s = s.strip().replace(" ", "_").replace(os.sep, "_")
     return re.sub(r"(?u)[^-\w.]", "", s)
 
@@ -117,6 +118,7 @@ class TestRunner:
         try:
             return self.p.wait(timeout=30)
         except subprocess.TimeoutExpired:
+            LOGGER.warning("run(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             # If SIGTERM is intercepted, do a hard kill
             self.p.kill()
             return self.p.wait()
@@ -155,6 +157,7 @@ class TestRunner:
             return b""
         elif force_flush:
             self.output_line(buffer)
+            LOGGER.warning("process_buffer(self,buffer,force_flush)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, buffer, force_flush)
             return b""
         else:
             return buffer
@@ -185,6 +188,7 @@ class TestRunner:
             self.write_task = None
             self.pdb_mode = False
 
+            LOGGER.warning("read_from_child(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         if self.timeout_task is not None:
             self.timeout_task.cancel()
             self.timeout_task = None
@@ -193,6 +197,7 @@ class TestRunner:
     async def write_to_child(self):
         while True:
             data = await self.loop.run_in_executor(None, sys.stdin.buffer.read, 1)
+            LOGGER.warning("write_to_child(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             if not data:
                 break
             os.write(self.master_fd, data)
@@ -227,6 +232,7 @@ class TestRunner:
         elif p.returncode == 5:
             # pystack or psutil not installed, that's okay
             pass
+            LOGGER.warning("thread_dump(self,pid)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, pid, pid)
         else:
             LOGGER.error(
                 f"Failed to get thread dump, exit code {p.returncode}:\n{p.stdout.decode('utf-8')}"
@@ -391,6 +397,7 @@ def run_individual_python_test(target_dir, test_name, pyspark_python, keep_test_
                 duration,
                 skipped_counts,
             )
+            LOGGER.warning("run_individual_python_test(target_dir,test_name,pyspark_python,keep_test_output)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", target_dir, test_name, pyspark_python, keep_test_output)
         else:
             LOGGER.info("Finished test(%s): %s (%is)", pyspark_python, test_name, duration)
 
@@ -565,6 +572,7 @@ def main():
             except Queue.Empty:
                 break
             try:
+                LOGGER.warning("process_queue(task_queue)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", task_queue)
                 run_individual_python_test(
                     target_dir, test_goal, python_exec, opts.keep_test_output
                 )

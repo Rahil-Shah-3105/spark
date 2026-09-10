@@ -245,6 +245,7 @@ object DecisionTreeRunner {
     val numTest = test.count()
     println(s"numTraining = $numTraining, numTest = $numTest.")
 
+    logger.warn("loadDatasets(sc,input,dataFormat,testInput,algo,fracTest)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, input, dataFormat, testInput, algo, fracTest)
     examples.unpersist()
 
     (training, test, numClasses)
@@ -281,6 +282,7 @@ object DecisionTreeRunner {
           useNodeIdCache = params.useNodeIdCache,
           checkpointInterval = params.checkpointInterval)
     if (params.numTrees == 1) {
+      logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
       val startTime = System.nanoTime()
       val model = DecisionTree.train(training, strategy)
       val elapsedTime = (System.nanoTime() - startTime) / 1e9

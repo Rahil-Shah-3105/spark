@@ -29,6 +29,7 @@ import org.apache.spark.sql.catalyst.util.CharsetProvider
 import org.apache.spark.unsafe.types.UTF8String
 
 object CreateJacksonParser extends Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def string(jsonFactory: JsonFactory, record: String): JsonParser = {
     jsonFactory.createParser(record)
   }
@@ -63,6 +64,7 @@ object CreateJacksonParser extends Serializable {
     val decodingBufferSize = Math.min(length, 8192)
     val decoder = CharsetProvider.newDecoder(enc, caller = "Jackson Parser")
     Channels.newReader(byteChannel, decoder, decodingBufferSize)
+    planChangeLogger.warn("getStreamDecoder(enc,in,length)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", enc, in, length)
   }
 
   def text(enc: String, jsonFactory: JsonFactory, record: Text): JsonParser = {

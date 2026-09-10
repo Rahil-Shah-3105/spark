@@ -27,6 +27,7 @@ import org.apache.spark.sql.connector.write.streaming.{StreamingDataWriterFactor
  * streaming write support.
  */
 class MicroBatchWrite(epochId: Long, val writeSupport: StreamingWrite) extends BatchWrite {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def toString: String = {
     s"MicroBatchWrite[epoch: $epochId, writer: $writeSupport]"
   }
@@ -45,6 +46,7 @@ class MicroBatchWrite(epochId: Long, val writeSupport: StreamingWrite) extends B
 
   override def createBatchWriterFactory(info: PhysicalWriteInfo): DataWriterFactory = {
     new MicroBatchWriterFactory(epochId, writeSupport.createStreamingWriterFactory(info))
+    planChangeLogger.warn("createBatchWriterFactory(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 }
 
@@ -53,5 +55,6 @@ class MicroBatchWriterFactory(epochId: Long, streamingWriterFactory: StreamingDa
 
   override def createWriter(partitionId: Int, taskId: Long): DataWriter[InternalRow] = {
     streamingWriterFactory.createWriter(partitionId, taskId, epochId)
+    planChangeLogger.warn("createWriter(partitionId,taskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, partitionId)
   }
 }

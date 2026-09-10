@@ -43,6 +43,7 @@ class LastAttemptAggregatingAccumulator private[execution](
     typedImperatives,
     conf)
   with LastAttemptAccumulator[InternalRow, InternalRow, InternalRow] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Keep a serializable copy because both the base field and the resultExpressions constructor
   // parameter are @transient. Executor-side copyAndReset() needs it below.
@@ -87,5 +88,6 @@ class LastAttemptAggregatingAccumulator private[execution](
     if (isAtDriverSide && !Utils.isInRunningSparkTask) {
       setValueIfOnDriverSide(value.copy())
     }
+    planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 }

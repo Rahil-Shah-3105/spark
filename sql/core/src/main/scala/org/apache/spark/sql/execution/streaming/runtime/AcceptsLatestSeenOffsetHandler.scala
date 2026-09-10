@@ -26,10 +26,12 @@ import org.apache.spark.sql.execution.streaming.checkpointing.OffsetSeqBase
  * This feeds "latest seen offset" to the sources that implement AcceptsLatestSeenOffset.
  */
 object AcceptsLatestSeenOffsetHandler {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def setLatestSeenOffsetOnSources(
       offsets: Option[OffsetSeqBase],
       sources: Seq[SparkDataStream],
       sourceIdMap: Map[String, SparkDataStream]): Unit = {
+       planChangeLogger.warn("setLatestSeenOffsetOnSources(offsets,sources,sourceIdMap)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", offsets, sources, sourceIdMap, sourceIdMap)
     assertNoAcceptsLatestSeenOffsetWithDataSourceV1(sources)
 
     offsets.map(_.toStreamProgress(sources, sourceIdMap)) match {
@@ -50,6 +52,7 @@ object AcceptsLatestSeenOffsetHandler {
       .filter(_.isInstanceOf[AcceptsLatestSeenOffset])
       .filter(_.isInstanceOf[Source])
 
+      planChangeLogger.warn("assertNoAcceptsLatestSeenOffsetWithDataSourceV1(sources)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sources)
     if (unsupportedSources.nonEmpty) {
       throw new SparkUnsupportedOperationException(
         errorClass = "_LEGACY_ERROR_TEMP_3169",

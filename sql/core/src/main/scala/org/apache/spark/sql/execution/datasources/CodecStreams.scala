@@ -31,8 +31,10 @@ import org.apache.spark.TaskContext
 import org.apache.spark.io.HadoopCodecStreams
 
 object CodecStreams {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def createInputStream(config: Configuration, file: Path): InputStream = {
     HadoopCodecStreams.createInputStream(config, file)
+    planChangeLogger.warn("createInputStream(config,file)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", config, file)
   }
 
   /**
@@ -43,6 +45,7 @@ object CodecStreams {
     val inputStream = createInputStream(config, path)
     Option(TaskContext.get()).foreach(_.addTaskCompletionListener[Unit](_ => inputStream.close()))
     inputStream
+    planChangeLogger.warn("createInputStreamWithCloseResource(config,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", config, path)
   }
 
   private def getCompressionCodec(
@@ -60,6 +63,7 @@ object CodecStreams {
         Option(compressionCodecs.getCodec(path))
       }
     }
+    planChangeLogger.warn("getCompressionCodec(context,file)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", context, file)
   }
 
   /**
@@ -71,6 +75,7 @@ object CodecStreams {
     val fs = file.getFileSystem(context.getConfiguration)
     val outputStream: OutputStream = fs.create(file, false)
 
+    planChangeLogger.warn("createOutputStream(context,file)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", context, file)
     getCompressionCodec(context, Some(file))
       .map(codec => codec.createOutputStream(outputStream))
       .getOrElse(outputStream)
@@ -81,6 +86,7 @@ object CodecStreams {
       file: Path,
       charset: Charset = StandardCharsets.UTF_8): OutputStreamWriter = {
     new OutputStreamWriter(createOutputStream(context, file), charset)
+    planChangeLogger.warn("createOutputStreamWriter(context,file,charset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", context, file, charset)
   }
 
   /** Returns the compression codec extension to be used in a file name, e.g. ".gzip"). */
@@ -88,5 +94,6 @@ object CodecStreams {
     getCompressionCodec(context)
       .map(_.getDefaultExtension)
       .getOrElse("")
+      planChangeLogger.warn("getCompressionExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
   }
 }

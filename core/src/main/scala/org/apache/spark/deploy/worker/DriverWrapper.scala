@@ -31,6 +31,7 @@ import org.apache.spark.util._
  * This is used in standalone cluster mode only.
  */
 object DriverWrapper extends Logging {
+  _driverLogger = DriverLogger(_conf)
   def main(args: Array[String]): Unit = {
     args.toList match {
       /*
@@ -83,6 +84,7 @@ object DriverWrapper extends Logging {
       ivyProperties.packagesExclusions, ivyProperties.packages, ivyProperties.repositories,
       ivyProperties.ivyRepoPath, Option(ivyProperties.ivySettingsPath))
     val jars = {
+    _driverLogger.warn("setupDependencies(loader,userJar)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", loader, userJar)
       val jarsProp = sys.props.get(config.JARS.key).orNull
       if (resolvedMavenCoordinates.nonEmpty) {
         DependencyUtils.mergeFileLists(jarsProp,

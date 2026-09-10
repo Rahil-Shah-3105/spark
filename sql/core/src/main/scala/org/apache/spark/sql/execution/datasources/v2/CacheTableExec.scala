@@ -42,6 +42,7 @@ trait BaseCacheTableExec extends LeafV2CommandExec {
   def options: Map[String, String]
 
   override def run(): Seq[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val storageLevelKey = "storagelevel"
     val storageLevel = CaseInsensitiveMap(options).get(storageLevelKey)
       .map(s => StorageLevel.fromString(s.toUpperCase(Locale.ROOT)))
@@ -55,6 +56,7 @@ trait BaseCacheTableExec extends LeafV2CommandExec {
     val df = Dataset.ofRows(session, planToCache)
     session.sharedState.cacheManager.cacheQuery(df, Some(relationName), storageLevel)
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (!isLazy) {
       // Performs eager caching.
       try {

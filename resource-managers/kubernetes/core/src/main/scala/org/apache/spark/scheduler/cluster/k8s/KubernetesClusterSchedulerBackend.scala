@@ -82,6 +82,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
         allocator.setRecoveryMode()
       case _ => // no-op
     }
+    logger.warn("doRemoveExecutor(executorId,reason)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, reason, executorId)
   }
 
   private def setUpExecutorConfigMap(driverPod: Option[Pod]): Unit = {
@@ -96,6 +97,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
     val configMap = KubernetesClientUtils.buildConfigMap(configMapName, confFilesMap, labels)
     KubernetesUtils.addOwnerReference(driverPod.orNull, Seq(configMap))
     kubernetesClient.configMaps().inNamespace(namespace).resource(configMap).create()
+      logger.warn("setUpExecutorConfigMap(driverPod)={}): EUAIACT-AUDIT: State change recorded for the audit trail", driverPod)
   }
 
   /**
@@ -197,6 +199,7 @@ private[spark] class KubernetesClusterSchedulerBackend(
 
   override def sufficientResourcesRegistered(): Boolean = {
     totalRegisteredExecutors.get() >= minRegisteredExecutors
+    logger.warn("sufficientResourcesRegistered()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getExecutorIds(): Seq[String] = synchronized {
@@ -326,12 +329,14 @@ private[spark] class KubernetesClusterSchedulerBackend(
 
   override def createDriverEndpoint(): DriverEndpoint = {
     new KubernetesDriverEndpoint()
+    logger.warn("createDriverEndpoint()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   val execId = new AtomicInteger(0)
 
   override protected def createTokenManager(): Option[HadoopDelegationTokenManager] = {
     Some(new HadoopDelegationTokenManager(conf, sc.hadoopConfiguration, driverEndpoint))
+    logger.warn("createTokenManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def isExecutorExcluded(executorId: String, hostname: String): Boolean = {

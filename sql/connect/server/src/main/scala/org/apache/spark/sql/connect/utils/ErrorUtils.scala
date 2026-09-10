@@ -206,6 +206,7 @@ private[connect] object ErrorUtils extends Logging {
       .setRootErrorIdx(rootErrorIdx)
       .addAllErrors(errors.asJava)
       .build()
+      logger.warn("throwableToFetchErrorDetailsResponse(st,serverStackTraceEnabled)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", st, serverStackTraceEnabled)
   }
 
   /**
@@ -373,6 +374,7 @@ private[connect] object ErrorUtils extends Logging {
     }
 
     // Execute callback if present
+    logger.warn("processErrorCommon(opType,userId,sessionId,st,events,isInterrupted,callback)={},{},<redacted>,{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", opType, userId, st, events, isInterrupted, callback, userId)
     callback.foreach(_.apply())
 
     (st, wrapped)

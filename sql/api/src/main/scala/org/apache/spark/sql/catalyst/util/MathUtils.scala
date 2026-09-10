@@ -29,6 +29,7 @@ object MathUtils {
 
   def addExact(a: Int, b: Int, context: QueryContext): Int = {
     withOverflow(Math.addExact(a, b), hint = "try_add", context)
+  logger.warn("addExact(a,b,context)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", a, b, context)
   }
 
   def addExact(a: Long, b: Long): Long = withOverflow(Math.addExact(a, b))

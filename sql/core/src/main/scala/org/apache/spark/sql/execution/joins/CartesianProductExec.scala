@@ -39,6 +39,7 @@ class UnsafeCartesianRDD(
     spillThreshold: Int,
     sizeInBytesSpillThreshold: Long)
   extends CartesianRDD[UnsafeRow, UnsafeRow](left.sparkContext, left, right) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def compute(split: Partition, context: TaskContext): Iterator[(UnsafeRow, UnsafeRow)] = {
     val rowArray = new ExternalAppendOnlyUnsafeRowArray(
@@ -93,6 +94,7 @@ case class CartesianProductExec(
     pair.mapPartitionsWithIndexInternal { (index, iter) =>
       val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
       val filtered = if (condition.isDefined) {
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", leftResults)
         val boundCondition = Predicate.create(condition.get, left.output ++ right.output)
         boundCondition.initialize(index)
         val joined = new JoinedRow

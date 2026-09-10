@@ -35,7 +35,9 @@ private[v1] class AbstractApplicationResource extends BaseAppResource {
   @GET
   @Path("jobs")
   def jobsList(@QueryParam("status") statuses: JList[JobExecutionStatus]): Seq[JobData] = {
+    _driverLogger = DriverLogger(_conf)
     withUI(_.store.jobsList(statuses))
+    _driverLogger.warn("jobsList(statuses)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", statuses)
   }
 
   @GET
@@ -131,6 +133,7 @@ private[v1] class AbstractApplicationResource extends BaseAppResource {
   def getEventLogs(): Response = {
     // For backwards compatibility, this code also tries with attemptId "1" if the UI
     // without an attempt ID does not exist.
+    _driverLogger.warn("getEventLogs()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     try {
       checkUIViewPermissions()
     } catch {
@@ -156,6 +159,7 @@ private[v1] class AbstractApplicationResource extends BaseAppResource {
             zipStream.close()
           }
 
+          _driverLogger.warn("write(output)={}): EUAIACT-AUDIT: State change recorded for the audit trail", output)
         }
       }
 
@@ -216,6 +220,7 @@ private[v1] class OneApplicationAttemptResource extends AbstractApplicationResou
       .getOrElse {
         throw new NotFoundException(s"unknown app $appId, attempt $attemptId")
       }
+      _driverLogger.warn("getAttempt()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
 }

@@ -64,6 +64,7 @@ private[sql] trait CompilationErrors extends DataTypeErrorsBase {
       errorClass = "PROTOBUF_DESCRIPTOR_FILE_NOT_FOUND",
       messageParameters = Map("filePath" -> filePath),
       cause = Option(cause))
+    logger.warn("cannotFindDescriptorFileError(filePath,cause)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filePath, cause)
   }
 
   def usingUntypedScalaUDFError(): Throwable = {
@@ -96,6 +97,7 @@ private[sql] trait CompilationErrors extends DataTypeErrorsBase {
     new AnalysisException(
       errorClass = "INVALID_SAVE_MODE",
       messageParameters = Map("mode" -> toDSOption(saveMode)))
+    logger.warn("invalidSaveModeError(saveMode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", saveMode)
   }
 
   def sortByWithoutBucketingError(): Throwable = {
@@ -142,12 +144,14 @@ private[sql] trait CompilationErrors extends DataTypeErrorsBase {
     new AnalysisException(
       errorClass = "CANNOT_MODIFY_STATIC_CONFIG",
       messageParameters = Map("key" -> toSQLConf(key)))
+    logger.warn("cannotModifyValueOfStaticConfigError(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   def cannotModifyValueOfSparkConfigError(key: String, docroot: String): Throwable = {
     new AnalysisException(
       errorClass = "CANNOT_MODIFY_CONFIG",
       messageParameters = Map("key" -> toSQLConf(key), "docroot" -> docroot))
+    logger.warn("cannotModifyValueOfSparkConfigError(key,docroot)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, docroot)
   }
 }
 

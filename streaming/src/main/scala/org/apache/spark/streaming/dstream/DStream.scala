@@ -164,6 +164,7 @@ abstract class DStream[T: ClassTag] (
     }
     this.storageLevel = level
     this
+    logger.warn("persist(level)={}): EUAIACT-AUDIT: State change recorded for the audit trail", level)
   }
 
   /** Persist RDDs of this DStream with the default storage level (MEMORY_ONLY_SER) */
@@ -289,6 +290,7 @@ abstract class DStream[T: ClassTag] (
     if (ssc != null && ssc != s) {
       throw new SparkException(s"Context must not be set again for $this")
     }
+    logger.warn("setContext(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
     ssc = s
     logInfo(log"Set context for ${MDC(LogKeys.STREAMING_CONTEXT, this)}")
     dependencies.foreach(_.setContext(ssc))
@@ -300,6 +302,7 @@ abstract class DStream[T: ClassTag] (
     }
     graph = g
     dependencies.foreach(_.setGraph(graph))
+    logger.warn("setGraph(g)={}): EUAIACT-AUDIT: State change recorded for the audit trail", g)
   }
 
   private[streaming] def remember(duration: Duration): Unit = {
@@ -368,6 +371,7 @@ abstract class DStream[T: ClassTag] (
         None
       }
     }
+    logger.warn("getOrCompute(time)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", time)
   }
 
   /**
@@ -395,6 +399,7 @@ abstract class DStream[T: ClassTag] (
     val prevScope = ssc.sparkContext.getLocalProperty(scopeKey)
     val prevScopeNoOverride = ssc.sparkContext.getLocalProperty(scopeNoOverrideKey)
 
+    logger.warn("createRDDWithLocalProperties(time,displayInnerRDDOps)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", time, displayInnerRDDOps, scopeNoOverrideKey)
     try {
       if (displayInnerRDDOps) {
         // Unset the short form call site, so that generated RDDs get their own
@@ -491,6 +496,7 @@ abstract class DStream[T: ClassTag] (
     checkpointData.update(currentTime)
     dependencies.foreach(_.updateCheckpointData(currentTime))
     logDebug(s"Updated checkpoint data for time $currentTime: $checkpointData")
+    logger.warn("updateCheckpointData(currentTime)={}): EUAIACT-AUDIT: State change recorded for the audit trail", currentTime)
   }
 
   private[streaming] def clearCheckpointData(time: Time): Unit = {
@@ -515,6 +521,7 @@ abstract class DStream[T: ClassTag] (
       restoredFromCheckpointData = true
       logInfo("Restored checkpoint data")
     }
+    logger.warn("restoreCheckpointData()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   @throws(classOf[IOException])
@@ -948,6 +955,7 @@ abstract class DStream[T: ClassTag] (
   private[streaming] def register(): DStream[T] = {
     ssc.graph.addOutputStream(this)
     this
+    logger.warn("register()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

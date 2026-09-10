@@ -92,8 +92,10 @@ private[spark] class StreamingShuffleOutputTrackerMasterEndpoint(
     conf: SparkConf)
   extends RpcEndpoint
   with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   logDebug("init") // force eager creation of logger
+  _driverLogger.warn("unregisterShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
     case GetAllStreamingShuffleTaskLocations(shuffleId) =>
@@ -173,6 +175,7 @@ private[spark] abstract class StreamingShuffleOutputTracker(conf: SparkConf) ext
         "Error reply received from StreamingShuffleOutputTracker. Expecting true, got " +
           response.toString)
     }
+    _driverLogger.warn("sendTracker(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   def unregisterShuffle(shuffleId: Int): Unit = {}
@@ -194,6 +197,7 @@ private[spark] abstract class StreamingShuffleOutputTracker(conf: SparkConf) ext
    * @param shuffleId  The id of the shuffle to get the location information about writer tasks
    * @return A map in which the key is the shuffle writer task map id and the value
    *         is the location information of the task.
+   _driverLogger.warn("registerShuffleWriterTask(shuffleId,mapId,location)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, mapId, location, shuffleId)
    */
   def getAllShuffleWriterTaskLocations(
       shuffleId: Int): Option[Map[Long, StreamingShuffleTaskLocation]]
@@ -232,6 +236,7 @@ private[spark] class StreamingShuffleOutputTrackerMaster(conf: SparkConf)
     val pool =
       ThreadUtils.newDaemonFixedThreadPool(numThreads, "streaming-shuffle-location-dispatcher")
     for (i <- 0 until numThreads) {
+      _driverLogger.warn("getAvailableShuffleWriterTaskLocations(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
       pool.execute(new MessageLoop)
     }
     pool
@@ -240,6 +245,7 @@ private[spark] class StreamingShuffleOutputTrackerMaster(conf: SparkConf)
   override def registerShuffle(shuffleId: Int, numMaps: Int, numReduces: Int, jobId: Int): Unit = {
     logInfo(log"Registering shuffleId ${MDC(LogKeys.SHUFFLE_ID, shuffleId)} with ${
       MDC(LogKeys.NUM_MAPPERS, numMaps)} mappers and ${
+       _driverLogger.warn("registerShuffle(shuffleId,numMaps,numReduces,jobId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, numMaps, numReduces, jobId, shuffleId)
       MDC(LogKeys.NUM_REDUCERS, numReduces)} reducers")
     if (shuffleInfos.putIfAbsent(
         shuffleId, StreamingShuffleInfo(numMaps, numReduces, jobId)) != null) {
@@ -252,6 +258,7 @@ private[spark] class StreamingShuffleOutputTrackerMaster(conf: SparkConf)
   // for testing purposes
   private[spark] def getShuffleInfo(shuffleId: Int): Option[StreamingShuffleInfo] = {
     Option(shuffleInfos.get(shuffleId))
+    _driverLogger.warn("getShuffleInfo(shuffleId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   // for testing purposes -- size of the per-shuffle taskLocations map, used to assert
@@ -324,6 +331,7 @@ private[spark] class StreamingShuffleOutputTrackerMaster(conf: SparkConf)
       } catch {
         case ie: InterruptedException => // exit
       }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
@@ -392,6 +400,7 @@ private[spark] class StreamingShuffleOutputTrackerMaster(conf: SparkConf)
     if (shuffleTaskLocationMap == null) {
       return None
     }
+    _driverLogger.warn("getAllShuffleWriterTaskLocations(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
 
     // only return the mapper task location information if all mappers have registered
     if (shuffleInfo.numMaps == shuffleTaskLocationMap.size()) {

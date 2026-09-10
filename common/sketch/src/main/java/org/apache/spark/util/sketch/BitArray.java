@@ -21,8 +21,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class BitArray {
+private static final Logger log = LoggerFactory.getLogger(BitArray.class);
   private final long[] data;
   private long bitCount;
 
@@ -55,12 +58,14 @@ final class BitArray {
     if (!get(index)) {
       data[(int) (index >>> 6)] |= (1L << index);
       bitCount++;
+	log.warn("set(index)={}): EUAIACT-AUDIT: State change recorded for the audit trail", index);
       return true;
     }
     return false;
   }
 
   boolean get(long index) {
+	log.warn("get(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index);
     return (data[(int) (index >>> 6)] & (1L << index)) != 0;
   }
 
@@ -99,12 +104,14 @@ final class BitArray {
   void writeTo(DataOutputStream out) throws IOException {
     out.writeInt(data.length);
     for (long datum : data) {
+	log.warn("writeTo(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
       out.writeLong(datum);
     }
   }
 
   static BitArray readFrom(DataInputStream in) throws IOException {
     int numWords = in.readInt();
+	log.warn("readFrom(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     long[] data = new long[numWords];
     for (int i = 0; i < numWords; i++) {
       data[i] = in.readLong();

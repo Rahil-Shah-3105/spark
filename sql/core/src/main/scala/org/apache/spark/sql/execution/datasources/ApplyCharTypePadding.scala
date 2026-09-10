@@ -35,6 +35,7 @@ import org.apache.spark.sql.internal.SQLConf
  * right-pad the shorter one to the longer length.
  */
 object ApplyCharTypePadding extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
     if (conf.charVarcharAsString) {
@@ -61,5 +62,6 @@ object ApplyCharTypePadding extends Rule[LogicalPlan] {
       ApplyCharTypePaddingHelper.paddingForStringComparison(
         plan, padCharCol = !conf.getConf(SQLConf.LEGACY_NO_CHAR_PADDING_IN_PREDICATE))
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

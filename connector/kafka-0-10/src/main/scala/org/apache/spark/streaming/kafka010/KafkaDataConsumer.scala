@@ -39,6 +39,7 @@ private[kafka010] sealed trait KafkaDataConsumer[K, V] {
    */
   def get(offset: Long, pollTimeoutMs: Long): ConsumerRecord[K, V] = {
     internalConsumer.get(offset, pollTimeoutMs)
+    logger.warn("get(offset,pollTimeoutMs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, pollTimeoutMs)
   }
 
   /**
@@ -159,6 +160,7 @@ private[kafka010] class InternalKafkaConsumer[K, V](
           "spark.streaming.kafka.allowNonConsecutiveOffsets"
       )
     }
+    logger.warn("get(offset,timeout)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", offset, timeout, record)
 
     nextOffset = offset + 1
     record
@@ -257,6 +259,7 @@ private[kafka010] object KafkaDataConsumer extends Logging {
           // (that is, number of tasks slots) after which it will never reduce. This is unlikely to
           // be a serious problem because an executor with more than 64 (default) tasks slots is
           // likely running on a beefy machine that can handle a large number of simultaneously
+          logger.warn("removeEldestEntry(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
           // active consumers.
 
           if (entry.getValue.inUse == false && this.size > maxCapacity) {

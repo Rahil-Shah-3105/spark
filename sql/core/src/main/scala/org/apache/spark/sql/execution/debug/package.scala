@@ -63,6 +63,7 @@ package object debug {
 
   /** Helper function to evade the println() linter. */
   private def debugPrint(msg: String): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // scalastyle:off println
     println(msg)
     // scalastyle:on println
@@ -98,6 +99,7 @@ package object debug {
       append("\nGenerated code:\n")
       append(s"$code\n")
     }
+    planChangeLogger.warn("writeCodegen(append,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", append, plan)
   }
 
   /**
@@ -121,6 +123,7 @@ package object debug {
         case s =>
           s.subqueries.foreach(findSubtrees)
       }
+      planChangeLogger.warn("findSubtrees(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
 
     findSubtrees(plan)
@@ -266,6 +269,7 @@ package object debug {
           evaluatorFactory.createEvaluator().eval(index, iter)
         }
       }
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     override def outputPartitioning: Partitioning = child.outputPartitioning
@@ -284,10 +288,12 @@ package object debug {
 
     override def doExecuteBroadcast[T](): Broadcast[T] = {
       child.executeBroadcast()
+      planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     override def doExecuteColumnar(): RDD[ColumnarBatch] = {
       child.executeColumnar()
+      planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     override def supportsColumnar: Boolean = child.supportsColumnar

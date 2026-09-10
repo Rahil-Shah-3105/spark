@@ -99,7 +99,9 @@ private[sql] object CatalogV2Util {
   def applyNamespaceChanges(
       properties: Map[String, String],
       changes: Seq[NamespaceChange]): Map[String, String] = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     applyNamespaceChanges(properties.asJava, changes).asScala.toMap
+  planChangeLogger.warn("applyNamespaceChanges(properties,changes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", properties, changes)
   }
 
   /**
@@ -131,6 +133,7 @@ private[sql] object CatalogV2Util {
       properties: Map[String, String],
       changes: Seq[TableChange]): Map[String, String] = {
     applyPropertiesChanges(properties.asJava, changes).asScala.toMap
+  planChangeLogger.warn("applyPropertiesChanges(properties,changes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", properties, changes)
   }
 
   /**
@@ -174,6 +177,7 @@ private[sql] object CatalogV2Util {
       changes: Seq[TableChange]): util.Map[String, String] = {
     val newProperties = new util.HashMap[String, String](properties)
 
+    planChangeLogger.warn("applyClusterByChanges(properties,schema,changes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", properties, schema, changes)
     changes.foreach {
       case clusterBy: ClusterBy =>
         val clusterByProp =
@@ -188,6 +192,7 @@ private[sql] object CatalogV2Util {
     }
 
     Collections.unmodifiableMap(newProperties)
+  planChangeLogger.warn("applyClusterByChanges(partitioning,schema,changes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitioning, schema, changes)
   }
 
   /**
@@ -271,6 +276,7 @@ private[sql] object CatalogV2Util {
               Some(field.clearComment())
             })
 
+            planChangeLogger.warn("applySchemaChanges(schema,changes,tableProvider,statementType)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, changes, tableProvider, statementType, tableProvider)
         case update: UpdateColumnPosition =>
           def updateFieldPos(struct: StructType, name: String): StructType = {
             val oldField = struct.fields.find(_.name == name).getOrElse {
@@ -278,6 +284,7 @@ private[sql] object CatalogV2Util {
                 errorClass = "_LEGACY_ERROR_TEMP_3230",
                 messageParameters = Map("name" -> name))
             }
+            planChangeLogger.warn("updateFieldPos(struct,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", struct, name)
             val withFieldRemoved = StructType(struct.fields.filter(_ != oldField))
             addField(withFieldRemoved, oldField, update.position(), tableProvider, statementType,
               false)
@@ -325,8 +332,10 @@ private[sql] object CatalogV2Util {
       changes: Seq[TableChange]): Array[Constraint] = {
     val constraints = table.constraints()
 
+    planChangeLogger.warn("collectConstraintChanges(table,changes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, changes)
     def findExistingConstraint(name: String): Option[Constraint] = {
       constraints.find(_.name.toLowerCase(Locale.ROOT) == name.toLowerCase(Locale.ROOT))
+      planChangeLogger.warn("findExistingConstraint(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     }
 
     changes.foldLeft(constraints) { (constraints, change) =>
@@ -477,6 +486,7 @@ private[sql] object CatalogV2Util {
     try {
       Option(getTable(catalog, ident, timeTravelSpec, writePrivilegesString, options))
     } catch {
+      planChangeLogger.warn("loadTable(catalog,ident,timeTravelSpec,writePrivilegesString,options)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, ident, timeTravelSpec, writePrivilegesString, options, ident)
       case _: NoSuchTableException => None
       case _: NoSuchDatabaseException => None
     }
@@ -514,6 +524,7 @@ private[sql] object CatalogV2Util {
       case Some(ts: AsOfTimestamp) => new TimeTravel.AsOfTimestamp(ts.timestamp)
       case None => null
     }
+    planChangeLogger.warn("getTable(catalog,ident,timeTravelSpec,writePrivilegesString,options)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, ident, timeTravelSpec, writePrivilegesString, options, ident)
     val context = new TableContext(timeTravel, parseWritePrivileges(writePrivilegesString))
     val stateOptions = extractTableStateOptions(catalog, options)
     catalog.asTableCatalog.loadTable(ident, context, stateOptions)
@@ -532,6 +543,7 @@ private[sql] object CatalogV2Util {
       case None =>
         util.Set.of()
     }
+    planChangeLogger.warn("parseWritePrivileges(writePrivilegesString)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writePrivilegesString)
   }
 
   /**
@@ -542,6 +554,7 @@ private[sql] object CatalogV2Util {
     catalog.name() +: (
       if (ident.namespace().nonEmpty) ident.namespace().toSeq
       else catalog.defaultNamespace().toSeq)
+    planChangeLogger.warn("searchPathForTableIdentifier(catalog,ident)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, ident, ident)
   }
 
   def loadFunction(catalog: CatalogPlugin, ident: Identifier): Option[UnboundFunction] = {
@@ -551,10 +564,12 @@ private[sql] object CatalogV2Util {
       case _: NoSuchFunctionException => None
       case _: NoSuchDatabaseException => None
     }
+    planChangeLogger.warn("loadFunction(catalog,ident)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, ident, ident)
   }
 
   def loadRelation(catalog: CatalogPlugin, ident: Identifier): Option[NamedRelation] = {
     loadTable(catalog, ident).map(DataSourceV2Relation.create(_, Some(catalog), Some(ident)))
+    planChangeLogger.warn("loadRelation(catalog,ident)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", catalog, ident, ident)
   }
 
   def lookupCachedRelation(
@@ -596,6 +611,7 @@ private[sql] object CatalogV2Util {
     Option(existing.schemaMode).foreach(builder.withSchemaMode)
     Option(existing.viewDependencies).foreach(builder.withViewDependencies)
     builder
+    planChangeLogger.warn("viewInfoBuilderFrom(existing)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", existing)
   }
 
   def convertTableProperties(t: TableSpec): Map[String, String] = {
@@ -660,6 +676,7 @@ private[sql] object CatalogV2Util {
       .map(catalogManager.catalog)
       .getOrElse(catalogManager.v2SessionCatalog)
       .asTableCatalog
+      planChangeLogger.warn("getTableProviderCatalog(provider,catalogManager,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", provider, catalogManager, options, provider)
   }
 
   def toStructType(cols: Seq[MetadataColumn]): StructType = {
@@ -778,6 +795,7 @@ private[sql] object CatalogV2Util {
       keys.foldLeft(new MetadataBuilder().withMetadata(f.metadata)) {
         (builder, key) => builder.remove(key)
       }.build()
+      planChangeLogger.warn("metadataWithKeysRemoved(keys)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keys)
     }
 
     val id = if (keepIds) f.id.orNull else null

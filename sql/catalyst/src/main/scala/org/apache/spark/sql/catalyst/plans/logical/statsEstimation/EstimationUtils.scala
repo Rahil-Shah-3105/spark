@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.types.{DecimalType, _}
 
 object EstimationUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /** Check if each plan has rowCount in its statistics. */
   def rowCountsExist(plans: LogicalPlan*): Boolean =
@@ -67,6 +68,7 @@ object EstimationUtils {
     } else {
       updatedStatOpt
     }
+    planChangeLogger.warn("updateStat(oldNumRows,newNumRows,oldStatOpt,updatedStatOpt)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", oldNumRows, newNumRows, oldStatOpt, updatedStatOpt)
   }
 
   def ceil(bigDecimal: BigDecimal): BigInt = bigDecimal.setScale(0, RoundingMode.CEILING).toBigInt
@@ -97,11 +99,13 @@ object EstimationUtils {
         }
         alias.toAttribute -> columnStat
     }
+    planChangeLogger.warn("getAliasStats(expressions,attributeStats,rowCount)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expressions, attributeStats, rowCount)
   }
 
   def getSizePerRow(
       attributes: Seq[Attribute],
       attrStats: AttributeMap[ColumnStat] = AttributeMap(Nil)): BigInt = {
+       planChangeLogger.warn("getSizePerRow(attributes,attrStats)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attributes, attrStats)
     // We assign a generic overhead for a Row object, the actual overhead is different for different
     // Row format.
     8 + attributes.map { attr =>
@@ -123,6 +127,7 @@ object EstimationUtils {
       attributes: Seq[Attribute],
       outputRowCount: BigInt,
       attrStats: AttributeMap[ColumnStat] = AttributeMap(Nil)): BigInt = {
+       planChangeLogger.warn("getOutputSize(attributes,outputRowCount,attrStats)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attributes, outputRowCount, attrStats)
     // Output size can't be zero, or sizeInBytes of BinaryNode will also be zero
     // (simple computation of statistics returns product of children).
     if (outputRowCount > 0) outputRowCount * getSizePerRow(attributes, attrStats) else 1
@@ -165,6 +170,7 @@ object EstimationUtils {
       i += 1
     }
     i
+    planChangeLogger.warn("findFirstBinForValue(value,bins)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, bins)
   }
 
   /**
@@ -177,6 +183,7 @@ object EstimationUtils {
       i -= 1
     }
     i
+    planChangeLogger.warn("findLastBinForValue(value,bins)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, bins)
   }
 
   /**
@@ -269,6 +276,7 @@ object EstimationUtils {
     val rightBins = rightHistogram.bins
       .filter(b => b.lo <= upperBound && b.hi >= lowerBound)
 
+      planChangeLogger.warn("getOverlappedRanges(leftHistogram,rightHistogram,lowerBound,upperBound)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftHistogram, rightHistogram, lowerBound, upperBound)
     leftBins.foreach { lb =>
       rightBins.foreach { rb =>
         val (left, leftHeight) = trimBin(lb, leftHistogram.height, lowerBound, upperBound)

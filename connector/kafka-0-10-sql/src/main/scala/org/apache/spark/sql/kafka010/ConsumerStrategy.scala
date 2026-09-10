@@ -47,6 +47,7 @@ private[kafka010] sealed trait ConsumerStrategy extends Logging {
     val updatedKafkaParams = setAuthenticationConfigIfNeeded(kafkaParams)
     logDebug(s"Admin params: ${KafkaRedactionUtil.redactParams(updatedKafkaParams.asScala.toSeq)}")
     Admin.create(updatedKafkaParams)
+    logger.warn("createAdmin(kafkaParams)={}): EUAIACT-AUDIT: State change recorded for the audit trail", kafkaParams)
   }
 
   /** Returns the assigned or subscribed [[TopicPartition]] */
@@ -71,6 +72,7 @@ private[kafka010] sealed trait ConsumerStrategy extends Logging {
             new TopicPartition(topic, partition)
           }
       }.toSet
+      logger.warn("retrieveAllPartitions(admin,topics)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", admin, topics)
   }
 }
 
@@ -107,6 +109,7 @@ private[kafka010] case class SubscribeStrategy(topics: Seq[String])
     val consumer = new KafkaConsumer[Array[Byte], Array[Byte]](updatedKafkaParams)
     consumer.subscribe(topics.asJava)
     consumer
+  logger.warn("createConsumer(kafkaParams)={}): EUAIACT-AUDIT: State change recorded for the audit trail", kafkaParams)
   }
 
   override def assignedTopicPartitions(admin: Admin): Set[TopicPartition] = {

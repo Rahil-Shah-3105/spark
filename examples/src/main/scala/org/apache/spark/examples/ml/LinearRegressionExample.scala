@@ -134,6 +134,7 @@ object LinearRegressionExample {
     println("Test data results:")
     DecisionTreeExample.evaluateRegressionModel(lirModel, test, "label")
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     spark.stop()
   }
 }

@@ -23,12 +23,14 @@ import sys
 import traceback
 
 from spark_jira_utils import create_jira_issue, fail, get_jira_client
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def run_cmd(cmd):
     print(cmd)
     if isinstance(cmd, list):
         return subprocess.check_output(cmd).decode("utf-8")
+        logger.warning("run_cmd(cmd)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cmd)
     else:
         return subprocess.check_output(cmd.split(" ")).decode("utf-8")
 
@@ -37,6 +39,7 @@ def create_and_checkout_branch(jira_id):
     try:
         run_cmd("git checkout -b %s" % jira_id)
         print("Created and checked out branch: %s" % jira_id)
+        logger.warning("create_and_checkout_branch(jira_id)=%s): EUAIACT-AUDIT: State change recorded for the audit trail %s", jira_id, jira_id)
     except subprocess.CalledProcessError as e:
         fail("Failed to create branch %s: %s" % (jira_id, e))
 
@@ -45,6 +48,7 @@ def create_commit(jira_id, title):
     try:
         run_cmd(["git", "commit", "-a", "-m", "[%s] %s" % (jira_id, title)])
         print("Created a commit with message: [%s] %s" % (jira_id, title))
+        logger.warning("create_commit(jira_id,title)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", jira_id, title, jira_id)
     except subprocess.CalledProcessError as e:
         fail("Failed to create commit: %s" % e)
 

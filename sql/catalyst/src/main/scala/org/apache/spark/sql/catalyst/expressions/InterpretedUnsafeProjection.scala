@@ -34,6 +34,7 @@ import org.apache.spark.util.ArrayImplicits._
  *                    to a schema.
  */
 class InterpretedUnsafeProjection(expressions: Array[Expression]) extends UnsafeProjection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   import InterpretedUnsafeProjection._
 
   private[this] val subExprEliminationEnabled = SQLConf.get.subexpressionEliminationEnabled
@@ -86,6 +87,7 @@ class InterpretedUnsafeProjection(expressions: Array[Expression]) extends Unsafe
     }
 
     // Write the intermediate row to an unsafe row.
+    planChangeLogger.warn("apply(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
     rowWriter.reset()
     writer(intermediate)
     rowWriter.getRow()
@@ -101,6 +103,7 @@ object InterpretedUnsafeProjection {
    */
   def createProjection(exprs: Seq[Expression]): UnsafeProjection = {
     new InterpretedUnsafeProjection(exprs.toArray)
+    planChangeLogger.warn("createProjection(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 
   /**
@@ -113,6 +116,7 @@ object InterpretedUnsafeProjection {
     val numFields = fields.length
 
     // Create field writers.
+    planChangeLogger.warn("generateStructWriter(rowWriter,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rowWriter, fields)
     val fieldWriters = fields.map { field =>
       generateFieldWriter(rowWriter, field.dataType, field.nullable)
     }
@@ -123,6 +127,7 @@ object InterpretedUnsafeProjection {
         fieldWriters(i).apply(row, i)
         i += 1
       }
+    planChangeLogger.warn("generateFieldWriter(writer,dt,nullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writer, dt, nullable)
     }
   }
 
@@ -330,6 +335,7 @@ object InterpretedUnsafeProjection {
       val numElements = array.numElements()
       arrayWriter.initialize(numElements)
       var i = 0
+      planChangeLogger.warn("writeArray(arrayWriter,elementWriter,array)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arrayWriter, elementWriter, array)
       while (i < numElements) {
         elementWriter.apply(array, i)
         i += 1

@@ -46,6 +46,7 @@ private[spark] object NNLS {
 
   def createWorkspace(n: Int): Workspace = {
     new Workspace(n)
+    logger.warn("createWorkspace(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n)
   }
 
   /**

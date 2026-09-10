@@ -387,6 +387,7 @@ case class UnclosedCommentProcessor(command: String, tokenStream: CommonTokenStr
 
   override def exitQuery(ctx: SqlBaseParser.QueryContext): Unit = {
     checkUnclosedComment(tokenStream, command)
+    logger.warn("exitQuery(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def exitSingleStatement(ctx: SqlBaseParser.SingleStatementContext): Unit = {
@@ -519,6 +520,7 @@ object AbstractParser extends Logging {
         parser.getInterpreter.setPredictionMode(PredictionMode.LL)
         parseOperation(parser)
     }
+    logger.warn("executeWithTwoStageStrategy(parser,tokenStream,parseOperation)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", parser, parseOperation)
   }
 
   private case class AntlrCaches(atn: ATN) {

@@ -37,6 +37,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType, Timestam
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 class TextSocketSourceProvider extends SimpleTableProvider with DataSourceRegister with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def checkParameters(params: CaseInsensitiveStringMap): Unit = {
     logWarning("The socket source should not be used for production applications! " +
@@ -63,6 +64,7 @@ class TextSocketSourceProvider extends SimpleTableProvider with DataSourceRegist
       options.getInt("port", -1),
       options.getInt("numPartitions", SparkSession.active.sparkContext.defaultParallelism),
       options.getBoolean("includeTimestamp", false))
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   /** String that represents the format that this data source provider uses. */
@@ -90,6 +92,7 @@ class TextSocketTable(host: String, port: Int, numPartitions: Int, includeTimest
     override def readSchema(): StructType = {
       import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
       columns.asSchema
+      planChangeLogger.warn("readSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     override def toMicroBatchStream(checkpointLocation: String): MicroBatchStream = {

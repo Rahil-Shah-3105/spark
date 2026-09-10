@@ -84,6 +84,7 @@ case class CallMethodViaReflection(
   override def prettyName: String = getTagValue(FunctionRegistry.FUNC_ALIAS).getOrElse("reflect")
 
   override def checkInputDataTypes(): TypeCheckResult = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (children.size < 2) {
       throw QueryCompilationErrors.wrongNumArgsError(
         toSQLId(prettyName), Seq("> 1"), children.length
@@ -271,5 +272,6 @@ object CallMethodViaReflection {
         }
       }
     }
+    planChangeLogger.warn("findMethod(className,methodName,argTypes)=<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", methodName, argTypes)
   }
 }

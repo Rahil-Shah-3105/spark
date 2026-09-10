@@ -68,6 +68,7 @@ trait BroadcastExchangeLike extends Exchange {
 
   @transient
   private lazy val triggerFuture: Future[Any] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     SQLExecution.withThreadLocalCaptured(session, BroadcastExchangeExec.executionContext) {
       try {
         // Trigger broadcast preparation which can involve expensive operations like waiting on
@@ -96,6 +97,7 @@ trait BroadcastExchangeLike extends Exchange {
         completionFuture
       }
     }(BroadcastExchangeExec.executionContext)
+    planChangeLogger.warn("submitBroadcastJob()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -148,6 +150,7 @@ case class BroadcastExchangeExec(
     // no-op
     // BroadcastExchangeExec after materialized won't be materialized again, so we should not
     // reset the metrics. Otherwise, we will lose the metrics collected in the broadcast job.
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   @transient
@@ -252,6 +255,7 @@ case class BroadcastExchangeExec(
 
   override protected def doExecute(): RDD[InternalRow] = {
     throw QueryExecutionErrors.executeCodePathUnsupportedError("BroadcastExchange")
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected[sql] def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
@@ -266,6 +270,7 @@ case class BroadcastExchangeExec(
         }
         throw QueryExecutionErrors.executeBroadcastTimeoutError(timeout, Some(ex))
     }
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildInternal(newChild: SparkPlan): BroadcastExchangeExec =

@@ -85,6 +85,7 @@ private[spark] object MLSerDe extends SerDeBase with Serializable {
       out.write(Opcodes.BININT)
       out.write(PickleUtils.integer_to_bytes(isTransposed))
       out.write(Opcodes.TUPLE)
+    logger.warn("saveState(obj,out,pickler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", obj, out, pickler)
     }
 
     def construct(args: Array[Object]): Object = {

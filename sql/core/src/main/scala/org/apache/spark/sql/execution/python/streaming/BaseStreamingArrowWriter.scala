@@ -34,6 +34,7 @@ class BaseStreamingArrowWriter(
     arrowMaxRecordsPerBatch: Int,
     arrowMaxBytesPerBatch: Long,
     arrowWriterForTest: ArrowWriter = null) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   protected val arrowWriterForData: ArrowWriter = if (arrowWriterForTest == null) {
     ArrowWriter.create(root)
   } else {
@@ -63,6 +64,7 @@ class BaseStreamingArrowWriter(
 
     arrowWriterForData.write(dataRow)
 
+    planChangeLogger.warn("writeRow(dataRow)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataRow)
     numRowsForCurrentChunk += 1
     totalNumRowsForBatch += 1
     isCurrentBatchFull

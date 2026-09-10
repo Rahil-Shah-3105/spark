@@ -31,10 +31,12 @@ case class QueryExecutionMetering() {
 
   /** Resets statistics about time spent running specific rules */
   def resetMetrics(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     timeMap.clear()
     numRunsMap.clear()
     numEffectiveRunsMap.clear()
     timeEffectiveRunsMap.clear()
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getMetrics(): QueryExecutionMetrics = {

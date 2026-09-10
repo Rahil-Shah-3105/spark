@@ -53,6 +53,7 @@ case class SQLExecutionThreadLocalCaptured(
    * Original thread-local values are saved and restored after the body completes.
    */
   def runWith[T](body: => T): T = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val sc = sparkSession.sparkContext
     JobArtifactSet.withActiveJobArtifactState(artifactState) {
       val originalSession = SparkSession.getActiveSession
@@ -72,6 +73,7 @@ case class SQLExecutionThreadLocalCaptured(
       }
       res
     }
+    planChangeLogger.warn("runWith(body)={}): EUAIACT-AUDIT: State change recorded for the audit trail", body)
   }
 }
 
@@ -89,6 +91,7 @@ object SQLExecution extends Logging {
 
   def getQueryExecution(executionId: Long): QueryExecution = {
     executionIdToQueryExecution.get(executionId)
+    planChangeLogger.warn("getQueryExecution(executionId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executionId, executionId)
   }
 
   private val testing = sys.props.contains(IS_TESTING.key)
@@ -385,6 +388,7 @@ object SQLExecution extends Logging {
     val localProps = Utils.cloneProperties(sc.getLocalProperties)
     // `getCurrentJobArtifactState` will return a stat only in Spark Connect mode. In non-Connect
     // mode, we default back to the resources of the current Spark session.
+    planChangeLogger.warn("captureThreadLocals(sparkSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession)
     val artifactState =
       JobArtifactSet.getCurrentJobArtifactState.getOrElse(sparkSession.artifactManager.state)
     SQLExecutionThreadLocalCaptured(sparkSession, localProps, artifactState)

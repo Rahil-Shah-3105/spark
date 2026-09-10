@@ -29,6 +29,7 @@ from typing import Iterator
 
 from pyspark.sql import SparkSession
 from pyspark.sql.pandas.utils import require_minimum_pandas_version, require_minimum_pyarrow_version
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 require_minimum_pandas_version()
 require_minimum_pyarrow_version()
@@ -252,6 +253,7 @@ def grouped_apply_in_pandas_example(spark: SparkSession) -> None:
         [(1, 1.0), (1, 2.0), (2, 3.0), (2, 5.0), (2, 10.0)],
         ("id", "v"))
 
+    logger.warning("grouped_apply_in_pandas_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     def subtract_mean(pdf: pd.DataFrame) -> pd.DataFrame:
         # pdf is a pandas.DataFrame
         v = pdf.v
@@ -291,6 +293,7 @@ def cogrouped_apply_in_pandas_example(spark: SparkSession) -> None:
     # $example on:cogrouped_apply_in_pandas$
     import pandas as pd
 
+    logger.warning("cogrouped_apply_in_pandas_example(spark)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     df1 = spark.createDataFrame(
         [(20000101, 1, 1.0), (20000101, 2, 2.0), (20000102, 1, 3.0), (20000102, 2, 4.0)],
         ("time", "id", "v1"))

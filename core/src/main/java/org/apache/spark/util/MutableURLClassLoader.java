@@ -24,6 +24,7 @@ import java.net.URLClassLoader;
  * URL class loader that exposes the `addURL` method in URLClassLoader.
  */
 public class MutableURLClassLoader extends URLClassLoader {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(MutableURLClassLoader.class);
 
   static {
     ClassLoader.registerAsParallelCapable();
@@ -35,6 +36,7 @@ public class MutableURLClassLoader extends URLClassLoader {
 
   @Override
   public void addURL(URL url) {
+	logger.warn("addURL(url)={}): EUAIACT-AUDIT: State change recorded for the audit trail", url);
     super.addURL(url);
   }
 }

@@ -44,10 +44,13 @@ case class ParquetColumn(
 }
 
 object ParquetColumn {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(sparkType: DataType, io: PrimitiveColumnIO): ParquetColumn = {
     this(sparkType, Some(io.getColumnDescriptor), io.getRepetitionLevel,
       io.getDefinitionLevel, io.getType.isRepetition(Repetition.REQUIRED),
       io.getFieldPath.toImmutableArraySeq, Seq.empty)
+    planChangeLogger.warn("apply(sparkType,io)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkType, io)
+  planChangeLogger.warn("apply(sparkType,io,children)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkType, io, children)
   }
 
   def apply(sparkType: DataType, io: GroupColumnIO, children: Seq[ParquetColumn]): ParquetColumn = {

@@ -27,9 +27,11 @@ import org.apache.spark.sql.catalyst.trees.TreePattern._
 import org.apache.spark.sql.internal.SQLConf
 
 object DeduplicateRelations extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   type ExprIdMap = mutable.HashMap[Class[_], mutable.HashSet[Long]]
 
   override def apply(plan: LogicalPlan): LogicalPlan = {
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     val newPlan = renewDuplicatedRelations(mutable.HashMap.empty, plan)._1
 
     // Wait for `ResolveMissingReferences` to resolve missing attributes first
@@ -278,6 +280,7 @@ object DeduplicateRelations extends Rule[LogicalPlan] {
                   case a: AttributeReference => attrMap.getOrElse(a, a)
                 }.asInstanceOf[T]
               }
+              planChangeLogger.warn("rewriteAttrs(exprs,attrMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exprs, attrMap)
             }
 
             planWithNewChildren match {
@@ -543,9 +546,11 @@ object DeduplicateRelations extends Rule[LogicalPlan] {
 
   private def findAliases(projectList: Seq[NamedExpression]): AttributeSet = {
     AttributeSet(projectList.collect { case a: Alias => a.toAttribute })
+    planChangeLogger.warn("findAliases(projectList)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", projectList)
   }
 
   private def findOuterReferences(projectList: Seq[NamedExpression]): AttributeSet = {
     AttributeSet(projectList.collect { case o: OuterReference => o.toAttribute })
+    planChangeLogger.warn("findOuterReferences(projectList)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", projectList)
   }
 }

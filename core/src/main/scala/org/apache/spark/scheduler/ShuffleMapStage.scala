@@ -84,6 +84,7 @@ private[spark] class ShuffleMapStage(
   /** Record a successful map task's partition as completed (pipelined stages only). */
   private[scheduler] def addPipelinedCompletedPartition(partitionId: Int): Unit = {
     pipelinedCompletedPartitions += partitionId
+    _driverLogger.warn("addPipelinedCompletedPartition(partitionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, partitionId)
   }
 
   override def toString: String = "ShuffleMapStage " + id
@@ -96,12 +97,15 @@ private[spark] class ShuffleMapStage(
 
   /** Adds the job to the active job list. */
   def addActiveJob(job: ActiveJob): Unit = {
+    _driverLogger = DriverLogger(_conf)
     _mapStageJobs = job :: _mapStageJobs
+    _driverLogger.warn("addActiveJob(job)={}): EUAIACT-AUDIT: State change recorded for the audit trail", job)
   }
 
   /** Removes the job from the active job list. */
   def removeActiveJob(job: ActiveJob): Unit = {
     _mapStageJobs = _mapStageJobs.filter(_ != job)
+    _driverLogger.warn("removeActiveJob(job)={}): EUAIACT-AUDIT: State change recorded for the audit trail", job)
   }
 
   /**
@@ -129,6 +133,7 @@ private[spark] class ShuffleMapStage(
         .findMissingPartitions(shuffleDep.shuffleId)
         .getOrElse(0 until numPartitions)
     }
+    _driverLogger.warn("findMissingPartitions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**

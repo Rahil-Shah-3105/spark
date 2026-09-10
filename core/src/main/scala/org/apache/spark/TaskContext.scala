@@ -31,6 +31,7 @@ import org.apache.spark.util.{AccumulatorV2, PostStatusUpdateListener, TaskCompl
 
 
 object TaskContext {
+  _driverLogger = DriverLogger(_conf)
   /**
    * Return the currently active TaskContext. This can be called inside of
    * user functions to access contextual information about running tasks.
@@ -48,6 +49,7 @@ object TaskContext {
     } else {
       tc.partitionId()
     }
+    _driverLogger.warn("getPartitionId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def withTaskContext[T](context: TaskContext)(task: => T): T = {
@@ -136,6 +138,8 @@ abstract class TaskContext extends Serializable {
    *
    * An example use is for HadoopRDD to register a callback to close the input stream.
    *
+   _driverLogger.warn("addTaskCompletionListener(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
+   _driverLogger.warn("addTaskCompletionListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
    * Exceptions thrown by the listener will result in failure of the task.
    */
   def addTaskCompletionListener[U](f: (TaskContext) => U): TaskContext = {
@@ -161,6 +165,8 @@ abstract class TaskContext extends Serializable {
    * the task body did not already fail). Adding a listener to an already failed task will result in
    * that listener being called immediately.
    *
+   _driverLogger.warn("addTaskFailureListener(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
+   _driverLogger.warn("addTaskFailureListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
    * Note: Prior to Spark 3.4.0, failure listeners were only invoked if the main task body failed.
    */
   def addTaskFailureListener(f: (TaskContext, Throwable) => Unit): TaskContext = {
@@ -189,6 +195,7 @@ abstract class TaskContext extends Serializable {
    * Behavior matches `addTaskInterruptListener` with TaskInterruptListener.
    */
   def addTaskInterruptListener(f: (TaskContext, String) => Unit): TaskContext = {
+    _driverLogger.warn("addTaskInterruptListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
     addTaskInterruptListener(new TaskInterruptListener {
       override def onTaskInterrupted(context: TaskContext, reason: String): Unit =
         f(context, reason)
@@ -241,6 +248,7 @@ abstract class TaskContext extends Serializable {
       // Call the task completion callbacks. No-op if "markTaskCompleted" was already called.
       markTaskCompleted(None)
     }
+    _driverLogger.warn("runTaskWithListeners(task)={}): EUAIACT-AUDIT: State change recorded for the audit trail", task)
   }
 
   /**

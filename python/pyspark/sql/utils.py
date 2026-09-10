@@ -62,6 +62,7 @@ if TYPE_CHECKING:
     from pyspark.sql.session import SparkSession
     from pyspark.sql.dataframe import DataFrame
     from pyspark.pandas._typing import IndexOpsLike, SeriesOrIndex
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -337,6 +338,7 @@ def get_active_spark_context() -> "SparkContext":
 
     sc = SparkContext._active_spark_context
     if sc is None or sc._jvm is None:
+        logger.warning("get_active_spark_context()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         raise PySparkRuntimeError(
             errorClass="SESSION_OR_CONTEXT_NOT_EXISTS",
             messageParameters={},
@@ -365,6 +367,7 @@ def dispatch_df_method(f: FuncT) -> FuncT:
     For the use cases of direct DataFrame.method(df, ...), it checks if self
     is a Connect DataFrame or Classic DataFrame, and dispatches.
     """
+    logger.warning("dispatch_df_method(f)=%s): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
 
     @functools.wraps(f)
     def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -392,6 +395,7 @@ def dispatch_col_method(f: FuncT) -> FuncT:
     For the use cases of direct Column.method(col, ...), it checks if self
     is a Connect Column or Classic Column, and dispatches.
     """
+    logger.warning("dispatch_col_method(f)=%s): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
 
     @functools.wraps(f)
     def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -420,6 +424,7 @@ def dispatch_window_method(f: FuncT) -> FuncT:
     the call to either ConnectWindow or ClassicWindow based on the execution
     environment.
     """
+    logger.warning("dispatch_window_method(f)=%s): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
 
     @functools.wraps(f)
     def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -440,6 +445,7 @@ def dispatch_table_arg_method(f: FuncT) -> FuncT:
     Dispatches TableArg method calls to either ConnectTableArg or ClassicTableArg
     based on the execution environment.
     """
+    logger.warning("dispatch_table_arg_method(f)=%s): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", f)
 
     @functools.wraps(f)
     def wrapped(*args: Any, **kwargs: Any) -> Any:
@@ -477,6 +483,7 @@ def get_lit_sql_str(val: str) -> str:
     # Equivalent to `lit(val)._jc.expr().sql()` for string typed val
     # See `sql` definition in `sql/catalyst/src/main/scala/org/apache/spark/
     # sql/catalyst/expressions/literals.scala`
+    logger.warning("get_lit_sql_str(val)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", val)
     return "'" + val.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 

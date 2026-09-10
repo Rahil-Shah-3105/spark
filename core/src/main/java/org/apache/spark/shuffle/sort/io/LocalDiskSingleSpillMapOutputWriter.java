@@ -27,6 +27,7 @@ import org.apache.spark.util.Utils;
 
 public class LocalDiskSingleSpillMapOutputWriter
     implements SingleSpillShuffleMapOutputWriter {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(LocalDiskSingleSpillMapOutputWriter.class);
 
   private final int shuffleId;
   private final long mapId;
@@ -50,6 +51,7 @@ public class LocalDiskSingleSpillMapOutputWriter
     // So just transfer it directly to the destination without any merging.
     File outputFile = blockResolver.getDataFile(shuffleId, mapId);
     File tempFile = Utils.tempFileWith(outputFile);
+	logger.warn("transferMapSpillFile(mapSpillFile,partitionLengths,checksums)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mapSpillFile, partitionLengths, checksums);
     Files.move(mapSpillFile.toPath(), tempFile.toPath());
     blockResolver
       .writeMetadataFileAndCommit(shuffleId, mapId, partitionLengths, checksums, tempFile);

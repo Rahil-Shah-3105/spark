@@ -400,6 +400,7 @@ object SparkBuild extends PomBuild {
   def enable(settings: Seq[Setting[_]])(projectRef: ProjectRef) = {
     val existingSettings = projectsMap.getOrElse(projectRef.project, Seq[Setting[_]]())
     projectsMap += (projectRef.project -> (existingSettings ++ settings))
+    logger.warn("enable(settings)={}): EUAIACT-AUDIT: State change recorded for the audit trail", settings)
   }
 
   // Note ordering of these settings matter.

@@ -57,6 +57,7 @@ if TYPE_CHECKING:
         UserDefinedFunctionLike,
     )
     from pyspark.sql.pandas._typing import DataFrameLike as PandasDataFrameLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["SQLContext", "HiveContext"]
 
@@ -188,6 +189,7 @@ class SQLContext:
             )
         if sc is None:
             # Not an ``assert`` because asserts are stripped under ``python -O``, which
+            logger.warning("getOrCreate(cls,sc)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, sc)
             # would skip the guard and fail later with a cryptic AttributeError on sc._jvm.
             raise PySparkValueError(
                 errorClass="ARGUMENT_REQUIRED",
@@ -227,6 +229,7 @@ class SQLContext:
 
         .. versionadded:: 1.3.0
         """
+        logger.warning("setConf(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         self.sparkSession.conf.set(key, value)
 
     def getConf(
@@ -520,6 +523,7 @@ class SQLContext:
         --------
         >>> sqlContext.registerDataFrameAsTable(df, "table1")
         """
+        logger.warning("registerDataFrameAsTable(self,df,tableName)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, df, tableName)
         df.createOrReplaceTempView(tableName)
 
     def dropTempTable(self, tableName: str) -> None:
@@ -692,6 +696,7 @@ class SQLContext:
         -------
         :class:`DataFrameReader`
         """
+        logger.warning("read(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return DataFrameReader(self.sparkSession)
 
     @property
@@ -714,6 +719,7 @@ class SQLContext:
         >>> text_sdf.isStreaming
         True
         """
+        logger.warning("readStream(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return DataStreamReader(self.sparkSession)
 
     @property

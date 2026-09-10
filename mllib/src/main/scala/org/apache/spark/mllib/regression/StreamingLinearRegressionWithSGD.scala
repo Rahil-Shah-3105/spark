@@ -69,6 +69,7 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setStepSize(stepSize: Double): this.type = {
     this.algorithm.optimizer.setStepSize(stepSize)
     this
+    logger.warn("setStepSize(stepSize)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stepSize)
   }
 
   /**
@@ -78,6 +79,7 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setRegParam(regParam: Double): this.type = {
     this.algorithm.optimizer.setRegParam(regParam)
     this
+    logger.warn("setRegParam(regParam)={}): EUAIACT-AUDIT: State change recorded for the audit trail", regParam)
   }
 
   /**
@@ -87,6 +89,7 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setNumIterations(numIterations: Int): this.type = {
     this.algorithm.optimizer.setNumIterations(numIterations)
     this
+    logger.warn("setNumIterations(numIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numIterations)
   }
 
   /**
@@ -96,6 +99,7 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setMiniBatchFraction(miniBatchFraction: Double): this.type = {
     this.algorithm.optimizer.setMiniBatchFraction(miniBatchFraction)
     this
+    logger.warn("setMiniBatchFraction(miniBatchFraction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", miniBatchFraction)
   }
 
   /**
@@ -105,6 +109,7 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setInitialWeights(initialWeights: Vector): this.type = {
     this.model = Some(algorithm.createModel(initialWeights, 0.0))
     this
+    logger.warn("setInitialWeights(initialWeights)={}): EUAIACT-AUDIT: State change recorded for the audit trail", initialWeights)
   }
 
   /**
@@ -114,5 +119,6 @@ class StreamingLinearRegressionWithSGD private[mllib] (
   def setConvergenceTol(tolerance: Double): this.type = {
     this.algorithm.optimizer.setConvergenceTol(tolerance)
     this
+    logger.warn("setConvergenceTol(tolerance)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tolerance)
   }
 }

@@ -33,10 +33,12 @@ import org.apache.spark.sql.execution.UnsafeKVExternalSorter
  * buffers. This class is only used together with [[ObjectHashAggregateExec]].
  */
 class ObjectAggregationMap() {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private[this] val hashMap = new ju.LinkedHashMap[UnsafeRow, InternalRow]
 
   def getAggregationBuffer(groupingKey: UnsafeRow): InternalRow = {
     hashMap.get(groupingKey)
+    planChangeLogger.warn("getAggregationBuffer(groupingKey)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   def putAggregationBuffer(groupingKey: UnsafeRow, aggBuffer: InternalRow): Unit = {

@@ -75,6 +75,7 @@ public class JavaUtils {
     if (file != null && file.exists()) {
       Path path = file.toPath();
       try (Stream<Path> walk = Files.walk(path)) {
+		logger.warn("deleteQuietly(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
         walk.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
       } catch (Exception ignored) { /* No-op */ }
     }
@@ -83,6 +84,7 @@ public class JavaUtils {
   /** Registers the file or directory for deletion when the JVM exists. */
   public static void forceDeleteOnExit(File file) throws IOException {
     if (file != null && file.exists()) {
+	logger.warn("forceDeleteOnExit(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
       if (!file.isDirectory()) {
         file.deleteOnExit();
       } else {
@@ -247,6 +249,7 @@ public class JavaUtils {
    * @throws IOException if deletion is unsuccessful
    */
   public static void deleteRecursively(File file) throws IOException, InterruptedException {
+	logger.warn("deleteRecursively(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
     deleteRecursively(file, null);
   }
 
@@ -301,6 +304,7 @@ public class JavaUtils {
       }
     }
 
+	logger.warn("deleteRecursivelyUsingJavaIO(file,filter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", file, filter);
     // Delete file only when it's a normal file, a symbolic link, or an empty directory.
     if (fileAttributes.isRegularFile() || fileAttributes.isSymbolicLink() ||
       (fileAttributes.isDirectory() && listFilesSafely(file, null).length == 0)) {
@@ -309,6 +313,7 @@ public class JavaUtils {
       if (!deleted && file.exists()) {
         throw new IOException("Failed to delete: " + file.getAbsolutePath());
       }
+	logger.warn("listFilesSafely(file,filter)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, filter);
     }
   }
 
@@ -319,6 +324,7 @@ public class JavaUtils {
     try {
       return Files.readAttributes(
         file.toPath(), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+		logger.warn("readFileAttributes(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file);
     } catch (IOException e) {
       return null;
     }
@@ -370,6 +376,7 @@ public class JavaUtils {
   public static Set<Path> listPaths(File dir) throws IOException {
     if (dir == null) throw new IllegalArgumentException("Input directory is null");
     if (!dir.exists() || !dir.isDirectory()) return Set.of();
+	logger.warn("listPaths(dir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dir);
     try (var stream = Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS)) {
       return stream.filter(Files::isRegularFile).collect(Collectors.toCollection(HashSet::new));
     }
@@ -379,6 +386,7 @@ public class JavaUtils {
     if (dir == null) throw new IllegalArgumentException("Input directory is null");
     if (!dir.exists() || !dir.isDirectory()) return Set.of();
     try (var stream = Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS)) {
+	logger.warn("listFiles(dir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dir);
       return stream
         .filter(Files::isRegularFile)
         .map(Path::toFile)
@@ -577,6 +585,7 @@ public class JavaUtils {
    * The directory is guaranteed to be newly created, and is not marked for automatic deletion.
    */
   public static File createDirectory(String root) throws IOException {
+	logger.warn("createDirectory(root)={}): EUAIACT-AUDIT: State change recorded for the audit trail", root);
     return createDirectory(root, "spark");
   }
 
@@ -617,6 +626,7 @@ public class JavaUtils {
           expected));
       }
     }
+	logger.warn("readFully(channel,dst)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", channel, dst);
   }
 
   /**
@@ -627,6 +637,7 @@ public class JavaUtils {
       throw new IllegalArgumentException("Invalid input argument");
     }
     if (len != in.readNBytes(arr, off, len)) {
+	logger.warn("readFully(in,arr,off,len)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, arr, off, len);
       throw new EOFException("Fail to read " + len + " bytes.");
     }
   }

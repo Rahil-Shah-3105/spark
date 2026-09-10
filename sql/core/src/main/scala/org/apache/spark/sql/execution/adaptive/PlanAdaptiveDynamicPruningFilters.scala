@@ -41,6 +41,7 @@ case class PlanAdaptiveDynamicPruningFilters(
       buildKeys: Seq[Expression],
       valueExpression: Option[Expression],
       adaptivePlan: AdaptiveSparkPlanExec): Option[BaseSubqueryExec] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (!conf.exchangeReuseEnabled || buildKeys.isEmpty) {
       return None
     }
@@ -94,6 +95,7 @@ case class PlanAdaptiveDynamicPruningFilters(
     if (!conf.dynamicPartitionPruningEnabled) {
       return plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
 
     plan.transformAllExpressionsWithPruning(
       _.containsAllPatterns(DYNAMIC_PRUNING_EXPRESSION, IN_SUBQUERY_EXEC)) {

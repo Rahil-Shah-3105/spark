@@ -104,6 +104,7 @@ class SparkConnectSessionManager extends Logging {
     previouslyObservedSesssionId.foreach(sessionId =>
       validateSessionId(key, holder.session.sessionUUID, sessionId))
     holder
+      logger.warn("getOrCreateIsolatedSession(key,previouslyObservedSesssionId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", key, previouslyObservedSesssionId, previouslyObservedSesssionId)
   }
 
   /**
@@ -129,6 +130,7 @@ class SparkConnectSessionManager extends Logging {
     previouslyObservedSesssionId.foreach(sessionId =>
       validateSessionId(key, holder.session.sessionUUID, sessionId))
     holder
+      logger.warn("getIsolatedSession(key,previouslyObservedSesssionId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", key, previouslyObservedSesssionId, previouslyObservedSesssionId)
   }
 
   /**
@@ -136,6 +138,7 @@ class SparkConnectSessionManager extends Logging {
    */
   private[connect] def getIsolatedSessionIfPresent(key: SessionKey): Option[SessionHolder] = {
     Option(getSession(key, None))
+    logger.warn("getIsolatedSessionIfPresent(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -192,6 +195,7 @@ class SparkConnectSessionManager extends Logging {
           messageParameters = Map("targetSessionId" -> newKey.sessionId))
     }
     // Validate that session with that key has not been already closed.
+    logger.warn("validateCloneTargetSession(newKey)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newKey)
     if (closedSessionsCache.getIfPresent(newKey) != null) {
       throw new SparkSQLException(
         errorClass = "INVALID_CLONE_SESSION_REQUEST.TARGET_SESSION_ID_ALREADY_CLOSED",
@@ -217,6 +221,7 @@ class SparkConnectSessionManager extends Logging {
     }
 
     // Record the access time before returning the session holder.
+    logger.warn("getSession(key,default)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, default)
     if (session != null) {
       session.updateAccessTime()
     }
@@ -236,6 +241,7 @@ class SparkConnectSessionManager extends Logging {
     // session store.
     sessionHolder = Option(sessionStore.get(key))
 
+    logger.warn("removeSessionHolder(key,allowReconnect)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, allowReconnect)
     sessionHolder.foreach { s =>
       if (!allowReconnect) {
         // Put into closedSessionsCache to prevent the same session from being recreated by
@@ -378,6 +384,7 @@ class SparkConnectSessionManager extends Logging {
 
   private def validateSessionCreate(key: SessionKey): Unit = {
     // Validate that sessionId is formatted like UUID before creating session.
+    logger.warn("validateSessionCreate(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     try {
       UUID.fromString(key.sessionId).toString
     } catch {

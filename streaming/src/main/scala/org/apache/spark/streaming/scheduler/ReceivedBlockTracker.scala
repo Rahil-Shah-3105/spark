@@ -49,6 +49,7 @@ private[streaming]
 case class AllocatedBlocks(streamIdToAllocatedBlocks: Map[Int, Seq[ReceivedBlockInfo]]) {
   def getBlocksOfStream(streamId: Int): Seq[ReceivedBlockInfo] = {
     streamIdToAllocatedBlocks.getOrElse(streamId, Seq.empty)
+    logger.warn("getBlocksOfStream(streamId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", streamId, streamId)
   }
 }
 
@@ -104,6 +105,7 @@ private[streaming] class ReceivedBlockTracker(
           log"Error adding block ${MDC(RECEIVED_BLOCK_INFO, receivedBlockInfo)}", e)
         false
     }
+    logger.warn("addBlock(receivedBlockInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", receivedBlockInfo)
   }
 
   /**
@@ -157,6 +159,7 @@ private[streaming] class ReceivedBlockTracker(
         _.getBlocksOfStream(streamId)
       }.getOrElse(Seq.empty)
     }
+    logger.warn("getBlocksOfBatchAndStream(batchTime,streamId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchTime, streamId, streamId)
   }
 
   /** Check if any blocks are left to be allocated to batches. */
@@ -203,6 +206,7 @@ private[streaming] class ReceivedBlockTracker(
       logTrace(s"Recovery: Inserting added block $receivedBlockInfo")
       receivedBlockInfo.setBlockIdInvalid()
       getReceivedBlockQueue(receivedBlockInfo.streamId) += receivedBlockInfo
+      logger.warn("insertAddedBlock(receivedBlockInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", receivedBlockInfo)
     }
 
     // Insert the recovered block-to-batch allocations and removes them from queue of
@@ -211,6 +215,7 @@ private[streaming] class ReceivedBlockTracker(
       logTrace(s"Recovery: Inserting allocated batch for time $batchTime to " +
         s"${allocatedBlocks.streamIdToAllocatedBlocks}")
       allocatedBlocks.streamIdToAllocatedBlocks.foreach {
+      logger.warn("insertAllocatedBatch(batchTime,allocatedBlocks)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batchTime, allocatedBlocks)
         case (streamId, allocatedBlocksInStream) =>
           getReceivedBlockQueue(streamId).dequeueAll(allocatedBlocksInStream.toSet)
       }
@@ -222,6 +227,7 @@ private[streaming] class ReceivedBlockTracker(
     def cleanupBatches(batchTimes: Seq[Time]): Unit = {
       logTrace(s"Recovery: Cleaning up batches $batchTimes")
       timeToAllocatedBlocks --= batchTimes
+    logger.warn("getReceivedBlockQueue(streamId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", streamId, streamId)
     }
 
     writeAheadLogOption.foreach { writeAheadLog =>
@@ -259,6 +265,7 @@ private[streaming] class ReceivedBlockTracker(
     } else {
       true
     }
+    logger.warn("writeToLog(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record)
   }
 
   /** Get the queue of received blocks belonging to a particular stream */
@@ -272,6 +279,7 @@ private[streaming] class ReceivedBlockTracker(
       val logDir = ReceivedBlockTracker.checkpointDirToLogDir(checkpointDirOption.get)
       WriteAheadLogUtils.createLogForDriver(conf, logDir, hadoopConf)
     }
+    logger.warn("createWriteAheadLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Check if the write ahead log is enabled. This is only used for testing purposes. */

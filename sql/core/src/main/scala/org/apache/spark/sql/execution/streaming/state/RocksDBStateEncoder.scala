@@ -53,6 +53,7 @@ sealed trait RocksDBKeyStateEncoder {
 }
 
 sealed trait RocksDBValueStateEncoder {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def supportsMultipleValuesPerKey: Boolean
   def encodeValue(row: UnsafeRow): Array[Byte]
   def decodeValue(valueBytes: Array[Byte]): UnsafeRow
@@ -79,6 +80,7 @@ class TestStateSchemaProvider extends StateSchemaProvider {
    * @param valueSchema Spark SQL schema for the value
    * @param keySchemaId Schema ID for the key, defaults to 0
    * @param valueSchemaId Schema ID for the value, defaults to 0
+   planChangeLogger.warn("getCurrentStateSchemaId(colFamilyName,isKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilyName, isKey)
    */
   def captureSchema(
       colFamilyName: String,
@@ -96,6 +98,7 @@ class TestStateSchemaProvider extends StateSchemaProvider {
 
   override def getSchemaMetadataValue(key: StateSchemaMetadataKey): StateSchemaMetadataValue = {
     schemas(key)
+  planChangeLogger.warn("getSchemaMetadataValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   override def getCurrentStateSchemaId(colFamilyName: String, isKey: Boolean): Short = {
@@ -219,6 +222,7 @@ object StateSchemaMetadata {
         // Add new entries to our accumulated map
         schemas ++ schemaEntries.toMap
     }
+    planChangeLogger.warn("createStateSchemaMetadata(checkpointLocation,hadoopConf,stateSchemaFiles)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointLocation, hadoopConf, stateSchemaFiles)
 
     // Create the final metadata
     StateSchemaMetadata(activeSchemas)
@@ -813,6 +817,7 @@ class AvroStateEncoder(
   private def getAvroSerializer(schema: StructType): AvroSerializer = {
     val avroType = SchemaConverters.toAvroTypeWithDefaults(schema)
     new AvroSerializer(schema, avroType, nullable = false)
+    planChangeLogger.warn("getAvroSerializer(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   private def getAvroDeserializer(schema: StructType): AvroDeserializer = {
@@ -821,6 +826,7 @@ class AvroStateEncoder(
     new AvroDeserializer(avroType, schema,
       avroOptions.datetimeRebaseModeInRead, avroOptions.useStableIdForUnionType,
       avroOptions.stableIdPrefixForUnionType, avroOptions.recursiveFieldMaxDepth)
+    planChangeLogger.warn("getAvroDeserializer(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   /**
@@ -883,6 +889,7 @@ class AvroStateEncoder(
       suffixKeySchema.map(getAvroSerializer),
       suffixKeySchema.map(getAvroDeserializer)
     )
+    planChangeLogger.warn("createAvroEnc(keyStateEncoderSpec,valueSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyStateEncoderSpec, valueSchema)
   }
 
   override def supportsSchemaEvolution: Boolean = true
@@ -945,6 +952,7 @@ class AvroStateEncoder(
       resultBytes, Platform.BYTE_ARRAY_OFFSET, resultBytes.length
     )
     resultBytes
+    planChangeLogger.warn("removeVersionByte(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", bytes, resultBytes)
   }
 
   /**
@@ -1365,6 +1373,7 @@ object RocksDBStateEncoder extends Logging {
       keyStateEncoderSpec: KeyStateEncoderSpec,
       useColumnFamilies: Boolean): RocksDBKeyStateEncoder = {
     keyStateEncoderSpec.toEncoder(dataEncoder, useColumnFamilies)
+    planChangeLogger.warn("getKeyEncoder(dataEncoder,keyStateEncoderSpec,useColumnFamilies)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataEncoder, keyStateEncoderSpec, useColumnFamilies)
   }
 
   /**
@@ -1387,6 +1396,7 @@ object RocksDBStateEncoder extends Logging {
     } else {
       new SingleValueStateEncoder(dataEncoder, valueSchema)
     }
+    planChangeLogger.warn("getValueEncoder(dataEncoder,valueSchema,useMultipleValuesPerKey,delimiterSize)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataEncoder, valueSchema, useMultipleValuesPerKey, delimiterSize)
   }
 }
 
@@ -1761,10 +1771,12 @@ object TimestampKeyStateEncoder {
       BoundReference(x._2, x._1.dataType, x._1.nullable))
     UnsafeProjection.create(
       refs :+ Literal(0L), // placeholder for timestamp
+    planChangeLogger.warn("getAttachTimestampProjection(keyWithoutTimestampSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keyWithoutTimestampSchema)
       DataTypeUtils.toAttributes(StructType(keyWithoutTimestampSchema)))
   }
 
   def getDetachTimestampProjection(keyWithTimestampSchema: StructType): UnsafeProjection = {
+    planChangeLogger.warn("getDetachTimestampProjection(keyWithTimestampSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keyWithTimestampSchema)
     val refs = keyWithTimestampSchema.zipWithIndex.dropRight(1).map(x =>
       BoundReference(x._2, x._1.dataType, x._1.nullable))
     UnsafeProjection.create(refs)

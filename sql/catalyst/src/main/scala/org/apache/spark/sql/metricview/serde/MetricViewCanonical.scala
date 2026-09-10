@@ -58,6 +58,7 @@ private[sql] case class DimensionExpression(expr: String) extends Expression
 private[sql] case class MeasureExpression(expr: String) extends Expression
 
 private[sql] object SourceType extends Enumeration {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   type SourceType = Value
   val ASSET, SQL = Value
 
@@ -106,6 +107,7 @@ private[sql] object Source {
             )
         }
     }
+    planChangeLogger.warn("apply(sourceText)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourceText)
   }
 }
 

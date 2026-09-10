@@ -28,6 +28,7 @@ import org.apache.spark.resource.ResourceInformation
 import org.apache.spark.util.Utils
 
 sealed abstract class PluginContainer {
+  _driverLogger = DriverLogger(_conf)
 
   def shutdown(): Unit
   def registerMetrics(appId: String): Unit
@@ -74,6 +75,7 @@ private class DriverPluginContainer(
       plugin.registerMetrics(appId, ctx)
       ctx.registerMetrics()
     }
+    _driverLogger.warn("registerMetrics(appId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId)
   }
 
   override def shutdown(): Unit = {
@@ -194,6 +196,8 @@ object PluginContainer {
       sc: SparkContext,
       resources: java.util.Map[String, ResourceInformation]): Option[PluginContainer] = {
     PluginContainer(Left(sc), resources)
+    _driverLogger.warn("apply(env,resources)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", env, resources)
+  _driverLogger.warn("apply(sc,resources)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, resources)
   }
 
   def apply(

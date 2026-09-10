@@ -32,6 +32,7 @@ import org.apache.spark.network.buffer.NettyManagedBuffer;
  * Similarly, the client-side decoding will reuse the Netty ByteBuf as the buffer.
  */
 public final class ChunkFetchSuccess extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ChunkFetchSuccess.class);
   public final StreamChunkId streamChunkId;
 
   public ChunkFetchSuccess(StreamChunkId streamChunkId, ManagedBuffer buffer) {
@@ -55,6 +56,7 @@ public final class ChunkFetchSuccess extends AbstractResponseMessage {
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.warn("createFailureResponse(error)={}): EUAIACT-AUDIT: State change recorded for the audit trail", error);
     return new ChunkFetchFailure(streamChunkId, error);
   }
 

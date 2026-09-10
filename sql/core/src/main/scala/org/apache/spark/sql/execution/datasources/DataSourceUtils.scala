@@ -43,6 +43,7 @@ import org.apache.spark.util.Utils
 
 
 object DataSourceUtils extends PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Merges write options into a Hadoop configuration. Keys "path" and "paths" are excluded.
@@ -74,6 +75,7 @@ object DataSourceUtils extends PredicateHelper {
     if (conf.get(key) == null) {
       conf.set(key, value)
     }
+    planChangeLogger.warn("setConfIfAbsent(conf,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, key, value)
   }
 
   /**
@@ -166,6 +168,7 @@ object DataSourceUtils extends PredicateHelper {
       modeByConfig: String,
       minVersion: String,
       metadataKey: String): RebaseSpec = {
+       planChangeLogger.warn("getRebaseSpec(lookupFileMeta,modeByConfig,minVersion,metadataKey)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", lookupFileMeta, modeByConfig, minVersion, metadataKey)
     val policy = if (Utils.isTesting &&
       SQLConf.get.getConfString("spark.test.forceNoRebase", "") == "true") {
       LegacyBehaviorPolicy.CORRECTED
@@ -221,6 +224,7 @@ object DataSourceUtils extends PredicateHelper {
       case _ => throw SparkException.internalError(s"Unrecognized format $format.")
     }
     QueryExecutionErrors.sparkUpgradeInReadingDatesError(format, config, option)
+    planChangeLogger.warn("newRebaseExceptionInRead(format)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", format)
   }
 
   def newRebaseExceptionInWrite(format: String): SparkUpgradeException = {
@@ -231,6 +235,7 @@ object DataSourceUtils extends PredicateHelper {
       case _ => throw SparkException.internalError(s"Unrecognized format $format.")
     }
     QueryExecutionErrors.sparkUpgradeInWritingDatesError(format, config)
+    planChangeLogger.warn("newRebaseExceptionInWrite(format)={}): EUAIACT-AUDIT: State change recorded for the audit trail", format)
   }
 
   def shouldIgnoreCorruptFileException(e: Throwable): Boolean = e match {
@@ -245,6 +250,7 @@ object DataSourceUtils extends PredicateHelper {
       if (days < RebaseDateTime.lastSwitchJulianDay) {
         throw DataSourceUtils.newRebaseExceptionInRead(format)
       }
+      planChangeLogger.warn("createDateRebaseFuncInRead(rebaseMode,format)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rebaseMode, format)
       days
     case LegacyBehaviorPolicy.LEGACY => RebaseDateTime.rebaseJulianToGregorianDays
     case LegacyBehaviorPolicy.CORRECTED => identity[Int]
@@ -257,6 +263,7 @@ object DataSourceUtils extends PredicateHelper {
       if (days < RebaseDateTime.lastSwitchGregorianDay) {
         throw DataSourceUtils.newRebaseExceptionInWrite(format)
       }
+      planChangeLogger.warn("createDateRebaseFuncInWrite(rebaseMode,format)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rebaseMode, format)
       days
     case LegacyBehaviorPolicy.LEGACY => RebaseDateTime.rebaseGregorianToJulianDays
     case LegacyBehaviorPolicy.CORRECTED => identity[Int]
@@ -270,6 +277,7 @@ object DataSourceUtils extends PredicateHelper {
         throw DataSourceUtils.newRebaseExceptionInRead(format)
       }
       micros
+      planChangeLogger.warn("createTimestampRebaseFuncInRead(rebaseSpec,format)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rebaseSpec, format)
     case LegacyBehaviorPolicy.LEGACY =>
       RebaseDateTime.rebaseJulianToGregorianMicros(rebaseSpec.timeZone, _)
     case LegacyBehaviorPolicy.CORRECTED => identity[Long]
@@ -285,6 +293,7 @@ object DataSourceUtils extends PredicateHelper {
       micros
     case LegacyBehaviorPolicy.LEGACY =>
       val timeZone = SQLConf.get.sessionLocalTimeZone
+      planChangeLogger.warn("createTimestampRebaseFuncInWrite(rebaseMode,format)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rebaseMode, format)
       RebaseDateTime.rebaseGregorianToJulianMicros(timeZone, _)
     case LegacyBehaviorPolicy.CORRECTED => identity[Long]
   }
@@ -329,6 +338,7 @@ object DataSourceUtils extends PredicateHelper {
       }
     }
     getPartitionFiltersAndDataFilters(AttributeSet(partitionColumns), normalizedFilters)
+    planChangeLogger.warn("getPartitionFiltersAndDataFilters(partitionSchema,normalizedFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionSchema, normalizedFilters)
   }
 
   /**
@@ -339,6 +349,8 @@ object DataSourceUtils extends PredicateHelper {
       partitionAttributes: Seq[AttributeReference],
       normalizedFilters: Seq[Expression]): (Seq[Expression], Seq[Expression]) = {
     getPartitionFiltersAndDataFilters(AttributeSet(partitionAttributes), normalizedFilters)
+  planChangeLogger.warn("getPartitionFiltersAndDataFilters(partitionAttributes,normalizedFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionAttributes, normalizedFilters)
+  planChangeLogger.warn("getPartitionFiltersAndDataFilters(partitionSet,normalizedFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionSet, normalizedFilters)
   }
 
   private def getPartitionFiltersAndDataFilters(

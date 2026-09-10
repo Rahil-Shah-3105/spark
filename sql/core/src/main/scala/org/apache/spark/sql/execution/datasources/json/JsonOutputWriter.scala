@@ -34,6 +34,7 @@ class JsonOutputWriter(
     dataSchema: StructType,
     context: TaskAttemptContext)
   extends OutputWriter with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val encoding = options.encoding match {
     case Some(charsetName) => Charset.forName(charsetName)
@@ -54,6 +55,7 @@ class JsonOutputWriter(
   override def write(row: InternalRow): Unit = {
     gen.write(row)
     gen.writeLineEnding()
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {

@@ -29,6 +29,7 @@ import org.apache.spark.util.kvstore.KVStore
  * application.
  */
 class StreamingQueryStatusStore(store: KVStore) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def allQueryUIData: Seq[StreamingQueryUIData] = {
     val view = store.view(classOf[StreamingQueryData]).index("startTimestamp").first(0L)
@@ -37,6 +38,7 @@ class StreamingQueryStatusStore(store: KVStore) {
 
   // visible for test
   private[sql] def getQueryProgressData(runId: UUID): Seq[StreamingQueryProgressWrapper] = {
+    planChangeLogger.warn("getQueryProgressData(runId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", runId, runId)
     val view = store.view(classOf[StreamingQueryProgressWrapper])
       .index("runId").first(runId.toString).last(runId.toString)
     KVUtils.viewToSeq(view)

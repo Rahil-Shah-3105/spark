@@ -258,5 +258,6 @@ class ExecutorPVCResizeExecutorPlugin extends ExecutorPlugin with Logging {
       logInfo(s"Reporting max PVC disk usage ratio for executor ${env.executorId}: $ratio")
       pluginContext.send(PVCDiskUsageReport(env.executorId, ratio))
     }
+    logger.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 }

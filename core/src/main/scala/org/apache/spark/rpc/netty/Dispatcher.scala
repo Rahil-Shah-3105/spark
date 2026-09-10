@@ -54,9 +54,11 @@ private[netty] class Dispatcher(nettyEnv: NettyRpcEnv, numUsableCores: Int) exte
   private var stopped = false
 
   def registerRpcEndpoint(name: String, endpoint: RpcEndpoint): NettyRpcEndpointRef = {
+    _driverLogger = DriverLogger(_conf)
     val addr = RpcEndpointAddress(nettyEnv.address, name)
     val endpointRef = new NettyRpcEndpointRef(nettyEnv.conf, addr, nettyEnv)
     synchronized {
+    _driverLogger.warn("registerRpcEndpoint(name,endpoint)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, endpoint)
       if (stopped) {
         throw new IllegalStateException("RpcEnv has been stopped")
       }
@@ -98,6 +100,7 @@ private[netty] class Dispatcher(nettyEnv: NettyRpcEnv, numUsableCores: Int) exte
     if (loop != null) {
       loop.unregister(name)
     }
+    _driverLogger.warn("unregisterRpcEndpoint(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
     // Don't clean `endpointRefs` here because it's possible that some messages are being processed
     // now and they can use `getRpcEndpointRef`. So `endpointRefs` will be cleaned in Inbox via
     // `removeRpcEndpointRef`.

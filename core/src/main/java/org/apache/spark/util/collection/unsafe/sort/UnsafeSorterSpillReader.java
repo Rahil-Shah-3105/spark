@@ -38,6 +38,7 @@ import java.io.*;
  * of the file format).
  */
 public final class UnsafeSorterSpillReader extends UnsafeSorterIterator implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeSorterSpillReader.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(UnsafeSorterSpillReader.class);
   public static final int MAX_BUFFER_SIZE_BYTES = 16777216; // 16 mb
@@ -128,6 +129,7 @@ public final class UnsafeSorterSpillReader extends UnsafeSorterIterator implemen
       arr = new byte[recordLength];
       baseObject = arr;
     }
+	logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     JavaUtils.readFully(in, arr, 0, recordLength);
     numRecordsRemaining--;
     if (numRecordsRemaining == 0) {

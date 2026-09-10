@@ -103,6 +103,7 @@ object DenseKMeans {
 
     val cost = model.computeCost(examples)
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println(s"Total cost = $cost.")
 
     sc.stop()

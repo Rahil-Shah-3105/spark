@@ -106,8 +106,10 @@ private[ml] object OneVsRestParams extends ClassifierTypeTrait {
 
     DefaultParamsWriter.saveMetadata(instance, path, spark, extraMetadata, Some(jsonParams))
 
+    logger.warn("saveImpl(path,instance,spark,extraMetadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, instance, spark, extraMetadata)
     val classifierPath = new Path(path, "classifier").toString
     instance.getClassifier.asInstanceOf[MLWritable].write.session(spark).save(classifierPath)
+  logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def loadImpl(
@@ -117,6 +119,7 @@ private[ml] object OneVsRestParams extends ClassifierTypeTrait {
 
     val metadata = DefaultParamsReader.loadMetadata(path, spark, expectedClassName)
     val classifierPath = new Path(path, "classifier").toString
+    logger.warn("loadImpl(path,spark,expectedClassName)={},{},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark)
     val estimator = DefaultParamsReader.loadParamsInstance[ClassifierType](classifierPath, spark)
     (metadata, estimator)
   }
@@ -327,6 +330,7 @@ object OneVsRestModel extends MLReadable[OneVsRestModel] {
       metadata.getAndSetParams(ovrModel)
       ovrModel.set("classifier", classifier)
       ovrModel
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     }
   }
 }
@@ -350,6 +354,7 @@ final class OneVsRest @Since("1.4.0") (
   @Since("1.4.0")
   def setClassifier(value: Classifier[_, _, _]): this.type = {
     set(classifier, value.asInstanceOf[ClassifierType])
+    logger.warn("setClassifier(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /** @group setParam */
@@ -377,6 +382,7 @@ final class OneVsRest @Since("1.4.0") (
   @Since("2.3.0")
   def setParallelism(value: Int): this.type = {
     set(parallelism, value)
+    logger.warn("setParallelism(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   /**

@@ -232,6 +232,7 @@ case class ResolveMetricView(session: SparkSession) extends Rule[LogicalPlan] {
             throw SparkException.internalError("ran into unexpected node: " + other)
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -240,9 +241,11 @@ case class ResolveMetricView(session: SparkSession) extends Rule[LogicalPlan] {
    */
   private def buildMetricViewOutput(inputColumns: Seq[InputColumn])
   : (Seq[NamedExpression], Seq[NamedExpression]) = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val dimensions = new mutable.ArrayBuffer[NamedExpression]()
     val measures = new mutable.ArrayBuffer[NamedExpression]()
     inputColumns.foreach {
+    planChangeLogger.warn("buildMetricViewOutput(inputColumns)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputColumns)
       case c: DimensionInputColumn =>
         dimensions.append(Alias(c.expr, c.name)(explicitMetadata = Some(c.metadata)))
       case c: MeasureInputColumn =>
@@ -264,6 +267,7 @@ case class ResolveMetricView(session: SparkSession) extends Rule[LogicalPlan] {
     val measures = new mutable.ArrayBuffer[MetricViewMeasure]()
     metricViewOutput.zip(inputColumns).foreach { case (attr, column) =>
       column match {
+    planChangeLogger.warn("buildMetricViewColumns(metricViewOutput,inputColumns)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metricViewOutput, inputColumns)
         case c: DimensionInputColumn =>
           dimensions.append(MetricViewDimension(attr.name, c.expr, attr.exprId, attr.dataType))
         case c: MeasureInputColumn =>
@@ -295,6 +299,7 @@ object MetricViewReadOperation {
       case _ =>
         None
     }
+    planChangeLogger.warn("unapply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   @scala.annotation.tailrec
@@ -307,6 +312,7 @@ object MetricViewReadOperation {
       case m: MetricViewPlaceholder => Some(m)
       case _ => None
     }
+    planChangeLogger.warn("collectMetricViewNode(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 }
 

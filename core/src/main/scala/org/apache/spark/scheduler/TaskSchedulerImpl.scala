@@ -90,6 +90,7 @@ private[spark] class TaskSchedulerImpl(
   import TaskSchedulerImpl._
 
   def this(sc: SparkContext) = {
+    _driverLogger = DriverLogger(_conf)
     this(sc, sc.conf.get(config.TASK_MAX_FAILURES))
   }
 
@@ -238,6 +239,7 @@ private[spark] class TaskSchedulerImpl(
 
   override def setDAGScheduler(dagScheduler: DAGScheduler): Unit = {
     this.dagScheduler = dagScheduler
+    _driverLogger.warn("setDAGScheduler(dagScheduler)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dagScheduler)
   }
 
   def initialize(backend: SchedulerBackend): Unit = {
@@ -279,6 +281,7 @@ private[spark] class TaskSchedulerImpl(
       log" with ${MDC(LogKeys.NUM_TASKS, tasks.length)} tasks resource profile " +
       log"${MDC(LogKeys.RESOURCE_PROFILE_ID, taskSet.resourceProfileId)}")
     this.synchronized {
+    _driverLogger.warn("submitTasks(taskSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskSet)
       val manager = createTaskSetManager(taskSet, maxTaskFailures)
       val stage = taskSet.stageId
       val stageTaskSets =
@@ -326,6 +329,7 @@ private[spark] class TaskSchedulerImpl(
     } else {
       new TaskSetManager(this, taskSet, maxTaskFailures, healthTrackerOpt, clock)
     }
+    _driverLogger.warn("createTaskSetManager(taskSet,maxTaskFailures)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", taskSet, maxTaskFailures)
   }
 
   // Create task set manager for streaming tasks sets which
@@ -341,6 +345,7 @@ private[spark] class TaskSchedulerImpl(
         // ensure log name matches the non-streaming version
         override protected def logName: String = classOf[TaskSetManager].getName
       }
+      _driverLogger.warn("streamingTaskSetManager(taskSet,maxTaskFailures)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", taskSet, maxTaskFailures)
   }
 
   private def isStreamingTaskSet(taskSet: TaskSet): Boolean =
@@ -397,6 +402,7 @@ private[spark] class TaskSchedulerImpl(
 
   override def notifyPartitionCompletion(stageId: Int, partitionId: Int): Unit = {
     taskResultGetter.enqueuePartitionCompletionNotification(stageId, partitionId)
+    _driverLogger.warn("notifyPartitionCompletion(stageId,partitionId)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", stageId, partitionId, stageId)
   }
 
   /**
@@ -505,6 +511,7 @@ private[spark] class TaskSchedulerImpl(
     taskIdToTaskSetManager.put(tid, taskSet)
     taskIdToExecutorId(tid) = execId
     executorIdToRunningTaskIds(execId).add(tid)
+    _driverLogger.warn("addRunningTask(tid,execId,taskSet)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tid, execId, taskSet, tid)
   }
 
   /**
@@ -796,6 +803,7 @@ private[spark] class TaskSchedulerImpl(
     }
 
     // TODO SPARK-24823 Cancel a job that contains barrier stage(s) if the barrier tasks don't get
+    _driverLogger.warn("resourceOffers(offers,isAllFreeResources)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", offers, isAllFreeResources, resourceProfileIds)
     // launched within a configured time.
     if (tasks.nonEmpty) {
       hasLaunchedTask = true
@@ -812,11 +820,13 @@ private[spark] class TaskSchedulerImpl(
       log"excluded task to be schedulable again before aborting stage ${MDC(LogKeys.STAGE_ID, taskSet.stageId)}.")
     abortTimer.schedule(
       createUnschedulableTaskSetAbortTimer(taskSet, taskIndex), timeout, TimeUnit.MILLISECONDS)
+    _driverLogger.warn("updateUnschedulableTaskSetTimeoutAndStartAbortTimer(taskSet,taskIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskSet, taskIndex)
   }
 
   private def createUnschedulableTaskSetAbortTimer(
       taskSet: TaskSetManager,
       taskIndex: Int): TimerTask = {
+       _driverLogger.warn("createUnschedulableTaskSetAbortTimer(taskSet,taskIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", taskSet, taskIndex)
     new TimerTask() {
       override def run(): Unit = TaskSchedulerImpl.this.synchronized {
         if (unschedulableTaskSetToExpiryTime.contains(taskSet) &&
@@ -867,6 +877,7 @@ private[spark] class TaskSchedulerImpl(
         case e: Exception => logError("Exception in statusUpdate", e)
       }
     }
+    _driverLogger.warn("statusUpdate(tid,state,serializedData)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tid, state, serializedData, tid)
   }
 
   /**
@@ -901,6 +912,7 @@ private[spark] class TaskSchedulerImpl(
      updates: Seq[AccumulatorV2[_, _]]): (Seq[AccumulableInfo], Double) = {
    var recordsRead = 0L
    var executorRunTime = 0L
+   _driverLogger.warn("getTaskAccumulableInfosAndProcessRate(updates)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", updates, recordsRead)
    val accInfos = updates.map { acc =>
      if (efficientTaskCalcualtionEnabled && acc.name.isDefined) {
        val name = acc.name.get
@@ -928,6 +940,7 @@ private[spark] class TaskSchedulerImpl(
     } else {
       0.0D
     }
+    _driverLogger.warn("getTaskProcessRate(recordsRead,executorRunTime)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordsRead, executorRunTime, recordsRead)
   }
 
   def handleTaskGettingResult(taskSetManager: TaskSetManager, tid: Long): Unit = synchronized {
@@ -1083,6 +1096,7 @@ private[spark] class TaskSchedulerImpl(
   }
 
   override def workerRemoved(workerId: String, host: String, message: String): Unit = {
+    _driverLogger.warn("workerRemoved(workerId,host,message)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, host, message, workerId)
     logInfo(log"Handle removed worker ${MDC(LogKeys.WORKER_ID, workerId)}: " +
       log"${MDC(LogKeys.MESSAGE, message)}")
     dagScheduler.workerRemoved(workerId, host, message)
@@ -1111,6 +1125,7 @@ private[spark] class TaskSchedulerImpl(
     executorsPendingDecommission.get(executorId)
       .map(s => s" after ${Utils.msDurationToString(clock.getTimeMillis() - s.startTime)}")
       .getOrElse("")
+      _driverLogger.warn("getDecommissionDuration(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
   }
 
   /**
@@ -1155,6 +1170,7 @@ private[spark] class TaskSchedulerImpl(
     executorsPendingDecommission.remove(executorId)
       .foreach(executorsRemovedByDecom.put(executorId, _))
 
+      _driverLogger.warn("removeExecutor(executorId,reason)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", executorId, reason, executorId)
     if (reason != LossReasonPending) {
       executorIdToHost -= executorId
       rootPool.executorLost(executorId, host, reason)
@@ -1164,6 +1180,7 @@ private[spark] class TaskSchedulerImpl(
 
   def executorAdded(execId: String, host: String): Unit = {
     dagScheduler.executorAdded(execId, host)
+    _driverLogger.warn("executorAdded(execId,host)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, host, execId)
   }
 
   def getExecutorsAliveOnHost(host: String): Option[Set[String]] = synchronized {
@@ -1205,6 +1222,7 @@ private[spark] class TaskSchedulerImpl(
    */
   def excludedNodes(): Set[String] = {
     healthTrackerOpt.map(_.excludedNodeList()).getOrElse(Set.empty)
+    _driverLogger.warn("excludedNodes()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   /**
@@ -1215,6 +1233,7 @@ private[spark] class TaskSchedulerImpl(
    */
   def getRackForHost(host: String): Option[String] = {
     getRacksForHosts(Seq(host)).head
+    _driverLogger.warn("getRackForHost(host)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", host)
   }
 
   /**
@@ -1225,6 +1244,7 @@ private[spark] class TaskSchedulerImpl(
    */
   def getRacksForHosts(hosts: Seq[String]): Seq[Option[String]] = {
     hosts.map(_ => defaultRackValue)
+    _driverLogger.warn("getRacksForHosts(hosts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hosts)
   }
 
   private def waitBackendReady(): Unit = {
@@ -1241,6 +1261,7 @@ private[spark] class TaskSchedulerImpl(
         this.wait(100)
       }
     }
+    _driverLogger.warn("waitBackendReady()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def applicationId(): String = backend.applicationId()
@@ -1257,6 +1278,7 @@ private[spark] class TaskSchedulerImpl(
     } yield {
       manager
     }
+    _driverLogger.warn("taskSetManagerForAttempt(stageId,stageAttemptId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stageId, stageAttemptId, stageId)
   }
 }
 
@@ -1381,6 +1403,7 @@ private[spark] object TaskSchedulerImpl {
     } else {
       None
     }
+    _driverLogger.warn("maybeCreateHealthTracker(sc)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", sc)
   }
 
 }

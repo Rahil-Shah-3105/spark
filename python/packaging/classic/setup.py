@@ -25,6 +25,7 @@ from setuptools import setup
 from setuptools.command.install import install
 from shutil import copyfile, copytree, rmtree
 from pathlib import Path
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 if (
     # When we package, the parent directory 'classic' dir
@@ -192,6 +193,7 @@ class InstallCommand(install):
                 == (hadoop_version, hive_version)
             ):
                 # Do not download and install if they are same as default.
+                logger.warning("run(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
                 return
 
             install_module.install_spark(

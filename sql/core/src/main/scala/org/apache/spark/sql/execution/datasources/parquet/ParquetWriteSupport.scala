@@ -53,6 +53,7 @@ import org.apache.spark.types.variant.Variant
  * argument.
  */
 class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // A `ValueWriter` is responsible for writing a field of an `InternalRow` to the record consumer.
   // Here we are using `SpecializedGetters` rather than `InternalRow` so that we can directly access
   // data in `ArrayData` without the help of `SpecificMutableRow`.
@@ -168,12 +169,14 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
 
   override def prepareForWrite(recordConsumer: RecordConsumer): Unit = {
     this.recordConsumer = recordConsumer
+    planChangeLogger.warn("prepareForWrite(recordConsumer)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", recordConsumer, recordConsumer)
   }
 
   override def write(row: InternalRow): Unit = {
     consumeMessage {
       writeFields(row, shreddedSchema, rootFieldWriters)
     }
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   private def writeFields(
@@ -187,6 +190,7 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
       }
       i += 1
     }
+    planChangeLogger.warn("writeFields(row,schema,fieldWriters)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", row, schema, fieldWriters)
   }
 
   // `inShredded` indicates whether the current traversal is nested within a shredded Variant
@@ -199,6 +203,7 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
     // it's set later in prepareForWrite(). The existing code works because closures
     // over `this.recordConsumer` (a var field) capture the var reference, not its value.
     // We wrap in a lambda to achieve the same lazy evaluation for the ops method.
+    planChangeLogger.warn("makeWriter(dataType,inShredded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataType, inShredded)
     ParquetTypeOps(dataType)
       .map(_.makeWriter(() => recordConsumer, makeWriter(_, inShredded)))
       .getOrElse(makeWriterDefault(dataType, inShredded))
@@ -383,6 +388,7 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
 
     val binaryWriterUsingUnscaledBytes =
       (row: SpecializedGetters, ordinal: Int) => {
+      planChangeLogger.warn("makeDecimalWriter(precision,scale)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", precision, scale)
         val decimal = row.getDecimal(ordinal, precision, scale)
         val bytes = decimal.toJavaBigDecimal.unscaledValue().toByteArray
         val fixedLengthBytes = if (bytes.length == numBytes) {
@@ -418,6 +424,7 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
   }
 
   def makeArrayWriter(arrayType: ArrayType, inShredded: Boolean): ValueWriter = {
+    planChangeLogger.warn("makeArrayWriter(arrayType,inShredded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arrayType, inShredded)
     // The shredded schema should not have an array inside
     val elementWriter = makeWriter(arrayType.elementType, inShredded)
 
@@ -505,6 +512,7 @@ class ParquetWriteSupport extends WriteSupport[InternalRow] with Logging {
     val keyWriter = makeWriter(mapType.keyType, inShredded)
     val valueWriter = makeWriter(mapType.valueType, inShredded)
     val repeatedGroupName = if (writeLegacyParquetFormat) {
+    planChangeLogger.warn("makeMapWriter(mapType,inShredded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mapType, inShredded)
       // Legacy mode:
       //
       //   <map-repetition> group <name> (MAP) {
@@ -590,9 +598,11 @@ object ParquetWriteSupport {
     configuration.setIfUnset(
       ParquetOutputFormat.WRITER_VERSION,
       ParquetProperties.WriterVersion.PARQUET_1_0.toString)
+    planChangeLogger.warn("setSchema(schema,configuration)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, configuration)
   }
 
   def setShreddingSchema(shreddingSchema: StructType, configuration: Configuration): Unit = {
     configuration.set(SPARK_VARIANT_SHREDDING_SCHEMA, shreddingSchema.json)
+    planChangeLogger.warn("setShreddingSchema(shreddingSchema,configuration)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", shreddingSchema, configuration)
   }
 }

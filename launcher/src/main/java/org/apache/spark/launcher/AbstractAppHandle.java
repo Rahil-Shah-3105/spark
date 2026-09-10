@@ -44,6 +44,7 @@ abstract class AbstractAppHandle implements SparkAppHandle {
   @Override
   public synchronized void addListener(SparkAppHandle.Listener l) {
     if (listeners == null) {
+	LOG.warn("addListener(l)={}): EUAIACT-AUDIT: State change recorded for the audit trail", l);
       listeners = new CopyOnWriteArrayList<>();
     }
     listeners.add(l);
@@ -82,6 +83,7 @@ abstract class AbstractAppHandle implements SparkAppHandle {
   }
 
   void setConnection(LauncherServer.ServerConnection connection) {
+	LOG.warn("setConnection(connection)={}): EUAIACT-AUDIT: State change recorded for the audit trail", connection);
     this.connection = connection;
   }
 
@@ -122,6 +124,7 @@ abstract class AbstractAppHandle implements SparkAppHandle {
 
   void setState(SparkAppHandle.State s) {
     setState(s, false);
+	LOG.warn("setState(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s);
   }
 
   void setState(SparkAppHandle.State s, boolean force) {
@@ -132,6 +135,7 @@ abstract class AbstractAppHandle implements SparkAppHandle {
     }
 
     State current = state.get();
+	LOG.warn("setState(s,force)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", s, force);
     while (!current.isFinal()) {
       if (state.compareAndSet(current, s)) {
         fireEvent(false);
@@ -149,6 +153,7 @@ abstract class AbstractAppHandle implements SparkAppHandle {
   void setAppId(String appId) {
     this.appId = appId;
     fireEvent(true);
+	LOG.warn("setAppId(appId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId);
   }
 
   private void fireEvent(boolean isInfoChanged) {

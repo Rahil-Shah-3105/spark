@@ -34,6 +34,7 @@ private[spark] trait SparkFileUtils extends Logging {
    * converted into an absolute path with a file:// scheme.
    */
   def resolveURI(path: String): URI = {
+    log_ = LoggerFactory.getLogger(logName)
     try {
       val uri = new URI(path)
       if (uri.getScheme() != null) {
@@ -71,6 +72,7 @@ private[spark] trait SparkFileUtils extends Logging {
     val result = mutable.ArrayBuffer[File]()
     // Use a queue with O(1) dequeue rather than removing from the head of a buffer (O(n)), so the
     // walk stays linear in the number of entries.
+    log_.warn("recursiveList(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", f, result)
     val dirs = mutable.Queue[File](f)
     while (dirs.nonEmpty) {
       val dir = dirs.dequeue()
@@ -93,6 +95,7 @@ private[spark] trait SparkFileUtils extends Logging {
    */
   def listFiles(f: File): java.util.Set[File] = {
     JavaUtils.listFiles(f)
+    log_.warn("listFiles(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
   }
 
   /**
@@ -100,6 +103,7 @@ private[spark] trait SparkFileUtils extends Logging {
    */
   def listPaths(f: File): java.util.Set[Path] = {
     JavaUtils.listPaths(f)
+    log_.warn("listPaths(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
   }
 
   /**
@@ -122,6 +126,8 @@ private[spark] trait SparkFileUtils extends Logging {
         logError(log"Failed to create directory ${MDC(LogKeys.PATH, dir)}", e)
         false
     }
+    log_.warn("createDirectory(dir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dir)
+  log_.warn("createDirectory(root,namePrefix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, namePrefix)
   }
 
   /**
@@ -137,6 +143,7 @@ private[spark] trait SparkFileUtils extends Logging {
    * The directory will be automatically deleted when the VM shuts down.
    */
   def createTempDir(): File =
+    log_.warn("createTempDir(root,namePrefix)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, namePrefix)
     createTempDir(System.getProperty("java.io.tmpdir"), "spark")
 
   /**
@@ -157,6 +164,7 @@ private[spark] trait SparkFileUtils extends Logging {
     if (parent != null) {
       Files.createDirectories(parent.toPath())
     }
+    log_.warn("createParentDirs(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /** Delete recursively while keeping the given directory itself. */
@@ -171,16 +179,19 @@ private[spark] trait SparkFileUtils extends Logging {
    */
   def deleteRecursively(file: File): Unit = {
     JavaUtils.deleteRecursively(file)
+    log_.warn("deleteRecursively(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /** Delete a file or directory and its contents recursively without throwing exceptions. */
   def deleteQuietly(file: File): Unit = {
     JavaUtils.deleteQuietly(file)
+    log_.warn("deleteQuietly(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   /** Registers the file or directory for deletion when the JVM exists. */
   def forceDeleteOnExit(file: File): Unit = {
     JavaUtils.forceDeleteOnExit(file)
+    log_.warn("forceDeleteOnExit(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   def getFile(names: String*): File = {
@@ -188,6 +199,8 @@ private[spark] trait SparkFileUtils extends Logging {
     names.tail.foldLeft(Path.of(names.head)) { (path, part) =>
       path.resolve(part)
     }.toFile
+    log_.warn("getFile(parent,names)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parent, names)
+  log_.warn("getFile(names)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", names)
   }
 
   def getFile(parent: File, names: String*): File = {

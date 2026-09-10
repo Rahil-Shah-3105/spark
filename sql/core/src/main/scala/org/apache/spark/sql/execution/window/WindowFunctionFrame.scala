@@ -37,6 +37,7 @@ import org.apache.spark.util.ArrayImplicits._
  * will be called before processing the next partition, and must reset the states.
  */
 abstract class WindowFunctionFrame {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Prepare the frame for calculating the results for a partition.
    *
@@ -67,6 +68,7 @@ abstract class WindowFunctionFrame {
 object WindowFunctionFrame {
   def getNextOrNull(iterator: Iterator[UnsafeRow]): UnsafeRow = {
     if (iterator.hasNext) iterator.next() else null
+    planChangeLogger.warn("getNextOrNull(iterator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", iterator)
   }
 }
 
@@ -153,6 +155,7 @@ abstract class OffsetWindowFunctionFrameBase(
     input = rows
     inputIterator = input.generateIterator()
     inputIndex = 0
+    planChangeLogger.warn("resetStates(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
     skippedNonNullCount = 0
     nextSelectedRow = EmptyRow
   }
@@ -167,6 +170,7 @@ abstract class OffsetWindowFunctionFrameBase(
   protected def findNextRowWithNonNullInput(): Unit = {
     // In order to find the offset row whose input is not-null,
     // offset < = input.length must be guaranteed.
+    planChangeLogger.warn("findNextRowWithNonNullInput()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     assert(offset <= input.length)
     while (skippedNonNullCount < offset && inputIndex < input.length) {
       val r = WindowFunctionFrame.getNextOrNull(inputIterator)
@@ -407,6 +411,7 @@ class UnboundedPrecedingOffsetWindowFunctionFrame(
     } else {
       fillDefaultValue(EmptyRow)
     }
+  planChangeLogger.warn("write(index,current)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, current)
   }
 }
 

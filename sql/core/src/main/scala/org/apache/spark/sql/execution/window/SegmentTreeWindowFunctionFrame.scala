@@ -198,6 +198,7 @@ private[window] final class SegmentTreeWindowFunctionFrame(
 
   /** Release prior segtree-path cached state (tree + row-cursors + bounds). */
   private def resetSegtreeState(): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (tree != null) {
       tree.close()
       tree = null
@@ -205,6 +206,7 @@ private[window] final class SegmentTreeWindowFunctionFrame(
     closeIters()
     nextRow = null
     lowerRow = null
+    planChangeLogger.warn("resetSegtreeState()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     upperRow = null
     lowerBound = 0
     upperBound = 0
@@ -219,6 +221,7 @@ private[window] final class SegmentTreeWindowFunctionFrame(
       case RowFrame => writeRow(index, current)
       case RangeFrame => writeRange(index, current)
     }
+    planChangeLogger.warn("write(index,current)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, current)
   }
 
   // `writeRow`/`writeRange` maintain the `(lowerBound, upperBound)` monotone
@@ -263,6 +266,7 @@ private[window] final class SegmentTreeWindowFunctionFrame(
     // `lowerBound < upperBound` is the second defense.
     while (lowerBound < upperBound &&
         lbound.compare(null, lowerBound, current, index) < 0) {
+         planChangeLogger.warn("writeRow(index,current)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, current)
       lowerBound += 1
       boundsChanged = true
     }
@@ -270,6 +274,7 @@ private[window] final class SegmentTreeWindowFunctionFrame(
     if (boundsChanged) {
       tree.queryInto(lowerBound, upperBound, processor, target)
     }
+  planChangeLogger.warn("writeRange(index,current)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, current)
   }
 
   private def writeRange(index: Int, current: InternalRow): Unit = {

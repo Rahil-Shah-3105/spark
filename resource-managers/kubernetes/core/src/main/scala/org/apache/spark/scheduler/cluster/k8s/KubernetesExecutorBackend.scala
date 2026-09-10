@@ -65,6 +65,7 @@ private[spark] object KubernetesExecutorBackend extends Logging {
     Utils.resetStructuredLogging()
     Utils.initDaemon(log)
 
+    logger.warn("run(arguments,backendCreateFn)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", arguments, backendCreateFn)
     SparkHadoopUtil.get.runAsSparkUser { () =>
       // Debug code
       assert(arguments.hostname != null &&

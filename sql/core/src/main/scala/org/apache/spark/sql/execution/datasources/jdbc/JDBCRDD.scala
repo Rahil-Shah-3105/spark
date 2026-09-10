@@ -44,6 +44,7 @@ case class JDBCPartition(whereClause: String, idx: Int) extends Partition {
 }
 
 object JDBCRDD extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Takes a (schema, table) specification and returns the table's Catalyst
@@ -109,6 +110,8 @@ object JDBCRDD extends Logging {
           isTimestampNTZ = options.preferTimestampNTZ,
           preferTimestampNanos = options.preferTimestampNanos)
       }
+      planChangeLogger.warn("getQueryOutputSchema(query,options,dialect)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, dialect)
+      planChangeLogger.warn("getQueryOutputSchema(query,options,dialect,conn)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, dialect, conn)
     }
   }
 
@@ -130,6 +133,7 @@ object JDBCRDD extends Logging {
   private def pruneSchema(schema: StructType, columns: Array[String]): StructType = {
     val fieldMap = schema.fields.map(x => x.name -> x).toMap
     new StructType(columns.map(name => fieldMap(name)))
+    planChangeLogger.warn("pruneSchema(schema,columns)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, columns)
   }
 
   /**
@@ -255,6 +259,7 @@ class JDBCRDD(
       builder = builder.withGroupByColumns(groupByKeys)
     }
 
+    planChangeLogger.warn("generateJdbcQuery(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
     sampleClause.foreach { clause =>
       builder = builder.withTableSampleClause(clause)
     }

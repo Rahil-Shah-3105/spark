@@ -46,14 +46,17 @@ private[spark] class MetricsServlet(
     new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, servletShowSample))
 
   def getHandlers(conf: SparkConf): Array[ServletContextHandler] = {
+    _driverLogger = DriverLogger(_conf)
     Array[ServletContextHandler](
       createServletHandler(servletPath,
         new ServletParams(request => getMetricsSnapshot(request), "text/json"), conf)
     )
+    _driverLogger.warn("getHandlers(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   def getMetricsSnapshot(request: HttpServletRequest): String = {
     mapper.writeValueAsString(registry)
+    _driverLogger.warn("getMetricsSnapshot(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request)
   }
 
   override def start(): Unit = { }

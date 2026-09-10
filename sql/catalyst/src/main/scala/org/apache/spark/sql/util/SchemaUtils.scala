@@ -54,6 +54,7 @@ private[spark] object SchemaUtils {
    * For the given dataType `dt` find all column paths that satisfy the given predicate `f`.
    */
   def findColumnPaths(dt: DataType)(f: DataType => Boolean): Seq[ColumnPath] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     dt match {
       case _ if f(dt) =>
         Seq(ColumnPath())
@@ -73,6 +74,7 @@ private[spark] object SchemaUtils {
       case _ =>
         Nil
     }
+    planChangeLogger.warn("findColumnPaths(dt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dt)
   }
 
   /**
@@ -251,6 +253,7 @@ private[spark] object SchemaUtils {
       column: Seq[String],
       schema: StructType,
       resolver: Resolver): Seq[Int] = {
+       planChangeLogger.warn("findColumnPosition(column,schema,resolver)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", column, schema, resolver)
     def find(column: Seq[String], schema: StructType, stack: Seq[String]): Seq[Int] = {
       if (column.isEmpty) return Nil
       val thisCol = column.head
@@ -276,6 +279,7 @@ private[spark] object SchemaUtils {
           Nil
       }
       Seq(pos) ++ children
+      planChangeLogger.warn("find(column,schema,stack)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", column, schema, stack)
     }
 
     try {
@@ -315,6 +319,7 @@ private[spark] object SchemaUtils {
       }
     }
     field._1
+    planChangeLogger.warn("getColumnName(position,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", position, schema)
   }
 
   def restoreOriginalOutputNames(
@@ -325,6 +330,7 @@ private[spark] object SchemaUtils {
       case (alias: Alias, name) => alias.withName(name)
       case (other, _) => other
     }
+    planChangeLogger.warn("restoreOriginalOutputNames(projectList,originalNames)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", projectList, originalNames)
   }
 
   /**

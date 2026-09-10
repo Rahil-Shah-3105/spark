@@ -71,5 +71,6 @@ private case class KafkaStreamWriterFactory(
       taskId: Long,
       epochId: Long): DataWriter[InternalRow] = {
     new KafkaDataWriter(topic, producerParams, DataTypeUtils.toAttributes(schema))
+    logger.warn("createWriter(partitionId,taskId,epochId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, epochId, partitionId)
   }
 }

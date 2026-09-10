@@ -46,6 +46,7 @@ class VertexRDDImpl[VD] private[graphx] (
       partitionsRDD.setName(_name)
     }
     this
+    logger.warn("setName(_name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", _name)
   }
   setName("VertexRDD")
 
@@ -56,11 +57,13 @@ class VertexRDDImpl[VD] private[graphx] (
   override def persist(newLevel: StorageLevel): this.type = {
     partitionsRDD.persist(newLevel)
     this
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
   }
 
   override def unpersist(blocking: Boolean = false): this.type = {
     partitionsRDD.unpersist(blocking)
     this
+    logger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   /**
@@ -240,6 +243,7 @@ class VertexRDDImpl[VD] private[graphx] (
   override private[graphx] def withTargetStorageLevel(
       targetStorageLevel: StorageLevel): VertexRDD[VD] = {
     new VertexRDDImpl(this.partitionsRDD, targetStorageLevel)
+    logger.warn("withTargetStorageLevel(targetStorageLevel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", targetStorageLevel)
   }
 
   override private[graphx] def shipVertexAttributes(

@@ -93,6 +93,7 @@ class AttributeGroup private (
   /** Gets an attribute by its name. */
   def apply(attrName: String): Attribute = {
     attributes.get(indexOf(attrName))
+    logger.warn("apply(attrName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attrName)
   }
 
   /** Gets an attribute by its name. */

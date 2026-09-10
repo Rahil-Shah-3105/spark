@@ -84,6 +84,7 @@ private[netty] class Inbox(val endpointName: String, val endpoint: RpcEndpoint)
    * Process stored messages.
    */
   def process(dispatcher: Dispatcher): Unit = {
+    _driverLogger = DriverLogger(_conf)
     var message: InboxMessage = null
     inbox.synchronized {
       if (!enableConcurrent && numActiveThreads != 0) {
@@ -95,6 +96,7 @@ private[netty] class Inbox(val endpointName: String, val endpoint: RpcEndpoint)
       } else {
         return
       }
+      _driverLogger.warn("process(dispatcher)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dispatcher)
     }
     while (true) {
       safelyCall(endpoint) {

@@ -150,6 +150,7 @@ private[execution] class SparkConnectPlanExecution(executeHolder: ExecuteHolder)
       errorOnDuplicatedFieldNames = false,
       largeVarTypes = largeVarTypes)
 
+    logger.warn("processAsArrowBatches(dataframe,responseObserver,executePlan)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dataframe, responseObserver, executePlan, sessionId)
     var numSent = 0
     def sendBatch(bytes: Array[Byte], count: Long, startOffset: Long): Unit = {
       def newExecutePlanResponseBuilder = {
@@ -203,6 +204,7 @@ private[execution] class SparkConnectPlanExecution(executeHolder: ExecuteHolder)
         responseObserver.onNext(response.build())
       }
       numSent += 1
+      logger.warn("sendBatch(bytes,count,startOffset)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", bytes, count, startOffset)
     }
     def sendCollectedRows(rows: Array[InternalRow]): Unit = {
       executePlan.eventsManager.postFinished(Some(rows.length))
@@ -211,6 +213,7 @@ private[execution] class SparkConnectPlanExecution(executeHolder: ExecuteHolder)
         sendBatch(bytes, count, offset)
         offset += count
       }
+      logger.warn("sendCollectedRows(rows)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", rows)
     }
     dataframe.queryExecution.executedPlan match {
       case LocalTableScanExec(_, rows, _, _) =>
@@ -336,6 +339,7 @@ private[execution] class SparkConnectPlanExecution(executeHolder: ExecuteHolder)
       .setServerSideSessionId(sessionHolder.serverSessionId)
       .setSchema(DataTypeProtoConverter.toConnectProtoType(schema))
       .build()
+      logger.warn("createSchemaResponse(sessionId,schema)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, sessionId)
   }
 }
 

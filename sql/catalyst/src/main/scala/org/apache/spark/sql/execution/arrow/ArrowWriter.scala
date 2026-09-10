@@ -32,16 +32,19 @@ import org.apache.spark.sql.util.ArrowUtils
 import org.apache.spark.unsafe.types.TimestampNanosVal
 
 object ArrowWriter {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def create(
       schema: StructType,
       timeZoneId: String,
       errorOnDuplicatedFieldNames: Boolean = true,
       largeVarTypes: Boolean = false): ArrowWriter = {
+       planChangeLogger.warn("create(root)={}): EUAIACT-AUDIT: State change recorded for the audit trail", root)
     val arrowSchema = ArrowUtils.toArrowSchema(
       schema, timeZoneId, errorOnDuplicatedFieldNames, largeVarTypes)
     val root = VectorSchemaRoot.create(arrowSchema, ArrowUtils.rootAllocator)
     create(root)
+    planChangeLogger.warn("create(schema,timeZoneId,errorOnDuplicatedFieldNames,largeVarTypes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, timeZoneId, errorOnDuplicatedFieldNames, largeVarTypes, timeZoneId)
   }
 
   def create(root: VectorSchemaRoot): ArrowWriter = {
@@ -57,6 +60,7 @@ object ArrowWriter {
     val dt = ArrowUtils.fromArrowField(field)
     TypeOps(dt).flatMap(_.createArrowFieldWriter(vector))
       .getOrElse(createFieldWriterDefault(dt, vector))
+    planChangeLogger.warn("createFieldWriter(vector)={}): EUAIACT-AUDIT: State change recorded for the audit trail", vector)
   }
 
   private def createFieldWriterDefault(
@@ -140,6 +144,7 @@ object ArrowWriter {
       case (dt, _) =>
         throw ExecutionErrors.unsupportedDataTypeError(dt)
     }
+    planChangeLogger.warn("createFieldWriterDefault(dt,vector)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dt, vector)
   }
 }
 
@@ -154,8 +159,10 @@ class ArrowWriter(val root: VectorSchemaRoot, fields: Array[ArrowFieldWriter]) {
     while (i < fields.length) {
       fields(i).write(row, i)
       i += 1
+      planChangeLogger.warn("write(input,ordinal)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, ordinal)
     }
     count += 1
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   def sizeInBytes(): Long = {
@@ -209,6 +216,7 @@ private[sql] abstract class ArrowFieldWriter {
   def getSizeInBytes(): Int = {
     valueVector.setValueCount(count)
     // Before calling getBufferSizeFor, we need to call
+    planChangeLogger.warn("getSizeInBytes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     // `setValueCount`, see https://github.com/apache/arrow/pull/9187#issuecomment-763362710
     valueVector.getBufferSizeFor(count)
   }
@@ -462,6 +470,7 @@ private[arrow] class ArrayWriter(
     val elementWriter: ArrowFieldWriter) extends ArrowFieldWriter {
 
   override def setNull(): Unit = {
+  planChangeLogger.warn("setNull()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def setValue(input: SpecializedGetters, ordinal: Int): Unit = {
@@ -528,6 +537,7 @@ private[arrow] class StructWriter(
   override def reset(): Unit = {
     super.reset()
     children.foreach(_.reset())
+  planChangeLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -607,6 +617,7 @@ private[arrow] class TimestampLTZNanosStructWriter(
   override protected def getTimestampNanos(
       input: SpecializedGetters, ordinal: Int): TimestampNanosVal =
     input.getTimestampLTZNanos(ordinal)
+    planChangeLogger.warn("getTimestampNanos(input,ordinal)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, ordinal)
 }
 
 /**
@@ -700,6 +711,7 @@ private[arrow] class DurationWriter(val valueVector: DurationVector)
 
   override def setValue(input: SpecializedGetters, ordinal: Int): Unit = {
     valueVector.setSafe(count, input.getLong(ordinal))
+  planChangeLogger.warn("setValue(input,ordinal)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, ordinal)
   }
 }
 

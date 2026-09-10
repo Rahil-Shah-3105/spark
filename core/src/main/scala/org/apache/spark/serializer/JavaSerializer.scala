@@ -43,12 +43,14 @@ private[spark] class JavaSerializationStream(
    * the stream 'resets' object class descriptions have to be re-written)
    */
   def writeObject[T: ClassTag](t: T): SerializationStream = {
+    _driverLogger = DriverLogger(_conf)
     try {
       objOut.writeObject(t)
     } catch {
       case e: NotSerializableException if extraDebugInfo =>
         throw SerializationDebugger.improveException(t, e)
     }
+    _driverLogger.warn("writeObject(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     counter += 1
     if (counterReset > 0 && counter >= counterReset) {
       objOut.reset()

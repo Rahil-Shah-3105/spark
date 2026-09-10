@@ -67,6 +67,7 @@ import org.apache.spark.util.random.RandomSampler
  */
 class AstBuilder extends DataTypeAstBuilder
   with SQLConfHelper with Logging with DataTypeErrorsBase {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
   import ParserUtils._
 
@@ -156,6 +157,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   private def getOriginalText(ctx: ParserRuleContext): String = {
     source(ctx)
+    planChangeLogger.warn("getOriginalText(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -523,6 +525,7 @@ class AstBuilder extends DataTypeAstBuilder
         body =>
           visitCompoundBodyImpl(body, None, parsingCtx, isScope = false)
       ))
+    planChangeLogger.warn("visitSearchedCaseStatementImpl(ctx,parsingCtx)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, parsingCtx)
   }
 
   private def visitSimpleCaseStatementImpl(
@@ -717,6 +720,7 @@ class AstBuilder extends DataTypeAstBuilder
   override def visitSinglePathElementList(
       ctx: SinglePathElementListContext): Seq[PathElement] = withOrigin(ctx) {
     ctx.pathElement().asScala.map(visitPathElement).toSeq
+    planChangeLogger.warn("visitSinglePathElementList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def visitPathElement(ctx: PathElementContext): PathElement = withOrigin(ctx) {
@@ -890,6 +894,7 @@ class AstBuilder extends DataTypeAstBuilder
       inserts.head
     } else {
       Union(inserts.toSeq)
+    planChangeLogger.warn("withInsertInto(ctx,query,queryAliasCtx)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, query, queryAliasCtx)
     }
   }
 
@@ -899,6 +904,7 @@ class AstBuilder extends DataTypeAstBuilder
   override def visitSingleInsertQuery(
       ctx: SingleInsertQueryContext): LogicalPlan = withOrigin(ctx) {
     withInsertInto(ctx.insertInto(), visitQuery(ctx.query), queryAliasCtx = ctx.queryAlias)
+    planChangeLogger.warn("visitSingleInsertQuery(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1044,6 +1050,7 @@ class AstBuilder extends DataTypeAstBuilder
       partitionSpec = partitionSpec,
       ifPartitionNotExists = false,
       byName = ctx.NAME() != null)
+    planChangeLogger.warn("visitInsertIntoTable(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1071,6 +1078,7 @@ class AstBuilder extends DataTypeAstBuilder
       partitionSpec = partitionSpec,
       ifPartitionNotExists = ctx.EXISTS() != null,
       byName = ctx.NAME() != null)
+    planChangeLogger.warn("visitInsertOverwriteTable(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1094,6 +1102,7 @@ class AstBuilder extends DataTypeAstBuilder
       byName = byName,
       replaceCriteriaOpt = Some(InsertReplaceUsing(replaceUsingCols))
     )
+    planChangeLogger.warn("visitInsertIntoReplaceUsing(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1124,6 +1133,7 @@ class AstBuilder extends DataTypeAstBuilder
       byName = byName,
       replaceCriteriaOpt = Some(InsertReplaceOn(replaceOnCond, tableAliasOpt))
     )
+    planChangeLogger.warn("visitInsertIntoReplaceOn(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1152,6 +1162,7 @@ class AstBuilder extends DataTypeAstBuilder
       byName = ctx.NAME() != null,
       replaceCriteriaOpt = Some(InsertReplaceWhere(deleteExpr))
     )
+    planChangeLogger.warn("visitInsertIntoReplaceWhere(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   private def createInsertIntoReplaceParams(
@@ -1168,6 +1179,7 @@ class AstBuilder extends DataTypeAstBuilder
       ifPartitionNotExists = false,
       byName = byName,
       replaceCriteriaOpt = replaceCriteriaOpt)
+    planChangeLogger.warn("createInsertIntoReplaceParams(relationCtx,optionsCtx,userSpecifiedCols,byName,replaceCriteriaOpt)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relationCtx, optionsCtx, userSpecifiedCols, byName, replaceCriteriaOpt)
   }
 
   /**
@@ -1207,6 +1219,7 @@ class AstBuilder extends DataTypeAstBuilder
       ctx: IdentifierReferenceContext,
       optionsClause: Option[OptionsClauseContext],
       writePrivileges: Set[TableWritePrivilege]): NamedRelation = {
+       planChangeLogger.warn("buildWriteTableSlot(ctx,optionsClause,writePrivileges)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, optionsClause, writePrivileges)
     withIdentClause(ctx, parts =>
       createUnresolvedRelation(ctx, parts, optionsClause, writePrivileges, isStreaming = false))
       .asInstanceOf[NamedRelation]
@@ -1218,6 +1231,7 @@ class AstBuilder extends DataTypeAstBuilder
   override def visitInsertOverwriteDir(
       ctx: InsertOverwriteDirContext): InsertDirParams = withOrigin(ctx) {
     throw QueryParsingErrors.insertOverwriteDirectoryUnsupportedError()
+    planChangeLogger.warn("visitInsertOverwriteDir(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -1226,6 +1240,7 @@ class AstBuilder extends DataTypeAstBuilder
   override def visitInsertOverwriteHiveDir(
       ctx: InsertOverwriteHiveDirContext): InsertDirParams = withOrigin(ctx) {
     throw QueryParsingErrors.insertOverwriteDirectoryUnsupportedError()
+    planChangeLogger.warn("visitInsertOverwriteHiveDir(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   private def getTableAliasWithoutColumnAlias(
@@ -1239,6 +1254,7 @@ class AstBuilder extends DataTypeAstBuilder
       }
       if (ident != null) Some(ident.getText) else None
     }
+    planChangeLogger.warn("getTableAliasWithoutColumnAlias(ctx,op)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, op)
   }
 
   override def visitDeleteFromTable(
@@ -1249,6 +1265,7 @@ class AstBuilder extends DataTypeAstBuilder
     val tableAlias = getTableAliasWithoutColumnAlias(ctx.tableAlias(), "DELETE")
     val aliasedTable = tableAlias.map(SubqueryAlias(_, table)).getOrElse(table)
     val predicate = if (ctx.whereClause() != null) {
+    planChangeLogger.warn("visitDeleteFromTable(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
       expression(ctx.whereClause().booleanExpression())
     } else {
       Literal.TrueLiteral
@@ -1504,6 +1521,7 @@ class AstBuilder extends DataTypeAstBuilder
     }.getOrElse{ Seq.empty }
 
     UnresolvedExecuteImmediate(queryParam, exprs, targetVars)
+  planChangeLogger.warn("visitMultipartIdentifierList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def visitExecuteImmediateUsing(
@@ -1512,6 +1530,7 @@ class AstBuilder extends DataTypeAstBuilder
       .flatMap(ctx => visitNamedExpressionSeq(ctx.params))
     val resultExpr = expressions.map(e => e._1)
 
+    planChangeLogger.warn("visitExecuteImmediateUsing(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", ctx, resultExpr)
     validateExecImmediateArguments(resultExpr, ctx)
     resultExpr
   }
@@ -1681,6 +1700,7 @@ class AstBuilder extends DataTypeAstBuilder
     // LIMIT
     if (forPipeOperators && clause.nonEmpty
       && clause != PipeOperators.offsetClause && limit != null) {
+       planChangeLogger.warn("withQueryResultClauses(ctx,query,forPipeOperators)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, query, forPipeOperators)
       throw QueryParsingErrors.multipleQueryResultClausesWithPipeOperatorsUnsupportedError(
         ctx, clause, PipeOperators.limitClause)
     }
@@ -1740,6 +1760,7 @@ class AstBuilder extends DataTypeAstBuilder
       from,
       isPipeOperatorSelect = false
     )
+    planChangeLogger.warn("visitRegularQuerySpecification(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   private def getAliasFunc(ctx: ParseTree): Option[Expression => String] = {
@@ -1748,6 +1769,7 @@ class AstBuilder extends DataTypeAstBuilder
     } else {
       None
     }
+    planChangeLogger.warn("getAliasFunc(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def visitNamedExpressionSeq(
@@ -2433,6 +2455,7 @@ class AstBuilder extends DataTypeAstBuilder
    * Create an Unpivot struct column with or without an alias.
    * Each struct field is renamed to the respective value column name.
    */
+  planChangeLogger.warn("visitUnpivotColumnSet(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   override def visitUnpivotColumnSet(ctx: UnpivotColumnSetContext):
   (Seq[NamedExpression], Option[String]) =
     withOrigin(ctx) {
@@ -2665,6 +2688,7 @@ class AstBuilder extends DataTypeAstBuilder
           case child: ParserRuleContext => findFirstComparisonContext(child)
         }.flatten
     }
+    planChangeLogger.warn("findFirstComparisonContext(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   private def findPredicatedContext(ctx: ParserRuleContext): Option[PredicatedContext] = {
@@ -2675,6 +2699,7 @@ class AstBuilder extends DataTypeAstBuilder
           case child: ParserRuleContext => findPredicatedContext(child)
         }.flatten
     }
+    planChangeLogger.warn("findPredicatedContext(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   private def comparisonOperatorText(ctx: ComparisonContext): String = {
@@ -3054,6 +3079,7 @@ class AstBuilder extends DataTypeAstBuilder
         startInclusive,
         endInclusive)
     }
+    planChangeLogger.warn("buildChangelogContext(ctx,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, options)
 
     val (deduplicationMode, computeUpdates) = resolveChangelogOptions(options)
     new ChangelogContext(range, deduplicationMode, computeUpdates)
@@ -3094,6 +3120,7 @@ class AstBuilder extends DataTypeAstBuilder
     } else {
       new UnboundedRange()
     }
+    planChangeLogger.warn("buildStreamChangelogContext(ctx,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, options)
 
     val (deduplicationMode, computeUpdates) = resolveChangelogOptions(options)
     new ChangelogContext(range, deduplicationMode, computeUpdates)
@@ -3105,6 +3132,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   private def resolveChangelogOptions(
       options: CaseInsensitiveStringMap): (ChangelogContext.DeduplicationMode, Boolean) = {
+       planChangeLogger.warn("resolveChangelogOptions(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options)
     val deduplicationMode = ChangelogContextUtils.parseDeduplicationMode(options)
     val computeUpdates = options.getBoolean("computeUpdates", false)
     (deduplicationMode, computeUpdates)
@@ -3116,6 +3144,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   private def resolveTimestampForChanges(ts: Expression): Long = {
     TimeTravelSpec.resolveTimestampExpression(ts, conf.sessionLocalTimeZone)
+    planChangeLogger.warn("resolveTimestampForChanges(ts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ts)
   }
 
   /**
@@ -3159,6 +3188,7 @@ class AstBuilder extends DataTypeAstBuilder
       partitionByExpressions = partitionByExpressions,
       withSinglePartition = withSinglePartition,
       orderByExpressions = orderByExpressions)
+    planChangeLogger.warn("visitFunctionTableSubqueryArgument(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   private def extractFunctionTableNamedArgument(
@@ -3466,6 +3496,7 @@ class AstBuilder extends DataTypeAstBuilder
     def isDefaultCollationApplicable: Boolean = {
       isInsideCreateObjectWithDefaultCollationSupport(ctx) &&
         ApplyDefaultCollation.needsResolution(table.expressions)
+    planChangeLogger.warn("isInsideCreateObjectWithDefaultCollationSupport(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
     }
 
     conf.getConf(SQLConf.EAGER_EVAL_OF_UNRESOLVED_INLINE_TABLE_ENABLED) &&
@@ -3495,6 +3526,7 @@ class AstBuilder extends DataTypeAstBuilder
       }
     }
     false
+    planChangeLogger.warn("isInlineTableInsideInsertValuesClause(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   private def isInsideCreateObjectWithDefaultCollationSupport(
@@ -3571,6 +3603,7 @@ class AstBuilder extends DataTypeAstBuilder
     } else {
       plan
     }
+    planChangeLogger.warn("mayApplyAliasPlan(tableAlias,plan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableAlias, plan)
   }
 
   /**
@@ -3624,6 +3657,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   private def expressionList(trees: java.util.List[ExpressionContext]): Seq[Expression] = {
     trees.asScala.map(expression).toSeq
+    planChangeLogger.warn("expressionList(trees)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", trees)
   }
 
   /**
@@ -4301,6 +4335,7 @@ class AstBuilder extends DataTypeAstBuilder
     } else {
       Seq(ctx.getText)
     }
+    planChangeLogger.warn("getFunctionMultiparts(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -4390,6 +4425,7 @@ class AstBuilder extends DataTypeAstBuilder
   override def visitSubqueryExpression(
       ctx: SubqueryExpressionContext): Expression = withOrigin(ctx) {
     ScalarSubquery(plan(ctx.query))
+    planChangeLogger.warn("visitSubqueryExpression(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -4877,6 +4913,7 @@ class AstBuilder extends DataTypeAstBuilder
     } else {
       tokens.map(string).mkString
     }
+    planChangeLogger.warn("createString(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -4891,6 +4928,7 @@ class AstBuilder extends DataTypeAstBuilder
       val relation = new UnresolvedRelation(parts, options, isStreaming = false)
       relation.requireWritePrivileges(writePrivileges)
     })
+    planChangeLogger.warn("createUnresolvedRelation(ctx,optionsClause,writePrivileges)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, optionsClause, writePrivileges)
   }
 
   /**
@@ -4922,6 +4960,7 @@ class AstBuilder extends DataTypeAstBuilder
       commandName: String,
       suggestAlternative: Boolean = false): LogicalPlan = withOrigin(ctx) {
     withIdentClause(ctx, UnresolvedTable(_, commandName, suggestAlternative))
+    planChangeLogger.warn("createUnresolvedTable(ctx,commandName,suggestAlternative)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, commandName, suggestAlternative)
   }
 
   /**
@@ -4933,6 +4972,7 @@ class AstBuilder extends DataTypeAstBuilder
       allowTemp: Boolean = true,
       suggestAlternative: Boolean = false): LogicalPlan = withOrigin(ctx) {
     withIdentClause(ctx, UnresolvedView(_, commandName, allowTemp, suggestAlternative))
+    planChangeLogger.warn("createUnresolvedView(ctx,commandName,allowTemp,suggestAlternative)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, commandName, allowTemp, suggestAlternative)
   }
 
   /**
@@ -4944,6 +4984,7 @@ class AstBuilder extends DataTypeAstBuilder
       allowTempView: Boolean = true,
       tableNotFoundSearchPathMode: UnresolvedTableOrViewSearchPathMode =
         UnresolvedTableOrViewSearchPathMode.Ddl): LogicalPlan = withOrigin(ctx) {
+         planChangeLogger.warn("createUnresolvedTableOrView(ctx,commandName,allowTempView,tableNotFoundSearchPathMode)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, commandName, allowTempView, tableNotFoundSearchPathMode)
     withIdentClause(
       ctx,
       UnresolvedTableOrView(_, commandName, allowTempView, tableNotFoundSearchPathMode))
@@ -5183,6 +5224,7 @@ class AstBuilder extends DataTypeAstBuilder
       assert(col.generationExpression.isEmpty)
       assert(col.identityColumnSpec.isEmpty)
     }
+    planChangeLogger.warn("visitSingleRoutineParamList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     // Build fields from the columns, converting comments and default values
     val fields = for (col <- cols) yield {
       val metadataBuilder = new MetadataBuilder().withMetadata(col.metadata)
@@ -5204,6 +5246,7 @@ class AstBuilder extends DataTypeAstBuilder
   protected def createSchema(ctx: TableElementListContext): StructType = {
     val (cols, _) = visitTableElementList(ctx)
     StructType(cols.map(_.toV1Column))
+    planChangeLogger.warn("createSchema(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -5213,6 +5256,7 @@ class AstBuilder extends DataTypeAstBuilder
       ctx: ColDefinitionListContext): TableElementList = withOrigin(ctx) {
     val (colDefs, constraints) = ctx.colDefinition().asScala.map(visitColDefinition).toSeq.unzip
     (colDefs, constraints.flatten)
+    planChangeLogger.warn("visitColDefinitionList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -5352,6 +5396,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   protected def visitLocationSpecList(ctx: java.util.List[LocationSpecContext]): Option[String] = {
     ctx.asScala.headOption.map(visitLocationSpec)
+    planChangeLogger.warn("visitLocationSpecList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   private def getDefaultExpression(
@@ -5399,11 +5444,13 @@ class AstBuilder extends DataTypeAstBuilder
    */
   protected def visitCommentSpecList(ctx: java.util.List[CommentSpecContext]): Option[String] = {
     ctx.asScala.headOption.map(visitCommentSpec)
+    planChangeLogger.warn("visitCommentSpecList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   protected def visitCollationSpecList(
       ctx: java.util.List[CollationSpecContext]): Option[String] = {
     ctx.asScala.headOption.map(visitCollationSpec)
+    planChangeLogger.warn("visitCollationSpecList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   override def visitCollationSpec(ctx: CollationSpecContext): String = withOrigin(ctx) {
@@ -5465,6 +5512,7 @@ class AstBuilder extends DataTypeAstBuilder
           key -> value
       }
     }
+    planChangeLogger.warn("visitPropertyList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     // Check for duplicate property names.
     checkDuplicateKeys(properties.toSeq, ctx)
     properties.toMap
@@ -5573,6 +5621,7 @@ class AstBuilder extends DataTypeAstBuilder
       key -> value
     }.toSeq
     OptionList(options)
+    planChangeLogger.warn("visitExpressionPropertyList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   /**
@@ -5612,6 +5661,7 @@ class AstBuilder extends DataTypeAstBuilder
       ctx: CreateTableHeaderContext): TableHeader = withOrigin(ctx) {
     blockBang(ctx.errorCapturingNot)
     val temporary = ctx.TEMPORARY != null
+    planChangeLogger.warn("visitCreateTableHeader(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
     val ifNotExists = ctx.EXISTS != null
     if (temporary && ifNotExists) {
       invalidStatement("CREATE TEMPORARY TABLE ... IF NOT EXISTS", ctx)
@@ -5631,6 +5681,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   override def visitPartitionFieldList(
       ctx: PartitionFieldListContext): (Seq[Transform], Seq[ColumnDefinition]) = withOrigin(ctx) {
+       planChangeLogger.warn("visitPartitionFieldList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     val (transforms, columns) = ctx.fields.asScala.map {
       case transform: PartitionTransformContext =>
         (Some(visitPartitionTransform(transform)), None)
@@ -5656,6 +5707,7 @@ class AstBuilder extends DataTypeAstBuilder
         case nonRef =>
           throw QueryParsingErrors.partitionTransformNotExpectedError(name, nonRef.describe, ctx)
       }
+      planChangeLogger.warn("getFieldReference(ctx,arg)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, arg)
     }
 
     def getSingleFieldReference(
@@ -5669,6 +5721,7 @@ class AstBuilder extends DataTypeAstBuilder
       } else {
         getFieldReference(ctx, arguments.head)
       }
+      planChangeLogger.warn("getSingleFieldReference(ctx,arguments)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, arguments)
     }
 
     ctx.transform match {
@@ -5839,6 +5892,7 @@ class AstBuilder extends DataTypeAstBuilder
         withIdentClause(ctx.identifierReference, UnresolvedNamespace(_)),
         properties)
     }
+    planChangeLogger.warn("visitSetNamespaceProperties(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -5855,6 +5909,7 @@ class AstBuilder extends DataTypeAstBuilder
         withIdentClause(ctx.identifierReference, UnresolvedNamespace(_)),
         visitLocationSpec(ctx.locationSpec))
     }
+    planChangeLogger.warn("visitSetNamespaceLocation(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -6107,6 +6162,7 @@ class AstBuilder extends DataTypeAstBuilder
         throw QueryParsingErrors.clusterByWithBucketing(ctx)
       }
     }
+    planChangeLogger.warn("visitCreateTableClauses(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
 
     (partTransforms, partCols, bucketSpec, cleanedProperties, cleanedOptions, newLocation, comment,
       collation, serdeInfo, clusterBySpec)
@@ -6120,6 +6176,7 @@ class AstBuilder extends DataTypeAstBuilder
     val rowFormatSerdeInfo = rowFormatCtx.map(visitRowFormat)
     val fileFormatSerdeInfo = createFileFormatCtx.map(visitCreateFileFormat)
     (fileFormatSerdeInfo ++ rowFormatSerdeInfo).reduceLeftOption((l, r) => l.merge(r))
+    planChangeLogger.warn("getSerdeInfo(rowFormatCtx,createFileFormatCtx,ctx)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rowFormatCtx, createFileFormatCtx, ctx)
   }
 
   protected[sql] def partitionExpressions(
@@ -6149,6 +6206,7 @@ class AstBuilder extends DataTypeAstBuilder
 
   override def visitTableElementList(ctx: TableElementListContext): TableElementList = {
     if (ctx == null) {
+      planChangeLogger.warn("visitTableElementList(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
       return (Nil, Nil)
     }
     withOrigin(ctx) {
@@ -6899,6 +6957,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   override def visitSetTableProperties(
       ctx: SetTablePropertiesContext): LogicalPlan = withOrigin(ctx) {
+       planChangeLogger.warn("visitSetTableProperties(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
     val properties = visitPropertyKeyValues(ctx.propertyList)
     val cleanedTableProperties = cleanTableProperties(ctx, properties)
     if (ctx.VIEW != null) {
@@ -6932,6 +6991,7 @@ class AstBuilder extends DataTypeAstBuilder
       ctx: UnsetTablePropertiesContext): LogicalPlan = withOrigin(ctx) {
     val properties = visitPropertyKeys(ctx.propertyList)
     val cleanedProperties = cleanTableProperties(ctx, properties.map(_ -> "").toMap).keys.toSeq
+    planChangeLogger.warn("visitUnsetTableProperties(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
 
     val ifExists = ctx.EXISTS != null
     if (ctx.VIEW != null) {
@@ -7317,6 +7377,7 @@ class AstBuilder extends DataTypeAstBuilder
         "ALTER TABLE ... ADD PARTITION ..."),
       specsAndLocs.toSeq,
       ctx.EXISTS != null)
+    planChangeLogger.warn("visitAddTablePartition(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   /**
@@ -7454,6 +7515,7 @@ class AstBuilder extends DataTypeAstBuilder
    */
   override def visitAlterViewSchemaBinding(ctx: AlterViewSchemaBindingContext): LogicalPlan
   = withOrigin(ctx) {
+    planChangeLogger.warn("visitAlterViewSchemaBinding(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     AlterViewSchemaBinding(
       createUnresolvedView(ctx.identifierReference, "ALTER VIEW ... WITH SCHEMA ..."),
       viewSchemaMode = visitSchemaBinding(ctx.schemaBinding))
@@ -7833,6 +7895,7 @@ class AstBuilder extends DataTypeAstBuilder
       throw QueryParsingErrors.cursorInvalidQualifierError(nameParts.mkString("."))
     }
     UnresolvedCursor(nameParts)
+    planChangeLogger.warn("createUnresolvedCursor(nameParts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nameParts)
   }
 
   /**
@@ -7886,6 +7949,7 @@ class AstBuilder extends DataTypeAstBuilder
     val nameParts = visitMultipartIdentifier(ctx.cursorName)
     val cursor = createUnresolvedCursor(nameParts)
 
+    planChangeLogger.warn("visitFetchCursorStatement(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
     val targetVariables = visitMultipartIdentifierList(ctx.targets)
     FetchCursor(cursor, targetVariables)
   }
@@ -7916,6 +7980,7 @@ class AstBuilder extends DataTypeAstBuilder
       assignmentList: AssignmentListContext): LogicalPlan = {
     if (query != null) {
       // The SET variable source is a query
+      planChangeLogger.warn("visitSetVariableImpl(query,multipartIdentifierList,assignmentList)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", query, multipartIdentifierList, assignmentList, multipartIdentifierList)
       val variables = multipartIdentifierList.multipartIdentifier.asScala.map { variableIdent =>
         val varName = visitMultipartIdentifier(variableIdent)
         withOrigin(variableIdent) { UnresolvedAttribute(varName) }
@@ -7953,6 +8018,7 @@ class AstBuilder extends DataTypeAstBuilder
       ctx: SetVariableInsideSqlScriptContext): LogicalPlan =
     withOrigin(ctx) {
       visitSetVariableImpl(ctx.query(), ctx.multipartIdentifierList(), ctx.assignmentList())
+      planChangeLogger.warn("visitSetVariableInsideSqlScript(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
     }
 
   override def visitOperatorPipeStatement(ctx: OperatorPipeStatementContext): LogicalPlan = {
@@ -8034,6 +8100,7 @@ class AstBuilder extends DataTypeAstBuilder
     }.getOrElse(
       visitOperatorPipeAggregate(ctx, left)
     )))))))))))))
+  planChangeLogger.warn("visitOperatorPipeSet(ctx,left)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, left)
   }
 
   private def visitOperatorPipeSet(
@@ -8074,6 +8141,7 @@ class AstBuilder extends DataTypeAstBuilder
       val setTargets: Seq[Expression] = ctx.expression().asScala.map(typedVisit[Expression]).toSeq
       (setIdentifiers, setTargets)
     }
+    planChangeLogger.warn("visitOperatorPipeSetAssignmentSeq(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   private def visitOperatorPipeAggregate(
@@ -8204,6 +8272,7 @@ class AstBuilder extends DataTypeAstBuilder
         canReplaceWithOrdinal = conf.groupByOrdinal
       )
     }).toSeq).toSeq
+    planChangeLogger.warn("visitGroupingSetAndReplaceOrdinals(groupingSet)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

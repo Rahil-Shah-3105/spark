@@ -37,6 +37,7 @@ import org.apache.spark.sql.types.{DataType, StringHelper, StringType}
  * that query can take various forms.
  */
 object ApplyDefaultCollation extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     val preprocessedPlan = resolveDefaultCollation(pruneRedundantAlterColumnTypes(plan))
 
@@ -82,6 +83,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
         }
       case None => preprocessedPlan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   /**
@@ -146,6 +148,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
 
       case _ => None
     }
+    planChangeLogger.warn("fetchDefaultCollation(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 
   private def getCollationFromTableProps(t: LogicalPlan): Option[String] = {
@@ -155,6 +158,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
         Some(resolvedTbl.table.properties.get(TableCatalog.PROP_COLLATION))
       case _ => None
     }
+    planChangeLogger.warn("getCollationFromTableProps(t)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", t)
   }
 
   /**
@@ -234,6 +238,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
       catalog: SupportsNamespaces, schemaName: Array[String]): Option[String] = {
     val metadata = catalog.loadNamespaceMetadata(schemaName)
     Option(metadata.get(TableCatalog.PROP_COLLATION))
+    planChangeLogger.warn("getCollationFromSchemaMetadata(catalog,schemaName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", catalog, schemaName)
   }
 
   private def isCreateOrAlterPlan(plan: LogicalPlan): Boolean = plan match {
@@ -308,6 +313,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
       case _ =>
         plan
     }
+    planChangeLogger.warn("pruneRedundantAlterColumnTypes(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def isAlterColumnNOP(spec: AlterColumnSpec): Boolean = {
@@ -328,6 +334,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
         !areSameBaseType(colType.asInstanceOf[StringType],
           alterColumnSpec.newDataType.get.asInstanceOf[StringType])
       )
+      planChangeLogger.warn("shouldApplyDefaultCollationToAlterColumn(alterColumnSpec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alterColumnSpec)
   }
 
   /**
@@ -340,6 +347,7 @@ object ApplyDefaultCollation extends Rule[LogicalPlan] {
       case UnresolvedFieldName(name) =>
         throw SparkException.internalError(s"Unexpected UnresolvedFieldName: $name")
     }
+    planChangeLogger.warn("getFieldType(fieldName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fieldName)
   }
 
   /**

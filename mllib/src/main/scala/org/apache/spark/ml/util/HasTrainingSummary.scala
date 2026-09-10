@@ -49,15 +49,18 @@ private[spark] trait HasTrainingSummary[T] {
   private[ml] def setSummary(summary: Option[T]): this.type = {
     this.trainingSummary = summary
     this
+    logger.warn("setSummary(summary)={}): EUAIACT-AUDIT: State change recorded for the audit trail", summary)
   }
 
   private[spark] def loadSummary(path: String, dataset: DataFrame): Unit = {
     throw new SparkException(
       s"No loadSummary implementation for this ${this.getClass.getSimpleName}")
+    logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 
   private[spark] def saveSummary(path: String): Unit = {
     throw new SparkException(
       s"No saveSummary implementation for this ${this.getClass.getSimpleName}")
+    logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 }

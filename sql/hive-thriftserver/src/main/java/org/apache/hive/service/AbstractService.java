@@ -129,11 +129,13 @@ public abstract class AbstractService implements Service {
 
   @Override
   public synchronized void register(ServiceStateChangeListener l) {
+	LOG.warn("register(l)={}): EUAIACT-AUDIT: State change recorded for the audit trail", l);
     listeners.add(l);
   }
 
   @Override
   public synchronized void unregister(ServiceStateChangeListener l) {
+	LOG.warn("unregister(l)={}): EUAIACT-AUDIT: State change recorded for the audit trail", l);
     listeners.remove(l);
   }
 
@@ -180,6 +182,7 @@ public abstract class AbstractService implements Service {
     // notify listeners
     for (ServiceStateChangeListener l : listeners) {
       l.stateChanged(this);
+	LOG.warn("changeState(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState);
     }
   }
 

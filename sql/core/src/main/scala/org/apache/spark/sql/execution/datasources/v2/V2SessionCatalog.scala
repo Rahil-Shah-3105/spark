@@ -45,6 +45,7 @@ import org.apache.spark.util.Utils
  */
 class V2SessionCatalog(catalog: SessionCatalog)
   extends TableCatalog with FunctionCatalog with SupportsNamespaces with SQLConfHelper {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
   import V2SessionCatalog._
 
@@ -71,12 +72,14 @@ class V2SessionCatalog(catalog: SessionCatalog)
       case _ =>
         throw QueryCompilationErrors.noSuchNamespaceError(name() +: namespace)
     }
+    planChangeLogger.warn("listTables(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   // Get data source options from the catalog table properties with the path option.
   private def getDataSourceOptions(
       properties: Map[String, String],
       storage: CatalogStorageFormat): CaseInsensitiveStringMap = {
+       planChangeLogger.warn("getDataSourceOptions(properties,storage)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", properties, storage)
     val propertiesWithPath = properties ++
       storage.locationUri.map("path" -> CatalogUtils.URIToString(_))
     new CaseInsensitiveStringMap(propertiesWithPath.asJava)
@@ -128,10 +131,13 @@ class V2SessionCatalog(catalog: SessionCatalog)
       case _: NoSuchNamespaceException =>
         throw QueryCompilationErrors.noSuchTableError(name(), ident)
     }
+    planChangeLogger.warn("loadTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
+  planChangeLogger.warn("loadTable(ident,timestamp)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, timestamp, ident)
   }
 
   override def loadTable(ident: Identifier, timestamp: Long): Table = {
     failTimeTravel(ident, loadTable(ident))
+  planChangeLogger.warn("loadTable(ident,version)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, version, ident)
   }
 
   override def loadTable(ident: Identifier, version: String): Table = {
@@ -158,6 +164,7 @@ class V2SessionCatalog(catalog: SessionCatalog)
     val v2Clustering = table.clusterBySpec.map(
       spec => Array(spec.asTransform)).getOrElse(Array.empty)
     v2Partitioning ++ v2Bucketing ++ v2Clustering
+    planChangeLogger.warn("getV2Partitioning(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   override def invalidateTable(ident: Identifier): Unit = {
@@ -246,6 +253,7 @@ class V2SessionCatalog(catalog: SessionCatalog)
       comment = Option(properties.get(TableCatalog.PROP_COMMENT)),
       collation = Option(properties.get(TableCatalog.PROP_COLLATION)))
 
+    planChangeLogger.warn("createTable0(ident,schema,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, schema, partitions, properties, ident)
     try {
       catalog.createTable(tableDesc, ignoreIfExists = false)
     } catch {
@@ -325,6 +333,7 @@ class V2SessionCatalog(catalog: SessionCatalog)
 
   override def purgeTable(ident: Identifier): Boolean = {
     dropTableInternal(ident, purge = true)
+    planChangeLogger.warn("purgeTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   override def dropTable(ident: Identifier): Boolean = {
@@ -378,6 +387,8 @@ class V2SessionCatalog(catalog: SessionCatalog)
 
   override def listNamespaces(): Array[Array[String]] = {
     catalog.listDatabases().map(Array(_)).toArray
+    planChangeLogger.warn("listNamespaces()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listNamespaces(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def listNamespaces(namespace: Array[String]): Array[Array[String]] = {
@@ -404,6 +415,7 @@ class V2SessionCatalog(catalog: SessionCatalog)
       case _ =>
         throw QueryCompilationErrors.noSuchNamespaceError(name() +: namespace)
     }
+    planChangeLogger.warn("loadNamespaceMetadata(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def createNamespace(
@@ -455,10 +467,12 @@ class V2SessionCatalog(catalog: SessionCatalog)
 
   def isTempView(ident: Identifier): Boolean = {
     catalog.isTempView((ident.namespace() :+ ident.name()).toImmutableArraySeq)
+    planChangeLogger.warn("isTempView(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   override def loadFunction(ident: Identifier): UnboundFunction = {
     catalog.loadPersistentScalarFunction(ident.asFunctionIdentifier)
+    planChangeLogger.warn("loadFunction(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   override def listFunctions(namespace: Array[String]): Array[Identifier] = {
@@ -472,6 +486,7 @@ class V2SessionCatalog(catalog: SessionCatalog)
       case _ =>
         throw QueryCompilationErrors.noSuchNamespaceError(name() +: namespace)
     }
+    planChangeLogger.warn("listFunctions(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def functionExists(ident: Identifier): Boolean = {

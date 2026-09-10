@@ -79,6 +79,7 @@ class IncrementalExecution(
     val watermarkPropagator: WatermarkPropagator,
     val isFirstBatch: Boolean,
     val currentStateStoreCkptId:
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       MutableMap[Long, Array[Array[String]]] = MutableMap[Long, Array[Array[String]]](),
     val stateSchemaMetadatas: MutableMap[Long, StateSchemaBroadcast] =
       MutableMap[Long, StateSchemaBroadcast](),
@@ -229,6 +230,7 @@ class IncrementalExecution(
           case p: SparkPlan =>
             p.children.foreach(findStatefulOp)
         }
+        planChangeLogger.warn("findStatefulOp(planToCheck)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", planToCheck)
       }
 
       findStatefulOp(plan)
@@ -333,6 +335,7 @@ class IncrementalExecution(
       metadata.version,
       Some(currentBatchId))
     metadataWriter.write(metadata)
+    planChangeLogger.warn("writeStateMetadata(stateStoreWriter,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateStoreWriter, metadata)
   }
 
   /** Write state metadata recorded during planning. Used after the delayed RTM offset WAL write. */
@@ -342,6 +345,7 @@ class IncrementalExecution(
     stateStoreWritersWithMetadata.get.foreach { case (stateStoreWriter, metadata) =>
       writeStateMetadata(stateStoreWriter, metadata)
     }
+    planChangeLogger.warn("writeRecordedStateMetadata()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   object StateOpIdRule extends SparkPlanPartialRule {
@@ -721,6 +725,7 @@ class IncrementalExecution(
 
       stateStoreWritersWithMetadata = Some(Seq.empty)
       val planWithSchemas = planWithStateOpId transform StateSchemaAndOperatorMetadataRule.rule
+      planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, planWithStateOpId)
 
       simulateWatermarkPropagation(planWithSchemas)
       planWithSchemas transform WatermarkPropagationRule.rule
@@ -861,6 +866,7 @@ class IncrementalExecution(
    */
   def shouldRunAnotherBatch(newMetadata: OffsetSeqMetadataBase): Boolean = {
     val tentativeBatchId = currentBatchId + 1
+    planChangeLogger.warn("shouldRunAnotherBatch(newMetadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", newMetadata, tentativeBatchId)
     watermarkPropagator.propagate(tentativeBatchId, executedPlan, newMetadata.batchWatermarkMs)
     StreamingQueryPlanTraverseHelper
       .collectFromUnfoldedPlan(executedPlan) {

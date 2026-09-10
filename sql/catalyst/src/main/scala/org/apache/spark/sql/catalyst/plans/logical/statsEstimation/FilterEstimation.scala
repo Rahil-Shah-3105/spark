@@ -43,6 +43,7 @@ case class FilterEstimation(plan: Filter) extends Logging {
    * @return Option[Statistics] When there is no statistics collected, it returns None.
    */
   def estimate: Option[Statistics] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (childStats.rowCount.isEmpty) return None
 
     // Estimate selectivity of this filter predicate, and update column stats if needed.
@@ -910,6 +911,7 @@ case class ColumnStatsMap(originalMap: AttributeMap[ColumnStat]) {
     } else {
       originalMap.get(a)
     }
+    planChangeLogger.warn("get(a)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", a)
   }
 
   def hasCountStats(a: Attribute): Boolean =
@@ -927,6 +929,7 @@ case class ColumnStatsMap(originalMap: AttributeMap[ColumnStat]) {
    */
   def apply(a: Attribute): ColumnStat = {
     get(a).get
+    planChangeLogger.warn("apply(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   /** Updates column stats in updatedMap. */

@@ -42,6 +42,7 @@ trait ParameterizedQueryExecutor {
    * Executes a parameterized SQL query by parsing and analyzing it with bound parameters.
    *
    * This method handles both parameterized and non-parameterized queries:
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
    * - Parameterized queries: Uses ParameterBindingUtils to bind parameters to markers (? or :name)
    * - Non-parameterized queries: Directly parses and analyzes the SQL text
    *
@@ -70,5 +71,6 @@ trait ParameterizedQueryExecutor {
 
       df.queryExecution.analyzed
     }
+    planChangeLogger.warn("executeParameterizedQuery(queryText,args,paramNames)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", queryText, args, paramNames)
   }
 }

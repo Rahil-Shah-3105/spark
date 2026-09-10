@@ -37,6 +37,7 @@ abstract class BaseProjection extends Projection {}
  * itself based on a new input [[InternalRow]] for a fixed set of [[Expression Expressions]].
  */
 object GenerateSafeProjection extends CodeGenerator[Seq[Expression], Projection] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   protected def canonicalize(in: Seq[Expression]): Seq[Expression] =
     in.map(ExpressionCanonicalizer.execute)
@@ -79,6 +80,7 @@ object GenerateSafeProjection extends CodeGenerator[Seq[Expression], Projection]
          |$allFields
          |final InternalRow $output = new $rowClass($values);
        """.stripMargin
+       planChangeLogger.warn("createCodeForStruct(ctx,input,schema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, input, schema)
 
     ExprCode(code, FalseLiteral, JavaCode.variable(output, classOf[InternalRow]))
   }
@@ -111,6 +113,7 @@ object GenerateSafeProjection extends CodeGenerator[Seq[Expression], Projection]
       }
       final ArrayData $output = new $arrayClass($values);
     """
+    planChangeLogger.warn("createCodeForArray(ctx,input,elementType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, input, elementType)
 
     ExprCode(code, FalseLiteral, JavaCode.variable(output, classOf[ArrayData]))
   }
@@ -132,6 +135,7 @@ object GenerateSafeProjection extends CodeGenerator[Seq[Expression], Projection]
       ${valueConverter.code}
       final MapData $output = new $mapClass(${keyConverter.value}, ${valueConverter.value});
     """
+    planChangeLogger.warn("createCodeForMap(ctx,input,keyType,valueType)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, input, keyType, valueType)
 
     ExprCode(code, FalseLiteral, JavaCode.variable(output, classOf[MapData]))
   }
@@ -151,6 +155,7 @@ object GenerateSafeProjection extends CodeGenerator[Seq[Expression], Projection]
   protected def create(expressions: Seq[Expression]): Projection = {
     val ctx = newCodeGenContext()
     val expressionCodes = expressions.zipWithIndex.map {
+    planChangeLogger.warn("create(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
       case (NoOp, _) => ""
       case (e, i) =>
         val evaluationCode = e.genCode(ctx)

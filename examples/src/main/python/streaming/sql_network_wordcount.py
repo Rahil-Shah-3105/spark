@@ -33,10 +33,12 @@ import datetime
 from pyspark import SparkConf, SparkContext, RDD
 from pyspark.streaming import StreamingContext
 from pyspark.sql import Row, SparkSession
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def getSparkSessionInstance(sparkConf: SparkConf) -> SparkSession:
     if ('sparkSessionSingletonInstance' not in globals()):
+        logger.warning("getSparkSessionInstance(sparkConf)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
         globals()['sparkSessionSingletonInstance'] = SparkSession\
             .builder\
             .config(conf=sparkConf)\
@@ -75,6 +77,7 @@ if __name__ == "__main__":
             # Do word count on table using SQL and print it
             wordCountsDataFrame = \
                 spark.sql("select word, count(*) as total from words group by word")
+            logger.warning("process(time,rdd)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", time, rdd)
             wordCountsDataFrame.show()
         except BaseException:
             pass

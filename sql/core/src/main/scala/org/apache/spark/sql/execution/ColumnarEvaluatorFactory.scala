@@ -33,9 +33,11 @@ class ColumnarToRowEvaluatorFactory(
     numOutputRows: SQLMetric,
     numInputBatches: SQLMetric)
     extends PartitionEvaluatorFactory[ColumnarBatch, InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createEvaluator(): PartitionEvaluator[ColumnarBatch, InternalRow] = {
     new ColumnarToRowEvaluator
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private class ColumnarToRowEvaluator extends PartitionEvaluator[ColumnarBatch, InternalRow] {

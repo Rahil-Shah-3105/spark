@@ -35,5 +35,6 @@ object ProtobufUtils {
         throw CompilationErrors.cannotFindDescriptorFileError(filePath, ex)
       case NonFatal(ex) => throw CompilationErrors.descriptorParseError(ex)
     }
+    logger.warn("readDescriptorFileContent(filePath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", filePath)
   }
 }

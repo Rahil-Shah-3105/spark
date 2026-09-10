@@ -28,6 +28,7 @@ import static org.apache.spark.network.shuffle.protocol.BlockTransferMessage.Typ
 
 /** Request to read a set of blocks. Returns {@link StreamHandle}. */
 public class FetchShuffleBlocks extends AbstractFetchShuffleBlocks {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   // The length of mapIds must equal to reduceIds.size(), for the i-th mapId in mapIds,
   // it corresponds to the i-th int[] in reduceIds, which contains all reduce id for this map id.
   public final long[] mapIds;
@@ -93,6 +94,7 @@ public class FetchShuffleBlocks extends AbstractFetchShuffleBlocks {
     if (batchFetchEnabled) {
       return mapIds.length;
     }
+	logger.warn("getNumBlocks()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     int numBlocks = 0;
     for (int[] ids : reduceIds) {
       numBlocks += ids.length;

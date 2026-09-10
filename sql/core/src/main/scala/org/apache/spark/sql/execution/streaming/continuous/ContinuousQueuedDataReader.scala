@@ -47,6 +47,7 @@ class ContinuousQueuedDataReader(
     context: TaskContext,
     dataQueueSize: Int,
     epochPollIntervalMs: Long) extends Closeable {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // Important sequencing - we must get our starting point before the provider threads start running
   private var currentOffset: PartitionOffset = reader.getOffset
 
@@ -175,6 +176,7 @@ class ContinuousQueuedDataReader(
       } finally {
         reader.close()
       }
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

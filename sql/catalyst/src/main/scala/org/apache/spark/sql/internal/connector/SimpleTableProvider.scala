@@ -29,11 +29,14 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 trait SimpleTableProvider extends TableProvider {
 
   def getTable(options: CaseInsensitiveStringMap): Table
+  planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
 
   private[this] var loadedTable: Table = _
   private def getOrLoadTable(options: CaseInsensitiveStringMap): Table = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (loadedTable == null) loadedTable = getTable(options)
     loadedTable
+    planChangeLogger.warn("getOrLoadTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = {
@@ -47,5 +50,6 @@ trait SimpleTableProvider extends TableProvider {
       properties: util.Map[String, String]): Table = {
     assert(partitioning.isEmpty)
     getOrLoadTable(new CaseInsensitiveStringMap(properties))
+    planChangeLogger.warn("getTable(schema,partitioning,properties)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, partitioning, properties)
   }
 }

@@ -44,6 +44,7 @@ case class TextPartitionReaderFactory(
     readDataSchema: StructType,
     partitionSchema: StructType,
     options: TextOptions) extends FilePartitionReaderFactory {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
     val confValue = broadcastedConf.value.value
@@ -68,6 +69,7 @@ case class TextPartitionReaderFactory(
         unsafeRowWriter.getRow()
       }
     }
+    planChangeLogger.warn("buildReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
     val fileReader = new PartitionReaderFromIterator[InternalRow](iter)
     new PartitionReaderWithPartitionValues(fileReader, readDataSchema,
       partitionSchema, file.partitionValues)

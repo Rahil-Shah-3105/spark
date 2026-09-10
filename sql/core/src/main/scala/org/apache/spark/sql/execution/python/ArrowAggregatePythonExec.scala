@@ -98,6 +98,7 @@ case class ArrowAggregatePythonExec(
 
   private def collectFunctions(
       udf: PythonFuncExpression): ((ChainedPythonFunctions, Long), Seq[Expression]) = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     udf.children match {
       case Seq(u: PythonFuncExpression) =>
         val ((chained, _), children) = collectFunctions(u)
@@ -153,6 +154,7 @@ case class ArrowAggregatePythonExec(
           session.sessionUUID
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", jobArtifactUUID)
 
     // Map grouped rows to ArrowPythonRunner results, Only execute if partition is not empty
     inputRDD.mapPartitionsInternal { iter => if (iter.isEmpty) iter else {
@@ -260,5 +262,6 @@ object ArrowAggregatePythonExec {
       "All aggregate functions must have the same eval type in ArrowAggregatePythonExec")
     new ArrowAggregatePythonExec(
       groupingExpressions, aggExpressions, resultExpressions, child, evalTypes.head)
+    planChangeLogger.warn("apply(groupingExpressions,aggExpressions,resultExpressions,child)=<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", aggExpressions, resultExpressions, child, resultExpressions)
   }
 }

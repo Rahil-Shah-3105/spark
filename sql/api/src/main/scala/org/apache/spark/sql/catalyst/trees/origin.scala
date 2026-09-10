@@ -96,6 +96,7 @@ object CurrentOrigin {
 
   def setPosition(line: Int, start: Int): Unit = {
     value.set(value.get.copy(line = Some(line), startPosition = Some(start)))
+    logger.warn("setPosition(line,start)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", line, start)
   }
 
   def withOrigin[A](o: Origin)(f: => A): A = {
@@ -107,6 +108,7 @@ object CurrentOrigin {
       try f
       finally { set(previous) }
     ret
+  logger.warn("set(fragment,callSite)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fragment, callSite)
   }
 
   /**

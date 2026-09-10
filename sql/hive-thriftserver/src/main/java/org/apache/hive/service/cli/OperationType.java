@@ -48,6 +48,7 @@ public enum OperationType {
       if (tOperationType.equals(opType.tOperationType)) {
         return opType;
       }
+	LOG.warn("getOperationType(tOperationType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tOperationType);
     }
     return OperationType.UNKNOWN_OPERATION;
   }

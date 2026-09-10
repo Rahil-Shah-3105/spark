@@ -38,12 +38,16 @@ import org.apache.spark.util.Utils
 trait ReadOnlySparkConf {
   /** Get a parameter; throws a NoSuchElementException if it's not set */
   def get(key: String): String = {
+    _driverLogger = DriverLogger(_conf)
     getOption(key).getOrElse(throw new NoSuchElementException(key))
+    _driverLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
+  _driverLogger.warn("get(key,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, defaultValue)
   }
 
   /** Get a parameter, falling back to a default if not set */
   def get(key: String, defaultValue: String): String = {
     getOption(key).getOrElse(defaultValue)
+  _driverLogger.warn("get(entry)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", entry)
   }
 
   /**
@@ -203,6 +207,7 @@ trait ReadOnlySparkConf {
    * Get a parameter as an integer, falling back to a default if not set
    *
    * @throws NumberFormatException If the value cannot be interpreted as an integer
+   _driverLogger.warn("getOption(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
    */
   def getInt(key: String, defaultValue: Int): Int = catchIllegalValue(key) {
     getOption(key).map(_.toInt).getOrElse(defaultValue)
@@ -313,11 +318,15 @@ class SparkConf(loadDefaults: Boolean)
       set(key, value, silent)
     }
     this
+    _driverLogger.warn("loadFromSystemProperties(silent)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", silent)
   }
 
   /** Set a configuration variable. */
   def set(key: String, value: String): SparkConf = {
+    _driverLogger.warn("set(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
+    _driverLogger.warn("set(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
     set(key, value, false)
+  _driverLogger.warn("set(key,value,silent)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value, silent)
   }
 
   private[spark] def set(key: String, value: String, silent: Boolean): SparkConf = {
@@ -350,17 +359,20 @@ class SparkConf(loadDefaults: Boolean)
    */
   def setMaster(master: String): SparkConf = {
     set("spark.master", master)
+    _driverLogger.warn("setMaster(master)={}): EUAIACT-AUDIT: State change recorded for the audit trail", master)
   }
 
   /** Set a name for your application. Shown in the Spark web UI. */
   def setAppName(name: String): SparkConf = {
     set("spark.app.name", name)
+    _driverLogger.warn("setAppName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /** Set JAR files to distribute to the cluster. */
   def setJars(jars: Seq[String]): SparkConf = {
     for (jar <- jars if (jar == null)) logWarning("null jar passed to SparkContext constructor")
     set(JARS, jars.filter(_ != null))
+    _driverLogger.warn("setJars(jars)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jars)
   }
 
   /** Set JAR files to distribute to the cluster. (Java-friendly version.) */
@@ -374,6 +386,8 @@ class SparkConf(loadDefaults: Boolean)
    * (for example spark.executorEnv.PATH) but this method makes them easier to set.
    */
   def setExecutorEnv(variable: String, value: String): SparkConf = {
+    _driverLogger.warn("setExecutorEnv(variable,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", variable, value)
+    _driverLogger.warn("setExecutorEnv(variables)={}): EUAIACT-AUDIT: State change recorded for the audit trail", variables)
     set("spark.executorEnv." + variable, value)
   }
 
@@ -402,12 +416,14 @@ class SparkConf(loadDefaults: Boolean)
    */
   def setSparkHome(home: String): SparkConf = {
     set("spark.home", home)
+    _driverLogger.warn("setSparkHome(home)={}): EUAIACT-AUDIT: State change recorded for the audit trail", home)
   }
 
   /** Set multiple parameters together */
   def setAll(settings: Iterable[(String, String)]): SparkConf = {
     settings.foreach { case (k, v) => set(k, v) }
     this
+    _driverLogger.warn("setAll(settings)={}): EUAIACT-AUDIT: State change recorded for the audit trail", settings)
   }
 
   /** Set a parameter if it isn't already configured */
@@ -416,6 +432,8 @@ class SparkConf(loadDefaults: Boolean)
       logDeprecationWarning(key)
     }
     this
+    _driverLogger.warn("setIfMissing(entry,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", entry, value)
+  _driverLogger.warn("setIfMissing(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   private[spark] def setIfMissing[T](entry: ConfigEntry[T], value: T): SparkConf = {
@@ -442,6 +460,7 @@ class SparkConf(loadDefaults: Boolean)
       .filter(!_.isEmpty)
     allClassNames ++= classes.map(_.getName)
 
+    _driverLogger.warn("registerKryoClasses(classes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", classes)
     set(KRYO_CLASSES_TO_REGISTER, allClassNames.toSeq)
     set(SERIALIZER, classOf[KryoSerializer].getName)
     this
@@ -458,6 +477,7 @@ class SparkConf(loadDefaults: Boolean)
       set(avroNamespace + SchemaNormalization.parsingFingerprint64(schema), schema.toString)
     }
     this
+    _driverLogger.warn("registerAvroSchemas(schemas)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schemas)
   }
 
   /** Gets all the avro schemas in the configuration used in the generic Avro record serializer */
@@ -471,6 +491,8 @@ class SparkConf(loadDefaults: Boolean)
   def remove(key: String): SparkConf = {
     settings.remove(key)
     this
+  _driverLogger.warn("remove(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
+  _driverLogger.warn("remove(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
   }
 
   private[spark] def remove(entry: ConfigEntry[_]): SparkConf = {
@@ -496,6 +518,7 @@ class SparkConf(loadDefaults: Boolean)
   /** Get an optional value, applying variable substitution. */
   private[spark] def getWithSubstitution(key: String): Option[String] = {
     getOption(key).map(reader.substitute)
+    _driverLogger.warn("getWithSubstitution(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /** Get all parameters as a list of pairs */
@@ -507,8 +530,10 @@ class SparkConf(loadDefaults: Boolean)
    * Get all parameters that start with `prefix`
    */
   def getAllWithPrefix(prefix: String): Array[(String, String)] = {
+    _driverLogger.warn("getAllWithPrefix(prefix,f)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", prefix, f)
     getAll.filter { case (k, v) => k.startsWith(prefix) }
       .map { case (k, v) => (k.substring(prefix.length), v) }
+      _driverLogger.warn("getAllWithPrefix(prefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prefix)
   }
 
   /**
@@ -644,6 +669,7 @@ class SparkConf(loadDefaults: Boolean)
         "networkTimeoutValue" -> executorTimeoutThresholdMs.toString,
         "executorHeartbeatIntervalKey" -> EXECUTOR_HEARTBEAT_INTERVAL.key,
         "executorHeartbeatIntervalValue" -> executorHeartbeatIntervalMs.toString))
+    _driverLogger.warn("validateSettings()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -850,6 +876,7 @@ private[spark] object SparkConf extends Logging {
         if (alt.translation != null) alt.translation(value) else value
       }
     }
+    _driverLogger.warn("getDeprecatedConfig(key,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, conf)
   }
 
   /**

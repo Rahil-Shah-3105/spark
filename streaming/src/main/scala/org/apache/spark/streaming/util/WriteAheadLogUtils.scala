@@ -31,6 +31,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
 
   def enableReceiverLog(conf: SparkConf): Boolean = {
     conf.get(RECEIVER_WAL_ENABLE_CONF_KEY)
+    logger.warn("enableReceiverLog(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   def getRollingIntervalSecs(conf: SparkConf, isDriver: Boolean): Int = {
@@ -39,6 +40,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
     } else {
       conf.get(RECEIVER_WAL_ROLLING_INTERVAL_CONF_KEY)
     }
+    logger.warn("getRollingIntervalSecs(conf,isDriver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, isDriver)
   }
 
   def getMaxFailures(conf: SparkConf, isDriver: Boolean): Int = {
@@ -47,10 +49,12 @@ private[streaming] object WriteAheadLogUtils extends Logging {
     } else {
       conf.get(RECEIVER_WAL_MAX_FAILURES_CONF_KEY)
     }
+    logger.warn("getMaxFailures(conf,isDriver)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, isDriver)
   }
 
   def isBatchingEnabled(conf: SparkConf, isDriver: Boolean): Boolean = {
     isDriver && conf.get(DRIVER_WAL_BATCHING_CONF_KEY)
+    logger.warn("isBatchingEnabled(conf,isDriver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isDriver)
   }
 
   /**
@@ -59,6 +63,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
    */
   def getBatchingTimeout(conf: SparkConf): Long = {
     conf.get(DRIVER_WAL_BATCHING_TIMEOUT_CONF_KEY)
+    logger.warn("getBatchingTimeout(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   def shouldCloseFileAfterWrite(conf: SparkConf, isDriver: Boolean): Boolean = {
@@ -67,6 +72,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
     } else {
       conf.get(RECEIVER_WAL_CLOSE_AFTER_WRITE_CONF_KEY)
     }
+    logger.warn("shouldCloseFileAfterWrite(conf,isDriver)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, isDriver)
   }
 
   /**
@@ -79,6 +85,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
       fileWalHadoopConf: Configuration
     ): WriteAheadLog = {
     createLog(true, sparkConf, fileWalLogDirectory, fileWalHadoopConf)
+    logger.warn("createLogForDriver(sparkConf,fileWalLogDirectory,fileWalHadoopConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, fileWalLogDirectory, fileWalHadoopConf)
   }
 
   /**
@@ -91,6 +98,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
       fileWalHadoopConf: Configuration
     ): WriteAheadLog = {
     createLog(false, sparkConf, fileWalLogDirectory, fileWalHadoopConf)
+    logger.warn("createLogForReceiver(sparkConf,fileWalLogDirectory,fileWalHadoopConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf, fileWalLogDirectory, fileWalHadoopConf)
   }
 
   /**
@@ -107,6 +115,7 @@ private[streaming] object WriteAheadLogUtils extends Logging {
       fileWalHadoopConf: Configuration
     ): WriteAheadLog = {
 
+     logger.warn("createLog(isDriver,sparkConf,fileWalLogDirectory,fileWalHadoopConf)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", isDriver, sparkConf, fileWalLogDirectory, fileWalHadoopConf)
     val classNameOption = if (isDriver) {
       sparkConf.get(DRIVER_WAL_CLASS_CONF_KEY)
     } else {

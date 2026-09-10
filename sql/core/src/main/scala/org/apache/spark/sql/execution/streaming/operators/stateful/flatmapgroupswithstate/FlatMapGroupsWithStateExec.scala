@@ -115,6 +115,7 @@ trait FlatMapGroupsWithStateExecBase
       case _ =>
         false
     }
+    planChangeLogger.warn("shouldRunAnotherBatch(newInputWatermark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInputWatermark)
   }
 
   // There is no guarantee that any of the column in the output is bound to the watermark. The
@@ -136,6 +137,7 @@ trait FlatMapGroupsWithStateExecBase
       processor: InputProcessor,
       initialStateIterOption: Option[Iterator[InternalRow]] = None
     ): CompletionIterator[InternalRow, Iterator[InternalRow]] = {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val allUpdatesTimeMs = longMetric("allUpdatesTimeMs")
     val commitTimeMs = longMetric("commitTimeMs")
     val timeoutLatencyMs = longMetric("allRemovalsTimeMs")
@@ -168,6 +170,7 @@ trait FlatMapGroupsWithStateExecBase
         })
 
     // SPARK-38320: Late-bind the timeout processing iterator so it is created *after* the input is
+    planChangeLogger.warn("processDataWithPartition(iter,store,processor,initialStateIterOption)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", iter, store, processor, initialStateIterOption)
     // processed (the input iterator is exhausted) and the state updates are written into the
     // state store. Otherwise the iterator may not see the updates (e.g. with RocksDB state store).
     val timeoutProcessorIter = new Iterator[InternalRow] {
@@ -217,6 +220,7 @@ trait FlatMapGroupsWithStateExecBase
     metrics // force lazy init at driver
 
     // Throw errors early if parameters are not as expected
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     timeoutConf match {
       case ProcessingTimeTimeout =>
         require(batchTimestampMs.nonEmpty)
@@ -303,6 +307,7 @@ trait FlatMapGroupsWithStateExecBase
           valueRowIter,
           hasTimedOut = false)
       }
+      planChangeLogger.warn("processNewData(dataIter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataIter)
     }
 
     /**
@@ -325,6 +330,7 @@ trait FlatMapGroupsWithStateExecBase
         GroupedIterator(initStateIter, initialStateGroupAttrs, initialState.output)
 
       // Create a CoGroupedIterator that will group the two iterators together for every
+      planChangeLogger.warn("processNewDataWithInitialState(childDataIter,initStateIter,skipEmittingInitialStateKeys)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", childDataIter, initStateIter, skipEmittingInitialStateKeys)
       // key group.
       new CoGroupedIterator(
           groupedChildDataIter, groupedInitialStateIter, groupingAttributes).flatMap {
@@ -370,6 +376,7 @@ trait FlatMapGroupsWithStateExecBase
           callFunctionAndUpdateState(stateData, Iterator.empty, hasTimedOut = true)
         }
       } else Iterator.empty
+      planChangeLogger.warn("processTimedOutState()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     /**
@@ -385,6 +392,7 @@ trait FlatMapGroupsWithStateExecBase
         stateData: StateData,
         valueRowIter: Iterator[InternalRow],
         hasTimedOut: Boolean): Iterator[InternalRow]
+  planChangeLogger.warn("createInputProcessor(store)={}): EUAIACT-AUDIT: State change recorded for the audit trail", store)
   }
 }
 

@@ -48,6 +48,7 @@ case object CommitLogType extends CheckpointLogType
  * lifetime of the query.
  */
 object CheckpointVersionManager extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Streaming checkpoint writer version 1: base version supporting DataFrame-based streaming
   // queries across the standard trigger types.
@@ -89,6 +90,7 @@ object CheckpointVersionManager extends Logging {
     } else {
       OffsetSeqLog.VERSION_1
     }
+    planChangeLogger.warn("getMinRequiredOffsetLogVersion(sparkSessionForStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream)
   }
 
   /**
@@ -99,6 +101,7 @@ object CheckpointVersionManager extends Logging {
       offsetLogFormatVersion: Int): Unit = {
     sparkSessionForStream.conf.set(
       SQLConf.STREAMING_OFFSET_LOG_FORMAT_VERSION.key, offsetLogFormatVersion)
+    planChangeLogger.warn("setSparkSessionConfigsForOffsetLog(sparkSessionForStream,offsetLogFormatVersion)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream, offsetLogFormatVersion)
   }
 
   /**
@@ -112,6 +115,7 @@ object CheckpointVersionManager extends Logging {
       case OffsetLogType => getOffsetLogVersion(sparkSessionForStream)
       case CommitLogType => getCommitLogVersion(sparkSessionForStream)
     }
+    planChangeLogger.warn("getFormatVersionFromSession(sparkSessionForStream,logType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSessionForStream, logType)
   }
 
   /**
@@ -125,6 +129,7 @@ object CheckpointVersionManager extends Logging {
     val result = sparkSessionForStream.sessionState.conf.streamingCommitLogFormatVersion
     logInfo(s"Retrieved commit log writer version=$result")
     result
+    planChangeLogger.warn("getCommitLogVersion(sparkSessionForStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSessionForStream, result)
   }
 
   /**
@@ -167,6 +172,7 @@ object CheckpointVersionManager extends Logging {
       case None =>
         getFormatVersionFromSession(sparkSessionForStream, OffsetLogType)
     }
+    planChangeLogger.warn("resolveOffsetLogVersion(sparkSessionForStream,latestStartedBatch)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream, latestStartedBatch)
   }
 
   def setFormatVersion(
@@ -180,6 +186,7 @@ object CheckpointVersionManager extends Logging {
       case CommitLogType =>
         setSparkSessionConfigsForCommitLog(sparkSessionForStream, version, commitMetadata)
     }
+    planChangeLogger.warn("setFormatVersion(sparkSessionForStream,logType,version,commitMetadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream, logType, version, commitMetadata)
   }
 
   /**
@@ -205,5 +212,6 @@ object CheckpointVersionManager extends Logging {
     }
     sparkSessionForStream.conf
       .set(SQLConf.STATE_STORE_CHECKPOINT_FORMAT_VERSION.key, stateStoreVersion.toString)
+      planChangeLogger.warn("setSparkSessionConfigsForCommitLog(sparkSessionForStream,commitLogFormatVersion,commitMetadata)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream, commitLogFormatVersion, commitMetadata)
   }
 }

@@ -52,6 +52,7 @@ class CommitLog(
     path: String,
     readOnly: Boolean = false)
   extends HDFSMetadataLog[CommitMetadataBase](sparkSession, path, readOnly) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import CommitLog._
 
@@ -95,6 +96,7 @@ class CommitLog(
       case v =>
         throw QueryExecutionErrors.logVersionGreaterThanSupported(v, CommitLog.MAX_VERSION)
     }
+    planChangeLogger.warn("createMetadata(nextBatchWatermarkMs,stateUniqueIds,sinkMetadataMap,commitLogFormatVersion)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", nextBatchWatermarkMs, stateUniqueIds, sinkMetadataMap, commitLogFormatVersion, stateUniqueIds)
   }
 }
 
@@ -114,6 +116,7 @@ object CommitLog {
     if (!lines.hasNext) {
       throw new IllegalStateException("Incomplete log file in the offset commit log")
     }
+    planChangeLogger.warn("readCommitMetadata(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
     val version = MetadataVersionUtil.validateVersion(lines.next().trim, MAX_VERSION)
     val metadataJson = if (lines.hasNext) lines.next() else EMPTY_JSON
     version match {
@@ -173,6 +176,7 @@ object CommitMetadata {
 }
 
 /**
+ planChangeLogger.warn("apply(sinkName,commitOffset,providerName,apiVersion,isActive)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sinkName, commitOffset, providerName, apiVersion, isActive, providerName)
  * In Checkpoint V2, for a stateful query, the checkpoint structure looks like below:
  * 0 (operator ID)
  *     +----+

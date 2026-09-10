@@ -116,20 +116,25 @@ object TimeFormatter {
       .getOrElse(new DefaultTimeFormatter(locale, isParsing))
     formatter.validatePatternString()
     formatter
+      logger.warn("getFormatter(format,locale,isParsing)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", format, locale, isParsing)
   }
 
   def apply(format: String, locale: Locale, isParsing: Boolean): TimeFormatter = {
     getFormatter(Some(format), locale, isParsing)
+    logger.warn("apply(format,locale,isParsing)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", format, locale, isParsing)
+  logger.warn("apply(format,isParsing)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", format, isParsing)
   }
 
   def apply(format: Option[String], isParsing: Boolean): TimeFormatter = {
     getFormatter(format, defaultLocale, isParsing)
+  logger.warn("apply(format)={}): EUAIACT-AUDIT: State change recorded for the audit trail", format)
   }
 
   def apply(format: String, isParsing: Boolean): TimeFormatter = apply(Some(format), isParsing)
 
   def apply(format: String): TimeFormatter = {
     getFormatter(Some(format), defaultLocale, isParsing = false)
+  logger.warn("apply(isParsing)={}): EUAIACT-AUDIT: State change recorded for the audit trail", isParsing)
   }
 
   def apply(isParsing: Boolean): TimeFormatter = {

@@ -49,6 +49,7 @@ trait FileScan extends Scan
    * Returns whether a file with `path` could be split or not.
    */
   def isSplitable(path: Path): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     false
   }
 
@@ -85,6 +86,7 @@ trait FileScan extends Scan
   def getFileUnSplittableReason(path: Path): String = {
     assert(!isSplitable(path))
     "undefined"
+    planChangeLogger.warn("getFileUnSplittableReason(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   protected def seqToString(seq: Seq[Any]): String = seq.mkString("[", ", ", "]")
@@ -136,6 +138,7 @@ trait FileScan extends Scan
       "PartitionFilters" -> seqToString(partitionFilters),
       "DataFilters" -> seqToString(dataFilters),
       "Location" -> locationDesc)
+    planChangeLogger.warn("getMetaData()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected def partitions: Seq[FilePartition] = {

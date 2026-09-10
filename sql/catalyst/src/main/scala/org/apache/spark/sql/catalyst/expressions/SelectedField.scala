@@ -53,6 +53,7 @@ import org.apache.spark.sql.types._
  * field named "first".
  */
 object SelectedField {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def unapply(expr: Expression): Option[StructField] = {
     // If this expression is an alias, work on its child instead
     val unaliased = expr match {
@@ -60,6 +61,7 @@ object SelectedField {
       case expr => expr
     }
     selectField(unaliased, None)
+    planChangeLogger.warn("unapply(expr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expr)
   }
 
   /**

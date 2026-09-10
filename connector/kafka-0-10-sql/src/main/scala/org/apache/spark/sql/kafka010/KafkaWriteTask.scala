@@ -53,6 +53,7 @@ private[kafka010] class KafkaWriteTask(
       val currentRow = iterator.next()
       sendRow(currentRow, internalProducer)
     }
+    logger.warn("execute(iterator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iterator)
   }
 
   def close(): Unit = {

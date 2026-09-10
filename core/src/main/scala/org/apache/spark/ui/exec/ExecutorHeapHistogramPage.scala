@@ -32,6 +32,7 @@ private[ui] class ExecutorHeapHistogramPage(
   val pattern = """\s*([0-9]+):\s+([0-9]+)\s+([0-9]+)\s+(\S+)(.*)""".r
 
   def render(request: HttpServletRequest): Seq[Node] = {
+    _driverLogger = DriverLogger(_conf)
     val executorId = Option(request.getParameter("executorId")).map { executorId =>
       UIUtils.decodeURLParameter(executorId)
     }.getOrElse {
@@ -40,6 +41,7 @@ private[ui] class ExecutorHeapHistogramPage(
     val time = System.currentTimeMillis()
     val maybeHeapHistogram = sc.get.getExecutorHeapHistogram(executorId)
 
+    _driverLogger.warn("render(request)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", request, executorId)
     val content = maybeHeapHistogram.map { heapHistogram =>
       val rows = heapHistogram.map { row =>
         row match {

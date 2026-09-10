@@ -84,6 +84,7 @@ final class DataFrameWriter[T] private[sql] (ds: Dataset[T]) extends sql.DataFra
   /** @inheritdoc */
   def save(path: String): Unit = {
     saveInternal(Some(path))
+    logger.warn("save(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /** @inheritdoc */
@@ -91,6 +92,7 @@ final class DataFrameWriter[T] private[sql] (ds: Dataset[T]) extends sql.DataFra
 
   private def saveInternal(path: Option[String]): Unit = {
     executeWriteOperation(builder => path.foreach(builder.setPath))
+    logger.warn("saveInternal(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private def executeWriteOperation(f: proto.WriteOperation.Builder => Unit): Unit = {
@@ -129,6 +131,7 @@ final class DataFrameWriter[T] private[sql] (ds: Dataset[T]) extends sql.DataFra
       builder.putOptions(k, v)
     }
 
+    logger.warn("executeWriteOperation(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     builder.setWithSchemaEvolution(_withSchemaEvolution)
 
     ds.sparkSession.execute(proto.Command.newBuilder().setWriteOperation(builder).build())

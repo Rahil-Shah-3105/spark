@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -21,6 +22,7 @@
 
 $(document).ready(function() {
   var annotations = $("dt:contains('Annotations')").next("dd").children("span.name");
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   addBadges(annotations, "AlphaComponent", ":: AlphaComponent ::", '<span class="alphaComponent badge">Alpha Component</span>');
   addBadges(annotations, "DeveloperApi", ":: DeveloperApi ::", '<span class="developer badge">Developer API</span>');
   addBadges(annotations, "Experimental", ":: Experimental ::", '<span class="experimental badge">Experimental</span>');
@@ -42,6 +44,7 @@ function addBadges(allAnnotations, name, tag, html) {
     .add(annotations.closest("div.fullcommenttop"))
     .add(annotations.closest("div.fullcomment").prevAll("h4.signature"))
     .prepend(html);
+	logger.warn(`addBadges(allAnnotations,name,tag,html)=${allAnnotations},${name},${tag},${html}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 $(document).ready(function() {

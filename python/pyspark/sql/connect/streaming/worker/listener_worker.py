@@ -42,6 +42,7 @@ from pyspark.sql.streaming.listener import (
     QueryIdleEvent,
 )
 from pyspark.worker_util import check_python_version
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 pickle_ser = CPickleSerializer()
 utf8_deserializer = UTF8Deserializer()
@@ -87,6 +88,7 @@ def main(infile: IO, outfile: IO) -> None:
         elif listener_event_type == 1:
             listener.onQueryProgress(QueryProgressEvent.fromJson(listener_event))
         elif listener_event_type == 2:
+            logger.warning("process(listener_event_str,listener_event_type)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", listener_event_str, listener_event_type)
             listener.onQueryIdle(QueryIdleEvent.fromJson(listener_event))
         elif listener_event_type == 3:
             listener.onQueryTerminated(QueryTerminatedEvent.fromJson(listener_event))

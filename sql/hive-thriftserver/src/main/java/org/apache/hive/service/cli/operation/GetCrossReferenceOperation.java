@@ -37,6 +37,7 @@ import java.util.List;
  *
  */
 public class GetCrossReferenceOperation extends MetadataOperation {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(GetCrossReferenceOperation.class);
   /**
   PKTABLE_CAT String => parent key table catalog (may be null)
   PKTABLE_SCHEM String => parent key table schema (may be null)
@@ -158,6 +159,7 @@ public class GetCrossReferenceOperation extends MetadataOperation {
       setState(OperationState.FINISHED);
     } catch (Exception e) {
       setState(OperationState.ERROR);
+	LOG.warn("runInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       throw new HiveSQLException(e);
     }
   }
@@ -178,6 +180,7 @@ public class GetCrossReferenceOperation extends MetadataOperation {
   @Override
   public TRowSet getNextRowSet(FetchOrientation orientation, long maxRows) throws HiveSQLException {
     assertState(OperationState.FINISHED);
+	LOG.warn("getNextRowSet(orientation,maxRows)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", orientation, maxRows);
     validateDefaultFetchOrientation(orientation);
     if (orientation.equals(FetchOrientation.FETCH_FIRST)) {
       rowSet.setStartOffset(0);

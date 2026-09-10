@@ -38,6 +38,7 @@ import org.apache.spark.sql.errors.QueryErrorsBase
  * `orderExpression`, and expands `USING` column lists into equi-join predicates.
  */
 object ResolveAsOfJoin extends Rule[LogicalPlan] with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsUpWithPruning(
     _.containsPattern(AS_OF_JOIN), ruleId) {
@@ -202,6 +203,7 @@ private[analysis] object AsOfJoinValidation extends QueryErrorsBase {
         join.failAnalysis(
           errorClass = "ASOF_JOIN_MATCH_CONDITION_INVALID_EXPRESSION",
           messageParameters = Map("expr" -> toSQLExpr(invalidExpr)))
+      planChangeLogger.warn("findInvalidMatchConditionExpression(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
       }
     }
     if (!MatchConditionTypes.isValidOperandType(leftExpr.dataType) ||

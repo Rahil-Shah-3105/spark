@@ -64,6 +64,7 @@ private[spark] class SparkUI private (
       override def doGet(req: HttpServletRequest, res: HttpServletResponse): Unit = {
         res.setContentType("text/html;charset=utf-8")
         res.getWriter.write("Spark is starting up. Please wait a while until it's ready.")
+        _driverLogger.warn("doGet(req,res)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", req, res)
       }
     }
     createServletHandler("/", servlet, basePath)
@@ -75,6 +76,7 @@ private[spark] class SparkUI private (
    * Attach all existing handlers to ServerInfo.
    */
   def attachAllHandlers(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // Attach all handlers that have been added already, but not yet attached.
     serverInfo.foreach { server =>
       server.removeHandler(initHandler)
@@ -141,6 +143,7 @@ private[spark] class SparkUI private (
 
   def setAppId(id: String): Unit = {
     appId = id
+    _driverLogger.warn("setAppId(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   /**
@@ -178,6 +181,7 @@ private[spark] class SparkUI private (
   override def checkUIViewPermissions(appId: String, attemptId: Option[String],
       user: String): Boolean = {
     securityManager.checkUIViewPermissions(user)
+    _driverLogger.warn("checkUIViewPermissions(appId,attemptId,user)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, user, appId)
   }
 
   def getApplicationInfoList: Iterator[ApplicationInfo] = {
@@ -199,6 +203,7 @@ private[spark] class SparkUI private (
         appSparkVersion = appSparkVersion
       ))
     ))
+  _driverLogger.warn("getApplicationInfoList(max)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", max)
   }
 
   override def getApplicationInfoList(max: Int)(
@@ -208,16 +213,19 @@ private[spark] class SparkUI private (
 
   def getApplicationInfo(appId: String): Option[ApplicationInfo] = {
     getApplicationInfoList.find(_.id == appId)
+    _driverLogger.warn("getApplicationInfo(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId)
   }
 
   def getStreamingJobProgressListener: Option[SparkListener] = streamingJobProgressListener
 
   def setStreamingJobProgressListener(sparkListener: SparkListener): Unit = {
     streamingJobProgressListener = Option(sparkListener)
+    _driverLogger.warn("setStreamingJobProgressListener(sparkListener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkListener)
   }
 
   def clearStreamingJobProgressListener(): Unit = {
     streamingJobProgressListener = None
+    _driverLogger.warn("clearStreamingJobProgressListener()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -245,6 +253,7 @@ private[spark] object SparkUI {
 
   def getUIPort(conf: SparkConf): Int = {
     conf.get(UI_PORT)
+    _driverLogger.warn("getUIPort(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**
@@ -261,6 +270,7 @@ private[spark] object SparkUI {
       appSparkVersion: String = org.apache.spark.SPARK_VERSION): SparkUI = {
 
     new SparkUI(store, sc, conf, securityManager, appName, basePath, startTime, appSparkVersion)
+    _driverLogger.warn("create(sc,store,conf,securityManager,appName,basePath,startTime,appSparkVersion)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, store, conf, securityManager, appName, basePath, startTime, appSparkVersion)
   }
 
 }

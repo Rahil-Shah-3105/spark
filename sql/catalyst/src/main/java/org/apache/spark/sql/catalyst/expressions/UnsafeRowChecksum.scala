@@ -29,6 +29,7 @@ import org.apache.spark.shuffle.checksum.RowBasedChecksum
  * IDs for sending the data, and they are the same for all rows in the same partition.
  */
 class UnsafeRowChecksum extends RowBasedChecksum() {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override protected def calculateRowChecksum(key: Any, value: Any): Long = {
     assert(
@@ -49,5 +50,6 @@ class UnsafeRowChecksum extends RowBasedChecksum() {
 object UnsafeRowChecksum {
   def createUnsafeRowChecksums(numPartitions: Int): Array[RowBasedChecksum] = {
     Array.tabulate(numPartitions)(_ => new UnsafeRowChecksum())
+    planChangeLogger.warn("createUnsafeRowChecksums(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
   }
 }

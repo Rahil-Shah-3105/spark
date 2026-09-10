@@ -40,10 +40,12 @@ class StreamStreamJoinStatePartitionReaderFactory(
     userFacingSchema: StructType,
     stateSchema: StructType,
     joinStateFormatVersion: Option[Int] = None) extends PartitionReaderFactory {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def createReader(partition: InputPartition): PartitionReader[InternalRow] = {
     new StreamStreamJoinStatePartitionReader(storeConf, hadoopConf,
       partition.asInstanceOf[StateStoreInputPartition], userFacingSchema, stateSchema,
       joinStateFormatVersion)
+    planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
   }
 }
 

@@ -26,11 +26,13 @@ import org.apache.spark.sql.streaming.{StatefulProcessorHandle, TimeMode}
 
 abstract class StatefulProcessorHandleImplBase(
     timeMode: TimeMode, keyExprEnc: ExpressionEncoder[Any]) extends StatefulProcessorHandle {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   protected var currState: StatefulProcessorHandleState = PRE_INIT
 
   def setHandleState(newState: StatefulProcessorHandleState): Unit = {
     currState = newState
+    planChangeLogger.warn("setHandleState(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState)
   }
 
   def getHandleState: StatefulProcessorHandleState = currState

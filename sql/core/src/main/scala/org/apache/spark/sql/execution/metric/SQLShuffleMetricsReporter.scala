@@ -30,6 +30,7 @@ import org.apache.spark.shuffle.ShuffleWriteMetricsReporter
 class SQLShuffleReadMetricsReporter(
     tempMetrics: TempShuffleReadMetrics,
     metrics: Map[String, SQLMetric]) extends TempShuffleReadMetrics {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private[this] val _remoteBlocksFetched =
     metrics(SQLShuffleReadMetricsReporter.REMOTE_BLOCKS_FETCHED)
   private[this] val _localBlocksFetched =
@@ -68,30 +69,37 @@ class SQLShuffleReadMetricsReporter(
   override def incRemoteBlocksFetched(v: Long): Unit = {
     _remoteBlocksFetched.add(v)
     tempMetrics.incRemoteBlocksFetched(v)
+    planChangeLogger.warn("incRemoteBlocksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incLocalBlocksFetched(v: Long): Unit = {
     _localBlocksFetched.add(v)
     tempMetrics.incLocalBlocksFetched(v)
+    planChangeLogger.warn("incLocalBlocksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteBytesRead(v: Long): Unit = {
     _remoteBytesRead.add(v)
     tempMetrics.incRemoteBytesRead(v)
+    planChangeLogger.warn("incRemoteBytesRead(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteBytesReadToDisk(v: Long): Unit = {
     _remoteBytesReadToDisk.add(v)
     tempMetrics.incRemoteBytesReadToDisk(v)
+    planChangeLogger.warn("incRemoteBytesReadToDisk(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incLocalBytesRead(v: Long): Unit = {
     _localBytesRead.add(v)
     tempMetrics.incLocalBytesRead(v)
+    planChangeLogger.warn("incLocalBytesRead(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incFetchWaitTime(v: Long): Unit = {
     _fetchWaitTime.add(v)
     tempMetrics.incFetchWaitTime(v)
+    planChangeLogger.warn("incFetchWaitTime(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRecordsRead(v: Long): Unit = {
     _recordsRead.add(v)
     tempMetrics.incRecordsRead(v)
+    planChangeLogger.warn("incRecordsRead(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incCorruptMergedBlockChunks(v: Long): Unit = {
     _corruptMergedBlockChunks.add(v)
@@ -100,30 +108,37 @@ class SQLShuffleReadMetricsReporter(
   override def incMergedFetchFallbackCount(v: Long): Unit = {
     _mergedFetchFallbackCount.add(v)
     tempMetrics.incMergedFetchFallbackCount(v)
+    planChangeLogger.warn("incMergedFetchFallbackCount(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteMergedBlocksFetched(v: Long): Unit = {
     _remoteMergedBlocksFetched.add(v)
     tempMetrics.incRemoteMergedBlocksFetched(v)
+    planChangeLogger.warn("incRemoteMergedBlocksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incLocalMergedBlocksFetched(v: Long): Unit = {
     _localMergedBlocksFetched.add(v)
     tempMetrics.incLocalMergedBlocksFetched(v)
+    planChangeLogger.warn("incLocalMergedBlocksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteMergedChunksFetched(v: Long): Unit = {
     _remoteMergedChunksFetched.add(v)
     tempMetrics.incRemoteMergedChunksFetched(v)
+    planChangeLogger.warn("incRemoteMergedChunksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incLocalMergedChunksFetched(v: Long): Unit = {
     _localMergedChunksFetched.add(v)
     tempMetrics.incLocalMergedChunksFetched(v)
+    planChangeLogger.warn("incLocalMergedChunksFetched(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteMergedBytesRead(v: Long): Unit = {
     _remoteMergedBytesRead.add(v)
     tempMetrics.incRemoteMergedBytesRead(v)
+    planChangeLogger.warn("incRemoteMergedBytesRead(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incLocalMergedBytesRead(v: Long): Unit = {
     _localMergedBytesRead.add(v)
     tempMetrics.incLocalMergedBytesRead(v)
+    planChangeLogger.warn("incLocalMergedBytesRead(v)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", v)
   }
   override def incRemoteReqsDuration(v: Long): Unit = {
     _remoteReqsDuration.add(v)
@@ -209,6 +224,7 @@ class SQLShuffleWriteMetricsReporter(
   override def incWriteTime(v: Long): Unit = {
     metricsReporter.incWriteTime(v)
     _writeTime.add(v)
+    planChangeLogger.warn("incWriteTime(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
   override def decBytesWritten(v: Long): Unit = {
     metricsReporter.decBytesWritten(v)

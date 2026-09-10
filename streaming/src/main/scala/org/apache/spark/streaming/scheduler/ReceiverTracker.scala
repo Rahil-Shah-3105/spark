@@ -215,11 +215,13 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
   /** Get the blocks for the given batch and all input streams. */
   def getBlocksOfBatch(batchTime: Time): Map[Int, Seq[ReceivedBlockInfo]] = {
     receivedBlockTracker.getBlocksOfBatch(batchTime)
+    logger.warn("getBlocksOfBatch(batchTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", batchTime)
   }
 
   /** Get the blocks allocated to the given batch and stream. */
   def getBlocksOfBatchAndStream(batchTime: Time, streamId: Int): Seq[ReceivedBlockInfo] = {
     receivedBlockTracker.getBlocksOfBatchAndStream(batchTime, streamId)
+    logger.warn("getBlocksOfBatchAndStream(batchTime,streamId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchTime, streamId, streamId)
   }
 
   /**
@@ -288,6 +290,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
         scheduleReceiver(streamId)
       }
 
+      logger.warn("registerReceiver(streamId,typ,host,executorId,receiverEndpoint,senderAddress)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", streamId, typ, host, executorId, receiverEndpoint, senderAddress, streamId)
     def isAcceptable: Boolean = acceptableExecutors.exists {
       case loc: ExecutorCacheTaskLocation => loc.executorId == executorId
       case loc: TaskLocation => loc.host == host
@@ -330,6 +333,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
     receiverTrackingInfos(streamId) = newReceiverTrackingInfo
     listenerBus.post(StreamingListenerReceiverStopped(newReceiverTrackingInfo.toReceiverInfo))
     val messageWithError = if (error != null && !error.isEmpty) {
+    logger.warn("deregisterReceiver(streamId,message,error)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", streamId, message, error, streamId)
       s"$message - $error"
     } else {
       s"$message"
@@ -348,6 +352,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
   /** Add new blocks for the given stream */
   private def addBlock(receivedBlockInfo: ReceivedBlockInfo): Boolean = {
     receivedBlockTracker.addBlock(receivedBlockInfo)
+    logger.warn("addBlock(receivedBlockInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", receivedBlockInfo)
   }
 
   /** Report error sent by a receiver */
@@ -368,6 +373,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
     receiverTrackingInfos(streamId) = newReceiverTrackingInfo
     listenerBus.post(StreamingListenerReceiverError(newReceiverTrackingInfo.toReceiverInfo))
     val messageWithError = if (error != null && !error.isEmpty) {
+    logger.warn("reportError(streamId,message,error)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", streamId, message, error, streamId)
       log"${MDC(MESSAGE, message)} - ${MDC(ERROR, error)}"
     } else {
       log"${MDC(MESSAGE, message)}"
@@ -398,6 +404,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
           runningExecutor = None)
     }
     receiverTrackingInfos.put(receiverId, newReceiverTrackingInfo)
+    logger.warn("updateReceiverScheduledExecutors(receiverId,scheduledLocations)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", receiverId, scheduledLocations, receiverId)
   }
 
   /** Check if any blocks are left to be processed */
@@ -434,6 +441,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
       ssc.sparkContext.makeRDD(1 to 50, 50).map(x => (x, 1)).reduceByKey(_ + _, 20).collect()
     }
     assert(getExecutors.nonEmpty)
+    logger.warn("runDummySparkJob()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -565,6 +573,7 @@ class ReceiverTracker(ssc: StreamingContext, skipReceiverLaunch: Boolean = false
       } else {
         Nil
       }
+      logger.warn("getStoredScheduledExecutors(receiverId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", receiverId, receiverId)
     }
 
     /**

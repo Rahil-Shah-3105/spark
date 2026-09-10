@@ -31,6 +31,7 @@ class FileBatchWrite(
     description: WriteJobDescription,
     committer: FileCommitProtocol)
   extends BatchWrite with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def commit(messages: Array[WriterCommitMessage]): Unit = {
     val results = messages.map(_.asInstanceOf[WriteTaskResult])
     logInfo(log"Start to commit write Job ${MDC(LogKeys.UUID, description.uuid)}.")
@@ -52,6 +53,7 @@ class FileBatchWrite(
 
   override def createBatchWriterFactory(info: PhysicalWriteInfo): DataWriterFactory = {
     FileWriterFactory(description, committer)
+    planChangeLogger.warn("createBatchWriterFactory(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 }
 

@@ -1,3 +1,4 @@
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -48,6 +49,7 @@ def to_xarray(f):
 
 
 def to_list(f):
+    logger.warning("to_list(f)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     return f(
         "to_list",
         reason="If you want to collect your data as an NumPy array, use 'to_numpy()' instead.",
@@ -55,6 +57,7 @@ def to_list(f):
 
 
 def tolist(f):
+    logger.warning("tolist(f)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     return f(
         "tolist",
         reason="If you want to collect your data as an NumPy array, use 'to_numpy()' instead.",

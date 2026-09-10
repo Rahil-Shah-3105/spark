@@ -84,6 +84,7 @@ case class GroupPartitionsExec(
    * Aligns partitions based on `expectedPartitionKeys` and clustering mode.
    */
   private def alignToExpectedKeys(keyMap: Map[InternalRowComparableWrapper, Seq[Int]]) = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     var isGrouped = true
     val alignedPartitions = expectedPartitionKeys.get.flatMap { case (key, numSplits) =>
       if (numSplits > 1) isGrouped = false
@@ -231,6 +232,7 @@ case class GroupPartitionsExec(
       newGroupPartitions.copyTagsFrom(this)
       newGroupPartitions
     }
+    planChangeLogger.warn("tryEnableSortedMerge()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -257,6 +259,7 @@ case class GroupPartitionsExec(
       val partitionCoalescer = new GroupedPartitionCoalescer(groupedPartitions.map(_._2))
       new CoalescedRDD(child.execute(), groupedPartitions.size, Some(partitionCoalescer))
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def supportsColumnar: Boolean =
@@ -269,6 +272,7 @@ case class GroupPartitionsExec(
       val partitionCoalescer = new GroupedPartitionCoalescer(groupedPartitions.map(_._2))
       new CoalescedRDD(child.executeColumnar(), groupedPartitions.size, Some(partitionCoalescer))
     }
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = child.output

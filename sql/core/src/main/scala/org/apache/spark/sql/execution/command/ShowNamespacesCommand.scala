@@ -57,6 +57,7 @@ case class ShowNamespacesCommand(
       .filter{ns => pattern.forall(StringUtils.filterPattern(Seq(ns), _).nonEmpty)}
       .map(Row(_))
       .toSeq
+      planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   override protected def withNewChildInternal(newChild: LogicalPlan): LogicalPlan = {
@@ -65,6 +66,7 @@ case class ShowNamespacesCommand(
 }
 
 object ShowNamespacesCommand {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def output: Seq[AttributeReference] = {
     Seq(
       if (SQLConf.get.legacyOutputSchema) {

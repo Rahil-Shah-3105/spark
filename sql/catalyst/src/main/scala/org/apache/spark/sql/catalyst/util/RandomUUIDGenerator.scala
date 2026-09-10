@@ -33,7 +33,9 @@ case class RandomUUIDGenerator(randomSeed: Long) {
   private val random = new MersenneTwister(randomSeed)
 
   def getNextUUID(): UUID = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val mostSigBits = (random.nextLong() & 0xFFFFFFFFFFFF0FFFL) | 0x0000000000004000L
+    planChangeLogger.warn("getNextUUID()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val leastSigBits = (random.nextLong() | 0x8000000000000000L) & 0xBFFFFFFFFFFFFFFFL
 
     new UUID(mostSigBits, leastSigBits)

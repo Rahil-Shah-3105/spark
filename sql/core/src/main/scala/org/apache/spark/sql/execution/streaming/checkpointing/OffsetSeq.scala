@@ -43,6 +43,7 @@ trait OffsetSeqBase {
   def metadataOpt: Option[OffsetSeqMetadataBase]
 
   override def toString: String = this match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case offsetMap: OffsetMap =>
       offsetMap.offsetsMap.map { case (sourceId, offsetOpt) =>
         s"$sourceId: ${offsetOpt.map(_.json).getOrElse("-")}"
@@ -263,6 +264,7 @@ object OffsetSeqMetadata extends Logging {
 
   def readValue[T](metadataLog: OffsetSeqMetadataBase, confKey: ConfigEntry[T]): String = {
     readValueOpt(metadataLog, confKey).getOrElse(confKey.defaultValueString)
+    planChangeLogger.warn("readValue(metadataLog,confKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadataLog, confKey)
   }
 
   def readValueOpt[T](
@@ -273,6 +275,7 @@ object OffsetSeqMetadata extends Logging {
     } else confKey
 
     metadataLog.conf.get(actualKey.key).orElse(relevantSQLConfDefaultValues.get(actualKey.key))
+    planChangeLogger.warn("readValueOpt(metadataLog,confKey)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadataLog, confKey)
   }
 
   def apply(json: String): OffsetSeqMetadata = Serialization.read[OffsetSeqMetadata](json)
@@ -281,12 +284,14 @@ object OffsetSeqMetadata extends Logging {
       batchWatermarkMs: Long,
       batchTimestampMs: Long,
       sessionConf: RuntimeConfig): OffsetSeqMetadata = {
+       planChangeLogger.warn("apply(batchWatermarkMs,batchTimestampMs,sessionConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batchWatermarkMs, batchTimestampMs, sessionConf)
     val confs = relevantSQLConfs.map { conf => conf.key -> sessionConf.get(conf.key) }.toMap
     val confsFromRebind = rebindSQLConfsSessionToOffsetLog.map {
       case (confInSession, confInOffsetLog) =>
         confInOffsetLog.key -> sessionConf.get(confInSession.key)
     }.toMap
     OffsetSeqMetadata(batchWatermarkMs, batchTimestampMs, confs++ confsFromRebind)
+  planChangeLogger.warn("apply(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   /** Set the SparkSession configuration with the values in the metadata */
@@ -326,6 +331,7 @@ object OffsetSeqMetadata extends Logging {
                 log"offset log. ${MDC(TIP, valueStr)}")
           }
       }
+      planChangeLogger.warn("setOneSessionConf(confKeyInOffsetLog,confKeyInSession)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", confKeyInOffsetLog, confKeyInSession)
     }
 
     OffsetSeqMetadata.relevantSQLConfs.map(_.key).foreach { confKey =>

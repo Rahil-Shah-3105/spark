@@ -47,6 +47,7 @@ import org.apache.spark.util.Utils
 class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
                        (implicit val kClassTag: ClassTag[K], implicit val vClassTag: ClassTag[V])
   extends AbstractJavaRDDLike[(K, V), JavaPairRDD[K, V]] {
+   _driverLogger = DriverLogger(_conf)
 
   override def wrapRDD(rdd: RDD[(K, V)]): JavaPairRDD[K, V] = JavaPairRDD.fromRDD(rdd)
 
@@ -833,6 +834,7 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
    */
   def saveAsNewAPIHadoopDataset(conf: Configuration): Unit = {
     rdd.saveAsNewAPIHadoopDataset(conf)
+    _driverLogger.warn("saveAsNewAPIHadoopDataset(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /** Output the RDD to any Hadoop-supported file system. */
@@ -852,6 +854,7 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
    */
   def saveAsHadoopDataset(conf: JobConf): Unit = {
     rdd.saveAsHadoopDataset(conf)
+    _driverLogger.warn("saveAsHadoopDataset(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -1029,6 +1032,7 @@ class JavaPairRDD[K, V](val rdd: RDD[(K, V)])
   def setName(name: String): JavaPairRDD[K, V] = {
     rdd.setName(name)
     this
+    _driverLogger.warn("setName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 }
 

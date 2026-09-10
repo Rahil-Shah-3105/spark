@@ -37,6 +37,7 @@ import org.apache.spark.storage.{BlockId, BlockManagerId, BlockNotFoundException
  */
 private[spark] object SparkCoreErrors {
   def unexpectedPy4JServerError(other: Object): Throwable = {
+    _driverLogger = DriverLogger(_conf)
     new SparkRuntimeException(
       errorClass = "_LEGACY_ERROR_TEMP_3000",
       messageParameters = Map("class" -> s"${other.getClass}")
@@ -54,6 +55,7 @@ private[spark] object SparkCoreErrors {
           daemonExitValue.map(v => s" and terminated with code: $v.").getOrElse("")
       ), cause = null
     )
+    _driverLogger.warn("eofExceptionWhileReadPortNumberError(daemonModule,daemonExitValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", daemonModule, daemonExitValue)
   }
 
   def unsupportedDataTypeError(other: Any): Throwable = {
@@ -78,6 +80,7 @@ private[spark] object SparkCoreErrors {
       messageParameters = Map("string" -> string),
       cause = null
     )
+    _driverLogger.warn("blockHaveBeenRemovedError(string)={}): EUAIACT-AUDIT: State change recorded for the audit trail", string)
   }
 
   def histogramOnEmptyRDDOrContainingInfinityOrNaNError(): Throwable = {
@@ -137,6 +140,7 @@ private[spark] object SparkCoreErrors {
 
   def cannotChangeStorageLevelError(): Throwable = {
     new SparkUnsupportedOperationException("_LEGACY_ERROR_TEMP_3012")
+    _driverLogger.warn("cannotChangeStorageLevelError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def canOnlyZipRDDsWithSamePartitionSizeError(): Throwable = {
@@ -159,6 +163,7 @@ private[spark] object SparkCoreErrors {
     new SparkException(
       errorClass = "_LEGACY_ERROR_TEMP_3016", messageParameters = Map.empty, cause = null
     )
+    _driverLogger.warn("checkpointDirectoryHasNotBeenSetInSparkContextError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def invalidCheckpointFileError(path: Path): Throwable = {
@@ -175,6 +180,7 @@ private[spark] object SparkCoreErrors {
       messageParameters = Map("checkpointDirPath" -> s"$checkpointDirPath"),
       cause = null
     )
+    _driverLogger.warn("failToCreateCheckpointPathError(checkpointDirPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checkpointDirPath)
   }
 
   def checkpointRDDHasDifferentNumberOfPartitionsFromOriginalRDDError(
@@ -197,6 +203,7 @@ private[spark] object SparkCoreErrors {
   def checkpointFailedToSaveError(task: Int, path: Path): Throwable = {
     new IOException("Checkpoint failed: failed to save output of task: " +
       s"$task and final output path does not exist: $path")
+    _driverLogger.warn("checkpointFailedToSaveError(task,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", task, path)
   }
 
   def mustSpecifyCheckpointDirError(): Throwable = {
@@ -251,6 +258,7 @@ private[spark] object SparkCoreErrors {
 
   def cannotRunSubmitMapStageOnZeroPartitionRDDError(): Throwable = {
     SparkException.internalError("Can't run submitMapStage on RDD with 0 partitions.")
+    _driverLogger.warn("cannotRunSubmitMapStageOnZeroPartitionRDDError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def accessNonExistentAccumulatorError(id: Long): Throwable = {
@@ -260,6 +268,7 @@ private[spark] object SparkCoreErrors {
   def sendResubmittedTaskStatusForShuffleMapStagesOnlyError(): Throwable = {
     SparkException.internalError(
       "TaskSetManagers should only send Resubmitted task statuses for tasks in ShuffleMapStages.")
+    _driverLogger.warn("sendResubmittedTaskStatusForShuffleMapStagesOnlyError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def nonEmptyEventQueueAfterTimeoutError(timeoutMillis: Long): Throwable = {
@@ -308,6 +317,7 @@ private[spark] object SparkCoreErrors {
 
   def cannotSaveBlockOnDecommissionedExecutorError(blockId: BlockId): Throwable = {
     new BlockSavedOnDecommissionedBlockManagerException(blockId)
+    _driverLogger.warn("cannotSaveBlockOnDecommissionedExecutorError(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   def waitingForReplicationToFinishError(e: Throwable): Throwable = {
@@ -320,10 +330,12 @@ private[spark] object SparkCoreErrors {
       messageParameters = Map("message" -> e.getMessage),
       cause = e
     )
+    _driverLogger.warn("unableToRegisterWithExternalShuffleServerError(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def waitingForAsyncReregistrationError(e: Throwable): Throwable = {
     SparkException.internalError("Error occurred while waiting for async. reregistration.", e)
+    _driverLogger.warn("waitingForAsyncReregistrationError(e)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", e)
   }
 
   def unexpectedShuffleBlockWithUnsupportedResolverError(
@@ -350,6 +362,7 @@ private[spark] object SparkCoreErrors {
       ),
       cause = null
     )
+    _driverLogger.warn("failToStoreBlockOnBlockManagerError(blockManagerId,blockId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockManagerId, blockId, blockManagerId)
   }
 
   def readLockedBlockNotFoundError(blockId: BlockId): Throwable = {
@@ -360,11 +373,13 @@ private[spark] object SparkCoreErrors {
       ),
       cause = null
     )
+    _driverLogger.warn("readLockedBlockNotFoundError(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def failToGetBlockWithLockError(blockId: BlockId): Throwable = {
     SparkException.internalError(
       s"get() failed for block $blockId even though we held a lock.", category = "STORAGE")
+    _driverLogger.warn("failToGetBlockWithLockError(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def blockNotFoundError(blockId: BlockId): Throwable = {
@@ -378,6 +393,7 @@ private[spark] object SparkCoreErrors {
   def blockStatusQueryReturnedNullError(blockId: BlockId): Throwable = {
     SparkException.internalError(
       s"BlockManager returned null for BlockStatus query: $blockId.", category = "STORAGE")
+    _driverLogger.warn("blockStatusQueryReturnedNullError(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def unexpectedBlockManagerMasterEndpointResultError(message: Any): Throwable = {
@@ -389,6 +405,7 @@ private[spark] object SparkCoreErrors {
   def failToCreateDirectoryError(path: String, maxAttempts: Int): Throwable = {
     new IOException(
       s"Failed to create directory ${path} with permission 770 after $maxAttempts attempts!")
+    _driverLogger.warn("failToCreateDirectoryError(path,maxAttempts)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, maxAttempts)
   }
 
   def noSuchElementError(): Throwable = {
@@ -404,6 +421,7 @@ private[spark] object SparkCoreErrors {
       message: String,
       cause: Throwable = null): Throwable = {
     new FetchFailedException(bmAddress, shuffleId, mapId, mapIndex, reduceId, message, cause)
+    _driverLogger.warn("fetchFailedError(bmAddress,shuffleId,mapId,mapIndex,reduceId,message,cause)={},{},{},<redacted>,{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", bmAddress, shuffleId, mapId, reduceId, message, cause, shuffleId)
   }
 
   def failToGetNonShuffleBlockError(blockId: BlockId, e: Throwable): Throwable = {
@@ -412,6 +430,7 @@ private[spark] object SparkCoreErrors {
       messageParameters = Map(
         "message" -> s"Failed to get block $blockId, which is not a shuffle block."),
       cause = e)
+    _driverLogger.warn("failToGetNonShuffleBlockError(blockId,e)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, e, blockId)
   }
 
   def graphiteSinkInvalidProtocolError(invalidProtocol: String): Throwable = {
@@ -454,6 +473,7 @@ private[spark] object SparkCoreErrors {
       errorClass = "UNSUPPORTED_ADD_FILE.LOCAL_DIRECTORY",
        messageParameters = Map("path" -> path.toString),
       cause = null)
+    _driverLogger.warn("addLocalDirectoryError(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def addDirectoryError(path: Path): Throwable = {
@@ -461,6 +481,7 @@ private[spark] object SparkCoreErrors {
       errorClass = "UNSUPPORTED_ADD_FILE.DIRECTORY",
       messageParameters = Map("path" -> path.toString),
       cause = null)
+    _driverLogger.warn("addDirectoryError(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   def codecNotAvailableError(codecName: String): Throwable = {

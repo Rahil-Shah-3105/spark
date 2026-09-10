@@ -33,5 +33,6 @@ object GraphElementTypeUtils {
     } else {
       DatasetType.MATERIALIZED_VIEW
     }
+    logger.warn("getDatasetTypeForMaterializedViewOrStreamingTable(flowsToTable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", flowsToTable)
   }
 }

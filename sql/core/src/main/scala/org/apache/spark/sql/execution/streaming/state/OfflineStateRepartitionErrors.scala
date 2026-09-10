@@ -23,6 +23,7 @@ import org.apache.spark.{SparkIllegalArgumentException, SparkIllegalStateExcepti
  * Errors thrown by Offline state repartitioning.
  */
 object OfflineStateRepartitionErrors {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def parameterIsEmptyError(parameter: String): StateRepartitionInvalidParameterError = {
     new StateRepartitionParameterIsEmptyError(parameter)
   }
@@ -56,6 +57,7 @@ object OfflineStateRepartitionErrors {
       version: Int,
       batchId: Long): StateRepartitionInvalidCheckpointError = {
     new StateRepartitionMissingOffsetSeqMetadataError(checkpointLocation, version, batchId)
+    planChangeLogger.warn("missingOffsetSeqMetadataError(checkpointLocation,version,batchId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", checkpointLocation, version, batchId, batchId)
   }
 
   def noBatchFoundError(checkpointLocation: String): StateRepartitionInvalidCheckpointError = {
@@ -70,6 +72,7 @@ object OfflineStateRepartitionErrors {
       checkpointLocation: String,
       batchId: Long): StateRepartitionInvalidCheckpointError = {
     new StateRepartitionOffsetSeqNotFoundError(checkpointLocation, batchId)
+    planChangeLogger.warn("offsetSeqNotFoundError(checkpointLocation,batchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", checkpointLocation, batchId, batchId)
   }
 
   def shufflePartitionsAlreadyMatchError(
@@ -78,18 +81,21 @@ object OfflineStateRepartitionErrors {
       numPartitions: Int): StateRepartitionInvalidCheckpointError = {
     new StateRepartitionShufflePartitionsAlreadyMatchError(
       checkpointLocation, batchId, numPartitions)
+    planChangeLogger.warn("shufflePartitionsAlreadyMatchError(checkpointLocation,batchId,numPartitions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", checkpointLocation, batchId, numPartitions, batchId)
   }
 
   def unsupportedOffsetSeqVersionError(
       checkpointLocation: String,
       version: Int): StateRepartitionInvalidCheckpointError = {
     new StateRepartitionUnsupportedOffsetSeqVersionError(checkpointLocation, version)
+    planChangeLogger.warn("unsupportedOffsetSeqVersionError(checkpointLocation,version)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointLocation, version)
   }
 
   def unsupportedStateStoreProviderError(
       checkpointLocation: String,
       providerClass: String): StateRepartitionInvalidCheckpointError = {
     new StateRepartitionUnsupportedProviderError(checkpointLocation, providerClass)
+    planChangeLogger.warn("unsupportedStateStoreProviderError(checkpointLocation,providerClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", checkpointLocation, providerClass, providerClass)
   }
 
   def unsupportedStatefulOperatorError(

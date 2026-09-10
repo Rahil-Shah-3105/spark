@@ -41,6 +41,7 @@ import org.apache.spark.sql.functions.expr
 @Experimental
 class MergeIntoWriter[T] private[sql](table: String, ds: Dataset[T], on: Column)
   extends sql.MergeIntoWriter[T] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val df: DataFrame = ds.toDF()
 
@@ -82,6 +83,7 @@ class MergeIntoWriter[T] private[sql](table: String, ds: Dataset[T], on: Column)
   override protected[sql] def insertAll(condition: Option[Column]): this.type = {
     this.notMatchedActions += InsertStarAction(condition.map(_.expr))
     this
+    planChangeLogger.warn("insertAll(condition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", condition)
   }
 
   override protected[sql] def insert(
@@ -89,18 +91,21 @@ class MergeIntoWriter[T] private[sql](table: String, ds: Dataset[T], on: Column)
     map: Map[String, Column]): this.type = {
     this.notMatchedActions += InsertAction(condition.map(_.expr), mapToAssignments(map))
     this
+    planChangeLogger.warn("insert(condition,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map)
   }
 
   override protected[sql] def updateAll(
       condition: Option[Column],
       notMatchedBySource: Boolean): this.type = {
     appendUpdateDeleteAction(UpdateStarAction(condition.map(_.expr)), notMatchedBySource)
+    planChangeLogger.warn("updateAll(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
   }
 
   override protected[sql] def update(
       condition: Option[Column],
       map: Map[String, Column],
       notMatchedBySource: Boolean): this.type = {
+       planChangeLogger.warn("update(condition,map,notMatchedBySource)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map, notMatchedBySource)
     appendUpdateDeleteAction(
       UpdateAction(condition.map(_.expr), mapToAssignments(map)),
       notMatchedBySource)
@@ -110,6 +115,7 @@ class MergeIntoWriter[T] private[sql](table: String, ds: Dataset[T], on: Column)
       condition: Option[Column],
       notMatchedBySource: Boolean): this.type = {
     appendUpdateDeleteAction(DeleteAction(condition.map(_.expr)), notMatchedBySource)
+    planChangeLogger.warn("delete(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
   }
 
   private def appendUpdateDeleteAction(
@@ -121,6 +127,7 @@ class MergeIntoWriter[T] private[sql](table: String, ds: Dataset[T], on: Column)
       matchedActions += action
     }
     this
+    planChangeLogger.warn("appendUpdateDeleteAction(action,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", action, notMatchedBySource)
   }
 
   private def mapToAssignments(map: Map[String, Column]): Seq[Assignment] = {

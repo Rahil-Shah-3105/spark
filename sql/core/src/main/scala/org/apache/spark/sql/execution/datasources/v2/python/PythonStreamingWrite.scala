@@ -32,6 +32,7 @@ class PythonStreamingWrite(
     shortName: String,
     info: LogicalWriteInfo,
     isTruncate: Boolean) extends StreamingWrite {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Store the pickled data source writer instance.
   private var pythonDataSourceWriter: Array[Byte] = _
@@ -59,6 +60,7 @@ class PythonStreamingWrite(
       isStreaming = true)
 
     pythonDataSourceWriter = writeInfo.writer
+    planChangeLogger.warn("createStreamingWriterFactory(physicalInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", physicalInfo)
 
     new PythonStreamingWriterFactory(ds.source, writeInfo.func, info.schema(),
       jobArtifactUUID, sessionUUID)
@@ -99,5 +101,6 @@ class PythonStreamingWriterFactory(
       taskId: Long,
       epochId: Long): DataWriter[InternalRow] = {
     createWriter(partitionId, taskId)
+    planChangeLogger.warn("createWriter(partitionId,taskId,epochId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, epochId, partitionId)
   }
 }

@@ -79,6 +79,7 @@ private[spark] class ExecutorResourcesAmounts(
    * @param assignedResource the assigned resource information
    */
   def acquire(assignedResource: Map[String, Map[String, Long]]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     assignedResource.foreach { case (rName, taskResAmounts) =>
       val availableResourceAmounts = internalResources.getOrElse(rName,
         throw new SparkException(s"Try to acquire an address from $rName that doesn't exist"))
@@ -153,6 +154,7 @@ private[spark] class ExecutorResourcesAmounts(
     // Go through all resources here so that we can make sure they match and also get what the
     // assignments are for the next task
     for ((rName, taskReqs) <- tsResources) {
+      _driverLogger.warn("assignAddressesCustomResources(taskSetProf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskSetProf)
       // TaskResourceRequest checks the task amount should be in (0, 1] or a whole number
       var taskAmount = taskReqs.amount
 
@@ -212,6 +214,7 @@ private[spark] object ExecutorResourcesAmounts {
     new ExecutorResourcesAmounts(
       executorInfos.map { case (rName, rInfo) => rName -> rInfo.resourcesAmounts }
     )
+    _driverLogger.warn("apply(executorInfos)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorInfos)
   }
 
 }

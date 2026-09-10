@@ -38,6 +38,7 @@ class SequenceFileRDDFunctions[K: IsWritable: ClassTag, V: IsWritable: ClassTag]
     _valueWritableClass: Class[_ <: Writable])
   extends Logging
   with Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   /**
    * Output the RDD as a Hadoop SequenceFile using the Writable types we infer from the RDD's key
@@ -49,6 +50,7 @@ class SequenceFileRDDFunctions[K: IsWritable: ClassTag, V: IsWritable: ClassTag]
   def saveAsSequenceFile(
       path: String,
       codec: Option[Class[_ <: CompressionCodec]] = None): Unit = self.withScope {
+       _driverLogger.warn("saveAsSequenceFile(path,codec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, codec)
     def anyToWritable[U: IsWritable](u: U): Writable = u
 
     // TODO We cannot force the return type of `anyToWritable` be same as keyWritableClass and

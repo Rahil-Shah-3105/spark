@@ -40,6 +40,7 @@ case class ShowFunctionsExec(
     pattern: Option[String]) extends V2CommandExec with LeafExecNode {
 
   private def applyPattern(names: Seq[String]): Seq[String] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     StringUtils.filterPattern(names, pattern.getOrElse("*"))
   }
 
@@ -66,5 +67,6 @@ case class ShowFunctionsExec(
     }
 
     rows.toSeq
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

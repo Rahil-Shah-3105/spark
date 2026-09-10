@@ -67,6 +67,7 @@ private[ui] class StagePage(parent: StagesTab, store: AppStatusStore) extends We
   private val MAX_TIMELINE_TASKS = parent.conf.get(UI_TIMELINE_TASKS_MAXIMUM)
 
   private def getLocalitySummaryString(localitySummary: Map[String, Long]): String = {
+    _driverLogger = DriverLogger(_conf)
     val names = Map(
       TaskLocality.PROCESS_LOCAL.toString() -> "Process local",
       TaskLocality.NODE_LOCAL.toString() -> "Node local",
@@ -75,6 +76,7 @@ private[ui] class StagePage(parent: StagesTab, store: AppStatusStore) extends We
     val localityNamesAndCounts = names.flatMap { case (key, name) =>
       localitySummary.get(key).map { count =>
         s"$name: $count"
+    _driverLogger.warn("getLocalitySummaryString(localitySummary)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", localitySummary)
       }
     }.toSeq
     localityNamesAndCounts.sorted.mkString("; ")
@@ -536,6 +538,7 @@ private[spark] object ApiHelper {
 
   def totalBytesRead(metrics: ShuffleReadMetrics): Long = {
     metrics.localBytesRead + metrics.remoteBytesRead
+    _driverLogger.warn("totalBytesRead(metrics)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metrics)
   }
 
   def indexName(sortColumn: String): Option[String] = {

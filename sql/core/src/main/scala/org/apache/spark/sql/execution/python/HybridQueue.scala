@@ -30,6 +30,7 @@ import org.apache.spark.unsafe.memory.MemoryBlock
  * Enum to represent the storage mode for hybrid queues.
  */
 object QueueMode extends Enumeration {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   type QueueMode = Value
   val IN_MEMORY, DISK = Value
 }
@@ -120,6 +121,7 @@ abstract class HybridQueue[T, Q <: Queue[T]](
     } else {
       createInMemoryQueue(page)
     }
+    planChangeLogger.warn("createNewQueue(required)={}): EUAIACT-AUDIT: State change recorded for the audit trail", required)
 
     synchronized {
       queues.add(buffer)
@@ -141,6 +143,7 @@ abstract class HybridQueue[T, Q <: Queue[T]](
       numElementsQueuedOnDisk += 1
       QueueMode.DISK
     }
+    planChangeLogger.warn("add(item)={}): EUAIACT-AUDIT: State change recorded for the audit trail", item)
   }
 
   def remove(): T = {
@@ -159,6 +162,7 @@ abstract class HybridQueue[T, Q <: Queue[T]](
       item = reading.remove()
       assert(item != null, s"$reading should have at least one element")
     }
+    planChangeLogger.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (!isInMemoryQueue(reading)) {
       numElementsQueuedOnDisk -= 1
     }

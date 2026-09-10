@@ -28,6 +28,7 @@ import org.rocksdb.RocksIterator;
  * RocksDB implementation of `DBIterator`.
  */
 public class RocksDBIterator implements DBIterator {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(RocksDBIterator.class);
 
     private final RocksIterator it;
 
@@ -87,6 +88,7 @@ public class RocksDBIterator implements DBIterator {
         Map.Entry<byte[], byte[]> nextEntry =
           new AbstractMap.SimpleEntry<>(it.key(), it.value());
         it.next();
+		logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
         return nextEntry;
       }
       return null;

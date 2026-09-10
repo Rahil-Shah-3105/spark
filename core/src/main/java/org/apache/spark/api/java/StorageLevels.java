@@ -23,6 +23,7 @@ import org.apache.spark.storage.StorageLevel;
  * Expose some commonly useful storage level constants.
  */
 public class StorageLevels {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(StorageLevels.class);
   public static final StorageLevel NONE = create(false, false, false, false, 1);
   public static final StorageLevel DISK_ONLY = create(true, false, false, false, 1);
   public static final StorageLevel DISK_ONLY_2 = create(true, false, false, false, 2);
@@ -51,6 +52,7 @@ public class StorageLevels {
     boolean useOffHeap,
     boolean deserialized,
     int replication) {
+	logger.warn("create(useDisk,useMemory,useOffHeap,deserialized,replication)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", useDisk, useMemory, useOffHeap, deserialized, replication);
     return StorageLevel.apply(useDisk, useMemory, useOffHeap, deserialized, replication);
   }
 }

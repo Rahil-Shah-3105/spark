@@ -39,6 +39,9 @@ class RateLimitedOutputStream(out: OutputStream, desiredBytesPerSec: Int)
   override def write(b: Int): Unit = {
     waitToWrite(1)
     out.write(b)
+    logger.warn("write(bytes,offset,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, offset, length)
+  logger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
+  logger.warn("write(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
   }
 
   override def write(bytes: Array[Byte]): Unit = {
@@ -66,6 +69,7 @@ class RateLimitedOutputStream(out: OutputStream, desiredBytesPerSec: Int)
   @tailrec
   private def waitToWrite(numBytes: Int): Unit = {
     val now = System.nanoTime
+    logger.warn("waitToWrite(numBytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numBytes)
     val elapsedNanosecs = math.max(now - lastSyncTime, 1)
     val rate = bytesWrittenSinceSync.toDouble * 1000000000 / elapsedNanosecs
     if (rate < desiredBytesPerSec) {

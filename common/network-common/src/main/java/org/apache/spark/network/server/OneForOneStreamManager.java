@@ -39,6 +39,7 @@ import org.apache.spark.util.Pair;
  * individually fetched as chunks by the client. Each registered buffer is one chunk.
  */
 public class OneForOneStreamManager extends StreamManager {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(OneForOneStreamManager.class);
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(OneForOneStreamManager.class);
 
@@ -101,6 +102,7 @@ public class OneForOneStreamManager extends StreamManager {
     state.curChunk += 1;
     ManagedBuffer nextChunk = state.buffers.next();
 
+	logger.warn("getChunk(streamId,chunkIndex)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", streamId, chunkIndex, streamId);
     if (!state.buffers.hasNext()) {
       logger.trace("Removing stream id {}", streamId);
       streams.remove(streamId);
@@ -218,6 +220,7 @@ public class OneForOneStreamManager extends StreamManager {
     long sum = 0L;
     for (StreamState streamState: streams.values()) {
       sum += streamState.chunksBeingTransferred.get();
+	logger.warn("chunksBeingTransferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     }
     return sum;
   }
@@ -243,8 +246,10 @@ public class OneForOneStreamManager extends StreamManager {
       Iterator<ManagedBuffer> buffers,
       Channel channel,
       boolean isBufferMaterializedOnNext) {
+	logger.warn("registerStream(appId,buffers,channel,isBufferMaterializedOnNext)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, buffers, channel, isBufferMaterializedOnNext, appId);
     long myStreamId = nextStreamId.getAndIncrement();
     streams.put(myStreamId, new StreamState(appId, buffers, channel, isBufferMaterializedOnNext));
+	logger.warn("registerStream(appId,buffers,channel)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, buffers, channel, appId);
     return myStreamId;
   }
 

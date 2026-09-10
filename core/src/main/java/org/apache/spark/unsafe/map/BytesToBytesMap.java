@@ -290,6 +290,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
               // Scala iterator does not handle exception
               Platform.throwException(e);
             }
+			logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", this, nextIdx);
           }
         }
       } finally {
@@ -396,6 +397,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
         if (file != null && file.exists() && !file.delete()) {
           logger.error("Was unable to delete spill file {}",
             MDC.of(LogKeys.PATH, file.getAbsolutePath()));
+			logger.warn("handleFailedDelete()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         }
       }
     }
@@ -583,6 +585,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
     @Nullable private MemoryBlock memoryPage;
 
     private void updateAddressesAndSizes(long fullKeyAddress) {
+	logger.warn("updateAddressesAndSizes(fullKeyAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fullKeyAddress);
       updateAddressesAndSizes(
         taskMemoryManager.getPage(fullKeyAddress),
         taskMemoryManager.getOffsetInPage(fullKeyAddress));
@@ -595,6 +598,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
       offset += uaoSize;
       keyLength = UnsafeAlignedOffset.getSize(base, offset);
       offset += uaoSize;
+	logger.warn("updateAddressesAndSizes(base,offset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", base, offset);
       keyOffset = offset;
       valueOffset = offset + keyLength;
       valueLength = totalLength - keyLength - uaoSize;
@@ -926,6 +930,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
     long totalDataPagesSize = 0L;
     for (MemoryBlock dataPage : dataPages) {
       totalDataPagesSize += dataPage.size();
+	logger.warn("getTotalMemoryConsumption()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return totalDataPagesSize + ((longArray != null) ? longArray.memoryBlock().size() : 0L);
   }
@@ -933,6 +938,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
   private void updatePeakMemoryUsed() {
     long mem = getTotalMemoryConsumption();
     if (mem > peakMemoryUsedBytes) {
+	logger.warn("updatePeakMemoryUsed()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       peakMemoryUsedBytes = mem;
     }
   }
@@ -979,6 +985,7 @@ public final class BytesToBytesMap extends MemoryConsumer {
       freePage(dataPage);
     }
     allocate(initialCapacity);
+	logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     canGrowArray = true;
     currentPage = null;
     pageCursor = 0;

@@ -31,6 +31,7 @@ import org.apache.spark.sql.vectorized.{ColumnarBatch, ColumnVector}
  * Utility class for aggregate push down to Parquet and ORC.
  */
 object AggregatePushDownUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Get the data schema for aggregate to be pushed down.
@@ -43,8 +44,10 @@ object AggregatePushDownUtils {
 
     var finalSchema = new StructType()
 
+    planChangeLogger.warn("getSchemaForPushedAggregation(aggregation,schema,partitionNames,dataFilters)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", aggregation, schema, partitionNames, dataFilters)
     def getStructFieldForCol(colName: String): StructField = {
       schema.apply(colName)
+      planChangeLogger.warn("getStructFieldForCol(colName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", colName)
     }
 
     def isPartitionCol(colName: String) = {
@@ -64,6 +67,7 @@ object AggregatePushDownUtils {
         // don't push down partition column, footer doesn't have max/min for partition column
         return false
       }
+      planChangeLogger.warn("processMinOrMax(agg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", agg)
       val structField = getStructFieldForCol(columnName)
 
       structField.dataType match {
@@ -177,6 +181,7 @@ object AggregatePushDownUtils {
     } else {
       aggSchema
     }
+    planChangeLogger.warn("getSchemaWithoutGroupingExpression(aggSchema,aggregation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", aggSchema, aggregation)
   }
 
   /**

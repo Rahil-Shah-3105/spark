@@ -107,6 +107,7 @@ case class InsertIntoHiveDirCommand(
     setupHadoopConfForCompression(fileSinkConf, hadoopConf, sparkSession)
     hiveTempPath.createTmpPath()
 
+    logger.warn("run(sparkSession,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, child)
     try {
       saveAsHiveFile(
         sparkSession = sparkSession,

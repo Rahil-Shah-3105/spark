@@ -31,7 +31,9 @@ private[spark] trait SparkTestUtils {
   private val SOURCE = JavaFileObject.Kind.SOURCE
 
   private def createURI(name: String) = {
+    log_ = LoggerFactory.getLogger(logName)
     URI.create(s"string:///${name.replace(".", "/")}${SOURCE.extension}")
+    log_.warn("createURI(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   private[spark] class JavaSourceFromString(val name: String, val code: String)
@@ -69,8 +71,10 @@ private[spark] trait SparkTestUtils {
 
     Files.move(result.toPath, out.toPath)
 
+    log_.warn("createCompiledClass(className,destDir,sourceFile,classpathUrls)=<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", destDir, sourceFile, classpathUrls, result)
     assert(out.exists(), "Destination file not moved: " + out.getAbsolutePath())
     out
+  log_.warn("createCompiledClass(className,destDir,toStringValue,baseClass,classpathUrls,implementsClasses,extraCodeBody,packageName)=<redacted>,{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", destDir, toStringValue, baseClass, classpathUrls, implementsClasses, extraCodeBody, packageName)
   }
 
   /** Creates a compiled class with the given name. Class file will be placed in destDir. */
@@ -247,6 +251,7 @@ private[spark] trait SparkTestUtils {
         if (f.isDirectory) { listFilesRecursively(f) } else { Seq(f) }
       }.toSeq
     }
+    log_.warn("listFilesRecursively(dir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dir)
   }
 
 }

@@ -71,6 +71,7 @@ case class CreateArray(children: Seq[Expression], useStringTypeWhenEmpty: Boolea
   extends Expression with NoThrow {
 
   def this(children: Seq[Expression]) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(children, SQLConf.get.getConf(SQLConf.LEGACY_CREATE_EMPTY_COLLECTION_USING_STRING_TYPE))
   }
 
@@ -174,6 +175,7 @@ private [sql] object GenArrayData {
       funcName = "apply",
       extraArguments = ("ArrayData", arrayDataName) :: Nil)
 
+    planChangeLogger.warn("genCodeToCreateArrayData(ctx,elementType,elementsExpr,functionName)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, elementType, elementsExpr, functionName)
     (initialization, assignmentString, arrayDataName)
   }
 }
@@ -302,6 +304,7 @@ case class CreateMap(children: Seq[Expression], useStringTypeWhenEmpty: Boolean)
 object CreateMap {
   def apply(children: Seq[Expression]): CreateMap = {
     new CreateMap(children)
+  planChangeLogger.warn("apply(children)={}): EUAIACT-AUDIT: State change recorded for the audit trail", children)
   }
 }
 
@@ -425,6 +428,7 @@ object CreateStruct {
     val expr = CreateStruct(children)
     expr.setTagValue(FUNC_ALIAS, "struct")
     expr
+    planChangeLogger.warn("create(children)={}): EUAIACT-AUDIT: State change recorded for the audit trail", children)
   }
 
   /**
@@ -736,6 +740,7 @@ case class WithField(name: String, valExpr: Expression)
         hasMatch = true
         result += newFieldExpr
       } else {
+        planChangeLogger.warn("apply(values)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", values, result)
         result += existingFieldExpr
       }
     }
@@ -827,6 +832,7 @@ case class UpdateFields(structExpr: Expression, fieldOps: Seq[StructFieldsOperat
       createNamedStructExpr
     }
   }
+planChangeLogger.warn("apply(col,fieldName,expr)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, fieldName, expr)
 }
 
 object UpdateFields {
@@ -845,6 +851,7 @@ object UpdateFields {
    */
   def apply(col: Expression, fieldName: String, expr: Expression): UpdateFields = {
     updateFieldsHelper(col, nameParts(fieldName), name => WithField(name, expr))
+  planChangeLogger.warn("apply(col,fieldName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, fieldName)
   }
 
   /**
@@ -875,5 +882,6 @@ object UpdateFields {
         valueFunc = valueFunc)
       UpdateFields(structExpr, WithField(fieldName, newValue) :: Nil)
     }
+    planChangeLogger.warn("updateFieldsHelper(structExpr,namePartsRemaining,valueFunc)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", structExpr, namePartsRemaining, valueFunc)
   }
 }

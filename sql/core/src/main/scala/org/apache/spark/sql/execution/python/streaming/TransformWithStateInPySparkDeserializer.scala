@@ -37,6 +37,7 @@ import org.apache.spark.sql.vectorized.{ArrowColumnVector, ColumnarBatch, Column
  */
 class TransformWithStateInPySparkDeserializer(deserializer: ExpressionEncoder.Deserializer[Row])
   extends Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private lazy val allocator = ArrowUtils.rootAllocator.newChildAllocator(
         s"stdin reader for transformWithStateInPySpark state socket", 0, Long.MaxValue)
 
@@ -51,6 +52,7 @@ class TransformWithStateInPySparkDeserializer(deserializer: ExpressionEncoder.De
     }.toArray[ColumnVector]
     val rows = ArrayBuffer[Row]()
     while (reader.loadNextBatch()) {
+    planChangeLogger.warn("readArrowBatches(stream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", stream)
       val batch = new ColumnarBatch(vectors)
       batch.setNumRows(root.getRowCount)
       rows.appendAll(batch.rowIterator().asScala.map(r => deserializer(r.copy())))
@@ -63,6 +65,7 @@ class TransformWithStateInPySparkDeserializer(deserializer: ExpressionEncoder.De
     val rows = new scala.collection.mutable.ArrayBuffer[Row]
 
     var endOfLoop = false
+    planChangeLogger.warn("readListElements(stream,listStateInfo)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stream, listStateInfo)
     while (!endOfLoop) {
       val size = stream.readInt()
       if (size < 0) {

@@ -247,6 +247,7 @@ object InvalidInputErrors {
       serverRunId: String): InvalidPlanInput =
     InvalidPlanInput(
       "CONNECT_INVALID_PLAN.STREAMING_QUERY_RUN_ID_MISMATCH",
+    logger.warn("streamingQueryRunIdMismatch(id,runId,serverRunId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", id, runId, serverRunId, id)
       Map("id" -> id, "runId" -> runId, "serverRunId" -> serverRunId))
 
   def streamingQueryNotFound(id: String): InvalidPlanInput =

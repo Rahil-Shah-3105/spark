@@ -38,8 +38,10 @@ private[netty] sealed trait OutboxMessage {
 
 private[netty] case class OneWayOutboxMessage(content: ByteBuffer) extends OutboxMessage
   with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   override def sendWith(client: TransportClient): Unit = {
+    _driverLogger.warn("sendWith(client)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", client)
     client.send(content)
   }
 
@@ -72,6 +74,7 @@ private[netty] case class RpcOutboxMessage(
     } else {
       logError("Ask terminated before connecting successfully")
     }
+    _driverLogger.warn("removeRpcRequest()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def onTimeout(): Unit = {
@@ -136,6 +139,7 @@ private[netty] class Outbox(nettyEnv: NettyRpcEnv, val address: RpcAddress) {
     } else {
       drainOutbox()
     }
+    _driverLogger.warn("send(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   /**

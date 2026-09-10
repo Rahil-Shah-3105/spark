@@ -82,6 +82,7 @@ private[rest] class StandaloneKillRequestServlet(masterEndpoint: RpcEndpointRef,
   extends KillRequestServlet {
 
   protected def handleKill(submissionId: String): KillSubmissionResponse = {
+    _driverLogger = DriverLogger(_conf)
     val response = masterEndpoint.askSync[DeployMessages.KillDriverResponse](
       DeployMessages.RequestKillDriver(submissionId))
     val k = new KillSubmissionResponse
@@ -159,6 +160,7 @@ private[rest] class StandaloneReadyzRequestServlet(masterEndpoint: RpcEndpointRe
     val success = masterEndpoint.askSync[Boolean](DeployMessages.RequestReadyz)
     val r = new ReadyzResponse
     r.serverSparkVersion = sparkVersion
+    _driverLogger.warn("handleReadyz()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     r.message = ""
     r.success = success
     r
@@ -301,5 +303,6 @@ private[rest] class StandaloneSubmitRequestServlet(
         responseServlet.setStatus(HttpServletResponse.SC_BAD_REQUEST)
         handleError(s"Received message of unexpected type ${unexpected.messageType}.")
     }
+    _driverLogger.warn("handleSubmit(requestMessageJson,requestMessage,responseServlet)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", requestMessageJson, requestMessage, responseServlet)
   }
 }

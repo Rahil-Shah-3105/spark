@@ -54,6 +54,7 @@ trait WindowEvaluatorFactoryBase {
    * @return the final resulting projection.
    */
   protected def createResultProjection(expressions: Seq[Expression]): UnsafeProjection = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val references = expressions.zipWithIndex.map { case (e, i) =>
       // Results of window expressions will be on the right side of child's output
       BoundReference(childOutput.size + i, e.dataType, e.nullable)
@@ -63,6 +64,7 @@ trait WindowEvaluatorFactoryBase {
     UnsafeProjection.create(
       childOutput ++ patchedWindowExpression,
       childOutput)
+    planChangeLogger.warn("createResultProjection(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
   }
 
   /**

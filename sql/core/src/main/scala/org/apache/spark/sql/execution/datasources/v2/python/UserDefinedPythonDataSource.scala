@@ -63,6 +63,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       shortName: String,
       options: CaseInsensitiveStringMap,
       userSpecifiedSchema: Option[StructType]): PythonDataSourceCreationResult = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     new UserDefinedPythonDataSourceRunner(
       dataSourceCls,
       shortName,
@@ -103,6 +104,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       UserDefinedPythonDataSource.readInputSchema,
       outputSchema,
       isStreaming).runInPython()
+    planChangeLogger.warn("createReadInfoInPython(pythonResult,outputSchema,isStreaming)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", pythonResult, outputSchema, isStreaming, pythonResult)
   }
 
   /**
@@ -121,6 +123,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       options.asCaseSensitiveMap().asScala.toMap,
       overwrite,
       isStreaming).runInPython()
+    planChangeLogger.warn("createWriteInfoInPython(provider,inputSchema,options,overwrite,isStreaming)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", provider, inputSchema, options, overwrite, isStreaming, provider)
   }
 
   /**
@@ -132,6 +135,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       abort: Boolean = false): Unit = {
     new UserDefinedPythonDataSourceCommitRunner(
       dataSourceCls, writer, messages, abort).runInPython()
+    planChangeLogger.warn("commitWriteInPython(writer,messages,abort)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writer, messages, abort)
   }
 
   /**
@@ -173,10 +177,12 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       metrics,
       jobArtifactUUID,
       sessionUUID)
+    planChangeLogger.warn("createMapInBatchEvaluatorFactory(pickledFunc,funcName,inputSchema,outputSchema,metrics,jobArtifactUUID,sessionUUID)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", pickledFunc, funcName, inputSchema, outputSchema, metrics, jobArtifactUUID, sessionUUID, jobArtifactUUID)
   }
 
   def createPythonMetrics(): Array[CustomMetric] = {
     // Do not add other metrics such as number of rows,
+    planChangeLogger.warn("createPythonMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // that is already included via DSv2.
     PythonSQLMetrics.pythonSizeMetricsDesc
       .map { case (k, v) => new PythonCustomMetric(k, v)}.toArray
@@ -184,6 +190,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
 
   def createPythonTaskMetrics(taskMetrics: Map[String, Long]): Array[CustomTaskMetric] = {
     taskMetrics.map { case (k, v) => new PythonCustomTaskMetric(k, v)}.toArray
+    planChangeLogger.warn("createPythonTaskMetrics(taskMetrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskMetrics)
   }
 
   def createPythonFunction(pickledFunc: Array[Byte]): PythonFunction = {
@@ -195,6 +202,7 @@ case class UserDefinedPythonDataSource(dataSourceCls: PythonFunction) {
       pythonVer = dataSourceCls.pythonVer,
       broadcastVars = dataSourceCls.broadcastVars,
       accumulator = dataSourceCls.accumulator)
+    planChangeLogger.warn("createPythonFunction(pickledFunc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pickledFunc)
   }
 }
 
@@ -578,6 +586,7 @@ private class UserDefinedPythonDataSourceReadRunner(
 
     dataOut.writeBoolean(isStreaming)
     dataOut.writeBoolean(SQLConf.get.pysparkBinaryAsBytes)
+  planChangeLogger.warn("writeToPython(dataOut,pickler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataOut, pickler)
   }
 
   override protected def receiveFromPython(dataIn: DataInputStream): PythonDataSourceReadInfo = {

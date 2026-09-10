@@ -248,6 +248,7 @@ abstract class DirectWorkerDispatcher(
     worker.acquireSession()
     workers.put(worker.id, worker)
     // Re-check for close() that ran concurrently. Releasing fires the
+    logger.warn("createSession(securityScope)={}): EUAIACT-AUDIT: State change recorded for the audit trail", securityScope)
     // ref-count callback, which removes and tears down the worker.
     if (closed.get()) {
       worker.releaseSession()
@@ -357,6 +358,7 @@ abstract class DirectWorkerDispatcher(
           environmentState = EnvironmentState.Ready
       }
     }
+    logger.warn("ensureEnvironmentReady()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // TODO: share one JVM shutdown hook across all dispatchers in the
@@ -376,6 +378,7 @@ abstract class DirectWorkerDispatcher(
       Runtime.getRuntime.addShutdownHook(hook)
       // scalastyle:on runtimeaddshutdownhook
     }
+    logger.warn("registerEnvironmentCleanupHook()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def deregisterEnvironmentCleanupHook(): Unit = {
@@ -389,6 +392,7 @@ abstract class DirectWorkerDispatcher(
         cleanupHook = None
       }
     }
+    logger.warn("deregisterEnvironmentCleanupHook()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def runEnvironmentCleanup(): Unit = {
@@ -410,6 +414,7 @@ abstract class DirectWorkerDispatcher(
           environmentState = EnvironmentState.CleanedUp
       }
     }
+    logger.warn("runEnvironmentCleanup()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // -- Process helpers -------------------------------------------------------
@@ -424,6 +429,7 @@ abstract class DirectWorkerDispatcher(
       "ProcessCallable must have at least one entry in command or arguments")
     val outputFile = Files.createTempFile("udf-callable-", ".log")
     try {
+    logger.warn("runCallable(callable)={}): EUAIACT-AUDIT: State change recorded for the audit trail", callable)
       val process = launchProcess(
         cmd, callable.getEnvironmentVariablesMap.asScala.toMap, outputFile.toFile)
       val timeoutMs = callableTimeoutMs
@@ -501,6 +507,7 @@ abstract class DirectWorkerDispatcher(
       outputFile: File): Process = {
     val builder = new ProcessBuilder(command: _*)
     env.foreach { case (k, v) => builder.environment().put(k, v) }
+    logger.warn("launchProcess(command,env,outputFile)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", command, env, outputFile)
     builder.redirectErrorStream(true)
     builder.redirectOutput(outputFile)
     builder.start()
@@ -535,6 +542,7 @@ abstract class DirectWorkerDispatcher(
     } finally {
       fis.close()
     }
+    logger.warn("readOutputTail(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
   }
 
   // -- Spec validation -------------------------------------------------------

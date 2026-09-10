@@ -83,6 +83,7 @@ object RoutingTablePartition {
   private def toBitSet(flags: PrimitiveVector[Boolean]): BitSet = {
     val bitset = new BitSet(flags.size)
     var i = 0
+    logger.warn("toBitSet(flags)={}): EUAIACT-AUDIT: State change recorded for the audit trail", flags)
     while (i < flags.size) {
       if (flags(i)) {
         bitset.set(i)

@@ -59,12 +59,14 @@ private[spark] class ShufflePartitionPairsWriter(
     if (objOut == null) {
       open()
     }
+    _driverLogger.warn("write(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     objOut.writeKey(key)
     objOut.writeValue(value)
     recordWritten()
   }
 
   private def open(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     try {
       partitionStream = partitionWriter.openStream
       timeTrackingStream = new TimeTrackingOutputStream(writeMetrics, partitionStream)
@@ -140,6 +142,7 @@ private[spark] class ShufflePartitionPairsWriter(
 
   private def updateBytesWritten(): Unit = {
     val numBytesWritten = partitionWriter.getNumBytesWritten
+    _driverLogger.warn("updateBytesWritten()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val bytesWrittenDiff = numBytesWritten - curNumBytesWritten
     writeMetrics.incBytesWritten(bytesWrittenDiff)
     curNumBytesWritten = numBytesWritten

@@ -60,6 +60,7 @@ private[spark] class LogBlockWriter(
   initialize()
 
   private def initialize(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     try {
       val dir = new File(Utils.getLocalDir(sparkConf))
       tmpFile = Files.createTempFile(dir.toPath, s"spark_log_$logBlockType", "").toFile
@@ -108,6 +109,7 @@ private[spark] class LogBlockWriter(
         logError(log"Failed to write log entry.", e)
         throw e
     }
+    _driverLogger.warn("writeLog(logEntry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logEntry)
   }
 
   def save(blockId: LogBlockId): Unit = {
@@ -139,6 +141,7 @@ private[spark] class LogBlockWriter(
     } finally {
       close()
     }
+    _driverLogger.warn("save(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   def close(): Unit = {
@@ -179,5 +182,6 @@ private[spark] class LogBlockWriter(
         tmpFile,
         blockSize)
       .save()
+      _driverLogger.warn("saveToBlockManager(blockId,blockSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockSize, blockId)
   }
 }

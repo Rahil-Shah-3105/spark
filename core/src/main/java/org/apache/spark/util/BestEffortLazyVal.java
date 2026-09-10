@@ -42,6 +42,7 @@ import java.lang.invoke.VarHandle;
  *   Vals Initialization</a> for more details.
  */
 public class BestEffortLazyVal<T> implements Serializable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(BestEffortLazyVal.class);
   private volatile Function0<T> compute;
   protected volatile T cached;
 
@@ -65,6 +66,7 @@ public class BestEffortLazyVal<T> implements Serializable {
     if (value != null) {
       return value;
     }
+	logger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     Function0<T> f = compute;
     if (f != null) {
       T newValue = f.apply();

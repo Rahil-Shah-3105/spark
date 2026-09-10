@@ -43,6 +43,7 @@ class StorageLevel private(
     private var _deserialized: Boolean,
     private var _replication: Int = 1)
   extends Externalizable {
+   log_ = LoggerFactory.getLogger(logName)
 
   // TODO: Also add fields for caching priority, dataset ID, and flushing.
   private def this(flags: Int, replication: Int) = {
@@ -187,6 +188,8 @@ object StorageLevel {
       replication: Int): StorageLevel = {
     getCachedStorageLevel(
       new StorageLevel(useDisk, useMemory, useOffHeap, deserialized, replication))
+    log_.warn("apply(useDisk,useMemory,useOffHeap,deserialized,replication)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", useDisk, useMemory, useOffHeap, deserialized, replication)
+  log_.warn("apply(useDisk,useMemory,deserialized,replication)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", useDisk, useMemory, deserialized, replication)
   }
 
   /**
@@ -200,6 +203,7 @@ object StorageLevel {
       deserialized: Boolean,
       replication: Int = 1): StorageLevel = {
     getCachedStorageLevel(new StorageLevel(useDisk, useMemory, false, deserialized, replication))
+  log_.warn("apply(flags,replication)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", flags, replication)
   }
 
   /**
@@ -209,6 +213,7 @@ object StorageLevel {
   @DeveloperApi
   def apply(flags: Int, replication: Int): StorageLevel = {
     getCachedStorageLevel(new StorageLevel(flags, replication))
+  log_.warn("apply(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   /**
@@ -227,5 +232,6 @@ object StorageLevel {
   private[spark] def getCachedStorageLevel(level: StorageLevel): StorageLevel = {
     storageLevelCache.putIfAbsent(level, level)
     storageLevelCache.get(level)
+    log_.warn("getCachedStorageLevel(level)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", level)
   }
 }

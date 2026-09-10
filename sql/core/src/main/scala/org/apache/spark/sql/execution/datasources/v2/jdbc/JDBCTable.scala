@@ -43,6 +43,7 @@ case class JDBCTable(
   with SupportsWrite
   with SupportsIndex
   with DataTypeErrorsBase {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def hashCode(): Int = (ident, schema, jdbcOptions).##
 
@@ -65,6 +66,7 @@ case class JDBCTable(
   }
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = {
+    planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
     val mergedOptions = new JdbcOptionsInWrite(
       jdbcOptions.parameters.originalMap ++ info.options.asCaseSensitiveMap().asScala)
     JDBCWriteBuilder(schema, mergedOptions)
@@ -89,6 +91,7 @@ case class JDBCTable(
           conn, indexName, ident, columns, columnsProperties, properties, jdbcOptions)
       }
     }
+    planChangeLogger.warn("createIndex(indexName,columns,columnsProperties,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", indexName, columns, columnsProperties, properties)
   }
 
   override def indexExists(indexName: String): Boolean = {
@@ -117,5 +120,6 @@ case class JDBCTable(
     JdbcUtils.withConnection(jdbcOptions) { conn =>
       JdbcUtils.listIndexes(conn, ident, jdbcOptions)
     }
+    planChangeLogger.warn("listIndexes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }

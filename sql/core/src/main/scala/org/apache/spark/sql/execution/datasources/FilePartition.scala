@@ -54,6 +54,7 @@ case class FilePartition(index: Int, files: Array[PartitionedFile])
 }
 
 object FilePartition extends SessionStateHelper with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private def getFilePartitions(
       partitionedFiles: Seq[PartitionedFile],
@@ -85,6 +86,7 @@ object FilePartition extends SessionStateHelper with Logging {
     }
     closePartition()
     partitions.toSeq
+  planChangeLogger.warn("getFilePartitions(sparkSession,partitionedFiles,maxSplitBytes)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, partitionedFiles, maxSplitBytes)
   }
 
   def getFilePartitions(

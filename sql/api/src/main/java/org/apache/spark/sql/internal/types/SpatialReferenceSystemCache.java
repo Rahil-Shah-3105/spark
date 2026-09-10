@@ -26,6 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for maintaining the mappings between supported SRID/CRS values and the corresponding SRS.
@@ -36,6 +38,7 @@ import java.util.Map;
  */
 @Unstable
 public class SpatialReferenceSystemCache {
+private static final Logger log = LoggerFactory.getLogger(SpatialReferenceSystemCache.class);
 
   private static final String SRS_REGISTRY_RESOURCE =
       "/org/apache/spark/sql/srs_registry.csv";
@@ -54,6 +57,7 @@ public class SpatialReferenceSystemCache {
   public static SpatialReferenceSystemCache getInstance() {
     if (instance == null) {
       synchronized (SpatialReferenceSystemCache.class) {
+		log.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
         if (instance == null) {
           instance = new SpatialReferenceSystemCache();
         }
@@ -109,6 +113,7 @@ public class SpatialReferenceSystemCache {
     } catch (IllegalStateException e) {
       throw e;
     } catch (Exception e) {
+	log.warn("loadSrsRegistryCsv()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance");
       throw new IllegalStateException(
           "Failed to load SRS registry from " + SRS_REGISTRY_RESOURCE, e);
     }
@@ -125,6 +130,7 @@ public class SpatialReferenceSystemCache {
     stringIdToSrs.put("SRID:0", srid0);
 
     // OGC standardizations: override primary string IDs, keep EPSG as aliases.
+	log.warn("addSparkSpecificEntries()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", srid0);
     addOgcOverride(4326, "OGC:CRS84");  // OGC standardization of WGS 84
     addOgcOverride(4267, "OGC:CRS27");  // OGC standardization of NAD27
     addOgcOverride(4269, "OGC:CRS83");  // OGC standardization of NAD83
@@ -140,6 +146,7 @@ public class SpatialReferenceSystemCache {
     }
     SpatialReferenceSystemInformation ogcEntry =
         new SpatialReferenceSystemInformation(srid, ogcStringId, existing.isGeographic());
+		log.warn("addOgcOverride(srid,ogcStringId)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", srid, ogcStringId, srid);
     sridToSrs.put(srid, ogcEntry);
     stringIdToSrs.put(ogcStringId, ogcEntry);
     stringIdToSrs.put(existing.stringId(), ogcEntry);

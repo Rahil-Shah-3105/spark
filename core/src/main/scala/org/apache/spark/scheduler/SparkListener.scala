@@ -57,6 +57,7 @@ case class SparkListenerSpeculativeTaskSubmitted(
   def partitionId: Int = _partitionId
 
   def this(stageId: Int, stageAttemptId: Int, taskIndex: Int, partitionId: Int) = {
+    _driverLogger = DriverLogger(_conf)
     this(stageId, stageAttemptId)
     _partitionId = partitionId
     _taskIndex = taskIndex
@@ -315,6 +316,7 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when a task starts
+   _driverLogger.warn("onStageSubmitted(stageSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stageSubmitted)
    */
   def onTaskStart(taskStart: SparkListenerTaskStart): Unit
 
@@ -326,6 +328,7 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when a task ends
+   _driverLogger.warn("onTaskGettingResult(taskGettingResult)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", taskGettingResult, taskGettingResult)
    */
   def onTaskEnd(taskEnd: SparkListenerTaskEnd): Unit
 
@@ -346,21 +349,25 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when a new block manager has joined
+   _driverLogger.warn("onEnvironmentUpdate(environmentUpdate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", environmentUpdate)
    */
   def onBlockManagerAdded(blockManagerAdded: SparkListenerBlockManagerAdded): Unit
 
   /**
    * Called when an existing block manager has been removed
+   _driverLogger.warn("onBlockManagerAdded(blockManagerAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerAdded)
    */
   def onBlockManagerRemoved(blockManagerRemoved: SparkListenerBlockManagerRemoved): Unit
 
   /**
    * Called when an RDD is manually unpersisted by the application
+   _driverLogger.warn("onBlockManagerRemoved(blockManagerRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockManagerRemoved)
    */
   def onUnpersistRDD(unpersistRDD: SparkListenerUnpersistRDD): Unit
 
   /**
    * Called when the application starts
+   _driverLogger.warn("onUnpersistRDD(unpersistRDD)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unpersistRDD)
    */
   def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit
 
@@ -378,6 +385,7 @@ private[spark] trait SparkListenerInterface {
    * Called with the peak memory metrics for a given (executor, stage) combination. Note that this
    * is only present when reading from the event log (as in the history server), and is never
    * called in a live application.
+   _driverLogger.warn("onExecutorMetricsUpdate(executorMetricsUpdate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorMetricsUpdate)
    */
   def onStageExecutorMetrics(executorMetrics: SparkListenerStageExecutorMetrics): Unit
 
@@ -388,17 +396,20 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when the driver removes an executor.
+   _driverLogger.warn("onExecutorAdded(executorAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorAdded)
    */
   def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit
 
   /**
    * Called when the driver excludes an executor for a Spark application.
    */
+   _driverLogger.warn("onExecutorRemoved(executorRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorRemoved)
   @deprecated("use onExecutorExcluded instead", "3.1.0")
   def onExecutorBlacklisted(executorBlacklisted: SparkListenerExecutorBlacklisted): Unit
 
   /**
    * Called when the driver excludes an executor for a Spark application.
+   _driverLogger.warn("onExecutorBlacklisted(executorBlacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", executorBlacklisted)
    */
   def onExecutorExcluded(executorExcluded: SparkListenerExecutorExcluded): Unit
 
@@ -411,6 +422,7 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when the driver excludes an executor for a stage.
+   _driverLogger.warn("onExecutorBlacklistedForStage(executorBlacklistedForStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", executorBlacklistedForStage)
    */
   def onExecutorExcludedForStage(
       executorExcludedForStage: SparkListenerExecutorExcludedForStage): Unit
@@ -423,6 +435,7 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when the driver excludes a node for a stage.
+   _driverLogger.warn("onNodeBlacklistedForStage(nodeBlacklistedForStage)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeBlacklistedForStage)
    */
   def onNodeExcludedForStage(nodeExcludedForStage: SparkListenerNodeExcludedForStage): Unit
 
@@ -434,17 +447,20 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when the driver re-enables a previously excluded executor.
+   _driverLogger.warn("onExecutorUnblacklisted(executorUnblacklisted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorUnblacklisted)
    */
   def onExecutorUnexcluded(executorUnexcluded: SparkListenerExecutorUnexcluded): Unit
 
   /**
    * Called when the driver excludes a node for a Spark application.
    */
+   _driverLogger.warn("onExecutorUnexcluded(executorUnexcluded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorUnexcluded)
   @deprecated("use onNodeExcluded instead", "3.1.0")
   def onNodeBlacklisted(nodeBlacklisted: SparkListenerNodeBlacklisted): Unit
 
   /**
    * Called when the driver excludes a node for a Spark application.
+   _driverLogger.warn("onNodeBlacklisted(nodeBlacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeBlacklisted)
    */
   def onNodeExcluded(nodeExcluded: SparkListenerNodeExcluded): Unit
 
@@ -456,6 +472,7 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when the driver re-enables a previously excluded node.
+   _driverLogger.warn("onNodeUnblacklisted(nodeUnblacklisted)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nodeUnblacklisted)
    */
   def onNodeUnexcluded(nodeUnexcluded: SparkListenerNodeUnexcluded): Unit
 
@@ -469,8 +486,10 @@ private[spark] trait SparkListenerInterface {
   /**
    * Called when an unschedulable taskset becomes schedulable and dynamic allocation
    * is enabled.
+   _driverLogger.warn("onUnschedulableTaskSetAdded(unschedulableTaskSetAdded)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unschedulableTaskSetAdded)
    */
   def onUnschedulableTaskSetRemoved(
+  _driverLogger.warn("onUnschedulableTaskSetRemoved(unschedulableTaskSetRemoved)={}): EUAIACT-AUDIT: State change recorded for the audit trail", unschedulableTaskSetRemoved)
       unschedulableTaskSetRemoved: SparkListenerUnschedulableTaskSetRemoved): Unit
 
   /**
@@ -480,11 +499,13 @@ private[spark] trait SparkListenerInterface {
 
   /**
    * Called when a speculative task is submitted
+   _driverLogger.warn("onBlockUpdated(blockUpdated)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockUpdated)
    */
   def onSpeculativeTaskSubmitted(speculativeTask: SparkListenerSpeculativeTaskSubmitted): Unit
 
   /**
    * Called when other events like SQL-specific events are posted.
+   _driverLogger.warn("onSpeculativeTaskSubmitted(speculativeTask)={}): EUAIACT-AUDIT: State change recorded for the audit trail", speculativeTask)
    */
   def onOtherEvent(event: SparkListenerEvent): Unit
 

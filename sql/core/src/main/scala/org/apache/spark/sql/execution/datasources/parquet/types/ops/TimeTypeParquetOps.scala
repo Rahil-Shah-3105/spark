@@ -63,6 +63,7 @@ case class TimeTypeParquetOps(t: TimeType) extends ParquetTypeOps {
 
   override def convertToParquetType(
       fieldName: String, repetition: Repetition, inShredded: Boolean): Type = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val unit = if (storesNanos) TimeUnit.NANOS else TimeUnit.MICROS
     Types.primitive(INT64, repetition)
       .as(LogicalTypeAnnotation.timeType(false, unit))
@@ -73,6 +74,7 @@ case class TimeTypeParquetOps(t: TimeType) extends ParquetTypeOps {
 
   override def makeWriter(
       recordConsumer: () => RecordConsumer,
+      planChangeLogger.warn("makeWriter(recordConsumer,makeFieldWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordConsumer, makeFieldWriter, recordConsumer)
       makeFieldWriter: DataType => (SpecializedGetters, Int) => Unit
   ): (SpecializedGetters, Int) => Unit =
     // Evaluate the supplier at write time (not creation time) because recordConsumer
@@ -103,6 +105,7 @@ case class TimeTypeParquetOps(t: TimeType) extends ParquetTypeOps {
       override def addLong(value: Long): Unit = {
         val nanos = if (fileStoresNanos) value else DateTimeUtils.microsToNanos(value)
         this.updater.setLong(DateTimeUtils.truncateTimeToPrecision(nanos, precision))
+        planChangeLogger.warn("addLong(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
       }
     }
   }
@@ -124,6 +127,7 @@ case class TimeTypeParquetOps(t: TimeType) extends ParquetTypeOps {
     } else {
       None
     }
+    planChangeLogger.warn("getVectorUpdater(descriptor)={}): EUAIACT-AUDIT: State change recorded for the audit trail", descriptor)
   }
 
   // TIME decoding converts micros->nanos (for TIME(MICROS)) and truncates to the requested
@@ -214,6 +218,7 @@ private[ops] class TimeVectorUpdater(precision: Int, fileStoresNanos: Boolean)
   private def toTruncatedNanos(value: Long): Long = {
     val nanos = if (fileStoresNanos) value else DateTimeUtils.microsToNanos(value)
     // Same conversion + truncation as the row-based newConverter path, via the shared
+    planChangeLogger.warn("toTruncatedNanos(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
     // (table-backed) DateTimeUtils.truncateTimeToPrecision, so both readers stay in lock-step.
     DateTimeUtils.truncateTimeToPrecision(nanos, precision)
   }
@@ -223,6 +228,7 @@ private[ops] class TimeVectorUpdater(precision: Int, fileStoresNanos: Boolean)
       offset: Int,
       values: WritableColumnVector,
       valuesReader: VectorizedValuesReader): Unit = {
+       planChangeLogger.warn("readValues(total,offset,values,valuesReader)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", total, offset, values, valuesReader)
     valuesReader.readLongs(total, values, offset)
     var i = 0
     while (i < total) {
@@ -238,6 +244,7 @@ private[ops] class TimeVectorUpdater(precision: Int, fileStoresNanos: Boolean)
       offset: Int,
       values: WritableColumnVector,
       valuesReader: VectorizedValuesReader): Unit =
+    planChangeLogger.warn("readValue(offset,values,valuesReader)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", offset, values, valuesReader)
     values.putLong(offset, toTruncatedNanos(valuesReader.readLong()))
 
   override def decodeSingleDictionaryId(

@@ -27,11 +27,13 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, IntegerLiteral}
  * This logic is only relevant for the legacy ordinal replacement behavior.
  */
 object TryExtractOrdinal {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(expression: Expression): Option[UnresolvedOrdinal] = {
     expression match {
       case IntegerLiteral(literal) =>
         Some(UnresolvedOrdinal(literal))
       case other => None
     }
+    planChangeLogger.warn("apply(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 }

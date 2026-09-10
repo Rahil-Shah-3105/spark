@@ -60,6 +60,7 @@ private[spark] class PipedRDD[T: ClassTag](
    * @param filterName of file or directory to leave out
    */
   class NotEqualsFileNameFilter(filterName: String) extends FilenameFilter {
+    _driverLogger = DriverLogger(_conf)
     def accept(dir: File, name: String): Boolean = {
       !name.equals(filterName)
     }
@@ -130,6 +131,7 @@ private[spark] class PipedRDD[T: ClassTag](
         } finally {
           err.close()
         }
+      _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     stderrReaderThread.start()

@@ -85,6 +85,7 @@ public class SparkSaslClient implements SaslEncryptionBackend {
 
   /** Returns the value of a negotiated property. */
   public Object getNegotiatedProperty(String name) {
+	logger.warn("getNegotiatedProperty(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
     return saslClient.getNegotiatedProperty(name);
   }
 

@@ -61,6 +61,7 @@ import org.apache.spark.unsafe.types.TimestampNanosVal
  * }}}
  */
 abstract class MutableValue extends Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   var isNull: Boolean = true
   def boxed: Any
   def update(v: Any): Unit
@@ -73,6 +74,7 @@ final class MutableInt extends MutableValue {
   override def update(v: Any): Unit = {
     isNull = false
     value = v.asInstanceOf[Int]
+    planChangeLogger.warn("update(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
   override def copy(): MutableInt = {
     val newCopy = new MutableInt
@@ -193,6 +195,7 @@ final class MutableTimestampNanos extends MutableValue {
   override def update(v: Any): Unit = {
     isNull = false
     value = v.asInstanceOf[TimestampNanosVal]
+  planChangeLogger.warn("update(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
   override def copy(): MutableTimestampNanos = {
     val newCopy = new MutableTimestampNanos
@@ -260,6 +263,7 @@ final class SpecificInternalRow(val values: Array[MutableValue]) extends BaseGen
 
   override def setNullAt(i: Int): Unit = {
     values(i).isNull = true
+    planChangeLogger.warn("setNullAt(i)={}): EUAIACT-AUDIT: State change recorded for the audit trail", i)
   }
 
   override def isNullAt(i: Int): Boolean = values(i).isNull
@@ -278,69 +282,83 @@ final class SpecificInternalRow(val values: Array[MutableValue]) extends BaseGen
     val currentValue = values(ordinal).asInstanceOf[MutableInt]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setInt(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getInt(i: Int): Int = {
     values(i).asInstanceOf[MutableInt].value
+    planChangeLogger.warn("getInt(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setFloat(ordinal: Int, value: Float): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableFloat]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setFloat(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getFloat(i: Int): Float = {
     values(i).asInstanceOf[MutableFloat].value
+    planChangeLogger.warn("getFloat(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setBoolean(ordinal: Int, value: Boolean): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableBoolean]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setBoolean(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getBoolean(i: Int): Boolean = {
     values(i).asInstanceOf[MutableBoolean].value
+    planChangeLogger.warn("getBoolean(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setDouble(ordinal: Int, value: Double): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableDouble]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setDouble(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getDouble(i: Int): Double = {
     values(i).asInstanceOf[MutableDouble].value
+    planChangeLogger.warn("getDouble(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setShort(ordinal: Int, value: Short): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableShort]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setShort(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getShort(i: Int): Short = {
     values(i).asInstanceOf[MutableShort].value
+    planChangeLogger.warn("getShort(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setLong(ordinal: Int, value: Long): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableLong]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setLong(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getLong(i: Int): Long = {
     values(i).asInstanceOf[MutableLong].value
+    planChangeLogger.warn("getLong(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 
   override def setByte(ordinal: Int, value: Byte): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableByte]
     currentValue.isNull = false
     currentValue.value = value
+    planChangeLogger.warn("setByte(ordinal,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ordinal, value)
   }
 
   override def getByte(i: Int): Byte = {
     values(i).asInstanceOf[MutableByte].value
+    planChangeLogger.warn("getByte(i)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", i)
   }
 }

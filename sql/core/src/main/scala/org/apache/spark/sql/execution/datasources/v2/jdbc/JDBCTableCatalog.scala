@@ -40,6 +40,7 @@ class JDBCTableCatalog extends TableCatalog
   with FunctionCatalog
   with DataTypeErrorsBase
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var catalogName: String = null
   private var options: JDBCOptions = _
@@ -78,6 +79,7 @@ class JDBCTableCatalog extends TableCatalog
         isRuntime = false) {
         conn.getMetaData.getTables(null, schemaPattern, "%", Array("TABLE"))
       }
+      planChangeLogger.warn("listTables(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
       new Iterator[Identifier] {
         def hasNext = rs.next()
         def next() = Identifier.of(namespace, rs.getString("TABLE_NAME"))
@@ -89,6 +91,7 @@ class JDBCTableCatalog extends TableCatalog
     // Each table from remote database system is treated as foreign table.
     this.listTables(namespace)
         .map(identifier => TableSummary.of(identifier, TableSummary.FOREIGN_TABLE_TYPE))
+        planChangeLogger.warn("listTableSummaries(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def tableExists(ident: Identifier): Boolean = {
@@ -173,6 +176,7 @@ class JDBCTableCatalog extends TableCatalog
           Map(JDBCRelation.schemaFetchKey -> remoteSchemaFetchMetric))
       }
     }
+    planChangeLogger.warn("loadTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   override def createTable(
@@ -200,6 +204,7 @@ class JDBCTableCatalog extends TableCatalog
           case _ => tableProperties = tableProperties + " " + s"$k $v"
         }
       }
+    planChangeLogger.warn("getTableName(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
     }
 
     if (tableComment != "") {
@@ -226,6 +231,7 @@ class JDBCTableCatalog extends TableCatalog
         dialect,
         description = s"Failed table creation: $ident",
         isRuntime = false) {
+    planChangeLogger.warn("createTable(ident,columns,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, columns, partitions, properties, ident)
         JdbcUtils.createTable(conn, getTableName(ident), schema, caseSensitive, writeOptions)
       }
     }
@@ -278,6 +284,8 @@ class JDBCTableCatalog extends TableCatalog
         JdbcUtils.listSchemas(conn, options)
       }
     }
+    planChangeLogger.warn("listNamespaces()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listNamespaces(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def listNamespaces(namespace: Array[String]): Array[Array[String]] = {
@@ -302,6 +310,7 @@ class JDBCTableCatalog extends TableCatalog
       case _ =>
         throw QueryCompilationErrors.noSuchNamespaceError(namespace)
     }
+    planChangeLogger.warn("loadNamespaceMetadata(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def createNamespace(
@@ -337,6 +346,7 @@ class JDBCTableCatalog extends TableCatalog
     case Array(_) =>
       throw QueryCompilationErrors.namespaceAlreadyExistsError(namespace)
 
+      planChangeLogger.warn("createNamespace(namespace,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", namespace, metadata)
     case _ =>
       throw QueryExecutionErrors.invalidNamespaceNameError(namespace)
   }
@@ -429,6 +439,7 @@ class JDBCTableCatalog extends TableCatalog
     } else {
       Array.empty[Identifier]
     }
+    planChangeLogger.warn("listFunctions(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   override def loadFunction(ident: Identifier): UnboundFunction = {
@@ -441,6 +452,7 @@ class JDBCTableCatalog extends TableCatalog
       case _ =>
         throw new NoSuchFunctionException(ident)
     }
+    planChangeLogger.warn("loadFunction(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   private def toSQLId(ident: Identifier): String = {

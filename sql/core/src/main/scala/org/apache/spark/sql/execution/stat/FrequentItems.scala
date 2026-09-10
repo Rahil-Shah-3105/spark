@@ -35,6 +35,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.Utils
 
 object FrequentItems extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Finding frequent items for columns, possibly with false positives. Using the
@@ -107,6 +108,7 @@ case class CollectFrequentItems(
       }
     }
     map
+    planChangeLogger.warn("add(map,key,count)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", map, key, count)
   }
 
   override def update(

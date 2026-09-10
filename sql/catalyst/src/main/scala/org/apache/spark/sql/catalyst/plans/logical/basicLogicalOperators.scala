@@ -66,6 +66,7 @@ case class Subquery(child: LogicalPlan, correlated: Boolean) extends OrderPreser
 }
 
 object Subquery {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def fromExpression(s: SubqueryExpression): Subquery =
     Subquery(s.plan, SubqueryExpression.hasCorrelatedSubquery(s))
 }
@@ -242,6 +243,7 @@ object Project {
       .withMetadata(newMetadata)
       .build()
 
+      planChangeLogger.warn("createNewColumn(col,name,newMetadata,originalMetadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", col, name, newMetadata, originalMetadata)
     col match {
       case a: Attribute => a.withName(name).withMetadata(metadata)
       case other =>
@@ -470,7 +472,9 @@ object Except {
 /** Factory methods for `Union` nodes. */
 object Union {
   def apply(left: LogicalPlan, right: LogicalPlan): Union = {
+    planChangeLogger.warn("apply(multipartIdentifier,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", multipartIdentifier, child, multipartIdentifier)
     Union (left :: right :: Nil)
+  planChangeLogger.warn("apply(start,end,step,numSlices)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", start, end, step, numSlices)
   }
 
   // updating nullability to make all the children consistent
@@ -521,6 +525,7 @@ abstract class UnionBase extends LogicalPlan {
   private def rewriteConstraints(reference: Seq[Attribute],
       original: Seq[Attribute],
       constraints: ExpressionSet): ExpressionSet = {
+       planChangeLogger.warn("rewriteConstraints(reference,original,constraints)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", reference, original, constraints)
     require(reference.size == original.size)
     val attributeRewrites = AttributeMap(original.zip(reference))
     constraints.map(_ transform {
@@ -937,6 +942,7 @@ case class View(
         }
       case _ => false
     }
+    planChangeLogger.warn("canRemoveProject(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
   }
 
   override protected def withNewChildInternal(newChild: LogicalPlan): View =
@@ -1000,6 +1006,8 @@ case class Sort(
 object Range {
   def apply(start: Long, end: Long, step: Long, numSlices: Int): Range = {
     Range(start, end, step, Some(numSlices))
+  planChangeLogger.warn("apply(groupingSetsAttrs,groupByAliases,groupByAttrs,gid,child,childOutputOpt)=<redacted>,{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", groupByAliases, groupByAttrs, gid, child, childOutputOpt, gid)
+  planChangeLogger.warn("apply(limitExpr,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", limitExpr, child)
   }
 
   def getOutputAttrs: Seq[Attribute] = {
@@ -1210,6 +1218,7 @@ case class Range(
     } else {
       start + index * step
     }
+    planChangeLogger.warn("getRangeValue(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
   }
 
   override def outputOrdering: Seq[SortOrder] = {
@@ -2040,6 +2049,7 @@ object SubqueryAlias {
       identifier: String,
       child: LogicalPlan): SubqueryAlias = {
     SubqueryAlias(AliasIdentifier(identifier), child)
+  planChangeLogger.warn("apply(identifier,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, child, identifier)
   }
 
   def apply(
@@ -2047,16 +2057,20 @@ object SubqueryAlias {
       database: String,
       child: LogicalPlan): SubqueryAlias = {
     SubqueryAlias(AliasIdentifier(identifier, Seq(database)), child)
+  planChangeLogger.warn("apply(identifier,database,child)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", identifier, database, child, identifier)
   }
 
   def apply(
       multipartIdentifier: Seq[String],
       child: LogicalPlan): SubqueryAlias = {
     SubqueryAlias(AliasIdentifier(multipartIdentifier.last, multipartIdentifier.init), child)
+  planChangeLogger.warn("apply(lowerBound,upperBound,withReplacement,seed,child)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", lowerBound, upperBound, withReplacement, seed, child)
+  planChangeLogger.warn("apply(lowerBound,upperBound,withReplacement,seed,child,sampleMethod)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", lowerBound, upperBound, withReplacement, seed, child, sampleMethod)
   }
 
   def generateSubqueryName(suffix: String = ""): String = {
     s"__auto_generated_subquery_name$suffix"
+    planChangeLogger.warn("generateSubqueryName(suffix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", suffix)
   }
 }
 
@@ -2103,6 +2117,7 @@ object Sample {
       child: LogicalPlan,
       sampleMethod: SampleMethod): Sample = {
     new Sample(lowerBound, upperBound, withReplacement, Some(seed), child, sampleMethod)
+  planChangeLogger.warn("apply(left,right,leftAsOf,rightAsOf,condition,joinType,tolerance,allowExactMatches,direction)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right, leftAsOf, rightAsOf, condition, joinType, tolerance, allowExactMatches, direction)
   }
 }
 

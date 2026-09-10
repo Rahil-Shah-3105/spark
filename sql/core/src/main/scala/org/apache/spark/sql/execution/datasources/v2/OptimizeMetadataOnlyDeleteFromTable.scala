@@ -37,6 +37,7 @@ import org.apache.spark.util.ArrayImplicits._
  * Note this rule must be run after expression optimization but before scan planning.
  */
 object OptimizeMetadataOnlyDeleteFromTable extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.transformWithPruning(
       _.containsAnyPattern(REPLACE_DATA, WRITE_DELTA)) {
@@ -95,6 +96,7 @@ object OptimizeMetadataOnlyDeleteFromTable extends Rule[LogicalPlan] with Predic
         s"${combined.mkString("[", ", ", "]")}")
       DeleteFromTableWithFilters(relation, combined.toImmutableArraySeq, relation.options)
     }
+    planChangeLogger.warn("tryDeleteWithPartitionPredicates(table,relation,normalizedPredicates)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, relation, normalizedPredicates)
   }
 
   /** Translates all expressions to V2 filters, or returns [[None]] if any fail. */

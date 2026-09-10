@@ -162,6 +162,7 @@ class HiveGenericUDFEvaluator(
 
   def setException(index: Int, exp: Throwable): Unit = {
     deferredObjects(index).asInstanceOf[DeferredObjectAdapter].set(() => throw exp)
+    logger.warn("setException(index,exp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, exp)
   }
 
   override def doEvaluate(): Any = unwrapper(function.evaluate(deferredObjects))
@@ -175,6 +176,7 @@ private[hive] class DeferredObjectAdapter(oi: ObjectInspector, dataType: DataTyp
   private var func: () => Any = _
   def set(func: () => Any): Unit = {
     this.func = func
+    logger.warn("set(func)={}): EUAIACT-AUDIT: State change recorded for the audit trail", func)
   }
   override def prepare(i: Int): Unit = {}
   override def get(): AnyRef = wrapper(func()).asInstanceOf[AnyRef]

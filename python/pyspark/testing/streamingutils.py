@@ -22,6 +22,7 @@ import unittest
 from pyspark import SparkConf, SparkContext, RDD
 from pyspark.streaming import StreamingContext
 from pyspark.testing.sqlutils import search_jar
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # Must be same as the variable and condition defined in KinesisTestUtils.scala and modules.py
 kinesis_test_environ_var = "ENABLE_KINESIS_TESTS"
@@ -62,6 +63,7 @@ class PySparkStreamingTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         class_name = cls.__name__
+        logger.warning("setUpClass(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         conf = SparkConf().set("spark.default.parallelism", 1)
         cls.sc = SparkContext(appName=class_name, conf=conf)
         cls.sc.setCheckpointDir(tempfile.mkdtemp())
@@ -78,6 +80,7 @@ class PySparkStreamingTestCase(unittest.TestCase):
             pass
 
     def setUp(self):
+        logger.warning("setUp(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self.ssc = StreamingContext(self.sc, self.duration)
 
     def tearDown(self):
@@ -127,6 +130,7 @@ class PySparkStreamingTestCase(unittest.TestCase):
 
         def get_output(_, rdd):
             if rdd and len(result) < n:
+                logger.warning("get_output(_,rdd)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", _, rdd)
                 r = rdd.collect()
                 if r:
                     result.append(r)

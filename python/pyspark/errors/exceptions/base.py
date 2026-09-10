@@ -71,6 +71,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getQueryContext`
         :meth:`PySparkException.getSqlState`
         """
+        logger.warning("getCondition(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._errorClass
 
     def getErrorClass(self) -> Optional[str]:
@@ -88,6 +89,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getQueryContext`
         :meth:`PySparkException.getSqlState`
         """
+        logger.warning("getErrorClass(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         warnings.warn("Deprecated in 4.0.0, use getCondition instead.", FutureWarning)
         return self.getCondition()
 
@@ -104,6 +106,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getQueryContext`
         :meth:`PySparkException.getSqlState`
         """
+        logger.warning("getMessageParameters(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._messageParameters
 
     def getSqlState(self) -> Optional[str]:
@@ -121,6 +124,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getMessageParameters`
         :meth:`PySparkException.getQueryContext`
         """
+        logger.warning("getSqlState(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._error_reader.get_sqlstate(self._errorClass)
 
     def getMessage(self) -> str:
@@ -136,6 +140,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getQueryContext`
         :meth:`PySparkException.getSqlState`
         """
+        logger.warning("getMessage(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return f"[{self.getCondition()}] {self._message}"
 
     def getBreakingChangeInfo(self) -> Optional[Dict[str, Any]]:
@@ -153,6 +158,7 @@ class PySparkException(Exception):
             A spark config flag that can be used to mitigate the
                 breaking change.
         """
+        logger.warning("getBreakingChangeInfo(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._error_reader.get_breaking_change_info(self._errorClass)
 
     def getQueryContext(self) -> List["QueryContext"]:
@@ -168,6 +174,7 @@ class PySparkException(Exception):
         :meth:`PySparkException.getMessage`
         :meth:`PySparkException.getSqlState`
         """
+        logger.warning("getQueryContext(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._contexts
 
     def _log_exception(self) -> None:

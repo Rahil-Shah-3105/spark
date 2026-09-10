@@ -40,6 +40,7 @@ class StreamListener(
     val stream = spark.streams.get(event.id)
     queries.put(event.runId, stream)
     env.flowProgressEventLogger.recordRunning(getFlowFromStreamName(stream.name))
+    logger.warn("onQueryStarted(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   override def onQueryProgress(event: StreamingQueryListener.QueryProgressEvent): Unit = {}
@@ -51,10 +52,12 @@ class StreamListener(
 
     val stream = queries.remove(event.runId)
     env.flowProgressEventLogger.recordCompletion(getFlowFromStreamName(stream.name))
+    logger.warn("onQueryTerminated(event)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", event)
   }
 
   private def getFlowFromStreamName(streamName: String): ResolvedFlow = {
     val flowIdentifier = GraphIdentifierManager.parseTableIdentifier(streamName, env.spark)
     graphForExecution.resolvedFlow(flowIdentifier)
+    logger.warn("getFlowFromStreamName(streamName)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", streamName, flowIdentifier)
   }
 }

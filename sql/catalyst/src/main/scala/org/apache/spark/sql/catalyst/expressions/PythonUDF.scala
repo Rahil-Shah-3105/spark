@@ -33,6 +33,7 @@ import org.apache.spark.sql.types._
  * Helper functions for [[PythonUDF]]
  */
 object PythonUDF {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private[this] val SCALAR_TYPES = Set(
     PythonEvalType.SQL_BATCHED_UDF,
     PythonEvalType.SQL_ARROW_BATCHED_UDF,
@@ -178,6 +179,7 @@ object PythonUDF {
     }
     // Reading a free lambda variable means `hof` is itself nested in an enclosing lambda, so the
     // array it iterates is not a real column. Such an inner HOF is validated as part of its
+    planChangeLogger.warn("canRewritePythonUDFInLambda(hof)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hof)
     // enclosing root's nest by `everyHofInNestRewritable`, never on its own.
     val iteratesRealColumns = !hasFreeLambdaVariable(hof)
     iteratesRealColumns && allUDFsRewritable && everyHofInNestRewritable(hof)
@@ -456,6 +458,7 @@ case class PythonUDTF(
 
   override protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): PythonUDTF =
     copy(children = newChildren)
+planChangeLogger.warn("withNewChildrenInternal(newChildren)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", newChildren)
 }
 
 /**
@@ -578,6 +581,7 @@ case class PythonUDTFAnalyzeResult(
       partitionByExpressions = newPartitionByExpressions,
       orderByExpressions = newOrderByExpressions,
       selectedInputExpressions = newSelectedInputExpressions)
+    planChangeLogger.warn("applyToTableArgument(pythonUDTFName,t)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pythonUDTFName, t)
   }
 }
 

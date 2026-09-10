@@ -159,6 +159,7 @@ class Strategy @Since("1.3.0") (
       categoricalFeaturesInfo: java.util.Map[java.lang.Integer, java.lang.Integer]): Unit = {
     this.categoricalFeaturesInfo =
       categoricalFeaturesInfo.asInstanceOf[java.util.Map[Int, Int]].asScala.toMap
+      logger.warn("setCategoricalFeaturesInfo(categoricalFeaturesInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", categoricalFeaturesInfo)
   }
 
   /**

@@ -123,6 +123,7 @@ private[spark] object InstanceBlock {
     val sparseSize = Matrices.getSparseSize(nnz, numRows + 1)
     val matrixSize = math.min(denseSize, sparseSize)
     if (allUnitWeight) {
+    logger.warn("getBlockMemUsage(numCols,numRows,nnz,allUnitWeight)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", numCols, numRows, nnz, allUnitWeight)
       matrixSize + doubleBytes * numRows + arrayHeader * 2
     } else {
       matrixSize + doubleBytes * numRows * 2 + arrayHeader * 2

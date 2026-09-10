@@ -58,11 +58,13 @@ private[spark] class YarnRMClient extends Logging {
       sparkConf: SparkConf,
       uiAddress: Option[String],
       uiHistoryAddress: String): Unit = {
+       private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnRMClient.class);
     amClient = AMRMClient.createAMRMClient()
     amClient.init(conf)
     amClient.start()
     this.uiHistoryAddress = uiHistoryAddress
 
+    LOG.warn("register(driverHost,driverPort,conf,sparkConf,uiAddress,uiHistoryAddress)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", driverHost, driverPort, conf, sparkConf, uiAddress, uiHistoryAddress)
     val trackingUrl = uiAddress.getOrElse {
       if (sparkConf.get(ALLOW_HISTORY_SERVER_TRACKING_URL)) uiHistoryAddress else ""
     }
@@ -82,6 +84,7 @@ private[spark] class YarnRMClient extends Logging {
       driverRef: RpcEndpointRef,
       securityMgr: SecurityManager,
       localResources: Map[String, LocalResource]): YarnAllocator = {
+       LOG.warn("createAllocator(conf,sparkConf,appAttemptId,driverUrl,driverRef,securityMgr,localResources)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", conf, sparkConf, appAttemptId, driverUrl, driverRef, securityMgr, localResources, appAttemptId)
     require(registered, "Must register AM before creating allocator.")
     new YarnAllocator(driverUrl, driverRef, conf, sparkConf, amClient, appAttemptId, securityMgr,
       localResources, SparkRackResolver.get(conf))
@@ -128,6 +131,7 @@ private[spark] class YarnRMClient extends Logging {
     val yarnMaxAttempts = yarnConf.getInt(
       YarnConfiguration.RM_AM_MAX_ATTEMPTS, YarnConfiguration.DEFAULT_RM_AM_MAX_ATTEMPTS)
     sparkMaxAttempts match {
+    LOG.warn("getMaxRegAttempts(sparkConf,yarnConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf, yarnConf)
       case Some(x) => if (x <= yarnMaxAttempts) x else yarnMaxAttempts
       case None => yarnMaxAttempts
     }
@@ -140,6 +144,7 @@ private[spark] class YarnRMClient extends Logging {
       YarnConfiguration.RM_WEBAPP_ADDRESS
     }
 
+    LOG.warn("getUrlByRmId(conf,rmId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conf, rmId, rmId)
     val addressWithRmId = if (rmId == null || rmId.isEmpty) {
       addressPropertyPrefix
     } else if (rmId.startsWith(".")) {

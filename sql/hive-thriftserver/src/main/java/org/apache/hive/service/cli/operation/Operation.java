@@ -97,14 +97,17 @@ public abstract class Operation {
   }
 
   protected void setBackgroundHandle(Future<?> backgroundHandle) {
+	LOG.warn("setBackgroundHandle(backgroundHandle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", backgroundHandle);
     this.backgroundHandle = backgroundHandle;
   }
 
   public boolean shouldRunAsync() {
+	LOG.warn("shouldRunAsync()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return runAsync;
   }
 
   public void setConfiguration(HiveConf configuration) {
+	LOG.warn("setConfiguration(configuration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", configuration);
     this.configuration = new HiveConf(configuration);
   }
 
@@ -139,6 +142,7 @@ public abstract class Operation {
   protected void setHasResultSet(boolean hasResultSet) {
     this.hasResultSet = hasResultSet;
     opHandle.setHasResultSet(hasResultSet);
+	LOG.warn("setHasResultSet(hasResultSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", hasResultSet, hasResultSet);
   }
 
   public OperationLog getOperationLog() {
@@ -147,6 +151,7 @@ public abstract class Operation {
 
   protected final OperationState setState(OperationState newState) throws HiveSQLException {
     state.validateTransition(newState);
+	LOG.warn("setState(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState);
     this.state = newState;
     this.lastAccessTime = System.currentTimeMillis();
     return this.state;
@@ -172,10 +177,12 @@ public abstract class Operation {
   }
 
   public void setOperationTimeout(long operationTimeout) {
+	LOG.warn("setOperationTimeout(operationTimeout)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operationTimeout);
     this.operationTimeout = operationTimeout;
   }
 
   protected void setOperationException(HiveSQLException operationException) {
+	LOG.warn("setOperationException(operationException)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operationException);
     this.operationException = operationException;
   }
 
@@ -243,12 +250,14 @@ public abstract class Operation {
         return;
       }
 
+	LOG.warn("createOperationLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       // register this operationLog to current thread
       OperationLog.setCurrentOperationLog(operationLog);
     }
   }
 
   protected void unregisterOperationLog() {
+	LOG.warn("unregisterOperationLog()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     if (isOperationLogEnabled) {
       OperationLog.removeCurrentOperationLog();
     }
@@ -259,6 +268,7 @@ public abstract class Operation {
    * Set up some preconditions, or configurations.
    */
   protected void beforeRun() {
+	LOG.warn("beforeRun()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     createOperationLog();
   }
 
@@ -267,6 +277,7 @@ public abstract class Operation {
    * Clean up resources, which was set up in beforeRun().
    */
   protected void afterRun() {
+	LOG.warn("afterRun()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     unregisterOperationLog();
   }
 
@@ -281,6 +292,7 @@ public abstract class Operation {
     try {
       runInternal();
     } finally {
+	LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       afterRun();
     }
   }
@@ -333,6 +345,7 @@ public abstract class Operation {
     if (!supportedOrientations.contains(orientation)) {
       throw new HiveSQLException("The fetch type " + orientation.toString() +
           " is not supported for this resultset", "HY106");
+		LOG.warn("validateFetchOrientation(orientation,supportedOrientations)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", orientation, supportedOrientations);
     }
   }
 

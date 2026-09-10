@@ -110,11 +110,13 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
       metadataPath,
       startingStreamOffsets,
       failOnDataLoss(caseInsensitiveParameters))
+    logger.warn("createSource(sqlContext,metadataPath,schema,providerName,parameters)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sqlContext, metadataPath, schema, providerName, parameters, providerName)
   }
 
   override def getTable(options: CaseInsensitiveStringMap): KafkaTable = {
     val includeHeaders = options.getBoolean(INCLUDE_HEADERS, false)
     new KafkaTable(includeHeaders)
+    logger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   /**
@@ -155,6 +157,8 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
       includeHeaders = includeHeaders,
       startingOffsets = startingRelationOffsets,
       endingOffsets = endingRelationOffsets)
+    logger.warn("createRelation(sqlContext,parameters)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext, parameters)
+  logger.warn("createRelation(outerSQLContext,mode,parameters,data)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outerSQLContext, mode, parameters, data)
   }
 
   override def createSink(
@@ -166,6 +170,7 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
     val defaultTopic = caseInsensitiveParameters.get(TOPIC_OPTION_KEY).map(_.trim)
     val specifiedKafkaParams = kafkaParamsForProducer(caseInsensitiveParameters)
     new KafkaSink(specifiedKafkaParams, defaultTopic)
+    logger.warn("createSink(sqlContext,parameters,partitionColumns,outputMode)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext, parameters, partitionColumns, outputMode)
   }
 
   override def createRelation(
@@ -446,6 +451,7 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
         private val producerParams =
           kafkaParamsForProducer(CaseInsensitiveMap(options.asScala.toMap))
 
+          logger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
         override def build(): Write = KafkaWrite(topic, producerParams, inputSchema)
 
         override def truncate(): WriteBuilder = this
@@ -458,6 +464,7 @@ private[kafka010] class KafkaSourceProvider extends DataSourceRegister
 
     override def readSchema(): StructType = {
       KafkaRecordToRowConverter.kafkaSchema(includeHeaders)
+      logger.warn("readSchema()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     override def toBatch(): Batch = {
@@ -632,6 +639,7 @@ private[kafka010] object KafkaSourceProvider extends Logging {
     if (startOffset > endOffset && startOffset >= 0 && endOffset >= 0) {
       throw exception(startOffset, endOffset, topicPartition)
     }
+    logger.warn("checkStartOffsetNotGreaterThanEndOffset(startOffset,endOffset,topicPartition,exception)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, endOffset, topicPartition, exception)
   }
 
   def checkOffsetLimitValidity(
@@ -675,6 +683,7 @@ private[kafka010] object KafkaSourceProvider extends Logging {
 
       case _ =>  // do nothing
     }
+    logger.warn("checkOffsetLimitValidity(startOffset,endOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, endOffset)
   }
 
   def getKafkaOffsetRangeLimit(
@@ -689,6 +698,7 @@ private[kafka010] object KafkaSourceProvider extends Logging {
       .map(v => StrategyOnNoMatchStartingOffset.withName(v.toUpperCase(Locale.ROOT)))
       .getOrElse(StrategyOnNoMatchStartingOffset.ERROR)
 
+      logger.warn("getKafkaOffsetRangeLimit(params,globalOffsetTimestampOptionKey,offsetByTimestampOptionKey,offsetOptionKey,defaultOffsets)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", params, globalOffsetTimestampOptionKey, offsetByTimestampOptionKey, offsetOptionKey, defaultOffsets)
     if (params.contains(globalOffsetTimestampOptionKey)) {
       // 1. global timestamp
       val tsStr = params(globalOffsetTimestampOptionKey).trim

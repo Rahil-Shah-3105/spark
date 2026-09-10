@@ -38,6 +38,7 @@ class ViewResolver(
     extends TreeNodeResolver[View, View]
     with ResolverMetricTracker
     {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val cteRegistry = resolver.getCteRegistry
   private val sourceUnresolvedRelationStack = new ArrayDeque[UnresolvedRelation]
   private val viewResolutionContextStack = new ArrayDeque[ViewResolutionContext]
@@ -162,8 +163,10 @@ class ViewResolver(
         viewResolutionContextStack.pop()
       }
     }
+    planChangeLogger.warn("withViewResolutionContext(unresolvedView)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedView)
   }
   private def checkMaterializedView(unresolvedView: View): Unit = {
+   planChangeLogger.warn("checkMaterializedView(unresolvedView)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedView)
   }
 
   private def checkResolverGuard(unresolvedView: View): Unit = {

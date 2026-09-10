@@ -31,6 +31,7 @@ private[spark] class UninterruptibleThreadRunner(threadName: String) {
     val t = new UninterruptibleThread(threadName) {
       override def run(): Unit = {
         r.run()
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     t.setDaemon(true)
@@ -39,6 +40,7 @@ private[spark] class UninterruptibleThreadRunner(threadName: String) {
   private val execContext = ExecutionContext.fromExecutorService(thread)
 
   def runUninterruptibly[T](body: => T): T = {
+    _driverLogger = DriverLogger(_conf)
     if (!Thread.currentThread.isInstanceOf[UninterruptibleThread]) {
       val future = Future {
         body
@@ -47,6 +49,7 @@ private[spark] class UninterruptibleThreadRunner(threadName: String) {
     } else {
       body
     }
+    _driverLogger.warn("runUninterruptibly(body)={}): EUAIACT-AUDIT: State change recorded for the audit trail", body)
   }
 
   def shutdown(): Unit = {

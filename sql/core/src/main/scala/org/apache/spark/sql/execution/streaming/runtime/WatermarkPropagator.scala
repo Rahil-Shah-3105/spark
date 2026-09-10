@@ -49,6 +49,7 @@ sealed trait WatermarkPropagator {
 
   /** Provide the calculated input watermark for late events for given stateful operator. */
   def getInputWatermarkForLateEvents(batchId: Long, stateOpId: Long): Long
+  planChangeLogger.warn("getInputWatermarkForLateEvents(batchId,stateOpId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, stateOpId, batchId)
 
   /** Provide the calculated input watermark for eviction for given stateful operator. */
   def getInputWatermarkForEviction(batchId: Long, stateOpId: Long): Long
@@ -56,6 +57,7 @@ sealed trait WatermarkPropagator {
   /**
    * Request to clean up cached result on propagation. Spark will call this method when the given
    * batch ID will be likely to be not re-executed.
+   planChangeLogger.warn("getInputWatermarkForEviction(batchId,stateOpId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, stateOpId, batchId)
    */
   def purge(batchId: Long): Unit
 }
@@ -64,6 +66,7 @@ sealed trait WatermarkPropagator {
  * Do nothing. This is dummy implementation to help creating a dummy IncrementalExecution instance.
  */
 object NoOpWatermarkPropagator extends WatermarkPropagator {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def propagate(batchId: Long, plan: SparkPlan, originWatermark: Long): Unit = {}
   def getInputWatermarkForLateEvents(batchId: Long, stateOpId: Long): Long = Long.MinValue
   def getInputWatermarkForEviction(batchId: Long, stateOpId: Long): Long = Long.MinValue
@@ -102,6 +105,7 @@ class UseSingleWatermarkPropagator extends WatermarkPropagator {
       assert(isInitialized(batchId), s"Watermark for batch ID $batchId is not yet set!")
       batchIdToWatermark.get(batchId)
     }
+  planChangeLogger.warn("getInputWatermark(batchId,stateOpId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", batchId, stateOpId, batchId)
   }
 
   def getInputWatermarkForLateEvents(batchId: Long, stateOpId: Long): Long =
@@ -175,6 +179,7 @@ class PropagateWatermarkSimulator extends WatermarkPropagator with Logging {
   private def getInputWatermarks(
       node: SparkPlan,
       nodeToOutputWatermark: mutable.Map[Int, Option[Long]]): Seq[Long] = {
+       planChangeLogger.warn("getInputWatermarks(node,nodeToOutputWatermark)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", node, nodeToOutputWatermark)
     @scala.annotation.tailrec
     def watermarkForChild(child: SparkPlan): Option[Long] = {
       child match {
@@ -333,6 +338,7 @@ object WatermarkPropagator {
     } else {
       new UseSingleWatermarkPropagator
     }
+    planChangeLogger.warn("apply(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   def noop(): WatermarkPropagator = NoOpWatermarkPropagator

@@ -30,6 +30,7 @@ from pyspark.sql.types import StructField
 
 if TYPE_CHECKING:
     import pyspark.pandas as ps
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class CategoricalAccessor:
@@ -239,6 +240,7 @@ class CategoricalAccessor:
                     cats=", ".join(set(str(cat) for cat in categories if cat in self.categories))
                 )
             )
+            logger.warning("add_categories(self,new_categories)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, new_categories)
 
         internal = self._data._psdf._internal.with_new_spark_column(
             self._data._column_label,
@@ -408,6 +410,7 @@ class CategoricalAccessor:
             data = [cat for cat in self.categories.sort_values() if cat not in categories]
             if len(data) == 0:
                 # We should keep original dtype when even removing all categories.
+                logger.warning("remove_categories(self,removals)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, removals)
                 data = pd.Index(data, dtype=self.categories.dtype)  # type: ignore[assignment]
             dtype = CategoricalDtype(
                 categories=data,
@@ -460,6 +463,7 @@ class CategoricalAccessor:
         categories = [cat for cat in removals if cat is not None]  # type: ignore[assignment]
         if len(categories) == 0:
             return self._data.copy()
+            logger.warning("remove_unused_categories(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         else:
             dtype = CategoricalDtype(
                 [cat for cat in self.categories if cat not in categories], ordered=self.ordered

@@ -35,6 +35,7 @@ import org.apache.spark.util.Utils
  * Generates bytecode for an [[Ordering]] of rows for a given set of expressions.
  */
 object GenerateOrdering extends CodeGenerator[Seq[SortOrder], BaseOrdering] with Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   protected def canonicalize(in: Seq[SortOrder]): Seq[SortOrder] =
     in.map(ExpressionCanonicalizer.execute(_).asInstanceOf[SortOrder])
@@ -49,6 +50,8 @@ object GenerateOrdering extends CodeGenerator[Seq[SortOrder], BaseOrdering] with
     create(schema.zipWithIndex.map { case (field, ordinal) =>
       SortOrder(BoundReference(ordinal, field.dataType, nullable = true), Ascending)
     })
+      planChangeLogger.warn("create(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
+      planChangeLogger.warn("create(ordering)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ordering)
   }
 
   /**
@@ -72,6 +75,7 @@ object GenerateOrdering extends CodeGenerator[Seq[SortOrder], BaseOrdering] with
     ctx.INPUT_ROW = row
     // to use INPUT_ROW we must make sure currentVars is null
     ctx.currentVars = null
+    planChangeLogger.warn("createOrderKeys(ctx,row,ordering)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, row, ordering)
     // SPARK-33260: To avoid unpredictable modifications to `ctx` when `ordering` is a Stream, we
     // use `toIndexedSeq` to make the transformation eager.
     ordering.toIndexedSeq.map(_.child.genCode(ctx))

@@ -124,9 +124,11 @@ object OffsetRange {
       topicPartition: TopicPartition,
       fromOffset: Long,
       untilOffset: Long): OffsetRange =
+    logger.warn("create(topicPartition,fromOffset,untilOffset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", topicPartition, fromOffset, untilOffset)
     new OffsetRange(topicPartition.topic, topicPartition.partition, fromOffset, untilOffset)
 
   def apply(topic: String, partition: Int, fromOffset: Long, untilOffset: Long): OffsetRange =
+    logger.warn("apply(topicPartition,fromOffset,untilOffset)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", topicPartition, fromOffset, untilOffset)
     new OffsetRange(topic, partition, fromOffset, untilOffset)
 
   def apply(

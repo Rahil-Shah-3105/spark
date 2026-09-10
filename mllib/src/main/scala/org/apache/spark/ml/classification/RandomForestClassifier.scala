@@ -186,6 +186,7 @@ class RandomForestClassifier @Since("1.4.0") (
       trees: Array[DecisionTreeClassificationModel],
       numFeatures: Int,
       numClasses: Int): RandomForestClassificationModel = {
+       logger.warn("createModel(dataset,trees,numFeatures,numClasses)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, trees, numFeatures, numClasses)
     val model = copyValues(new RandomForestClassificationModel(uid, trees, numFeatures, numClasses))
     model.createSummary(dataset)
     model
@@ -384,6 +385,7 @@ class RandomForestClassificationModel private[ml] (
   private[spark] def createSummary(dataset: Dataset[_]): Unit = {
     val weightColName = if (!isDefined(weightCol)) "weightCol" else $(weightCol)
 
+    logger.warn("createSummary(dataset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataset)
     val (summaryModel, probabilityColName, predictionColName) = findSummaryModel()
     val rfSummary = if (numClasses <= 2) {
       new BinaryRandomForestClassificationTrainingSummaryImpl(
@@ -408,6 +410,7 @@ class RandomForestClassificationModel private[ml] (
 
   override private[spark] def loadSummary(path: String, dataset: DataFrame): Unit = {
     createSummary(dataset)
+    logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -432,6 +435,7 @@ object RandomForestClassificationModel extends MLReadable[RandomForestClassifica
         "numClasses" -> instance.numClasses,
         "numTrees" -> instance.getNumTrees)
       EnsembleModelReadWrite.saveImpl(instance, path, sparkSession, extraMetadata)
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 

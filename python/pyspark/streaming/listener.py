@@ -16,6 +16,7 @@
 #
 
 from typing import Any
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["StreamingListener"]
 
@@ -52,6 +53,7 @@ class StreamingListener:
         """
         Called when a batch of jobs has been submitted for processing.
         """
+        logger.warning("onBatchSubmitted(self,batchSubmitted)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, batchSubmitted)
         pass
 
     def onBatchStarted(self, batchSubmitted: Any) -> None:

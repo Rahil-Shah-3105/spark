@@ -34,6 +34,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def invalidInsertIntoError(ctx: InsertIntoContext): Throwable = {
     new ParseException(errorClass = "_LEGACY_ERROR_TEMP_0001", ctx)
+    logger.warn("invalidInsertIntoError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def parserStackOverflow(parserRuleContext: ParserRuleContext): Throwable = {
@@ -42,6 +43,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def insertOverwriteDirectoryUnsupportedError(): Throwable = {
     SparkException.internalError("INSERT OVERWRITE DIRECTORY is not supported.")
+    logger.warn("insertOverwriteDirectoryUnsupportedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def insertReplaceOnNotEnabled(ctx: ParserRuleContext): Throwable = {
@@ -49,6 +51,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_ON_NOT_ENABLED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceOnNotEnabled(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceOnByNameNotEnabled(ctx: ParserRuleContext): Throwable = {
@@ -56,6 +59,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_ON_BY_NAME_NOT_ENABLED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceOnByNameNotEnabled(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceOnColumnListNotAllowed(ctx: ParserRuleContext): Throwable = {
@@ -63,6 +67,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_ON_COLUMN_LIST_NOT_ALLOWED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceOnColumnListNotAllowed(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceUsingNotEnabled(ctx: ParserRuleContext): Throwable = {
@@ -70,6 +75,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_USING_NOT_ENABLED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceUsingNotEnabled(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceUsingByNameNotEnabled(ctx: ParserRuleContext): Throwable = {
@@ -77,6 +83,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_USING_BY_NAME_NOT_ENABLED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceUsingByNameNotEnabled(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceWhereColumnListNotEnabled(ctx: ParserRuleContext): Throwable = {
@@ -84,6 +91,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_WHERE_COLUMN_LIST_NOT_ENABLED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceWhereColumnListNotEnabled(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def insertReplaceWhereTableAliasNotAllowed(ctx: TableAliasContext): Throwable = {
@@ -91,6 +99,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INSERT_REPLACE_WHERE_TABLE_ALIAS_NOT_ALLOWED",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("insertReplaceWhereTableAliasNotAllowed(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def columnAliasInOperationNotAllowedError(op: String, ctx: TableAliasContext): Throwable = {
@@ -113,6 +122,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       messageParameters =
         Map("expectedCount" -> expectedCount.toString, "actualCount" -> actualCount.toString),
       ctx.notMatchedAction())
+    logger.warn("insertedValueNumberNotMatchColumnNumberError(expectedCount,actualCount,ctx)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expectedCount, actualCount, ctx)
   }
 
   def mergeStatementWithoutWhenClauseError(ctx: MergeIntoTableContext): Throwable = {
@@ -162,10 +172,12 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "MULTIPLE_QUERY_RESULT_CLAUSES_WITH_PIPE_OPERATORS",
       messageParameters = Map("clause1" -> clause1, "clause2" -> clause2),
       ctx)
+    logger.warn("multipleQueryResultClausesWithPipeOperatorsUnsupportedError(ctx,clause1,clause2)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, clause1, clause2)
   }
 
   def combinationQueryResultClausesUnsupportedError(ctx: QueryOrganizationContext): Throwable = {
     new ParseException(errorClass = "UNSUPPORTED_FEATURE.COMBINATION_QUERY_RESULT_CLAUSES", ctx)
+    logger.warn("combinationQueryResultClausesUnsupportedError(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   def pipeOperatorAggregateUnsupportedCaseError(
@@ -263,6 +275,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "UNSUPPORTED_FEATURE.ASOF_JOIN",
       messageParameters = Map("config" -> toSQLConf(configKey)),
       ctx)
+    logger.warn("sqlAsOfJoinDisabled(configKey,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", configKey, ctx)
   }
 
   def sqlAsOfJoinMatchConditionInvalidOperator(
@@ -589,6 +602,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def storedAsAndStoredByBothSpecifiedError(): Throwable = {
     SparkException.internalError("Expected either STORED AS or STORED BY, not both.")
+    logger.warn("storedAsAndStoredByBothSpecifiedError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def operationInHiveStyleCommandUnsupportedError(
@@ -656,6 +670,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "_LEGACY_ERROR_TEMP_0037",
       messageParameters = Map("quoted" -> quoted),
       ctx)
+    logger.warn("addCatalogInCacheTableAsSelectNotAllowedError(quoted,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", quoted, ctx)
   }
 
   def showFunctionsUnsupportedError(identifier: String, ctx: ParserRuleContext): Throwable = {
@@ -711,6 +726,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def unexpectedFormatForSetConfigurationError(ctx: ParserRuleContext): Throwable = {
     new ParseException(errorClass = "INVALID_SET_SYNTAX", ctx)
+    logger.warn("unexpectedFormatForSetConfigurationError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def invalidPropertyKeyForSetQuotedConfigurationError(
@@ -721,6 +737,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INVALID_PROPERTY_KEY",
       messageParameters = Map("key" -> toSQLConf(keyCandidate), "value" -> toSQLConf(valueStr)),
       ctx)
+    logger.warn("invalidPropertyKeyForSetQuotedConfigurationError(keyCandidate,valueStr,ctx)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", keyCandidate, valueStr, ctx, keyCandidate)
   }
 
   def invalidPropertyValueForSetQuotedConfigurationError(
@@ -731,10 +748,12 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INVALID_PROPERTY_VALUE",
       messageParameters = Map("value" -> toSQLConf(valueCandidate), "key" -> toSQLConf(keyStr)),
       ctx)
+    logger.warn("invalidPropertyValueForSetQuotedConfigurationError(valueCandidate,keyStr,ctx)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", valueCandidate, keyStr, ctx, valueCandidate)
   }
 
   def unexpectedFormatForResetConfigurationError(ctx: ResetConfigurationContext): Throwable = {
     new ParseException(errorClass = "INVALID_RESET_COMMAND_FORMAT", ctx)
+    logger.warn("unexpectedFormatForResetConfigurationError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def intervalValueOutOfRangeError(input: String, ctx: IntervalContext): Throwable = {
@@ -750,14 +769,17 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def createTempTableNotSpecifyProviderError(ctx: CreateTableContext): Throwable = {
     new ParseException(errorClass = "_LEGACY_ERROR_TEMP_0046", ctx)
+    logger.warn("createTempTableNotSpecifyProviderError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def rowFormatNotUsedWithStoredAsError(ctx: CreateTableLikeContext): Throwable = {
     new ParseException(errorClass = "_LEGACY_ERROR_TEMP_0047", ctx)
+    logger.warn("rowFormatNotUsedWithStoredAsError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def useDefinedRecordReaderOrWriterClassesError(ctx: ParserRuleContext): Throwable = {
     new ParseException(errorClass = "_LEGACY_ERROR_TEMP_0048", ctx)
+    logger.warn("useDefinedRecordReaderOrWriterClassesError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def directoryPathAndOptionsPathBothSpecifiedError(ctx: InsertOverwriteDirContext): Throwable = {
@@ -778,6 +800,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "_LEGACY_ERROR_TEMP_0051",
       messageParameters = Map("element" -> element),
       ctx)
+    logger.warn("invalidGroupingSetError(element,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", element, ctx)
   }
 
   def identityColumnUnsupportedDataType(
@@ -806,6 +829,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "CREATE_VIEW_WITH_IF_NOT_EXISTS_AND_REPLACE",
       messageParameters = Map("viewName" -> viewName),
       ctx)
+    logger.warn("createViewWithBothIfNotExistsAndReplaceError(viewName,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", viewName, ctx)
   }
 
   def temporaryViewWithSchemaBindingMode(ctx: StatementContext): Throwable = {
@@ -813,6 +837,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "UNSUPPORTED_FEATURE.TEMPORARY_VIEW_WITH_SCHEMA_BINDING_MODE",
       messageParameters = Map.empty,
       ctx)
+    logger.warn("temporaryViewWithSchemaBindingMode(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   def parameterMarkerNotAllowed(statement: String, origin: Origin): Throwable = {
@@ -825,6 +850,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def defineTempViewWithIfNotExistsError(ctx: CreateViewContext): Throwable = {
     new ParseException(errorClass = "_LEGACY_ERROR_TEMP_0053", ctx)
+    logger.warn("defineTempViewWithIfNotExistsError(ctx)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctx)
   }
 
   def notAllowedToAddDBPrefixForTempViewError(
@@ -834,26 +860,31 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "TEMP_VIEW_NAME_TOO_MANY_NAME_PARTS",
       messageParameters = Map("actualName" -> toSQLId(nameParts)),
       ctx)
+    logger.warn("notAllowedToAddDBPrefixForTempViewError(nameParts,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nameParts, ctx)
   }
 
   def createFuncWithBothIfNotExistsAndReplaceError(ctx: ParserRuleContext): Throwable = {
     new ParseException(
       errorClass = "INVALID_SQL_SYNTAX.CREATE_ROUTINE_WITH_IF_NOT_EXISTS_AND_REPLACE",
       ctx)
+    logger.warn("createFuncWithBothIfNotExistsAndReplaceError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def createTempTableUsingProviderError(ctx: CreateTableContext): Throwable = {
     new ParseException(errorClass = "INVALID_SQL_SYNTAX.CREATE_TEMP_TABLE_USING_PROVIDER", ctx)
+    logger.warn("createTempTableUsingProviderError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def createFuncWithGeneratedColumnsError(ctx: ParserRuleContext): Throwable = {
     new ParseException(
       errorClass = "INVALID_SQL_SYNTAX.CREATE_FUNC_WITH_GENERATED_COLUMNS_AS_PARAMETERS",
       ctx)
+    logger.warn("createFuncWithGeneratedColumnsError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def createFuncWithConstraintError(ctx: ParserRuleContext): Throwable = {
     new ParseException(errorClass = "INVALID_SQL_SYNTAX.CREATE_FUNC_WITH_COLUMN_CONSTRAINTS", ctx)
+    logger.warn("createFuncWithConstraintError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def defineTempFuncWithIfNotExistsError(ctx: ParserRuleContext): Throwable = {
@@ -889,6 +920,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "INVALID_SQL_SYNTAX.CREATE_TEMP_FUNC_WITH_DATABASE",
       messageParameters = Map("database" -> toSQLId(databaseName)),
       ctx)
+    logger.warn("specifyingDBInCreateTempFuncError(databaseName,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", databaseName, ctx)
   }
 
   def invalidTableValuedFunctionNameError(
@@ -937,6 +969,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
       errorClass = "UNSUPPORTED_FEATURE.TIME_TRAVEL_AT_SYNTAX",
       messageParameters = Map("config" -> toSQLConf(configKey)),
       ctx)
+    logger.warn("timeTravelAtSyntaxDisabled(configKey,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", configKey, ctx)
   }
 
   def invalidNameForDropTempFunc(name: Seq[String], ctx: ParserRuleContext): Throwable = {
@@ -953,6 +986,7 @@ private[sql] object QueryParsingErrors extends DataTypeErrorsBase {
 
   def defaultColumnNotEnabledError(ctx: ParserRuleContext): Throwable = {
     new ParseException(errorClass = "UNSUPPORTED_DEFAULT_VALUE.WITH_SUGGESTION", ctx)
+    logger.warn("defaultColumnNotEnabledError(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
   }
 
   def defaultColumnReferencesNotAllowedInPartitionSpec(ctx: ParserRuleContext): Throwable = {

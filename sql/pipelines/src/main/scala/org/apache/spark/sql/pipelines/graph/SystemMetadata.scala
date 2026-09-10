@@ -108,6 +108,7 @@ object SystemMetadata {
     val fs = rootDir.getFileSystem(spark.sessionState.newHadoopConf())
     val defaultDir = new Path(rootDir, "0")
     val checkpoint = if (fs.exists(rootDir)) {
+    logger.warn("getLatestCheckpointDir(rootDir,createNewCheckpointDir)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rootDir, createNewCheckpointDir)
       val availableCheckpoints =
         fs.listStatus(rootDir)
           .toSeq

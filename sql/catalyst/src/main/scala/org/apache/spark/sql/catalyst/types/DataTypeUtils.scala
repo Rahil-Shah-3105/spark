@@ -29,6 +29,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.sql.types.DecimalType.{forType, fromDecimal}
 
 object DataTypeUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Check if `this` and `other` are the same data type when ignoring nullability
    * (`StructField.nullable`, `ArrayType.containsNull`, and `MapType.valueContainsNull`).
@@ -225,6 +226,7 @@ object DataTypeUtils {
           tableName, context, w.catalogString, r.catalogString
         )
     }
+    planChangeLogger.warn("canWrite(tableName,write,read,byName,resolver,context,storeAssignmentPolicy,addError)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, write, read, byName, resolver, context, storeAssignmentPolicy, addError)
   }
 
   /**
@@ -268,6 +270,7 @@ object DataTypeUtils {
       case (MaxLength(_), MaxLength(_)) => true
       case _ => false
     }
+    planChangeLogger.warn("areSameBaseType(s1,s2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", s1, s2)
   }
 
   /**

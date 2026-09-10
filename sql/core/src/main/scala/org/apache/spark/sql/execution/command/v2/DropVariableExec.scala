@@ -31,12 +31,14 @@ import org.apache.spark.sql.execution.datasources.v2.LeafV2CommandExec
  */
 case class DropVariableExec(name: String, ifExists: Boolean) extends LeafV2CommandExec
   with DataTypeErrorsBase {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override protected def run(): Seq[InternalRow] = {
     val variableManager = session.sessionState.catalogManager.tempVariableManager
     val normalizedName = if (session.sessionState.conf.caseSensitiveAnalysis) {
       name
     } else {
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       name.toLowerCase(Locale.ROOT)
     }
     if (!variableManager.remove(Seq(normalizedName))) {

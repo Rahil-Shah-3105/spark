@@ -52,6 +52,7 @@ private[kafka010] class KafkaSourceRDD(
   extends RDD[ConsumerRecord[Array[Byte], Array[Byte]]](sc, Nil) {
 
   override def persist(newLevel: StorageLevel): this.type = {
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
     logError("Kafka ConsumerRecord is not serializable. " +
       "Use .map to extract fields before calling .persist or .window")
     super.persist(newLevel)
@@ -64,6 +65,7 @@ private[kafka010] class KafkaSourceRDD(
   override def getPreferredLocations(split: Partition): Seq[String] = {
     val part = split.asInstanceOf[KafkaSourceRDDPartition]
     part.offsetRange.preferredLoc.map(Seq(_)).getOrElse(Seq.empty)
+    logger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   override def compute(
@@ -105,6 +107,7 @@ private[kafka010] class KafkaSourceRDD(
               r
             }
           }
+          logger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
 
         override protected def close(): Unit = {

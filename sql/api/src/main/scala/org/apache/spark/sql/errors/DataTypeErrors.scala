@@ -87,6 +87,7 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
       errorClass = "UDT_CLASS_NOT_FOUND.FOR_USER_CLASS",
       messageParameters = Map("udtClass" -> name, "userClass" -> userClass),
       cause = null)
+    logger.warn("cannotLoadUserDefinedTypeError(name,userClass)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, userClass)
   }
 
   def udtClassLoadingDisabledError(udtClass: String, allowed: Seq[String]): Throwable = {
@@ -95,6 +96,7 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
       messageParameters =
         Map("udtClass" -> udtClass, "allowed" -> allowed.map(toSQLValue).mkString(", ")),
       cause = null)
+    logger.warn("udtClassLoadingDisabledError(udtClass,allowed)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", udtClass, allowed)
   }
 
   def udtClassNotUserDefinedTypeError(udtClass: String): Throwable = {
@@ -200,6 +202,7 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
       decimalScale: Int,
       context: QueryContext = null): ArithmeticException = {
     numericValueOutOfRange(value, decimalPrecision, decimalScale, context)
+    logger.warn("cannotChangeDecimalPrecisionError(value,decimalPrecision,decimalScale,context)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, decimalPrecision, decimalScale, context)
   }
 
   private def numericValueOutOfRange(
@@ -336,6 +339,7 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
     if (!SqlApiConf.get.timestampNanosTypesEnabled) {
       throw timestampNanosTypesNotEnabledError()
     }
+    logger.warn("checkTimestampNanosTypesEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def timestampNanosTypesNotEnabledError(): Throwable = {
@@ -346,5 +350,6 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
         "configKey" -> "spark.sql.timestampNanosTypes.enabled",
         "configValue" -> "true"),
       cause = null)
+    logger.warn("timestampNanosTypesNotEnabledError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

@@ -55,9 +55,11 @@ class SqlGraphRegistrationContextState(
   def setSqlConf(k: String, v: String): Unit = sqlConf.put(k, v)
   def setCurrentCatalog(catalogName: String): Unit = {
     currentCatalogOpt = Option(catalogName)
+    logger.warn("setCurrentCatalog(catalogName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", catalogName)
   }
   def setCurrentDatabase(databaseName: String): Unit = {
     currentDatabaseOpt = Option(databaseName)
+    logger.warn("setCurrentDatabase(databaseName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", databaseName)
   }
   def clearCurrentDatabase(): Unit = {
     currentDatabaseOpt = None
@@ -123,6 +125,7 @@ class SqlGraphRegistrationContext(
     ).foreach { case SqlQueryPlanWithOrigin(logicalPlan, queryOrigin) =>
       processSqlQuery(logicalPlan, queryOrigin, spark)
     }
+      logger.warn("processSqlFile(sqlText,sqlFilePath,spark)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlText, sqlFilePath, spark)
   }
 
   private def processSqlQuery(
@@ -179,6 +182,7 @@ class SqlGraphRegistrationContext(
           queryOrigin = queryOrigin
         )
     }
+    logger.warn("processSqlQuery(queryPlan,queryOrigin,spark)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", queryPlan, queryOrigin, spark)
   }
 
   private object CreateStreamingTableHandler {
@@ -267,6 +271,7 @@ class SqlGraphRegistrationContext(
           )
         )
       )
+    logger.warn("handle(cst,queryOrigin)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cst, queryOrigin, stIdentifier)
     }
   }
 
@@ -349,6 +354,7 @@ class SqlGraphRegistrationContext(
       columnSelection = columnSelection,
       trackHistorySelection = trackHistorySelection
     )
+    logger.warn("buildChangeArgs(keys,sequenceByExpr,deleteCondition,includeColumns,excludeColumns,storedAsScdType,trackHistoryColumns,trackHistoryExceptColumns,queryOrigin)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keys, sequenceByExpr, deleteCondition, includeColumns, excludeColumns, storedAsScdType, trackHistoryColumns, trackHistoryExceptColumns, queryOrigin)
   }
 
   private def toUnqualifiedColumnName(attr: UnresolvedAttribute): UnqualifiedColumnName =
@@ -477,6 +483,7 @@ class SqlGraphRegistrationContext(
           )
         )
       )
+      logger.warn("handle(cmv,queryOrigin)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cmv, queryOrigin, mvIdentifier)
     }
   }
 
@@ -520,6 +527,8 @@ class SqlGraphRegistrationContext(
           )
         )
       )
+      logger.warn("handle(cv,queryOrigin)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cv, queryOrigin, viewIdentifier)
+    logger.warn("handle(cvc,queryOrigin)=<redacted>,{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", queryOrigin, viewIdentifier)
     }
   }
 
@@ -587,6 +596,7 @@ class SqlGraphRegistrationContext(
           currentDatabase = context.getCurrentDatabaseOpt
         )
         .identifier
+        logger.warn("handle(cf,queryOrigin)={},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", cf, queryOrigin, rawFlowIdentifier)
 
       cf.flowOperation match {
         case i: InsertIntoStatement =>
@@ -599,6 +609,7 @@ class SqlGraphRegistrationContext(
                 msg = "Unable to resolve target dataset name for INSERT INTO flow",
                 queryOrigin = queryOrigin
               )
+          logger.warn("validateInsertIntoFlow(insertIntoStatement,queryOrigin)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", insertIntoStatement, queryOrigin)
           }
           graphRegistrationContext.registerFlow(
             UntypedFlow(
@@ -652,6 +663,7 @@ class SqlGraphRegistrationContext(
     private def qualifyDestinationIdentifier(
         flowTargetDatasetIdentifier: TableIdentifier): TableIdentifier =
       GraphIdentifierManager
+      logger.warn("qualifyDestinationIdentifier(flowTargetDatasetIdentifier)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", flowTargetDatasetIdentifier, flowTargetDatasetIdentifier)
         .parseAndQualifyFlowIdentifier(
           rawFlowIdentifier = flowTargetDatasetIdentifier,
           currentCatalog = context.getCurrentCatalogOpt,

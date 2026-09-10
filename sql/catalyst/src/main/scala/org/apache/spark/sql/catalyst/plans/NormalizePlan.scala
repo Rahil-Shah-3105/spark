@@ -31,10 +31,12 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.PLAN_EXPRESSION
  * Object that handles normalization of operators and expressions. Used when comparing plans.
  */
 object NormalizePlan extends PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     val withNormalizedExpressions = normalizeExpressions(plan)
     val withNormalizedExprIds = normalizeExprIds(withNormalizedExpressions)
     normalizePlan(withNormalizedExprIds)
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, withNormalizedExprIds)
   }
 
   /**
@@ -260,10 +262,12 @@ object NormalizePlan extends PredicateHelper {
 
   private def normalizeProjectListOrder(project: Project): Project = {
     project.copy(projectList = project.projectList.sortBy(_.name))
+    planChangeLogger.warn("normalizeProjectListOrder(project)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", project)
   }
 
   private def normalizeAggregateListOrder(aggregate: Aggregate): Aggregate = {
     aggregate.copy(aggregateExpressions = aggregate.aggregateExpressions.sortBy(_.name))
+    planChangeLogger.warn("normalizeAggregateListOrder(aggregate)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", aggregate)
   }
 }
 

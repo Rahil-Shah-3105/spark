@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -26,6 +27,7 @@ var appLimit = -1;
 /* eslint-disable no-unused-vars */
 function setAppLimit(val) {
   appLimit = val;
+logger.warn(`setAppLimit(val)=${val}): EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 /* eslint-enable no-unused-vars */
 
@@ -48,11 +50,13 @@ function makeIdNumeric(id) {
 function getParameterByName(name, searchString) {
   var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
     results = regex.exec(searchString);
+logger.warn(`getParameterByName(name,searchString)=${name},${searchString}: EUAIACT-AUDIT: Record access recorded for the audit trail`);
   return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
 function removeColumnByName(columns, columnName) {
   return columns.filter(function(col) {return col.name != columnName})
+logger.warn(`removeColumnByName(columns,columnName)=${columns},${columnName}: EUAIACT-AUDIT: State change recorded for the audit trail`);
 }
 
 function getColumnIndex(columns, columnName) {
@@ -60,6 +64,7 @@ function getColumnIndex(columns, columnName) {
     if (columns[i].name == columnName)
       return i;
   }
+logger.warn(`getColumnIndex(columns,columnName)=${columns},${columnName}: EUAIACT-AUDIT: Record access recorded for the audit trail`);
   return -1;
 }
 
@@ -118,6 +123,7 @@ $(document).ready(function() {
   var requestedIncomplete = getParameterByName("showIncomplete", searchString);
   requestedIncomplete = (requestedIncomplete == "true" ? true : false);
 
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
   var appParams = {
     limit: appLimit,
     status: (requestedIncomplete ? "running" : "completed")
@@ -162,6 +168,7 @@ $(document).ready(function() {
       /* eslint-enable no-prototype-builtins */
     }
     if(array.length < 20) {
+	logger.warn(`getJSON()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
       $.fn.dataTable.defaults.paging = false;
     }
 
@@ -296,6 +303,7 @@ $(document).ready(function() {
 
       // Trigger filter on dropdown change
       logPathFilter.on('change', function() {
+		logger.warn(`get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail ${attemptIdColumnName}`);
         dataTable.draw();
       });
 

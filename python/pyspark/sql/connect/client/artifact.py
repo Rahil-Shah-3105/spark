@@ -35,6 +35,7 @@ import grpc
 
 import pyspark.sql.connect.proto as proto
 import pyspark.sql.connect.proto.base_pb2_grpc as grpc_lib
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 JAR_PREFIX: str = "jars"
 PYFILE_PREFIX: str = "pyfiles"
@@ -311,6 +312,7 @@ class ArtifactManager:
         Add a single artifact to the session.
         Currently only local files with .jar extension is supported.
         """
+        logger.warning("add_artifacts(self,pyfile,archive,file)=%s,%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pyfile, archive, file)
         requests: Iterator[proto.AddArtifactsRequest] = self._create_requests(
             *path, pyfile=pyfile, archive=archive, file=file
         )
@@ -334,6 +336,7 @@ class ArtifactManager:
         def add_to_batch(dep: Artifact, size: int) -> None:
             nonlocal current_batch
             nonlocal current_batch_size
+            logger.warning("add_to_batch(dep,size)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", dep, size)
 
             current_batch.append(dep)
             current_batch_size += size
@@ -342,6 +345,7 @@ class ArtifactManager:
             nonlocal current_batch
             nonlocal current_batch_size
 
+            logger.warning("write_batch()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             yield from self._add_batched_artifacts(current_batch)
             current_batch = []
             current_batch_size = 0
@@ -465,6 +469,7 @@ class ArtifactManager:
         for hash in hashes:
             artifact_name = f"{CACHE_PREFIX}/{hash}"
             status = resp.statuses.get(artifact_name)
+            logger.warning("get_cached_artifacts(self,hashes)=%s,<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             if status is not None and status.exists:
                 cached.add(hash)
         return cached

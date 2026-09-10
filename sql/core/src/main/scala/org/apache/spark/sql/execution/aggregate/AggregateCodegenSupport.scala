@@ -66,6 +66,7 @@ trait AggregateCodegenSupport
   protected def doConsumeWithKeys(ctx: CodegenContext, input: Seq[ExprCode]): String
 
   protected override def doProduce(ctx: CodegenContext): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (groupingExpressions.isEmpty) {
       doProduceWithoutKeys(ctx)
     } else {
@@ -110,6 +111,7 @@ trait AggregateCodegenSupport
         val isNull = ctx.addMutableState(CodeGenerator.JAVA_BOOLEAN, "bufIsNull")
         val value = ctx.addMutableState(CodeGenerator.javaType(e.dataType), "bufValue")
         // The initial expression should not access any column
+    planChangeLogger.warn("createAggBufVars(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx)
         val ev = e.genCode(ctx)
         val initVars =
           code"""
@@ -271,6 +273,7 @@ trait AggregateCodegenSupport
        |// evaluate aggregate functions and update aggregation buffers
        |$codeToEvalAggFuncs
      """.stripMargin
+     planChangeLogger.warn("generateAggBufferUpdateCode(ctx,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ctx, input)
   }
 
   /**

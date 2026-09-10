@@ -59,6 +59,7 @@ private[spark] class StreamingJobProgressListener(ssc: StreamingContext)
         // Note: if "onJobStart" happens before "onBatchSubmitted", the size of
         // "batchTimeToOutputOpIdToSparkJobIds" may be greater than the number of the retained
         // batches temporarily, so here we use "10" to handle such case. This is not a perfect
+        logger.warn("removeEldestEntry(p1)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p1)
         // solution, but at least it can handle most of cases.
         size() >
           waitingBatchUIData.size + runningBatchUIData.size + completedBatchUIData.size + 10
@@ -95,6 +96,7 @@ private[spark] class StreamingJobProgressListener(ssc: StreamingContext)
       waitingBatchUIData(batchSubmitted.batchInfo.batchTime) =
         BatchUIData(batchSubmitted.batchInfo)
     }
+    logger.warn("onBatchSubmitted(batchSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchSubmitted)
   }
 
   override def onBatchStarted(batchStarted: StreamingListenerBatchStarted): Unit = synchronized {
@@ -156,6 +158,7 @@ private[spark] class StreamingJobProgressListener(ssc: StreamingContext)
       assert(outputOpId != null)
       Some(Time(batchTime.toLong) -> outputOpId.toInt)
     }
+    logger.warn("getBatchTimeAndOutputOpId(properties)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", properties)
   }
 
   def startTime: Long = _startTime

@@ -100,6 +100,7 @@ private[streaming] class JavaStreamingListenerWrapper(javaStreamingListener: Jav
   override def onBatchSubmitted(batchSubmitted: StreamingListenerBatchSubmitted): Unit = {
     javaStreamingListener.onBatchSubmitted(
       new JavaStreamingListenerBatchSubmitted(toJavaBatchInfo(batchSubmitted.batchInfo)))
+    logger.warn("onBatchSubmitted(batchSubmitted)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchSubmitted)
   }
 
   override def onBatchStarted(batchStarted: StreamingListenerBatchStarted): Unit = {

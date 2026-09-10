@@ -78,6 +78,7 @@ private[ml] trait OneHotEncoderBase extends Params with HasHandleInvalid
     } else {
       ($(inputCols), $(outputCols))
     }
+    logger.warn("getInOutCols()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected def validateAndTransformSchema(
@@ -427,6 +428,7 @@ object OneHotEncoderModel extends MLReadable[OneHotEncoderModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.categorySizes)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -559,6 +561,7 @@ private[feature] object OneHotEncoderCommon {
       numAttrs: Int,
       dropLast: Boolean,
       keepInvalid: Boolean): AttributeGroup = {
+       logger.warn("createAttrGroupForAttrNames(outputColName,numAttrs,dropLast,keepInvalid)={},{},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", outputColName, numAttrs, dropLast, keepInvalid)
     val outputAttrNames = Array.tabulate(numAttrs)(_.toString)
     val filtered = if (dropLast && !keepInvalid) {
       outputAttrNames.dropRight(1)

@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.IntegerType
  * This rule assumes the commands have been fully resolved and all assignments have been aligned.
  */
 object RewriteUpdateTable extends RewriteRowLevelCommand {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsWithPruning(
     _.containsPattern(UPDATE_TABLE)) {
@@ -143,6 +144,7 @@ object RewriteUpdateTable extends RewriteRowLevelCommand {
       }
     }
 
+    planChangeLogger.warn("buildReplaceDataUpdateProjection(plan,assignments,cond)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, assignments, cond)
     val writeOp = If(cond, Literal(UPDATE_OPERATION), Literal(COPY_OPERATION))
     val operationCol = Alias(writeOp, OPERATION_COLUMN)()
     Project(operationCol +: updatedValues, plan)
@@ -177,6 +179,7 @@ object RewriteUpdateTable extends RewriteRowLevelCommand {
     val writeRelation = relation.copy(table = operationTable)
     val projections = buildWriteDeltaProjections(rowDeltaPlan, rowAttrs, rowIdAttrs, metadataAttrs)
     val groupFilterCond = if (groupFilterEnabled) Some(cond) else None
+    planChangeLogger.warn("buildWriteDeltaPlan(relation,operationTable,assignments,cond)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", relation, operationTable, assignments, cond, rowIdAttrs)
     WriteDelta(writeRelation, cond, rowDeltaPlan, relation, projections, groupFilterCond)
   }
 
@@ -207,6 +210,7 @@ object RewriteUpdateTable extends RewriteRowLevelCommand {
     // if there are any assignments to row ID attributes, add extra columns for the original values
     val originalRowIdValues = buildOriginalRowIdValues(rowIdAttrs, assignments)
 
+    planChangeLogger.warn("buildWriteDeltaUpdateProjection(plan,assignments,rowIdAttrs)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, assignments, rowIdAttrs, rowIdAttrs)
     val operationType = Alias(Literal(UPDATE_OPERATION), OPERATION_COLUMN)()
 
     Project(Seq(operationType) ++ updatedValues ++ originalRowIdValues, plan)
@@ -225,6 +229,7 @@ object RewriteUpdateTable extends RewriteRowLevelCommand {
     val outputs = Seq(deleteOutput, insertOutput)
     val operationTypeAttr = AttributeReference(OPERATION_COLUMN, IntegerType, nullable = false)()
     val attrs = operationTypeAttr +: matchedRowsPlan.output
+    planChangeLogger.warn("buildDeletesAndInserts(matchedRowsPlan,assignments,rowIdAttrs)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", matchedRowsPlan, assignments, rowIdAttrs, rowIdAttrs)
     val expandOutput = generateExpandOutput(attrs, outputs)
     Expand(outputs, expandOutput, matchedRowsPlan)
   }

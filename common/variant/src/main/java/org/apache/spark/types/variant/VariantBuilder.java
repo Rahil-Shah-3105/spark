@@ -36,11 +36,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.exc.InputCoercionException;
 
 import static org.apache.spark.types.variant.VariantUtil.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Build variant value and metadata by parsing JSON values.
  */
 public class VariantBuilder {
+private static final Logger log = LoggerFactory.getLogger(VariantBuilder.class);
   public VariantBuilder(boolean allowDuplicateKeys) {
     this(allowDuplicateKeys, true);
   }
@@ -125,6 +128,7 @@ public class VariantBuilder {
     if (segments.length == 0) {
       throw new IllegalArgumentException("Segments must be non-empty");
     }
+	log.warn("deleteAtPath(v,segments)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, segments);
     VariantBuilder builder = new VariantBuilder(false);
     builder.appendWithDeletionImpl(v.value, v.metadata, v.pos, segments, 0);
     return builder.result();
@@ -139,6 +143,7 @@ public class VariantBuilder {
     if (segments.length == 0) {
       throw new IllegalArgumentException("Segments must be non-empty");
     }
+	log.warn("insertAtPath(v,segments,val)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, segments, val);
     VariantBuilder builder = new VariantBuilder(false);
     builder.appendWithInsertionImpl(v.value, v.metadata, v.pos, segments, 0, val);
     return builder.result();
@@ -155,6 +160,7 @@ public class VariantBuilder {
     if (segments.length == 0) {
       throw new IllegalArgumentException("Segments must be non-empty");
     }
+	log.warn("setAtPath(v,segments,val,createIfMissing)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, segments, val, createIfMissing);
     VariantBuilder builder = new VariantBuilder(false);
     builder.appendWithSetImpl(v.value, v.metadata, v.pos, segments, 0, val, createIfMissing);
     return builder.result();
@@ -377,6 +383,7 @@ public class VariantBuilder {
       id = dictionaryKeys.size();
       dictionary.put(key, id);
       dictionaryKeys.add(key.getBytes(StandardCharsets.UTF_8));
+	log.warn("addKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
     }
     return id;
   }
@@ -605,6 +612,7 @@ public class VariantBuilder {
       byte[] value, byte[] metadata, int pos, PathSegment[] segments, int depth, Variant val) {
     checkIndex(pos, value.length);
     PathSegment seg = segments[depth];
+	log.warn("appendWithInsertionImpl(value,metadata,pos,segments,depth,val)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, metadata, pos, segments, depth, val);
     boolean isLast = depth == segments.length - 1;
     int basicType = value[pos] & BASIC_TYPE_MASK;
     if (seg instanceof ObjectKeySegment && basicType == OBJECT) {
@@ -709,6 +717,7 @@ public class VariantBuilder {
       boolean createIfMissing) {
     checkIndex(pos, value.length);
     PathSegment seg = segments[depth];
+	log.warn("appendWithSetImpl(value,metadata,pos,segments,depth,val,createIfMissing)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, metadata, pos, segments, depth, val, createIfMissing);
     boolean isLast = depth == segments.length - 1;
     int basicType = value[pos] & BASIC_TYPE_MASK;
     if (seg instanceof ObjectKeySegment && basicType == OBJECT) {
@@ -1002,6 +1011,7 @@ public class VariantBuilder {
     }
 
     FieldEntry withNewOffset(int newOffset) {
+	log.warn("withNewOffset(newOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newOffset);
       return new FieldEntry(key, id, newOffset);
     }
 
@@ -1082,6 +1092,7 @@ public class VariantBuilder {
     assert value >= 0 && value <= SIZE_LIMIT;
     if (value <= U8_MAX) return 1;
     if (value <= U16_MAX) return 2;
+	log.warn("getIntegerSize(value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", value);
     if (value <= U24_MAX) return 3;
     return 4;
   }

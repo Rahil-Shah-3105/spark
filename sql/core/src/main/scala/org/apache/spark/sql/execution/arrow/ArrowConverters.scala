@@ -66,7 +66,9 @@ private[sql] class ArrowBatchStreamWriter(
    * Consume iterator to write each serialized ArrowRecordBatch to the stream.
    */
   def writeBatches(arrowBatchIter: Iterator[Array[Byte]]): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     arrowBatchIter.foreach(writeChannel.write)
+    planChangeLogger.warn("writeBatches(arrowBatchIter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", arrowBatchIter)
   }
 
   /**
@@ -256,6 +258,7 @@ private[sql] object ArrowConverters extends Logging {
     val batches = new ArrowBatchWithSchemaIterator(
         Iterator.empty, schema, 0L, 0L,
         timeZoneId, errorOnDuplicatedFieldNames, largeVarTypes, TaskContext.get()) {
+         planChangeLogger.warn("createEmptyArrowBatch(schema,timeZoneId,errorOnDuplicatedFieldNames,largeVarTypes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", schema, timeZoneId, errorOnDuplicatedFieldNames, largeVarTypes, timeZoneId)
       override def hasNext: Boolean = true
     }
     Utils.tryWithSafeFinally {
@@ -509,6 +512,7 @@ private[sql] object ArrowConverters extends Logging {
   private[arrow] def loadBatch(
       batchBytes: Array[Byte],
       allocator: BufferAllocator): ArrowRecordBatch = {
+       planChangeLogger.warn("loadBatch(batchBytes,allocator)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", batchBytes, allocator)
     val in = new ByteArrayInputStream(batchBytes)
     MessageSerializer.deserializeRecordBatch(
       new ReadChannel(Channels.newChannel(in)), allocator)  // throws IOException
@@ -591,6 +595,7 @@ private[sql] object ArrowConverters extends Logging {
       // Create array to consume iterator so that we can safely close the file
       getBatchesFromStream(fileStream.getChannel).toArray
     }
+    planChangeLogger.warn("readArrowStreamFromFile(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filename)
   }
 
   /**
@@ -602,6 +607,7 @@ private[sql] object ArrowConverters extends Logging {
     new Iterator[Array[Byte]] {
       var batch: Array[Byte] = readNextBatch()
 
+      planChangeLogger.warn("getBatchesFromStream(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
       override def hasNext: Boolean = batch != null
 
       override def next(): Array[Byte] = {
@@ -622,6 +628,7 @@ private[sql] object ArrowConverters extends Logging {
 
         // Get the length of the body, which has not been read at this point
         val bodyLength = msgMetadata.getMessageBodyLength.toInt
+        planChangeLogger.warn("readNextBatch()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
         // Only care about RecordBatch messages, skip Schema and unsupported Dictionary messages
         if (msgMetadata.getMessage.headerType() == MessageHeader.RecordBatch) {

@@ -39,6 +39,7 @@ import org.apache.spark.util.Utils
  *       usage, we should support aggregate/window functions as well.
  */
 object RewriteWithExpression extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     plan.transformUpWithSubqueriesAndPruning(_.containsPattern(WITH_EXPRESSION)) {
       // For aggregates, separate the computation of the aggregations themselves from the final
@@ -64,6 +65,7 @@ object RewriteWithExpression extends Rule[LogicalPlan] {
       case p if p.expressions.exists(_.containsPattern(WITH_EXPRESSION)) =>
         applyInternal(p)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def applyInternal(p: LogicalPlan): LogicalPlan = {
@@ -84,10 +86,12 @@ object RewriteWithExpression extends Rule[LogicalPlan] {
       } else {
         Project(inputPlan.output ++ commonExprs.map(_._1), inputPlan)
       }
+    planChangeLogger.warn("rewriteWithExprAndInputPlans(e,inputPlans,commonExprsPerChild,commonExprIdSet,isNestedWith)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", e, inputPlans, commonExprsPerChild, commonExprIdSet, isNestedWith, commonExprIdSet)
     }
     newPlan = newPlan.withNewChildren(newChildren)
     // Since we add extra Projects with extra columns to pre-evaluate the common expressions,
     // the current operator may have extra columns if it inherits the output columns from its
+    planChangeLogger.warn("applyInternal(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", p, commonExprIdSet)
     // child, and we need to project away the extra columns to keep the plan schema unchanged.
     assert(p.output.length <= newPlan.output.length)
     if (p.output.length < newPlan.output.length) {

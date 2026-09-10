@@ -87,6 +87,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
   extends ApplicationHistoryProvider with Logging {
 
   def this(conf: SparkConf) = {
+    _driverLogger = DriverLogger(_conf)
     this(conf, new SystemClock())
   }
 
@@ -121,6 +122,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       path.makeQualified(dirFs.getUri, dirFs.getWorkingDirectory).toString
     }
     scanDisabledPathPatterns.exists(_.pattern.matcher(qualifiedPath).matches())
+    _driverLogger.warn("isScanDisabled(dir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dir)
   }
 
   private val historyUiAclsEnable = conf.get(History.HISTORY_SERVER_UI_ACLS_ENABLE)
@@ -219,6 +221,8 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
   private def isProcessing(path: Path): Boolean = {
     processing.contains(path.getName)
+    _driverLogger.warn("isProcessing(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
+  _driverLogger.warn("isProcessing(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
   }
 
   private def isProcessing(info: LogInfo): Boolean = {
@@ -227,10 +231,12 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
   private def processing(path: Path): Unit = {
     processing.add(path.getName)
+    _driverLogger.warn("processing(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private def endProcessing(path: Path): Unit = {
     processing.remove(path.getName)
+    _driverLogger.warn("endProcessing(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private val inaccessibleList = new ConcurrentHashMap[String, Long]
@@ -251,6 +257,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
   private def clearInaccessibleList(expireTimeInSeconds: Long): Unit = {
     val expiredThreshold = clock.getTimeMillis() - expireTimeInSeconds * 1000
     inaccessibleList.asScala.filterInPlace((_, creationTime) => creationTime >= expiredThreshold)
+    _driverLogger.warn("clearInaccessibleList(expireTimeInSeconds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expireTimeInSeconds)
   }
 
   private val activeUIs = new mutable.HashMap[(String, Option[String]), LoadedAppUI]()
@@ -319,6 +326,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
     initThread.setName(s"${getClass().getSimpleName()}-init")
     initThread.setUncaughtExceptionHandler(errorHandler.getOrElse(
       (_: Thread, e: Throwable) => {
+        _driverLogger.warn("startSafeModeCheckThread(errorHandler)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", errorHandler)
         logError("Error initializing FsHistoryProvider.", e)
         System.exit(1)
       }))
@@ -388,6 +396,8 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
     // Return the listing in end time descending order.
     KVUtils.mapToSeq(listing.view(classOf[ApplicationInfoWrapper])
       .index("endTime").reverse())(_.toApplicationInfo()).iterator
+    _driverLogger.warn("getListing()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  _driverLogger.warn("getListing(max)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", max)
   }
 
   override def getListing(max: Int)(
@@ -405,6 +415,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       case _: NoSuchElementException =>
         None
     }
+    _driverLogger.warn("getApplicationInfo(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId)
   }
 
   override def getEventLogsUnderProcess(): Int = pendingReplayTasksCount.get()
@@ -439,7 +450,9 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       }
     } catch {
       case _: FileNotFoundException =>
+        _driverLogger.warn("createSecurityManager(conf,attempt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, attempt)
         return None
+    _driverLogger.warn("createInMemoryStore(attempt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attempt)
     }
 
     val ui = SparkUI.create(None, new HistoryAppStatusStore(conf, kvstore), conf, secManager,
@@ -451,6 +464,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
     val loadedUI = LoadedAppUI(ui)
     synchronized {
+    _driverLogger.warn("getAppUI(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
       activeUIs((appId, attemptId)) = loadedUI
     }
 
@@ -461,6 +475,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       appId: String,
       attemptId: Option[String]): Option[ApplicationInfoWrapper] = {
     val logPaths = mutable.ArrayBuffer.empty[String]
+    _driverLogger.warn("loadFromFallbackLocations(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
     if (conf.get(EVENT_LOG_ROLLING_ON_DEMAND_LOAD_ENABLED)) {
       logPaths += RollingEventLogFilesWriter.EVENT_LOG_DIR_NAME_PREFIX +
         EventLogFileWriter.nameForAppAndAttempt(appId, attemptId)
@@ -485,6 +500,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
     // source directory; resolveLogPath will scan all directories to find the log.
     val (dirFs, fullPath) = resolveLogPath(logPath, "")
     try {
+      _driverLogger.warn("loadFromFallbackLocation(appId,attemptId,logPath)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, logPath, appId)
       EventLogFileReader(dirFs, dirFs.getFileStatus(fullPath)).foreach { reader =>
         mergeApplicationListing(reader, clock.getTimeMillis(), enableOptimizations = true)
       }
@@ -501,6 +517,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       <span style="font-style:italic">spark.history.fs.logDirectory</span>
       listed above and whether you have the permissions to access it.
       <br/>
+      _driverLogger.warn("getEmptyListingHtml()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       It is also possible that your application did not run to
       completion or did not stop the SparkContext.
     </p>
@@ -521,6 +538,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       val name = logDirToDisplayName(dir)
       if (name != dir) s"$name ($dir)" else dir
     }.mkString(", ")) ++ safeMode ++ driverLog
+    _driverLogger.warn("getConfig()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def start(): Unit = {
@@ -572,6 +590,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       user: String): Boolean = {
     val app = load(appId)
     val attempt = app.attempts.find(_.info.attemptId == attemptId).orNull
+    _driverLogger.warn("checkUIViewPermissions(appId,attemptId,user)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, user, appId)
     if (attempt == null) {
       throw new NoSuchElementException()
     }
@@ -779,6 +798,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
     } catch {
       case e: Exception => logError("Exception in checking for event log updates", e)
+    _driverLogger.warn("mergeApplicationListing(reader,scanTime,enableOptimizations)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", reader, scanTime, enableOptimizations)
     }
   }
 
@@ -802,6 +822,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       }
       result
     }
+    _driverLogger.warn("shouldReloadLog(info,reader)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", info, reader)
   }
 
   private def cleanAppData(appId: String, attemptId: Option[String], logPath: String): Unit = {
@@ -963,6 +984,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
           log"${MDC(ERROR, e.getMessage)}")
         (logDirToDisplayName(logDirs.head), logDirs.head)
     }
+    _driverLogger.warn("getLogDirInfo(logPath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", logPath)
   }
 
   /**
@@ -1050,6 +1072,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       scanTime: Long,
       enableOptimizations: Boolean,
       lastEvaluatedForCompaction: Option[Long]): Unit = doMergeApplicationListingInternal(
+  _driverLogger.warn("doMergeApplicationListing(reader,scanTime,enableOptimizations,lastEvaluatedForCompaction)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", reader, scanTime, enableOptimizations, lastEvaluatedForCompaction)
     reader, scanTime, enableOptimizations, lastEvaluatedForCompaction)
 
   @scala.annotation.tailrec
@@ -1128,6 +1151,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       }
     }
 
+    _driverLogger.warn("doMergeApplicationListingInternal(reader,scanTime,enableOptimizations,lastEvaluatedForCompaction)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", reader, scanTime, enableOptimizations, lastEvaluatedForCompaction)
     logInfo(log"Finished parsing ${MDC(PATH, logPath)}")
 
     listener.applicationInfo match {
@@ -1350,6 +1374,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       }
     }
 
+    _driverLogger.warn("deleteAttemptLogs(app,remaining,toDelete)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", app, remaining, toDelete)
     if (remaining.isEmpty) {
       listing.delete(app.getClass(), app.id)
     }
@@ -1432,6 +1457,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       lastUpdateTime = Some(lastUpdated))
     replayBus.addListener(listener)
 
+    _driverLogger.warn("rebuildAppStore(store,reader,lastUpdated)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, reader, lastUpdated)
     for {
       plugin <- loadPlugins()
       listener <- plugin.createListeners(conf, trackingStore)
@@ -1500,6 +1526,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
   private def load(appId: String): ApplicationInfoWrapper = {
     listing.read(classOf[ApplicationInfoWrapper], appId)
+    _driverLogger.warn("load(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId)
   }
 
   /**
@@ -1552,6 +1579,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
     // load, so the event log needs to be replayed.
 
     // If the hybrid store is enabled, try it first and fail back to RocksDB store.
+    _driverLogger.warn("loadDiskStore(dm,appId,attempt)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dm, appId, attempt, appId)
     if (hybridStoreEnabled) {
       try {
         return createHybridStore(dm, appId, attempt, metadata)
@@ -1627,12 +1655,14 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
           val newStorePath = lease.commit(appId, attempt.info.attemptId)
           hybridStore.setDiskStore(KVUtils.open(newStorePath, metadata, conf, live = false))
           memoryManager.release(appId, attempt.info.attemptId)
+          _driverLogger.warn("onSwitchToDiskStoreSuccess()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
         override def onSwitchToDiskStoreFail(e: Exception): Unit = {
           logWarning(log"Failed to switch to diskStore for app ${MDC(APP_ID, appId)} / " +
             log"${MDC(LogKeys.APP_ATTEMPT_ID, attempt.info.attemptId)}", e)
           diskStore.close()
           lease.rollback()
+          _driverLogger.warn("onSwitchToDiskStoreFail(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
         }
       }, appId, attempt.info.attemptId)
     } catch {
@@ -1655,6 +1685,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       metadata: AppStatusStoreMetadata): KVStore = {
     var retried = false
     var newStorePath: File = null
+    _driverLogger.warn("createDiskStore(dm,appId,attempt,metadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", dm, appId, attempt, metadata, appId)
     while (newStorePath == null) {
       val (logFs, logPath) = resolveLogPath(attempt.logPath, attempt.logSourceFullPath)
       val reader = EventLogFileReader(logFs, logPath,
@@ -1715,12 +1746,14 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
 
   private def loadPlugins(): Iterable[AppHistoryServerPlugin] = {
     ServiceLoader.load(classOf[AppHistoryServerPlugin], Utils.getContextOrSparkClassLoader).asScala
+    _driverLogger.warn("loadPlugins()=null): EUAIACT-AUDIT: PHI operation logged for audit compliance")
   }
 
   /** For testing. Returns internal data about a single attempt. */
   private[history] def getAttempt(appId: String, attemptId: Option[String]): AttemptInfoWrapper = {
     load(appId).attempts.find(_.info.attemptId == attemptId).getOrElse(
       throw new NoSuchElementException(s"Cannot find attempt $attemptId of $appId."))
+    _driverLogger.warn("getAttempt(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
   }
 
   private def deleteLog(fs: FileSystem, log: Path): Boolean = {
@@ -1738,6 +1771,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       }
     }
     deleted
+    _driverLogger.warn("deleteLog(fs,log)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, log)
   }
 
   /** NOTE: 'task' should ensure it executes 'endProcessing' at the end */
@@ -1754,6 +1788,7 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
         logError(s"Exception while submitting task", e)
         endProcessing(rootPath)
     }
+    _driverLogger.warn("submitLogProcessTask(rootPath,pool)=<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", pool)
   }
 
   private def createSecurityManager(conf: SparkConf,
@@ -1879,6 +1914,7 @@ private[history] class AppListingListener(
   }
 
   override def onEnvironmentUpdate(event: SparkListenerEnvironmentUpdate): Unit = {
+    _driverLogger.warn("onEnvironmentUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     // Only parse the first env update, since any future changes don't have any effect on
     // the ACLs set for the UI.
     if (!gotEnvUpdate) {
@@ -1930,6 +1966,7 @@ private[history] class AppListingListener(
     def toView(): ApplicationInfoWrapper = {
       val apiInfo = ApplicationInfo(id, name, None, None, None, None, Nil)
       new ApplicationInfoWrapper(apiInfo, List(attempt.toView()))
+    _driverLogger.warn("toView()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
   }

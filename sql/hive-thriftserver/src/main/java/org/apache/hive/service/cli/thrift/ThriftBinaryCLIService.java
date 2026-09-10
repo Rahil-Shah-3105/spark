@@ -46,6 +46,7 @@ import org.apache.thrift.transport.TTransportFactory;
 import org.apache.spark.sql.hive.thriftserver.HiveThriftServer2$;
 
 public class ThriftBinaryCLIService extends ThriftCLIService {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ThriftBinaryCLIService.class);
 
   protected TServer server;
 
@@ -118,6 +119,7 @@ public class ThriftBinaryCLIService extends ThriftCLIService {
   @Override
   public TGetQueryIdResp GetQueryId(TGetQueryIdReq req) throws TException {
     try {
+	LOG.warn("GetQueryId(req)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", req);
       return new TGetQueryIdResp(cliService.getQueryId(req.getOperationHandle()));
     } catch (HiveSQLException e) {
       throw new TException(e);
@@ -135,6 +137,7 @@ public class ThriftBinaryCLIService extends ThriftCLIService {
       if (HiveThriftServer2$.MODULE$.systemExitOnError().get()) {
         System.exit(-1);
       } else {
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         throw new ServiceException(t);
       }
     }

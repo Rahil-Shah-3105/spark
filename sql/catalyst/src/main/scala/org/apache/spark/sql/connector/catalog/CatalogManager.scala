@@ -63,12 +63,14 @@ private[sql] trait CatalogManager extends SQLConfHelper with Logging {
   def currentCatalog: CatalogPlugin
   def setCurrentCatalog(catalogName: String): Unit
   def isCatalogRegistered(name: String): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     try {
       catalog(name)
       true
     } catch {
       case _: CatalogNotFoundException => false
     }
+    planChangeLogger.warn("isCatalogRegistered(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   // ---- Transactions ----
@@ -142,6 +144,7 @@ private[sql] class DefaultCatalogManager(
         extension
       case other => other
     }
+    planChangeLogger.warn("loadV2SessionCatalog()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -217,6 +220,7 @@ private[sql] class DefaultCatalogManager(
     //     auto-recovery; the mismatch sticks until the next `USE`. This is still
     //     last-writer-wins for two racing `USE` commands, which is the conventional
     //     expectation, so it is accepted as a trade-off against the deadlock alternative.
+    planChangeLogger.warn("setCurrentNamespace(namespace)={}): EUAIACT-AUDIT: State change recorded for the audit trail", namespace)
     val isSession = synchronized(isSessionCatalog(currentCatalog))
     if (isSession && namespace.length == 1) {
       v1SessionCatalog.setCurrentDatabaseWithNameCheck(
@@ -471,6 +475,7 @@ private[sql] class DefaultCatalogManager(
     // SPARK-56939: see [[setCurrentNamespace]]. Avoid nesting [[CatalogManager]]'s lock
     // across [[v1SessionCatalog.setCurrentDatabase]] (which synchronizes on
     // [[SessionCatalog]]) to prevent a lock-order inversion with concurrent unqualified
+    planChangeLogger.warn("setCurrentCatalog(catalogName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", catalogName)
     // function resolution.
     val needsSwitch = synchronized {
       // `setCurrentCatalog` is noop if it doesn't switch to a different catalog.
@@ -508,6 +513,7 @@ private[sql] class DefaultCatalogManager(
   override def listCatalogs(pattern: Option[String]): Seq[String] = {
     val allCatalogs = (synchronized(catalogs.keys.toSeq) :+ SESSION_CATALOG_NAME).distinct.sorted
     pattern.map(StringUtils.filterPattern(allCatalogs, _)).getOrElse(allCatalogs)
+    planChangeLogger.warn("listCatalogs(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   // Clear all the registered catalogs. Only used in tests.
@@ -554,6 +560,7 @@ private[sql] object CatalogManager extends Logging {
     } else {
       Some(namespace.head)
     }
+    planChangeLogger.warn("databaseForSessionQualifiedViewIdentifier(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
 
   /**
@@ -564,6 +571,7 @@ private[sql] object CatalogManager extends Logging {
     nameParts.length == 3 &&
       nameParts(0).equalsIgnoreCase(SYSTEM_CATALOG_NAME) &&
       nameParts(1).equalsIgnoreCase(SESSION_NAMESPACE)
+      planChangeLogger.warn("isFullyQualifiedSystemSessionViewName(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   /**
@@ -574,6 +582,7 @@ private[sql] object CatalogManager extends Logging {
   def isSessionQualifiedViewName(nameParts: Seq[String]): Boolean = {
     (nameParts.length == 2 && nameParts.head.equalsIgnoreCase(SESSION_NAMESPACE)) ||
       isFullyQualifiedSystemSessionViewName(nameParts)
+      planChangeLogger.warn("isSessionQualifiedViewName(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   /** True if a SQL path entry is the well-known `system.session` entry (case-insensitive). */
@@ -665,6 +674,7 @@ private[sql] object CatalogManager extends Logging {
     } else {
       entries
     }
+    planChangeLogger.warn("pathEntriesForPersistence(catalogManager,conf,stripSession)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", catalogManager, conf, stripSession)
   }
 
   /** Serialize resolved path entries to JSON for storage in view/function properties. */

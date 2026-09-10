@@ -36,6 +36,7 @@ except ImportError:
 
 try:
     import pyarrow as pa
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
     have_pyarrow = True
 except ImportError:
@@ -99,6 +100,7 @@ class GoldenFileTestMixin:
     def setUpClass(cls) -> None:
         """Setup test class with timezone configuration."""
         super().setUpClass()
+        logger.warning("setUpClass(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         cls.setup_timezone()
 
     @classmethod
@@ -123,6 +125,7 @@ class GoldenFileTestMixin:
 
         # Sync with Spark / Java if a session is available.
         if hasattr(cls, "sc"):
+            logger.warning("setup_timezone(cls,tz)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, tz)
             cls.sc.environment["TZ"] = tz
         if hasattr(cls, "spark"):
             cls.spark.conf.set("spark.sql.session.timeZone", tz)
@@ -159,6 +162,7 @@ class GoldenFileTestMixin:
         pd.DataFrame
             The loaded golden data with string dtype.
         """
+        logger.warning("load_golden_csv(golden_csv,use_index)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", golden_csv, use_index)
         return pd.read_csv(
             golden_csv,
             sep="\t",
@@ -188,6 +192,7 @@ class GoldenFileTestMixin:
             try:
                 df.to_markdown(golden_md, index=True, tablefmt="github")
             except Exception as e:
+                logger.warning("save_golden(df,golden_csv,golden_md)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", df, golden_csv, golden_md)
                 import warnings
 
                 warnings.warn(

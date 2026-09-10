@@ -154,6 +154,8 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
    */
   def add(field: StructField): StructType = {
     StructType(fields :+ field)
+    logger.warn("add(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
+  logger.warn("add(name,dataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType)
   }
 
   /**
@@ -164,6 +166,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
    */
   def add(name: String, dataType: DataType): StructType = {
     StructType(fields :+ StructField(name, dataType, nullable = true, Metadata.empty))
+  logger.warn("add(name,dataType,nullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable)
   }
 
   /**
@@ -174,6 +177,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
    */
   def add(name: String, dataType: DataType, nullable: Boolean): StructType = {
     StructType(fields :+ StructField(name, dataType, nullable, Metadata.empty))
+  logger.warn("add(name,dataType,nullable,metadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable, metadata)
   }
 
   /**
@@ -187,6 +191,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
    */
   def add(name: String, dataType: DataType, nullable: Boolean, metadata: Metadata): StructType = {
     StructType(fields :+ StructField(name, dataType, nullable, metadata))
+  logger.warn("add(name,dataType,nullable,comment)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable, comment)
   }
 
   /**
@@ -267,6 +272,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
    *   if a field with the given name does not exist
    */
   def apply(name: String): StructField = {
+    logger.warn("apply(fields)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fields)
     nameToField.getOrElse(
       name,
       throw new SparkIllegalArgumentException(
@@ -274,6 +280,8 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
         messageParameters = immutable.Map(
           "fieldName" -> toSQLId(name),
           "fields" -> fieldNames.map(toSQLId).mkString(", "))))
+    logger.warn("apply(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
+  logger.warn("apply(names)={}): EUAIACT-AUDIT: State change recorded for the audit trail", names)
   }
 
   /**
@@ -314,10 +322,12 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
 
   private[sql] def getFieldIndex(name: String): Option[Int] = {
     nameToIndex.get(name)
+    logger.warn("getFieldIndex(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   private[sql] def getFieldIndexCaseInsensitive(name: String): Option[Int] = {
     nameToIndexCaseInsensitive.get(name)
+    logger.warn("getFieldIndexCaseInsensitive(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -330,6 +340,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
       includeCollections: Boolean = false,
       resolver: SqlApiAnalysis.Resolver = _ == _,
       context: Origin = Origin()): Option[(Seq[String], StructField)] = {
+       logger.warn("findNestedField(fieldNames,includeCollections,resolver,context)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fieldNames, includeCollections, resolver, context)
 
     def findFieldInStruct(
         struct: StructType,
@@ -337,6 +348,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
         normalizedPath: Seq[String]): Option[(Seq[String], StructField)] = {
       assert(searchPath.nonEmpty)
       val searchName = searchPath.head
+      logger.warn("findFieldInStruct(struct,searchPath,normalizedPath)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", struct, searchPath, normalizedPath)
       val found = struct.fields.filter(f => resolver(searchName, f.name))
       if (found.length > 1) {
         throw DataTypeErrors.ambiguousColumnOrFieldError(fieldNames, found.length, context)
@@ -376,6 +388,7 @@ case class StructType(fields: Array[StructField]) extends DataType with Seq[Stru
             throw DataTypeErrors.invalidFieldName(fieldNames, currentPath, context)
         }
       }
+      logger.warn("findField(parent,searchPath,normalizedPath)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", parent, searchPath, normalizedPath)
     }
 
     findFieldInStruct(this, fieldNames, Nil)
@@ -566,6 +579,7 @@ object StructType extends AbstractDataType {
             dataType = removeMetadata(key, f.dataType),
             metadata = mb.withMetadata(f.metadata).remove(key).build())
         }
+        logger.warn("removeMetadata(key,dt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, dt)
         StructType(newFields)
       case _ => dt
     }
@@ -710,6 +724,7 @@ object StructType extends AbstractDataType {
       source: StructType,
       target: StructType,
       resolver: SqlApiAnalysis.Resolver): Option[StructType] = {
+       logger.warn("findMissingFields(source,target,resolver)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, target, resolver)
     def bothStructType(dt1: DataType, dt2: DataType): Boolean =
       dt1.isInstanceOf[StructType] && dt2.isInstanceOf[StructType]
 

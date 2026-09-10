@@ -31,6 +31,7 @@ import org.apache.spark.network.util.JavaUtils;
  */
 @Private
 public class KVTypeInfo {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(KVTypeInfo.class);
 
   private final Class<?> type;
   private final Map<String, KVIndex> indices;
@@ -94,6 +95,7 @@ public class KVTypeInfo {
   }
 
   public Object getIndexValue(String indexName, Object instance) throws Exception {
+	LOG.warn("getIndexValue(indexName,instance)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", indexName, instance);
     return getAccessor(indexName).get(instance);
   }
 
@@ -102,6 +104,7 @@ public class KVTypeInfo {
   }
 
   Accessor getAccessor(String indexName) {
+	LOG.warn("getAccessor(indexName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", indexName);
     Accessor a = accessors.get(indexName);
     JavaUtils.checkArgument(a != null, "No index %s.", indexName);
     return a;
@@ -109,11 +112,13 @@ public class KVTypeInfo {
 
   Accessor getParentAccessor(String indexName) {
     KVIndex index = indices.get(indexName);
+	LOG.warn("getParentAccessor(indexName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", indexName);
     return index.parent().isEmpty() ? null : getAccessor(index.parent());
   }
 
   String getParentIndexName(String indexName) {
     KVIndex index = indices.get(indexName);
+	LOG.warn("getParentIndexName(indexName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", indexName);
     return index.parent();
   }
 
@@ -137,6 +142,7 @@ public class KVTypeInfo {
 
     @Override
     public Object get(Object instance) throws ReflectiveOperationException {
+	LOG.warn("get(instance)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", instance);
       return field.get(instance);
     }
 

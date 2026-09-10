@@ -27,6 +27,7 @@ from pyspark.sql.column import Column
 from pyspark.sql.connect.dataframe import DataFrame
 from pyspark.sql.observation import Observation as PySparkObservation
 import pyspark.sql.connect.plan as plan
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["Observation"]
 
@@ -81,6 +82,7 @@ class Observation:
         if self._error is not None:
             raise self._error
         if self._result is None:
+            logger.warning("get(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             raise PySparkAssertionError(errorClass="NO_OBSERVE_BEFORE_GET", messageParameters={})
 
         return self._result

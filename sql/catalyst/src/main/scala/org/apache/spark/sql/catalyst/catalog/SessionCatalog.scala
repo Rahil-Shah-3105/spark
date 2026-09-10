@@ -58,6 +58,7 @@ import org.apache.spark.util.ArrayImplicits._
 import org.apache.spark.util.Utils
 
 object SessionCatalog {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val DEFAULT_DATABASE = "default"
 
   /**
@@ -157,6 +158,7 @@ class SessionCatalog(
   private[sql] def setSessionFunctionKindsTestOverride(
       kinds: Option[Seq[SessionFunctionKind]]): Unit = {
     sessionFunctionKindsTestOverride = kinds
+    planChangeLogger.warn("setSessionFunctionKindsTestOverride(kinds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", kinds)
   }
 
   /**
@@ -361,6 +363,7 @@ class SessionCatalog(
 
   private def getDatabase(ident: CatalystIdentifier): Option[String] = {
     Some(format(ident.database.getOrElse(getCurrentDatabase)))
+    planChangeLogger.warn("getDatabase(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   private def getCatalog(ident: CatalystIdentifier): Option[String] = {
@@ -369,6 +372,7 @@ class SessionCatalog(
     } else {
       Some(format(ident.catalog.getOrElse(CatalogManager.SESSION_CATALOG_NAME)))
     }
+    planChangeLogger.warn("getCatalog(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   private val tableRelationCache: Cache[QualifiedTableName, LogicalPlan] = {
@@ -391,11 +395,13 @@ class SessionCatalog(
           if e.getCause != null && e.getCause.isInstanceOf[SparkThrowable] =>
         throw e.getCause
     }
+    planChangeLogger.warn("getCachedPlan(t,c)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t, c)
   }
 
   /** This method provides a way to get a cached plan if the key exists. */
   def getCachedTable(key: QualifiedTableName): LogicalPlan = {
     tableRelationCache.getIfPresent(key)
+    planChangeLogger.warn("getCachedTable(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /** This method provides a way to cache a plan. */
@@ -465,6 +471,7 @@ class SessionCatalog(
     externalCatalog.createDatabase(
       dbDefinition.copy(name = dbName, locationUri = makeQualifiedDBPath(dbDefinition.locationUri)),
       ignoreIfExists)
+    planChangeLogger.warn("createDatabase(dbDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dbDefinition, ignoreIfExists)
   }
 
   private def makeQualifiedDBPath(locationUri: URI): URI = {
@@ -506,6 +513,7 @@ class SessionCatalog(
     val dbName = format(db)
     requireDbExists(dbName)
     externalCatalog.getDatabase(dbName)
+    planChangeLogger.warn("getDatabaseMetadata(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db)
   }
 
   def databaseExists(db: String): Boolean = {
@@ -515,6 +523,8 @@ class SessionCatalog(
 
   def listDatabases(): Seq[String] = {
     externalCatalog.listDatabases()
+    planChangeLogger.warn("listDatabases()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  planChangeLogger.warn("listDatabases(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   def listDatabases(pattern: String): Seq[String] = {
@@ -525,11 +535,13 @@ class SessionCatalog(
 
   def setCurrentDatabase(db: String): Unit = {
     setCurrentDatabaseWithNameCheck(db, requireDbExists)
+    planChangeLogger.warn("setCurrentDatabase(db)={}): EUAIACT-AUDIT: State change recorded for the audit trail", db)
   }
 
   def setCurrentDatabaseWithNameCheck(db: String, nameCheck: String => Unit): Unit = {
     val dbName = format(db)
     if (dbName == globalTempDatabase) {
+    planChangeLogger.warn("setCurrentDatabaseWithNameCheck(db,nameCheck)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", db, nameCheck)
       throw QueryCompilationErrors.cannotUsePreservedDatabaseAsCurrentDatabaseError(
         globalTempDatabase)
     }
@@ -543,6 +555,7 @@ class SessionCatalog(
    */
   def getDefaultDBPath(db: String): URI = {
     CatalogUtils.stringToURI(format(db) + ".db")
+    planChangeLogger.warn("getDefaultDBPath(db)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", db)
   }
 
   // ----------------------------------------------------------------------------
@@ -587,6 +600,7 @@ class SessionCatalog(
     } else {
       tableDefinition.copy(identifier = qualifiedIdent)
     }
+    planChangeLogger.warn("createTable(tableDefinition,ignoreIfExists,validateLocation)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableDefinition, ignoreIfExists, validateLocation, validateLocation)
 
     requireDbExists(db)
     if (tableExists(newTableDefinition.identifier)) {
@@ -747,6 +761,7 @@ class SessionCatalog(
   def getTableMetadata(name: TableIdentifier): CatalogTable = {
     val t = getTableRawMetadata(name)
     t.copy(schema = CharVarcharUtils.replaceCharVarcharWithStringInSchema(t.schema))
+    planChangeLogger.warn("getTableMetadata(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -758,6 +773,7 @@ class SessionCatalog(
   def getTableRawMetadata(name: TableIdentifier): CatalogTable = {
     val qualifiedIdent = qualifyIdentifier(name)
     val db = qualifiedIdent.database.get
+    planChangeLogger.warn("getTableRawMetadata(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", name, qualifiedIdent)
     val table = qualifiedIdent.table
     // Let the external catalog handle all error cases (db not exists, table not exists)
     attachCatalogName(externalCatalog.getTable(db, table))
@@ -787,6 +803,7 @@ class SessionCatalog(
     } else {
       Seq.empty
     }
+    planChangeLogger.warn("getTablesByName(names)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", names)
   }
 
   /**
@@ -908,6 +925,7 @@ class SessionCatalog(
    */
   def getRawGlobalTempView(name: String): Option[TemporaryViewRelation] = {
     globalTempViewManager.get(format(name))
+    planChangeLogger.warn("getRawGlobalTempView(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -915,6 +933,7 @@ class SessionCatalog(
    */
   def getGlobalTempView(name: String): Option[View] = {
     getRawGlobalTempView(name).map(getTempViewPlan)
+    planChangeLogger.warn("getGlobalTempView(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -922,6 +941,7 @@ class SessionCatalog(
    */
   def getLocalOrGlobalTempView(name: TableIdentifier): Option[View] = {
     getRawLocalOrGlobalTempView(toNameParts(name)).map(getTempViewPlan)
+    planChangeLogger.warn("getLocalOrGlobalTempView(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -947,6 +967,7 @@ class SessionCatalog(
       case Seq(db, v) if isGlobalTempViewDB(db) => getRawGlobalTempView(v)
       case _ => None
     }
+    planChangeLogger.warn("getRawLocalOrGlobalTempView(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -965,6 +986,7 @@ class SessionCatalog(
    */
   def dropGlobalTempView(name: String): Boolean = {
     globalTempViewManager.remove(format(name))
+    planChangeLogger.warn("dropGlobalTempView(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   private def toNameParts(ident: TableIdentifier): Seq[String] = {
@@ -981,6 +1003,7 @@ class SessionCatalog(
    */
   def getTempViewRelation(viewInfo: TemporaryViewRelation): SubqueryAlias = {
     SubqueryAlias(toNameParts(viewInfo.tableMeta.identifier).map(format), getTempViewPlan(viewInfo))
+    planChangeLogger.warn("getTempViewRelation(viewInfo)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", viewInfo)
   }
 
   // -------------------------------------------------------------
@@ -1124,6 +1147,7 @@ class SessionCatalog(
     // Fall back to the historical 3-part form for v1 session-catalog tables -- we intentionally
     // always include `SESSION_CATALOG_NAME` here and ignore
     // `LEGACY_NON_IDENTIFIER_OUTPUT_CATALOG_NAME` to preserve pre-v2-DelegatingTable behavior.
+    planChangeLogger.warn("getRelation(metadata,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, options)
     val multiParts = metadata.multipartIdentifier.getOrElse {
       val qualifiedIdent = qualifyIdentifier(metadata.identifier)
       Seq(CatalogManager.SESSION_CATALOG_NAME, qualifiedIdent.database.get, qualifiedIdent.table)
@@ -1157,6 +1181,7 @@ class SessionCatalog(
         createSparkVersion = metadata.createVersion
       )
     ) {
+      planChangeLogger.warn("parseMetricViewDefinition(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
       CurrentOrigin.withOrigin(origin) {
         MetricViewPlanner.planRead(metadata, viewDefinition, parser, metadata.schema)
       }
@@ -1177,10 +1202,12 @@ class SessionCatalog(
         }
       Some(s"CREATE OR REPLACE VIEW $viewName${userSpecifiedColumns}AS $viewText")
     }
+    planChangeLogger.warn("buildViewDDL(metadata,isTempView)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", metadata, isTempView)
   }
 
   private def isHiveCreatedView(metadata: CatalogTable): Boolean = {
     // For views created by hive without explicit column names, there will be auto-generated
+    planChangeLogger.warn("isHiveCreatedView(metadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metadata)
     // column names like "_c0", "_c1", "_c2"...
     metadata.viewQueryColumnNames.isEmpty &&
       metadata.schema.fieldNames.exists(_.matches("_c[0-9]+"))
@@ -1301,6 +1328,7 @@ class SessionCatalog(
 
   def isGlobalTempViewDB(dbName: String): Boolean = {
     globalTempDatabase.equalsIgnoreCase(dbName)
+    planChangeLogger.warn("isGlobalTempViewDB(dbName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dbName)
   }
 
   /**
@@ -1308,6 +1336,7 @@ class SessionCatalog(
    */
   def isTempView(nameParts: Seq[String]): Boolean = {
     getRawLocalOrGlobalTempView(nameParts).isDefined
+    planChangeLogger.warn("isTempView(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   /**
@@ -1328,6 +1357,7 @@ class SessionCatalog(
         case _: NoSuchNamespaceException => false
       }
     }
+    planChangeLogger.warn("isView(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   /**
@@ -1359,6 +1389,7 @@ class SessionCatalog(
       includeLocalTempViews: Boolean): Seq[TableIdentifier] = {
     val dbName = format(db)
     val dbTables = if (dbName == globalTempDatabase) {
+    planChangeLogger.warn("listTables(db,pattern,includeLocalTempViews)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern, includeLocalTempViews)
       globalTempViewManager.listViewNames(pattern).map { name =>
         TableIdentifier(name, Some(globalTempDatabase))
       }
@@ -1382,6 +1413,7 @@ class SessionCatalog(
   def listViews(db: String, pattern: String): Seq[TableIdentifier] = {
     val dbName = format(db)
     val dbViews = if (dbName == globalTempDatabase) {
+    planChangeLogger.warn("listViews(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
       globalTempViewManager.listViewNames(pattern).map { name =>
         TableIdentifier(name, Some(globalTempDatabase))
       }
@@ -1407,6 +1439,7 @@ class SessionCatalog(
       Seq.empty
     }
 
+    planChangeLogger.warn("listTempViews(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
     val localTempViews = listLocalTempViews(pattern).flatMap { viewIndent =>
       tempViews.get(viewIndent.table).map(_.tableMeta)
     }
@@ -1423,6 +1456,7 @@ class SessionCatalog(
         TableIdentifier(name)
       }
     }
+    planChangeLogger.warn("listLocalTempViews(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
   }
 
   /**
@@ -1568,6 +1602,7 @@ class SessionCatalog(
     requireExactMatchedPartitionSpec(Seq(spec), getTableMetadata(qualifiedIdent))
     requireNonEmptyValueInPartitionSpec(Seq(spec))
     externalCatalog.getPartition(db, qualifiedIdent.table, spec)
+    planChangeLogger.warn("getPartition(tableName,spec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableName, spec, qualifiedIdent)
   }
 
   /**
@@ -1588,6 +1623,7 @@ class SessionCatalog(
       requirePartialMatchedPartitionSpec(Seq(spec), getTableMetadata(qualifiedIdent))
       requireNonEmptyValueInPartitionSpec(Seq(spec))
     }
+    planChangeLogger.warn("listPartitionNames(tableName,partialSpec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableName, partialSpec, qualifiedIdent)
     externalCatalog.listPartitionNames(db, qualifiedIdent.table, partialSpec)
   }
 
@@ -1609,6 +1645,7 @@ class SessionCatalog(
       requirePartialMatchedPartitionSpec(Seq(spec), getTableMetadata(qualifiedIdent))
       requireNonEmptyValueInPartitionSpec(Seq(spec))
     }
+    planChangeLogger.warn("listPartitions(tableName,partialSpec)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", tableName, partialSpec, qualifiedIdent)
     externalCatalog.listPartitions(db, qualifiedIdent.table, partialSpec)
   }
 
@@ -1713,6 +1750,7 @@ class SessionCatalog(
   def createFunction(funcDefinition: CatalogFunction, ignoreIfExists: Boolean): Unit = {
     val qualifiedIdent = qualifyIdentifier(funcDefinition.identifier)
     val db = qualifiedIdent.database.get
+    planChangeLogger.warn("createFunction(funcDefinition,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", funcDefinition, ignoreIfExists, qualifiedIdent)
     requireDbExists(db)
     val newFuncDefinition = funcDefinition.copy(identifier = qualifiedIdent)
     if (!functionExists(qualifiedIdent)) {
@@ -1790,6 +1828,7 @@ class SessionCatalog(
   def getFunctionMetadata(name: FunctionIdentifier): CatalogFunction = {
     val qualifiedIdent = qualifyIdentifier(name)
     val db = qualifiedIdent.database.get
+    planChangeLogger.warn("getFunctionMetadata(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", name, qualifiedIdent)
     requireDbExists(db)
     externalCatalog.getFunction(db, qualifiedIdent.funcName).copy(identifier = qualifiedIdent)
   }
@@ -1811,6 +1850,7 @@ class SessionCatalog(
    */
   def createUserDefinedFunction(function: UserDefinedFunction, ignoreIfExists: Boolean): Unit = {
     createFunction(function.toCatalogFunction, ignoreIfExists)
+    planChangeLogger.warn("createUserDefinedFunction(function,ignoreIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", function, ignoreIfExists)
   }
 
   // ----------------------------------------------------------------
@@ -2110,6 +2150,7 @@ class SessionCatalog(
    */
   def loadFunctionResources(resources: Seq[FunctionResource]): Unit = {
     resources.foreach(functionResourceLoader.loadResource)
+    planChangeLogger.warn("loadFunctionResources(resources)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", resources)
   }
 
   /**
@@ -2121,6 +2162,7 @@ class SessionCatalog(
       functionBuilder: Option[FunctionBuilder] = None): Unit = {
     val builder = functionBuilder.getOrElse(makeFunctionBuilder(funcDefinition))
     registerFunction(funcDefinition, overrideIfExists, functionRegistry, builder, info = None)
+    planChangeLogger.warn("registerFunction(funcDefinition,overrideIfExists,functionBuilder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", funcDefinition, overrideIfExists, functionBuilder, overrideIfExists)
   }
 
   private def registerFunction[T](
@@ -2200,6 +2242,7 @@ class SessionCatalog(
       overrideIfExists,
       functionRegistry,
       makeSQLFunctionBuilder(function))
+    planChangeLogger.warn("registerSQLScalarFunction(function,overrideIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", function, overrideIfExists, overrideIfExists)
   }
 
   /**
@@ -2214,6 +2257,7 @@ class SessionCatalog(
       overrideIfExists,
       tableFunctionRegistry,
       makeSQLTableFunctionBuilder(function))
+    planChangeLogger.warn("registerSQLTableFunction(function,overrideIfExists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", function, overrideIfExists, overrideIfExists)
   }
 
   /**
@@ -2323,6 +2367,7 @@ class SessionCatalog(
     // If it's an unqualified name, it's a temp function stored with session namespace database
     val tempIdent = if (name.database.isEmpty) tempFunctionIdentifier(name.funcName) else name
     functionRegistry.dropFunction(tempIdent) || tableFunctionRegistry.dropFunction(tempIdent)
+    planChangeLogger.warn("unregisterFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", name, tempIdent)
   }
 
   /**
@@ -2379,6 +2424,7 @@ class SessionCatalog(
       functionRegistry.functionExists(qualifiedIdent) ||
         tableFunctionRegistry.functionExists(qualifiedIdent)
     }
+    planChangeLogger.warn("isRegisteredFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /**
@@ -2387,6 +2433,7 @@ class SessionCatalog(
   def isPersistentFunction(name: FunctionIdentifier): Boolean = {
     val qualifiedIdent = qualifyIdentifier(name)
     val db = qualifiedIdent.database.get
+    planChangeLogger.warn("isPersistentFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", name, qualifiedIdent)
     val funcName = qualifiedIdent.funcName
     databaseExists(db) && externalCatalog.functionExists(db, funcName)
   }
@@ -2619,6 +2666,7 @@ class SessionCatalog(
   def lookupPersistentFunction(name: FunctionIdentifier): ExpressionInfo = {
     val qualifiedIdent = qualifyIdentifier(name)
     // Check if already cached in either registry
+    planChangeLogger.warn("lookupPersistentFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", name, qualifiedIdent)
     functionRegistry.lookupFunction(qualifiedIdent)
       .orElse(tableFunctionRegistry.lookupFunction(qualifiedIdent))
       .getOrElse {
@@ -2642,6 +2690,7 @@ class SessionCatalog(
   def loadPersistentScalarFunction(name: FunctionIdentifier): V1Function = {
     val qualifiedIdent = qualifyIdentifier(name)
 
+    planChangeLogger.warn("loadPersistentScalarFunction(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", name, qualifiedIdent)
     // Check cache first (no synchronization needed for reads)
     functionRegistry.lookupFunctionEntry(qualifiedIdent) match {
       case Some((cachedInfo, cachedBuilder)) =>
@@ -2710,6 +2759,7 @@ class SessionCatalog(
         makeUserDefinedTableFuncBuilder(udf))
       tableFunctionRegistry.lookupFunction(qualifiedIdent, arguments)
     }
+    planChangeLogger.warn("resolvePersistentTableFunction(name,arguments)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", name, arguments, qualifiedIdent)
   }
 
   /**
@@ -2717,6 +2767,7 @@ class SessionCatalog(
    */
   private def fetchCatalogFunction(qualifiedIdent: FunctionIdentifier): CatalogFunction = {
     val db = qualifiedIdent.database.get
+    planChangeLogger.warn("fetchCatalogFunction(qualifiedIdent)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", qualifiedIdent, qualifiedIdent)
     val funcName = qualifiedIdent.funcName
     requireDbExists(db)
     try {
@@ -2779,6 +2830,7 @@ class SessionCatalog(
     val functions = (functionRegistry.listFunction() ++ tableFunctionRegistry.listFunction())
       .filter(_.catalog.exists(_.equalsIgnoreCase(CatalogManager.SYSTEM_CATALOG_NAME)))
     val matched = StringUtils.filterPattern(functions.map(_.funcName), pattern).toSet
+      planChangeLogger.warn("listBuiltinAndTempFunctions(pattern)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pattern)
     functions.filter(f => matched.contains(f.funcName))
   }
 
@@ -2803,6 +2855,7 @@ class SessionCatalog(
     val functions = dbFunctions ++ loadedFunctions
     // The session catalog caches some persistent functions in the FunctionRegistry
     // so there can be duplicates. Return 1-part identifiers for SYSTEM (builtin) and
+    planChangeLogger.warn("listFunctions(db,pattern)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", db, pattern)
     // for temp (user-defined but session-scoped) to preserve backward compatibility.
     // Temp functions are tagged "USER" since they are user-defined, not system-builtin.
     functions.map {
@@ -2824,6 +2877,7 @@ class SessionCatalog(
     (functionRegistry.listFunction() ++ tableFunctionRegistry.listFunction())
       .filter(isTempFunctionIdentifier)
       // Strip the session namespace database qualifier
+      planChangeLogger.warn("listTemporaryFunctions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       .map(ident => FunctionIdentifier(ident.funcName))
   }
 

@@ -44,6 +44,7 @@ import org.apache.spark.unsafe.types.UTF8String
 
 abstract class StringRegexExpression extends BinaryExpression
   with ImplicitCastInputTypes with Predicate {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def nullIntolerant: Boolean = true
   def escape(v: String): String
   def matches(regex: Pattern, str: String): Boolean
@@ -886,6 +887,7 @@ abstract class RegExpExtractBase
       lastRegex = patternAndRegex._2
     }
     pattern.matcher(s.toString)
+    planChangeLogger.warn("getLastMatcher(s,p)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", s, p)
   }
 }
 

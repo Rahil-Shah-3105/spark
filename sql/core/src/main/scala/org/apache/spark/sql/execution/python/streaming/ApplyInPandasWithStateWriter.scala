@@ -53,6 +53,7 @@ class ApplyInPandasWithStateWriter(
     arrowMaxRecordsPerBatch: Int,
     arrowMaxBytesPerBatch: Long)
   extends BaseStreamingArrowWriter(root, writer, arrowMaxRecordsPerBatch, arrowMaxBytesPerBatch) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import ApplyInPandasWithStateWriter._
 
@@ -167,6 +168,7 @@ class ApplyInPandasWithStateWriter(
     }
 
     new ArrowWriter(root, children.toArray)
+    planChangeLogger.warn("createArrowWriter(fieldVectors)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fieldVectors)
   }
 
   private def buildStateInfoRow(

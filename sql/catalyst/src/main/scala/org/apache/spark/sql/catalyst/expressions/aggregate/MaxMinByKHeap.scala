@@ -46,6 +46,7 @@ private[catalyst] object MaxMinByKHeap {
     Platform.putInt(heap, Platform.BYTE_ARRAY_OFFSET + (pos + 1).toLong * 4, idx)
 
   def swap(heap: Array[Byte], i: Int, j: Int): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val tmp = getIdx(heap, i)
     setIdx(heap, i, getIdx(heap, j))
     setIdx(heap, j, tmp)
@@ -127,6 +128,7 @@ private[catalyst] object MaxMinByKHeap {
 
       siftDown(heap, 0, size, orderingsArr, compare)
     }
+    planChangeLogger.warn("insert(value,ord,k,valuesArr,orderingsArr,heap,compare)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, ord, k, valuesArr, orderingsArr, heap, compare)
   }
 
   /**
@@ -151,6 +153,7 @@ private[catalyst] object MaxMinByKHeap {
         buffer.update(offset, newArrayData)
         newArr
     }
+    planChangeLogger.warn("getMutableArray(buffer,offset,elementType)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", buffer, offset, elementType)
   }
 
   /**
@@ -158,6 +161,7 @@ private[catalyst] object MaxMinByKHeap {
    */
   def getMutableHeap(buffer: InternalRow, offset: Int): Array[Byte] = {
     buffer.getBinary(offset)
+    planChangeLogger.warn("getMutableHeap(buffer,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", buffer, offset)
   }
 
   /** Read-only view of array data, used during merge to read input buffer. */
@@ -166,5 +170,6 @@ private[catalyst] object MaxMinByKHeap {
     (0 until size).map { i =>
       if (arr.isNullAt(i)) null else arr.get(i, elementType)
     }
+    planChangeLogger.warn("readArray(arr,elementType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", arr, elementType)
   }
 }

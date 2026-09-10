@@ -29,6 +29,7 @@ from pyspark.sql.streaming.listener import (
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # TODO: Add StreamingCheckpointManager to __all__ once we add streaming checkpoint manager to the
 # public API
@@ -114,6 +115,7 @@ class StreamingQuery:
 
         >>> sq.stop()
         """
+        logger.warning("runId(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._jsq.runId().toString()
 
     @property
@@ -353,6 +355,7 @@ class StreamingQuery:
 
         >>> sq.stop()
         """
+        logger.warning("processAllAvailable(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._jsq.processAllAvailable()
 
     def stop(self) -> None:
@@ -540,6 +543,7 @@ class StreamingQueryManager:
         """
         query = self._jsqm.get(id)
         if query is not None:
+            logger.warning("get(self,id)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail %s", self, id, id)
             return StreamingQuery(query)
         else:
             return None
@@ -618,6 +622,7 @@ class StreamingQueryManager:
         --------
         >>> spark.streams.resetTerminated()
         """
+        logger.warning("resetTerminated(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._jsqm.resetTerminated()
 
     def addListener(self, listener: StreamingQueryListener) -> None:
@@ -678,6 +683,7 @@ class StreamingQueryManager:
         gw = SparkContext._gateway
         assert gw is not None
         java_import(gw.jvm, "org.apache.spark.sql.streaming.*")
+        logger.warning("addListener(self,listener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, listener)
         ensure_callback_server_started(gw)
 
         self._jsqm.addListener(listener._jlistener)
@@ -720,6 +726,7 @@ class StreamingQueryManager:
 
         >>> spark.streams.removeListener(test_listener)
         """
+        logger.warning("removeListener(self,listener)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, listener)
         self._jsqm.removeListener(listener._jlistener)
 
 

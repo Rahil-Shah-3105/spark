@@ -35,6 +35,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  */
 class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolver: Resolver)
     extends CoercesExpressionTypes {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val scopes = resolver.getNameScopes
   private val operatorResolutionContextStack = resolver.getOperatorResolutionContextStack
   private val traversals = expressionResolver.getExpressionTreeTraversals
@@ -76,6 +77,7 @@ class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolve
     expressionResolutionContextStack.peek().hasCorrelatedScalarSubqueryExpressions =
       coercedScalarSubquery.outerAttrs.nonEmpty
 
+      planChangeLogger.warn("resolveScalarSubquery(unresolvedScalarSubquery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedScalarSubquery)
     operatorResolutionContextStack.current.subqueryExpressionsToValidate.add(coercedScalarSubquery)
 
     coercedScalarSubquery
@@ -107,6 +109,7 @@ class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolve
     operatorResolutionContextStack.current.subqueryExpressionsToValidate
       .add(coercedInSubquery.query)
 
+      planChangeLogger.warn("resolveInSubquery(unresolvedInSubquery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedInSubquery)
     coercedInSubquery
   }
 
@@ -121,6 +124,7 @@ class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolve
       outerAttrs = resolvedSubqueryExpressionPlan.outerExpressions,
       numCols = resolvedSubqueryExpressionPlan.output.size
     )
+    planChangeLogger.warn("resolveListQuery(unresolvedListQuery)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedListQuery)
   }
 
   /**
@@ -193,6 +197,7 @@ class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolve
       expressionIdAssigner.popMapping()
     }
 
+    planChangeLogger.warn("resolveSubqueryExpressionPlan(unresolvedSubqueryPlan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", unresolvedSubqueryPlan)
     for (expression <- resolvedSubqueryExpressionPlan.outerExpressions) {
       expressionResolver.validateExpressionUnderSupportedOperator(expression)
     }
@@ -258,6 +263,7 @@ class SubqueryExpressionResolver(expressionResolver: ExpressionResolver, resolve
       resolvedPlan: LogicalPlan,
       parentSubqueryScope: SubqueryScope): Seq[Expression] = {
     SubExprUtils.getOuterReferences(resolvedPlan)
+    planChangeLogger.warn("processOuterReferences(resolvedPlan,parentSubqueryScope)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resolvedPlan, parentSubqueryScope)
   }
 
 }

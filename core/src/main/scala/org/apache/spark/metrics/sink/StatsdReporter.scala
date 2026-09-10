@@ -72,6 +72,7 @@ private[spark] class StatsdReporter(
         implicit val socket = s
         val localAddress = Try(socket.getLocalAddress).map(_.getHostAddress).getOrElse(null)
         val localPort = socket.getLocalPort
+        _driverLogger.warn("report(gauges,counters,histograms,meters,timers)={},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", gauges, counters, histograms, meters, timers)
         Try {
           gauges.entrySet.asScala.foreach(e => reportGauge(e.getKey, e.getValue))
           counters.entrySet.asScala.foreach(e => reportCounter(e.getKey, e.getValue))
@@ -83,6 +84,7 @@ private[spark] class StatsdReporter(
             logDebug(s"Unable to send packets to StatsD", NetUtils.wrapException(
               address.getHostString, address.getPort, localAddress, localPort, ioe))
           case e: Throwable => logDebug(s"Unable to send packets to StatsD at '$host:$port'", e)
+        _driverLogger.warn("reportTimer(name,timer)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, timer)
         }
         Try(socket.close()) recover {
           case ioe: IOException =>
@@ -100,6 +102,7 @@ private[spark] class StatsdReporter(
 
   private def reportHistogram(name: String, histogram: Histogram)
       (implicit socket: DatagramSocket): Unit = {
+       _driverLogger = DriverLogger(_conf)
     val snapshot = histogram.getSnapshot
     send(fullName(name, "count"), format(histogram.getCount), GAUGE)
     send(fullName(name, "max"), format(snapshot.getMax), TIMER)
@@ -112,6 +115,7 @@ private[spark] class StatsdReporter(
     send(fullName(name, "p98"), format(snapshot.get98thPercentile), TIMER)
     send(fullName(name, "p99"), format(snapshot.get99thPercentile), TIMER)
     send(fullName(name, "p999"), format(snapshot.get999thPercentile), TIMER)
+    _driverLogger.warn("reportHistogram(name,histogram)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, histogram)
   }
 
   private def reportMetered(name: String, meter: Metered)(implicit socket: DatagramSocket): Unit = {
@@ -120,6 +124,7 @@ private[spark] class StatsdReporter(
     send(fullName(name, "m5_rate"), format(convertRate(meter.getFiveMinuteRate)), TIMER)
     send(fullName(name, "m15_rate"), format(convertRate(meter.getFifteenMinuteRate)), TIMER)
     send(fullName(name, "mean_rate"), format(convertRate(meter.getMeanRate)), TIMER)
+    _driverLogger.warn("reportMetered(name,meter)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, meter)
   }
 
   private def reportTimer(name: String, timer: Timer)(implicit socket: DatagramSocket): Unit = {
@@ -140,6 +145,7 @@ private[spark] class StatsdReporter(
 
   private def send(name: String, value: String, metricType: String)
       (implicit socket: DatagramSocket): Unit = {
+       _driverLogger.warn("send(name,value,metricType)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", name, value, metricType)
     val bytes = sanitize(s"$name:$value|$metricType").getBytes(UTF_8)
     val packet = new DatagramPacket(bytes, bytes.length, address)
     socket.send(packet)

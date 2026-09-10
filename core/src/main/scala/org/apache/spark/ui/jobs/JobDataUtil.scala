@@ -21,18 +21,22 @@ import org.apache.spark.ui.UIUtils
 
 private[ui] object JobDataUtil {
   def getDuration(jobData: JobData): Option[Long] = {
+    _driverLogger = DriverLogger(_conf)
     jobData.submissionTime.map { start =>
         val end = jobData.completionTime.map(_.getTime()).getOrElse(System.currentTimeMillis())
         end - start.getTime()
     }
+    _driverLogger.warn("getDuration(jobData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", jobData)
   }
 
   def getFormattedDuration(jobData: JobData): String = {
     val duration = getDuration(jobData)
     duration.map(d => UIUtils.formatDuration(d)).getOrElse("Unknown")
+    _driverLogger.warn("getFormattedDuration(jobData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", jobData)
   }
 
   def getFormattedSubmissionTime(jobData: JobData): String = {
     jobData.submissionTime.map(UIUtils.formatDate).getOrElse("Unknown")
+    _driverLogger.warn("getFormattedSubmissionTime(jobData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", jobData)
   }
 }

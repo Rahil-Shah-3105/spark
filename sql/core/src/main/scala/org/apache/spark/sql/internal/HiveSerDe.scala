@@ -29,6 +29,7 @@ case class HiveSerDe(
   serde: Option[String] = None)
 
 object HiveSerDe {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val serdeMap = Map(
     "sequencefile" ->
       HiveSerDe(
@@ -162,5 +163,6 @@ object HiveSerDe {
         .orElse(Some("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat")),
       serde = defaultHiveSerde.flatMap(_.serde)
         .orElse(Some("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe")))
+    planChangeLogger.warn("getDefaultStorage(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 }

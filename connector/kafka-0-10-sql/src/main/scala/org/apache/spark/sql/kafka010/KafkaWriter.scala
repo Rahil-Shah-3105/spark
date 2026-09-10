@@ -61,12 +61,14 @@ private[kafka010] object KafkaWriter extends Logging {
           errorClass = "_LEGACY_ERROR_TEMP_3080",
           messageParameters = Map("msg" -> e.getMessage))
     }
+    logger.warn("validateQuery(schema,topic)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, topic)
   }
 
   def write(
       queryExecution: QueryExecution,
       kafkaParameters: ju.Map[String, Object],
       topic: Option[String] = None): Unit = {
+       logger.warn("write(queryExecution,kafkaParameters,topic)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", queryExecution, kafkaParameters, topic)
     val schema = queryExecution.analyzed.output
     validateQuery(schema, topic)
     queryExecution.toRdd.foreachPartition { iter =>

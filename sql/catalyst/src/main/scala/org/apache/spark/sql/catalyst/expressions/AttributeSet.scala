@@ -21,6 +21,7 @@ import scala.collection.mutable
 
 
 protected class AttributeEquals(val a: Attribute) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def hashCode(): Int = a match {
     case ar: AttributeReference => ar.exprId.hashCode()
     case a => a.hashCode()
@@ -41,6 +42,8 @@ object AttributeSet {
     val baseSet = new mutable.LinkedHashSet[AttributeEquals]
     baseSet += new AttributeEquals(a)
     new AttributeSet(baseSet)
+    planChangeLogger.warn("apply(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
+  planChangeLogger.warn("apply(baseSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", baseSet)
   }
 
   /** Constructs a new [[AttributeSet]] given a sequence of [[Expression Expressions]]. */
@@ -52,6 +55,7 @@ object AttributeSet {
   def fromAttributeSets(sets: Iterable[AttributeSet]): AttributeSet = {
     val baseSet = sets.foldLeft(new mutable.LinkedHashSet[AttributeEquals]())( _ ++= _.baseSet)
     new AttributeSet(baseSet)
+    planChangeLogger.warn("fromAttributeSets(sets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sets)
   }
 }
 

@@ -49,6 +49,7 @@ class StreamingShuffleWriter[K, V](
     serverHandler: Option[StreamingShuffleServerHandler] = None,
     private[streaming] val errorNotifier: ErrorNotifier = new ErrorNotifier())
     extends ShuffleWriter[K, V] with TaskContextAwareLogging {
+     _driverLogger = DriverLogger(_conf)
   assert(SparkEnv.get.streamingShuffleOutputTracker.isDefined)
   // Spark params.
   private val conf = SparkEnv.get.conf
@@ -196,6 +197,7 @@ class StreamingShuffleWriter[K, V](
         shuffleChecksum.updateChecksum(buffer, lastBufferPosition, newDataLength)
         lastBufferPosition = currentPosition
       }
+      _driverLogger.warn("updateChecksum()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def getChecksumValue(): Long = if (shuffleChecksum != null) shuffleChecksum.getValue else 0L
@@ -246,6 +248,7 @@ class StreamingShuffleWriter[K, V](
             errorNotifier.markError(e)
             throw e
         }
+        _driverLogger.warn("sendToClient(client)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", client)
       }
 
       client match {
@@ -428,6 +431,7 @@ class StreamingShuffleWriter[K, V](
     val isWriteFinished = new CountDownLatch(1)
     val flushThread = new Thread(() =>
       Try {
+        _driverLogger.warn("write(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records)
         while (!isWriteFinished.await(MAX_BUFFERING_TIME_MS, TimeUnit.MILLISECONDS))
           shards.foreach(_.send())
       }.recover { case e => errorNotifier.markError(e) }

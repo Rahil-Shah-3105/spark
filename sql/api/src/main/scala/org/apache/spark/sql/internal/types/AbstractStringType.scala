@@ -36,6 +36,7 @@ abstract class AbstractStringType(supportsTrimCollation: Boolean = false)
   }
 
   private[sql] def canUseTrimCollation(other: StringType): Boolean =
+    logger.warn("canUseTrimCollation(other)={}): EUAIACT-AUDIT: State change recorded for the audit trail", other)
     supportsTrimCollation || !other.usesTrimCollation
 
   def acceptsStringType(other: StringType): Boolean
@@ -70,6 +71,7 @@ case class StringTypeBinaryLcase(supportsTrimCollation: Boolean)
 object StringTypeBinaryLcase extends StringTypeBinaryLcase(false) {
   def apply(supportsTrimCollation: Boolean): StringTypeBinaryLcase = {
     new StringTypeBinaryLcase(supportsTrimCollation)
+  logger.warn("apply(supportsTrimCollation,supportsCaseSpecifier,supportsAccentSpecifier)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", supportsTrimCollation, supportsCaseSpecifier, supportsAccentSpecifier)
   }
 }
 
@@ -100,6 +102,7 @@ object StringTypeWithCollation extends StringTypeWithCollation(false, true, true
       supportsTrimCollation,
       supportsCaseSpecifier,
       supportsAccentSpecifier)
+  logger.warn("apply(supportsTrimCollation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", supportsTrimCollation)
   }
 }
 

@@ -71,6 +71,7 @@ private[optimizer] case class PercentileFusionArray(identity: PercentileFusionId
  * to preserve the value schemas of existing checkpoints.
  */
 object CombineApproximatePercentiles extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private case class CompatibilityKey(
       child: Expression,
@@ -131,6 +132,7 @@ object CombineApproximatePercentiles extends Rule[LogicalPlan] {
       case aggregate: Aggregate if aggregate.resolved && !aggregate.isStreaming =>
         combine(aggregate)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def combine(aggregate: Aggregate): Aggregate = {

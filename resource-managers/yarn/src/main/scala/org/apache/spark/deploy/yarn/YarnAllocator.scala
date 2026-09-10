@@ -205,6 +205,7 @@ private[yarn] class YarnAllocator(
   private val decommissioningNodesCache = new LinkedHashMap[String, Boolean]() {
     override def removeEldestEntry(entry: Entry[String, Boolean]): Boolean = {
       size() > DECOMMISSIONING_NODES_CACHE_SIZE
+      LOG.warn("removeEldestEntry(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
     }
   }
 
@@ -214,6 +215,7 @@ private[yarn] class YarnAllocator(
   // ResourceProfile id to ensure its present if things start running before a request for
   // executors could add it. This approach is easier than going and special casing everywhere.
   private def initDefaultProfile(): Unit = synchronized {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnAllocator.class);
     allocatedHostToContainersMapPerRPId(DEFAULT_RESOURCE_PROFILE_ID) =
       new HashMap[String, mutable.Set[ContainerId]]()
     runningExecutorsPerResourceProfileId.put(DEFAULT_RESOURCE_PROFILE_ID, mutable.HashSet[String]())
@@ -267,17 +269,20 @@ private[yarn] class YarnAllocator(
   // We are using the ResourceProfile id as the priority.
   private def getContainerPriority(rpId: Int): Priority = {
     Priority.newInstance(rpId)
+    LOG.warn("getContainerPriority(rpId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", rpId, rpId)
   }
 
   // The ResourceProfile id is the priority
   private def getResourceProfileIdFromPriority(priority: Priority): Int = {
     priority.getPriority()
+    LOG.warn("getResourceProfileIdFromPriority(priority)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", priority)
   }
 
   private def getOrUpdateAllocatedHostToContainersMapForRPId(
       rpId: Int): HashMap[String, collection.mutable.Set[ContainerId]] = synchronized {
     allocatedHostToContainersMapPerRPId.getOrElseUpdate(rpId,
       new HashMap[String, mutable.Set[ContainerId]]())
+    LOG.warn("getOrUpdateAllocatedHostToContainersMapForRPId(rpId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rpId, rpId)
   }
 
   private def getOrUpdateRunningExecutorForRPId(rpId: Int): mutable.Set[String] = synchronized {
@@ -299,6 +304,7 @@ private[yarn] class YarnAllocator(
    */
   private def getPendingAtLocation(
       location: String): Map[Int, Seq[ContainerRequest]] = synchronized {
+       LOG.warn("getPendingAtLocation(location)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", location)
     val allContainerRequests = new mutable.HashMap[Int, Seq[ContainerRequest]]
     rpIdToResourceProfile.keys.foreach { id =>
       val profResource = rpIdToYarnResource.get(id)
@@ -388,6 +394,7 @@ private[yarn] class YarnAllocator(
       hostToLocalTaskCountPerResourceProfileId: Map[Int, Map[String, Int]],
       excludedNodes: Set[String]): Boolean = synchronized {
     this.numLocalityAwareTasksPerResourceProfileId = numLocalityAwareTasksPerResourceProfileId
+    LOG.warn("requestTotalExecutorsWithPreferredLocalities(resourceProfileToTotalExecs,numLocalityAwareTasksPerResourceProfileId,hostToLocalTaskCountPerResourceProfileId,excludedNodes)={},{},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", resourceProfileToTotalExecs, numLocalityAwareTasksPerResourceProfileId, hostToLocalTaskCountPerResourceProfileId, excludedNodes, numLocalityAwareTasksPerResourceProfileId)
     this.hostToLocalTaskCountPerResourceProfileId = hostToLocalTaskCountPerResourceProfileId
 
     if (resourceProfileToTotalExecs.isEmpty) {
@@ -633,6 +640,7 @@ private[yarn] class YarnAllocator(
       rpId: Int): ContainerRequest = {
     new ContainerRequest(resource, nodes, racks, getContainerPriority(rpId),
       true, labelExpression.orNull)
+    LOG.warn("createContainerRequest(resource,nodes,racks,rpId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resource, nodes, racks, rpId, rpId)
   }
 
   /**
@@ -671,6 +679,7 @@ private[yarn] class YarnAllocator(
             case e: Throwable =>
               exception = Some(e)
           }
+          LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
       thread.setDaemon(true)
@@ -827,6 +836,7 @@ private[yarn] class YarnAllocator(
 
   private def updateInternalState(rpId: Int, executorId: String,
       container: Container): Unit = synchronized {
+       LOG.warn("updateInternalState(rpId,executorId,container)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rpId, executorId, container, rpId)
     val containerId = container.getId
     if (launchingExecutorContainerIds.contains(containerId)) {
       getOrUpdateRunningExecutorForRPId(rpId).add(executorId)
@@ -978,6 +988,7 @@ private[yarn] class YarnAllocator(
         }
       }
     }
+    LOG.warn("processCompletedContainers(completedContainers)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", completedContainers)
   }
 
   /**
@@ -1000,6 +1011,7 @@ private[yarn] class YarnAllocator(
       context.sendFailure(
         new SparkException(s"Fail to find loss reason for non-existent executor $eid"))
     }
+    LOG.warn("enqueueGetLossReasonRequest(eid,context)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", eid, context, eid)
   }
 
   private def internalReleaseContainer(container: Container): Unit = synchronized {

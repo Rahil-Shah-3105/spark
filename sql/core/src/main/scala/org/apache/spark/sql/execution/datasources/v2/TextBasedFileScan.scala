@@ -28,6 +28,7 @@ import org.apache.spark.util.Utils
 abstract class TextBasedFileScan(
     sparkSession: SparkSession,
     options: CaseInsensitiveStringMap) extends FileScan {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   @transient private lazy val codecFactory: CompressionCodecFactory = new CompressionCodecFactory(
     sparkSession.sessionState.newHadoopConfWithOptions(options.asScala.toMap))
 
@@ -36,5 +37,6 @@ abstract class TextBasedFileScan(
   override def getFileUnSplittableReason(path: Path): String = {
     assert(!isSplitable(path))
     "the file is compressed by unsplittable compression codec"
+    planChangeLogger.warn("getFileUnSplittableReason(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 }

@@ -41,6 +41,7 @@ private[v1] class PrometheusResource extends ApiRequestContext {
   @Path("prometheus")
   @Produces(Array(MediaType.TEXT_PLAIN))
   def executors(): String = {
+    _driverLogger = DriverLogger(_conf)
     val sb = new StringBuilder
     sb.append(s"""spark_info{version="$SPARK_VERSION_SHORT", revision="$SPARK_REVISION"} 1.0\n""")
     val store = uiRoot.asInstanceOf[SparkUI].store
@@ -117,5 +118,6 @@ private[spark] object PrometheusResource {
     UIRootFromServletContext.setUiRoot(jerseyContext, uiRoot)
     jerseyContext.addServlet(holder, "/*")
     jerseyContext
+    _driverLogger.warn("getServletHandler(uiRoot)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", uiRoot)
   }
 }

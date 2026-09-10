@@ -33,6 +33,7 @@ class PartitionerAwareUnionRDDPartition(
     @transient val rdds: Seq[RDD[_]],
     override val index: Int
   ) extends Partition {
+   _driverLogger = DriverLogger(_conf)
   var parents = rdds.map(_.partitions(index)).toArray
 
   override def hashCode(): Int = index
@@ -73,6 +74,7 @@ abstract class PartitionerAwareUnionRDDBase[T: ClassTag](
         logDebug("Location of " + rdd + " partition " + part.index + " = " + parentLocations)
         parentLocations
     }
+    _driverLogger.warn("getPreferredLocations(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
     val location = if (locations.isEmpty) {
       None
     } else {

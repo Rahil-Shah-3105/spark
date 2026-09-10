@@ -32,8 +32,10 @@ private[spark] class TaskThreadDumpPage(
       request: HttpServletRequest,
       executorId: String,
       blockingThreadId: Long): String = {
+       _driverLogger = DriverLogger(_conf)
     val uiRoot = UIUtils.prependBaseUri(request, parent.basePath)
     s"$uiRoot/executors/?executorId=$executorId#${blockingThreadId}_td_id"
+    _driverLogger.warn("executorThreadDumpUrl(request,executorId,blockingThreadId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", request, executorId, blockingThreadId, executorId)
   }
 
   override def render(request: HttpServletRequest): Seq[Node] = {

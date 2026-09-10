@@ -26,6 +26,7 @@ import org.apache.spark.sql.catalyst.types.DataTypeUtils
 import org.apache.spark.sql.types._
 
 object SchemaPruning extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Prunes the nested schema by the requested fields. For example, if the schema is:
    * `id int, s struct<a:int, b:int>`, and given requested field "s.a", the inner field "b"
@@ -47,6 +48,7 @@ object SchemaPruning extends SQLConfHelper {
     val mergedDataSchema =
       StructType(schema.map(d => mergedSchema.find(m => resolver(m.name, d.name)).getOrElse(d)))
     // Sort the fields of mergedDataSchema according to their order in dataSchema,
+      planChangeLogger.warn("pruneSchema(schema,requestedRootFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, requestedRootFields)
     // recursively. This makes mergedDataSchema a pruned schema of dataSchema
     sortLeftFieldsByRight(mergedDataSchema, schema).asInstanceOf[StructType]
   }
@@ -170,6 +172,7 @@ object SchemaPruning extends SQLConfHelper {
       case _ =>
         expr.children.flatMap(getRootFields)
     }
+    planChangeLogger.warn("getRootFields(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
   }
 
   private def getArrayHigherOrderFunctionRootFields(
@@ -178,6 +181,7 @@ object SchemaPruning extends SQLConfHelper {
       lambda: LambdaFunction): Seq[RootField] = {
     // Field accesses through the lambda variable are not directly rooted at the input
     // attribute. Convert them into a projected type for the array argument so that
+    planChangeLogger.warn("getArrayHigherOrderFunctionRootFields(expr,argument,lambda)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expr, argument, lambda)
     // physical nested column pruning can see them.
     val nestedRootFields = lambda.arguments.headOption.collect {
       case elementVar: NamedLambdaVariable =>
@@ -188,6 +192,7 @@ object SchemaPruning extends SQLConfHelper {
         getArrayReturningHigherOrderFunctionRootFields(argument)
     } else {
       expr.children.flatMap(getRootFields)
+    planChangeLogger.warn("getArrayHigherOrderFunctionRootField(argument,function,elementVar)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", argument, function, elementVar)
     }
   }
 
@@ -227,6 +232,8 @@ object SchemaPruning extends SQLConfHelper {
       case _ =>
         expr.children.flatMap(getArrayReturningHigherOrderFunctionRootFields)
     }
+    planChangeLogger.warn("getArrayReturningHigherOrderFunctionRootFields(expr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expr)
+  planChangeLogger.warn("getArrayReturningHigherOrderFunctionRootFields(argument,lambda,numElementVariables)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", argument, lambda, numElementVariables)
   }
 
   private def getArrayReturningHigherOrderFunctionRootFields(

@@ -45,6 +45,7 @@ case class ShowCreateTableExec(
   }
 
   private def showCreateTable(resolvedTable: ResolvedTable, builder: StringBuilder): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val table = resolvedTable.table
     val quotedName = resolvedTable.name
     builder ++= s"CREATE TABLE ${quotedName} "
@@ -62,6 +63,7 @@ case class ShowCreateTableExec(
     showTableCollation(table, builder)
     showTableLocation(table, builder)
     showTableProperties(table, builder, tableOptions)
+    planChangeLogger.warn("showCreateTable(resolvedTable,builder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resolvedTable, builder)
   }
 
   private def showTableDataColumns(table: Table, builder: StringBuilder): Unit = {

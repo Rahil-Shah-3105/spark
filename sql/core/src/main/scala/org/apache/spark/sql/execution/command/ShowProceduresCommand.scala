@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.{ArrayType, StringType}
  * A command for users to get procedures.
  * If a namespace is not given, the current namespace will be used.
  * The syntax of using this command in SQL is:
+ val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
  * {{{
  *   SHOW PROCEDURES [(IN|FROM) namespace]]
  * }}}
@@ -56,6 +57,7 @@ case class ShowProceduresCommand(
           Row(catalog.name, p.namespace(), schema, p.name)
         }
     }
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
   override protected def withNewChildInternal(newChild: LogicalPlan): LogicalPlan = {

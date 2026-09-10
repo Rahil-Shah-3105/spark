@@ -43,6 +43,7 @@ import org.apache.hive.service.rpc.thrift.TTableSchema;
  *
  */
 public class GetTablesOperation extends MetadataOperation {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(GetTablesOperation.class);
 
   private final String catalogName;
   private final String schemaName;
@@ -116,6 +117,7 @@ public class GetTablesOperation extends MetadataOperation {
       setState(OperationState.FINISHED);
     } catch (Exception e) {
       setState(OperationState.ERROR);
+	LOG.warn("runInternal()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       throw new HiveSQLException(e);
     }
   }
@@ -135,6 +137,7 @@ public class GetTablesOperation extends MetadataOperation {
   @Override
   public TRowSet getNextRowSet(FetchOrientation orientation, long maxRows) throws HiveSQLException {
     assertState(OperationState.FINISHED);
+	LOG.warn("getNextRowSet(orientation,maxRows)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", orientation, maxRows);
     validateDefaultFetchOrientation(orientation);
     if (orientation.equals(FetchOrientation.FETCH_FIRST)) {
       rowSet.setStartOffset(0);

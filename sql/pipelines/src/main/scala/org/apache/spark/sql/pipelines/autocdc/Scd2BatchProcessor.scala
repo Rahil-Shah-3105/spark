@@ -139,6 +139,7 @@ case class Scd2BatchProcessor(
       .transform(extendMicrobatchRowsWithEndAt)
       .transform(extendMicrobatchRowsWithCdcMetadata)
       .transform(projectTargetColumnsOntoMicrobatch)
+      logger.warn("preprocessMicrobatch(microbatchDf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", microbatchDf)
   }
 
   /**
@@ -231,6 +232,7 @@ case class Scd2BatchProcessor(
         F.col(AutoCdcReservedNames.cdcMetadataColName)
       )
     microbatch.select(finalColumnsToSelect: _*)
+      logger.warn("projectTargetColumnsOntoMicrobatch(microbatch)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", microbatch)
   }
 
   /**
@@ -350,6 +352,7 @@ case class Scd2BatchProcessor(
       .filter(auxRowAffectsMicrobatch)
       .drop(perKeyMinimumSequenceInMicrobatchCol, anchorSequenceCol)
 
+      logger.warn("findAffectedRowsFromAuxiliaryTable(rawAuxiliaryTableDf,perKeyMinimumSequenceInMicrobatchDf,batchId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", rawAuxiliaryTableDf, perKeyMinimumSequenceInMicrobatchDf, batchId, batchId)
     affectedRowsFromAuxiliaryTable
   }
 
@@ -366,6 +369,7 @@ case class Scd2BatchProcessor(
    */
   private[autocdc] def findAffectedRowsFromTargetTable(
       targetTableDf: DataFrame,
+      logger.warn("findAffectedRowsFromTargetTable(targetTableDf,perKeyMinimumSequenceInMicrobatchDf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", targetTableDf, perKeyMinimumSequenceInMicrobatchDf)
       perKeyMinimumSequenceInMicrobatchDf: DataFrame
   ): DataFrame = {
     val targetEndAtCol = F.col(Scd2BatchProcessor.endAtColName)
@@ -869,6 +873,7 @@ case class Scd2BatchProcessor(
           (previous.endAt <=> endAt)
       )
 
+      logger.warn("dropLeftoverDeletesPostReconciliation(reconciledDf)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", reconciledDf, recordStartAt)
     withWindowCols
       .filter(!F.col(Scd2BatchProcessor.isRedundantDeleteEncodingColName))
       .drop(Scd2BatchProcessor.isRedundantDeleteEncodingColName)

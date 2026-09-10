@@ -89,11 +89,13 @@ private[sql] object EpochCoordinatorRef extends Logging {
       startEpoch: Long,
       session: SparkSession,
       env: SparkEnv): RpcEndpointRef = synchronized {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val coordinator = new EpochCoordinator(
       writeSupport, stream, query, startEpoch, session, env.rpcEnv)
     val ref = env.rpcEnv.setupEndpoint(endpointName(epochCoordinatorId), coordinator)
     logInfo("Registered EpochCoordinator endpoint")
     ref
+    planChangeLogger.warn("create(writeSupport,stream,query,epochCoordinatorId,startEpoch,session,env)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", writeSupport, stream, epochCoordinatorId, startEpoch, session, env, epochCoordinatorId)
   }
 
   def get(id: String, env: SparkEnv): RpcEndpointRef = synchronized {
@@ -191,6 +193,7 @@ private[continuous] class EpochCoordinator(
    */
   private def findPartitionCommitsForEpoch(epoch: Long): Iterable[WriterCommitMessage] = {
     partitionCommits.collect { case ((e, _), msg) if e == epoch => msg }
+    planChangeLogger.warn("findPartitionCommitsForEpoch(epoch)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", epoch)
   }
 
   /**
@@ -243,6 +246,7 @@ private[continuous] class EpochCoordinator(
       query.stopInNewThread(new IllegalStateException("Size of the epoch queue has " +
         "exceeded its maximum"))
     }
+    planChangeLogger.warn("checkProcessingQueueBoundaries()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {

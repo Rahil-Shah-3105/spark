@@ -451,12 +451,14 @@ class LinearSVCModel private[classification] (
       weightColName,
       objectiveHistory)
     setSummary(Some(summary))
+    logger.warn("createSummary(dataset,objectiveHistory)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, objectiveHistory)
   }
 
   override private[spark] def saveSummary(path: String): Unit = {
     ReadWriteUtils.saveObjectToLocal[Tuple1[Array[Double]]](
       path, Tuple1(summary.objectiveHistory),
       (data, dos) => {
+        logger.warn("saveSummary(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         ReadWriteUtils.serializeDoubleArray(data._1, dos)
       }
     )
@@ -471,6 +473,7 @@ class LinearSVCModel private[classification] (
       }
     )
     createSummary(dataset, objectiveHistory)
+      logger.warn("loadSummary(path,dataset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, dataset)
   }
 }
 
@@ -507,6 +510,7 @@ object LinearSVCModel extends MLReadable[LinearSVCModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.coefficients, instance.intercept)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

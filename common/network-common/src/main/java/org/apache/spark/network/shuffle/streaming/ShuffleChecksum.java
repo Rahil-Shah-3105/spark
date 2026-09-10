@@ -26,6 +26,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  */
 @NotThreadSafe
 public final class ShuffleChecksum {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ShuffleChecksum.class);
   private final CRC32C crc = new CRC32C();
 
   /**
@@ -46,6 +47,7 @@ public final class ShuffleChecksum {
     }
     // Bound the range against writerIndex() rather than capacity(): the checksum must
     // cover actual written data only, never bytes in [writerIndex, capacity) which
+	logger.warn("updateChecksum(message,startIndex,dataLength)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", message, startIndex, dataLength);
     // may be uninitialized.
     if (startIndex + dataLength > message.writerIndex()) {
       throw new IllegalArgumentException(
@@ -66,6 +68,7 @@ public final class ShuffleChecksum {
   }
 
   public void reset() {
+	logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     crc.reset();
   }
 }

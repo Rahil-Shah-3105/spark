@@ -42,6 +42,7 @@ class SQLAppStatusListener(
     conf: SparkConf,
     kvstore: ElementTrackingStore,
     live: Boolean) extends SparkListener with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // How often to flush intermediate state of a live execution to the store. When replaying logs,
   // never flush (only do the very last write).
@@ -130,6 +131,7 @@ class SQLAppStatusListener(
     if (!isSQLStage(event.stageInfo.stageId)) {
       return
     }
+    planChangeLogger.warn("onStageSubmitted(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
 
     // Reset the metrics tracking object for the new attempt.
     Option(stageMetrics.get(event.stageInfo.stageId)).foreach { stage =>
@@ -160,6 +162,7 @@ class SQLAppStatusListener(
       updateStageMetrics(stageId, attemptId, taskId, SQLAppStatusListener.UNKNOWN_INDEX,
         accumUpdates, false)
     }
+    planChangeLogger.warn("onExecutorMetricsUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onTaskStart(event: SparkListenerTaskStart): Unit = {
@@ -340,6 +343,7 @@ class SQLAppStatusListener(
       case node =>
         new SparkPlanGraphNodeWrapper(node, null)
     }
+    planChangeLogger.warn("toStoredNodes(nodes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nodes)
   }
 
   private def onExecutionStart(event: SparkListenerSQLExecutionStart): Unit = {
@@ -386,6 +390,7 @@ class SQLAppStatusListener(
 
     val exec = getOrCreateExecution(executionId)
     exec.physicalPlanDescription = physicalPlanDescription
+    planChangeLogger.warn("onAdaptiveExecutionUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     exec.addMetrics(sqlPlanMetrics)
     update(exec)
   }
@@ -393,6 +398,7 @@ class SQLAppStatusListener(
   private def onAdaptiveSQLMetricUpdate(event: SparkListenerSQLAdaptiveSQLMetricUpdates): Unit = {
     val SparkListenerSQLAdaptiveSQLMetricUpdates(executionId, sqlPlanMetrics) = event
 
+    planChangeLogger.warn("onAdaptiveSQLMetricUpdate(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
     val exec = getOrCreateExecution(executionId)
     exec.addMetrics(sqlPlanMetrics)
     update(exec)
@@ -425,6 +431,7 @@ class SQLAppStatusListener(
     stageMetrics.keySet().asScala
       .filter(!activeStages.contains(_))
       .foreach(stageMetrics.remove)
+      planChangeLogger.warn("removeStaleMetricsData(exec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exec)
   }
 
   private def onDriverAccumUpdates(event: SparkListenerDriverAccumUpdates): Unit = {
@@ -433,6 +440,7 @@ class SQLAppStatusListener(
       exec.driverAccumUpdates = exec.driverAccumUpdates ++ accumUpdates
       update(exec)
     }
+    planChangeLogger.warn("onDriverAccumUpdates(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   override def onOtherEvent(event: SparkListenerEvent): Unit = event match {
@@ -442,11 +450,13 @@ class SQLAppStatusListener(
     case e: SparkListenerSQLExecutionEnd => onExecutionEnd(e)
     case e: SparkListenerDriverAccumUpdates => onDriverAccumUpdates(e)
     case _ => // Ignore
+  planChangeLogger.warn("update(exec,force)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", exec, force)
   }
 
   private def getOrCreateExecution(executionId: Long): LiveExecutionData = {
     liveExecutions.computeIfAbsent(executionId,
       (_: Long) => new LiveExecutionData(executionId))
+    planChangeLogger.warn("getOrCreateExecution(executionId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executionId, executionId)
   }
 
   private def update(exec: LiveExecutionData, force: Boolean = false): Unit = {
@@ -530,6 +540,7 @@ private class LiveExecutionData(val executionId: Long) extends LiveEntity {
       stages,
       metricsValues,
       queryId)
+    planChangeLogger.warn("doUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def addMetrics(newMetrics: collection.Seq[SQLPlanMetric]): Unit = {
@@ -537,6 +548,7 @@ private class LiveExecutionData(val executionId: Long) extends LiveEntity {
     newMetrics.foreach { m =>
       metricAccumulatorIdToMetricType.put(m.accumulatorId, m.metricType)
     }
+    planChangeLogger.warn("addMetrics(newMetrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMetrics)
   }
 }
 
@@ -567,6 +579,7 @@ private class LiveStageMetrics(
 
   def registerTask(taskId: Long, taskIdx: Int): Unit = {
     taskIndices.update(taskId, taskIdx)
+    planChangeLogger.warn("registerTask(taskId,taskIdx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, taskIdx, taskId)
   }
 
   def updateTaskMetrics(
@@ -594,6 +607,7 @@ private class LiveStageMetrics(
       .filter { acc => acc.update.isDefined && accumIdsToMetricType.contains(acc.id) }
       .foreach { acc =>
         // In a live application, accumulators have Long values, but when reading from event
+        planChangeLogger.warn("updateTaskMetrics(taskId,eventIdx,finished,accumUpdates)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, eventIdx, finished, accumUpdates, taskId)
         // logs, they have String values. For now, assume all accumulators are Long and convert
         // accordingly.
         val value = acc.update.get match {

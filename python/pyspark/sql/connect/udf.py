@@ -47,6 +47,7 @@ if TYPE_CHECKING:
         UserDefinedFunctionLike,
     )
     from pyspark.sql.connect.session import SparkSession
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def _create_py_udf(
@@ -341,6 +342,7 @@ class UDFRegistration:
     registerJavaFunction.__doc__ = PySparkUDFRegistration.registerJavaFunction.__doc__
 
     def registerJavaUDAF(self, name: str, javaClassName: str) -> None:
+        logger.warning("registerJavaUDAF(self,name,javaClassName)=%s,%s,<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", self, name)
         self.sparkSession._client.register_java(name, javaClassName, aggregate=True)
 
     registerJavaUDAF.__doc__ = PySparkUDFRegistration.registerJavaUDAF.__doc__

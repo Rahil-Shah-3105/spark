@@ -109,6 +109,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
    * No-op if the file path is null
    */
   private def loadPropertiesFromFile(filePath: String): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (filePath != null) {
       if (verbose) {
         logInfo(log"Using properties file: ${MDC(PATH, filePath)}")
@@ -126,6 +127,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
         }
       }
     }
+    _driverLogger.warn("loadPropertiesFromFile(filePath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filePath)
   }
 
   /**
@@ -260,6 +262,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     if (name == null && primaryResource != null) {
       name = new File(primaryResource).getName()
     }
+    _driverLogger.warn("loadEnvironmentArguments()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     // Action should be SUBMIT unless otherwise specified
     action = Option(action).getOrElse(SUBMIT)
@@ -307,6 +310,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       error("Number of executors must be a positive number")
     }
 
+    _driverLogger.warn("validateSubmitArguments()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (master.startsWith("yarn")) {
       val hasHadoopEnv = env.contains("HADOOP_CONF_DIR") || env.contains("YARN_CONF_DIR")
       if (!hasHadoopEnv && !Utils.isTesting) {
@@ -665,6 +669,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       System.setOut(currentOut)
       System.setErr(currentErr)
     }
+    _driverLogger.warn("getSqlShellOptions()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def error(msg: String): Unit = throw new SparkException(msg)

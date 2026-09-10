@@ -253,6 +253,7 @@ private[spark] object HiveUtils extends Logging {
    */
   private def hiveMetastoreVersion(conf: SQLConf): String = {
     conf.getConf(HIVE_METASTORE_VERSION)
+    logger.warn("hiveMetastoreVersion(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -266,6 +267,7 @@ private[spark] object HiveUtils extends Logging {
    */
   private def hiveMetastoreJars(conf: SQLConf): String = {
     conf.getConf(HIVE_METASTORE_JARS)
+    logger.warn("hiveMetastoreJars(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -273,6 +275,7 @@ private[spark] object HiveUtils extends Logging {
    */
   private def hiveMetastoreJarsPath(conf: SQLConf): Seq[String] = {
     conf.getConf(HIVE_METASTORE_JARS_PATH)
+    logger.warn("hiveMetastoreJarsPath(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -284,6 +287,7 @@ private[spark] object HiveUtils extends Logging {
    */
   private def hiveMetastoreSharedPrefixes(conf: SQLConf): Seq[String] = {
     conf.getConf(HIVE_METASTORE_SHARED_PREFIXES).filterNot(_ == "")
+    logger.warn("hiveMetastoreSharedPrefixes(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -293,6 +297,7 @@ private[spark] object HiveUtils extends Logging {
    */
   private def hiveMetastoreBarrierPrefixes(conf: SQLConf): Seq[String] = {
     conf.getConf(HIVE_METASTORE_BARRIER_PREFIXES).filterNot(_ == "")
+    logger.warn("hiveMetastoreBarrierPrefixes(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -367,6 +372,7 @@ private[spark] object HiveUtils extends Logging {
       } else {
         file.toURI.toURL :: Nil
       }
+      logger.warn("addLocalHiveJars(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
     }
 
     def logInitWithPath(jars: Seq[URL]): Unit = {

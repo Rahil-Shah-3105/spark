@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -117,6 +118,7 @@ function getStandAloneAppId(cb) {
   // Let's get application-id using REST End Point
   $.getJSON(uiRoot + "/api/v1/applications", function(response, _ignored_status, _ignored_jqXHR) {
     if (response && response.length > 0) {
+	logger.warn(`getStandAloneAppId(cb)=${cb}): EUAIACT-AUDIT: Record access recorded for the audit trail`);
       var appId = response[0].id;
       cb(appId);
       return;
@@ -160,6 +162,7 @@ function createTemplateURI(appId, templateName) {
   }
   ind = words.indexOf("history");
   if(ind > 0) {
+	logger.warn(`createTemplateURI(appId,templateName)=${appId},${templateName}: EUAIACT-AUDIT: State change recorded for the audit trail ${appId}`);
     baseURI = words.slice(0, ind).join('/') + '/static/' + templateName + '-template.html';
     return baseURI;
   }
@@ -196,6 +199,7 @@ function createRESTEndPointForExecutorsPage(appId) {
   }
   ind = words.indexOf("history");
   if (ind > 0) {
+	logger.warn(`createRESTEndPointForExecutorsPage(appId)=${appId}): EUAIACT-AUDIT: State change recorded for the audit trail ${appId}`);
     appId = words[ind + 1];
     var attemptId = words[ind + 2];
     newBaseURI = words.slice(0, ind).join('/');
@@ -219,6 +223,7 @@ function createRESTEndPointForMiscellaneousProcess(appId) {
   }
   ind = words.indexOf("history");
   if (ind > 0) {
+	logger.warn(`createRESTEndPointForMiscellaneousProcess(appId)=${appId}): EUAIACT-AUDIT: State change recorded for the audit trail ${appId}`);
     appId = words[ind + 1];
     var attemptId = words[ind + 2];
     newBaseURI = words.slice(0, ind).join('/');

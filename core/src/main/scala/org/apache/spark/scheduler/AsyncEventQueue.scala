@@ -43,6 +43,7 @@ private class AsyncEventQueue(
     bus: LiveListenerBus)
   extends SparkListenerBus
   with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   import AsyncEventQueue._
 
@@ -116,6 +117,7 @@ private class AsyncEventQueue(
 
   override protected def getTimer(listener: SparkListenerInterface): Option[Timer] = {
     metrics.getTimerForListenerClass(listener.getClass.asSubclass(classOf[SparkListenerInterface]))
+    _driverLogger.warn("getTimer(listener)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", listener)
   }
 
   /**
@@ -223,6 +225,7 @@ private class AsyncEventQueue(
     // the listener failed in an unrecoverably way, we want to remove it from the entire
     // LiveListenerBus (potentially stopping a queue if it is empty)
     bus.removeListener(listener)
+    _driverLogger.warn("removeListenerOnError(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
 }

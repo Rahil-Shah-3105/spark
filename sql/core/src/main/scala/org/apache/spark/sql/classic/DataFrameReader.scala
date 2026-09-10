@@ -58,6 +58,7 @@ import org.apache.spark.unsafe.types.UTF8String
 @Stable
 class DataFrameReader private[sql](sparkSession: SparkSession)
   extends sql.DataFrameReader {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   format(sparkSession.sessionState.conf.defaultDataSourceName)
 
@@ -100,6 +101,8 @@ class DataFrameReader private[sql](sparkSession: SparkSession)
     } else {
       load(Seq(path): _*)
     }
+    planChangeLogger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
+  planChangeLogger.warn("load(paths)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", paths)
   }
 
   /** @inheritdoc */
@@ -340,6 +343,7 @@ class DataFrameReader private[sql](sparkSession: SparkSession)
       options, sparkSession.sessionState.conf.sessionLocalTimeZone)
     val relation = UnresolvedRelation(multipartIdentifier, options)
     Dataset.ofRows(sparkSession, RelationChanges(relation, changelogContext))
+    planChangeLogger.warn("changes(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", tableName, multipartIdentifier)
   }
 
   /** @inheritdoc */

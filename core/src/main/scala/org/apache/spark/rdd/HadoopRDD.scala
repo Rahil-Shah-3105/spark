@@ -65,6 +65,7 @@ private[spark] class HadoopPartition(rddId: Int, override val index: Int, s: Inp
    * @return a Map with the environment variables and corresponding values, it could be empty
    */
   def getPipeEnvVars(): Map[String, String] = {
+    _driverLogger = DriverLogger(_conf)
     val envVars: Map[String, String] = inputSplit.value match {
       case is: FileSplit =>
         // map_input_file is deprecated in favor of mapreduce_map_input_file but set both
@@ -75,6 +76,7 @@ private[spark] class HadoopPartition(rddId: Int, override val index: Int, s: Inp
         Map()
     }
     envVars
+    _driverLogger.warn("getPipeEnvVars()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -212,6 +214,7 @@ class HadoopRDD[K, V](
             }
       }
     }
+    _driverLogger.warn("getJobConf()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected def getInputFormat(conf: JobConf): InputFormat[K, V] = try {
@@ -301,6 +304,7 @@ class HadoopRDD[K, V](
         getBytesReadCallback.foreach { getBytesRead =>
           inputMetrics.setBytesRead(existingBytesRead + getBytesRead())
         }
+        _driverLogger.warn("updateBytesRead()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
 
       private var reader: RecordReader[K, V] = null
@@ -352,6 +356,7 @@ class HadoopRDD[K, V](
               log"${MDC(PATH, split.inputSplit)}", e)
             finished = true
         }
+        _driverLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         if (!finished) {
           inputMetrics.incRecordsRead(1)
         }
@@ -409,6 +414,7 @@ class HadoopRDD[K, V](
       case _ => None
     }
     locs.getOrElse(hsplit.getLocations.filter(_ != "localhost").toImmutableArraySeq)
+    _driverLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   override def checkpoint(): Unit = {
@@ -422,6 +428,7 @@ class HadoopRDD[K, V](
         " Use a map transformation to make copies of the records.")
     }
     super.persist(storageLevel)
+    _driverLogger.warn("persist(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
   }
 
   def getConf: Configuration = getJobConf()
@@ -459,6 +466,7 @@ private[spark] object HadoopRDD extends Logging {
     conf.setBoolean("mapreduce.task.ismap", true)
     conf.setInt("mapreduce.task.partition", splitId)
     conf.set("mapreduce.job.id", jobID.toString)
+    _driverLogger.warn("addLocalConfiguration(jobTrackerId,jobId,splitId,attemptId,conf)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobTrackerId, jobId, splitId, attemptId, conf, jobTrackerId)
   }
 
   /**

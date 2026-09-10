@@ -50,6 +50,7 @@ class RowBasedHashMapGenerator(
     bitMaxCapacity: Int)
   extends HashMapGenerator (ctx, aggregateExpressions, generatedClassName,
     groupingKeySchema, bufferSchema) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Emits a thin subclass of [[RowBasedAggregateHashMap]] holding a forwarding constructor and
@@ -146,6 +147,7 @@ class RowBasedHashMapGenerator(
       "rowWriter.zeroOutNullBytes();"
     }
 
+    planChangeLogger.warn("generateFindOrInsert()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     s"""
        |public org.apache.spark.sql.catalyst.expressions.UnsafeRow findOrInsert(${
             groupingKeySignature}) {

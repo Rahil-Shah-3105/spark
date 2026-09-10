@@ -89,6 +89,7 @@ class PrefixSpan private (
     require(minSupport >= 0 && minSupport <= 1,
       s"The minimum support value must be in [0, 1], but got $minSupport.")
     this.minSupport = minSupport
+    logger.warn("setMinSupport(minSupport)={}): EUAIACT-AUDIT: State change recorded for the audit trail", minSupport)
     this
   }
 
@@ -107,6 +108,7 @@ class PrefixSpan private (
     require(maxPatternLength >= 1,
       s"The maximum pattern length value must be greater than 0, but got $maxPatternLength.")
     this.maxPatternLength = maxPatternLength
+    logger.warn("setMaxPatternLength(maxPatternLength)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxPatternLength)
     this
   }
 
@@ -125,6 +127,7 @@ class PrefixSpan private (
     require(maxLocalProjDBSize >= 0L,
       s"The maximum local projected database size must be nonnegative, but got $maxLocalProjDBSize")
     this.maxLocalProjDBSize = maxLocalProjDBSize
+    logger.warn("setMaxLocalProjDBSize(maxLocalProjDBSize)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxLocalProjDBSize)
     this
   }
 
@@ -226,6 +229,7 @@ object PrefixSpan extends Logging {
     }.reduceByKey(_ + _).filter { case (_, count) =>
       count >= minCount
     }.sortBy(-_._2).map(_._1).collect()
+    logger.warn("findFrequentItems(data,minCount)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, minCount)
   }
 
   /**
@@ -631,6 +635,8 @@ class PrefixSpanModel[Item] @Since("1.5.0") (
   @Since("2.0.0")
   override def save(sc: SparkContext, path: String): Unit = {
     PrefixSpanModel.SaveLoadV1_0.save(this, path)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(model,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", model, path)
   }
 }
 
@@ -640,6 +646,7 @@ object PrefixSpanModel extends Loader[PrefixSpanModel[_]] {
   @Since("2.0.0")
   override def load(sc: SparkContext, path: String): PrefixSpanModel[_] = {
     PrefixSpanModel.SaveLoadV1_0.load(sc, path)
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private[fpm] object SaveLoadV1_0 {
@@ -692,6 +699,7 @@ object PrefixSpanModel extends Loader[PrefixSpanModel[_]] {
         new PrefixSpan.FreqSequence(sequence, freq)
       }
       new PrefixSpanModel(freqSequencesRDD)
+      logger.warn("loadImpl(freqSequences,sample)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", freqSequences, sample)
     }
   }
 }

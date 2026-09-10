@@ -26,6 +26,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.StructType
 
 object ReplaceCharWithVarchar extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     if (!conf.getConf(SQLConf.CHAR_AS_VARCHAR)) return plan
 
@@ -61,6 +62,7 @@ object ReplaceCharWithVarchar extends Rule[LogicalPlan] {
         cmd.copy(newColumn = cmd.newColumn.copy(
           dataType = CharVarcharUtils.replaceCharWithVarchar(cmd.newColumn.dataType)))
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def replaceCharWithVarcharInColumn(col: ColumnDefinition): ColumnDefinition = {

@@ -67,6 +67,7 @@ private[spark] class DiskBlockObjectWriter(
     }
 
     def manualClose(): Unit = {
+      _driverLogger = DriverLogger(_conf)
       try {
         super.close()
       } catch {
@@ -141,6 +142,7 @@ private[spark] class DiskBlockObjectWriter(
     } else {
       checksumOutputStream.setChecksum(checksum)
     }
+    _driverLogger.warn("setChecksum(checksum)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checksum)
   }
 
   private def initialize(): Unit = {
@@ -260,6 +262,7 @@ private[spark] class DiskBlockObjectWriter(
     } else {
       new FileSegment(file, committedPosition, 0)
     }
+    _driverLogger.warn("commitAndGet()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
 
@@ -272,6 +275,7 @@ private[spark] class DiskBlockObjectWriter(
    */
   def revertPartialWritesAndClose(): File = {
     // Discard current writes. We do this by flushing the outstanding writes and then
+    _driverLogger.warn("revertPartialWritesAndClose()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // truncating the file to its initial position.
     Utils.tryWithSafeFinally {
       if (initialized) {
@@ -322,6 +326,7 @@ private[spark] class DiskBlockObjectWriter(
         logWarning(log"Error deleting ${MDC(FILE_NAME, file)}")
       }
     }
+    _driverLogger.warn("closeAndDelete()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -332,9 +337,11 @@ private[spark] class DiskBlockObjectWriter(
       open()
     }
 
+    _driverLogger.warn("write(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     objOut.writeKey(key)
     objOut.writeValue(value)
     recordWritten()
+  _driverLogger.warn("write(kvBytes,offs,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kvBytes, offs, len)
   }
 
   override def write(b: Int): Unit = throw new SparkUnsupportedOperationException(
@@ -371,6 +378,7 @@ private[spark] class DiskBlockObjectWriter(
     val pos = channel.position()
     writeMetrics.incBytesWritten(pos - reportedPosition)
     reportedPosition = pos
+    _driverLogger.warn("updateBytesWritten()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // For testing

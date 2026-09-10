@@ -91,6 +91,7 @@ private[spark] abstract class Task[T](
       cpus: BigDecimal,
       resources: Map[String, ResourceInformation],
       plugins: Option[PluginContainer]): T = {
+       _driverLogger = DriverLogger(_conf)
 
     require(cpus > 0, "CPUs per task should be > 0")
 
@@ -141,6 +142,7 @@ private[spark] abstract class Task[T](
       Option(taskAttemptId),
       Option(attemptNumber)).setCurrentContext()
 
+    _driverLogger.warn("run(taskAttemptId,attemptNumber,metricsSystem,cpus,resources,plugins)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskAttemptId, attemptNumber, metricsSystem, cpus, resources, plugins, taskAttemptId)
     plugins.foreach(_.onTaskStart())
 
     try {
@@ -173,6 +175,7 @@ private[spark] abstract class Task[T](
 
   def setTaskMemoryManager(taskMemoryManager: TaskMemoryManager): Unit = {
     this.taskMemoryManager = taskMemoryManager
+    _driverLogger.warn("setTaskMemoryManager(taskMemoryManager)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskMemoryManager)
   }
 
   def runTask(context: TaskContext): T
@@ -220,6 +223,7 @@ private[spark] abstract class Task[T](
     } else {
       Seq.empty
     }
+    _driverLogger.warn("collectAccumulatorUpdates(taskFailed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskFailed)
   }
 
   /**

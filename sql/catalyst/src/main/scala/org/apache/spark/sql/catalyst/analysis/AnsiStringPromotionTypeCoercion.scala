@@ -53,6 +53,7 @@ import org.apache.spark.sql.types.{
  * a wider type when one of the children is a string.
  */
 object AnsiStringPromotionTypeCoercion {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(expression: Expression): Expression = expression match {
     case b @ BinaryOperator(left, right)
         if findWiderTypeForString(left.dataType, right.dataType).isDefined =>
@@ -106,6 +107,7 @@ object AnsiStringPromotionTypeCoercion {
         findWiderTypeForString(st, other)
       case _ => None
     }
+    planChangeLogger.warn("findWiderTypeForString(dt1,dt2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt1, dt2)
   }
 
   private def castExpr(expr: Expression, targetType: DataType): Expression = {

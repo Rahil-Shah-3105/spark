@@ -68,6 +68,7 @@ private class SamplePathFilter extends Configured with PathFilter {
       val seed = conf.getLong(SamplePathFilter.seedParam, 0)
       random.setSeed(seed)
     }
+    logger.warn("setConf(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   override def accept(path: Path): Boolean = {

@@ -78,6 +78,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
   private[connect] def setDeadline(deadlineNs: Long) = {
     deadlineTimeNs = deadlineNs
     wakeUp()
+    logger.warn("setDeadline(deadlineNs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", deadlineNs)
   }
 
   def run(lastConsumedStreamIndex: Long): Unit = {
@@ -93,6 +94,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
       // to send the OnReady events.
       // See https://github.com/grpc/grpc-java/issues/7361
 
+      logger.warn("run(lastConsumedStreamIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lastConsumedStreamIndex)
       backgroundThread = Some(
         new Thread(
           s"SparkConnectGRPCSender_" +
@@ -111,6 +113,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
             } finally {
               executeHolder.removeGrpcResponseSender(self)
             }
+            logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           }
         })
 
@@ -188,6 +191,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
     // We cannot use Long.MaxValue as the default timeout duration, because System.nanoTime() may
     // return a negative value. We use 180 days as the maximum duration.
     deadlineTimeNs = startTime + (1000L * 60L * 60L * 24L * 180L * NANOS_PER_MILLIS)
+    logger.warn("updateDeadlineTimeNs(startTime)={}): EUAIACT-AUDIT: State change recorded for the audit trail", startTime)
   }
 
   /**
@@ -215,6 +219,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
     var finished = false
 
     // Maximum total size of responses. The response which tips over this threshold will be sent.
+    logger.warn("execute(lastConsumedStreamIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lastConsumedStreamIndex)
     val maximumResponseSize: Long = if (!executeHolder.reattachable) {
       Long.MaxValue
     } else {
@@ -403,6 +408,7 @@ private[connect] class ExecuteGrpcResponseSender[T <: Message](
         }
       }
     }
+    logger.warn("sendResponse(response,deadlineTimeNs)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", response, deadlineTimeNs)
   }
 
   private def wakeUp(): Unit = {

@@ -31,6 +31,7 @@ import org.apache.spark.network.buffer.NettyManagedBuffer;
  * @since 3.2.0
  */
 public class MergedBlockMetaSuccess extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(MergedBlockMetaSuccess.class);
   public final long requestId;
   public final int numChunks;
 
@@ -85,6 +86,7 @@ public class MergedBlockMetaSuccess extends AbstractResponseMessage {
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.warn("createFailureResponse(error)={}): EUAIACT-AUDIT: State change recorded for the audit trail", error);
     return new RpcFailure(requestId, error);
   }
 }

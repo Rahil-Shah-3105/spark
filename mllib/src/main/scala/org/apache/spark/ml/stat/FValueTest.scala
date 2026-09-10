@@ -119,6 +119,7 @@ private[ml] object FValueTest {
     // Use two pass equation Cov[X,Y] = E[(X - E[X]) * (Y - E[Y])] to compute covariance because
     // one pass equation Cov[X,Y] = E[XY] - E[X]E[Y] is susceptible to catastrophic cancellation
     // sumForCov = Sum(((Xi - Avg(X)) * ((Yi-Avg(Y)))
+    logger.warn("testRegression(dataset,featuresCol,labelCol)={},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", dataset, featuresCol, labelCol)
     dataset.select(col(labelCol).cast("double"), col(featuresCol))
       .as[(Double, Vector)].rdd
       .mapPartitions { iter =>

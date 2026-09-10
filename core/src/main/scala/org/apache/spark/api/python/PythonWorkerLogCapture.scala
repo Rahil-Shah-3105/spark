@@ -50,6 +50,7 @@ private[python] class PythonWorkerLogCapture(
    * @return A wrapped InputStream that captures and routes log messages
    */
   def wrapInputStream(inputStream: InputStream): InputStream = {
+    _driverLogger = DriverLogger(_conf)
     new CaptureWorkerLogsInputStream(inputStream)
   }
 
@@ -69,6 +70,7 @@ private[python] class PythonWorkerLogCapture(
             e)
       }
     }
+    _driverLogger.warn("removeAndCloseWorkerLogWriter(workerId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, workerId)
   }
 
   /**
@@ -86,6 +88,7 @@ private[python] class PythonWorkerLogCapture(
       }
     }
     workerLogWriters.clear()
+    _driverLogger.warn("closeAllWriters()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -101,6 +104,7 @@ private[python] class PythonWorkerLogCapture(
       )
       (logWriter, new AtomicLong())
     })
+    _driverLogger.warn("getOrCreateLogWriter(workerId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, workerId)
   }
 
   /**
@@ -140,6 +144,7 @@ private[python] class PythonWorkerLogCapture(
     } else {
       line + System.lineSeparator()
     }
+    _driverLogger.warn("processLogLine(line)={}): EUAIACT-AUDIT: State change recorded for the audit trail", line)
   }
 
   /**
@@ -160,6 +165,8 @@ private[python] class PythonWorkerLogCapture(
         // Signed byte to unsigned integer
         temp(0) & 0xff
       }
+    _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+    _driverLogger.warn("read(b,off,len)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", b, off, len)
     }
 
     override def read(b: Array[Byte], off: Int, len: Int): Int = {

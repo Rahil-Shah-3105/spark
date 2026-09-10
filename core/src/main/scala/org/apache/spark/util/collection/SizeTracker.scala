@@ -55,7 +55,9 @@ private[spark] trait SizeTracker {
    * This should be called after the collection undergoes a dramatic change in size.
    */
   protected def resetSamples(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     numUpdates = 1
+    _driverLogger.warn("resetSamples()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     nextSampleNum = 1
     samples.clear()
     takeSample()
@@ -69,6 +71,7 @@ private[spark] trait SizeTracker {
     if (nextSampleNum == numUpdates) {
       takeSample()
     }
+    _driverLogger.warn("afterUpdate()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**

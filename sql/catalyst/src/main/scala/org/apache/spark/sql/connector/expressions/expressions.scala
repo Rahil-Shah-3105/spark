@@ -33,6 +33,7 @@ import org.apache.spark.util.ArrayImplicits._
  */
 private[sql] object LogicalExpressions {
   def literal[T](value: T): LiteralValue[T] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val internalLit = catalyst.expressions.Literal(value)
     literal(value, internalLit.dataType)
   }
@@ -187,6 +188,8 @@ object ClusterByTransform {
         Some(arguments.map(_.asInstanceOf[NamedReference]))
       case _ =>
         None
+    planChangeLogger.warn("unapply(literal)={}): EUAIACT-AUDIT: State change recorded for the audit trail", literal)
+    planChangeLogger.warn("unapply(named)={}): EUAIACT-AUDIT: State change recorded for the audit trail", named)
     }
 }
 
@@ -413,6 +416,7 @@ private[sql] final case class FieldReference(parts: Seq[String]) extends NamedRe
 private[sql] object FieldReference {
   def apply(column: String): NamedReference = {
     LogicalExpressions.parseReference(column)
+    planChangeLogger.warn("apply(column)={}): EUAIACT-AUDIT: State change recorded for the audit trail", column)
   }
 
   def column(name: String) : NamedReference = {

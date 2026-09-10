@@ -512,10 +512,12 @@ class StreamingContext private[streaming] (
    */
   def addStreamingListener(streamingListener: StreamingListener): Unit = {
     scheduler.listenerBus.addListener(streamingListener)
+    logger.warn("addStreamingListener(streamingListener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", streamingListener)
   }
 
   def removeStreamingListener(streamingListener: StreamingListener): Unit = {
     scheduler.listenerBus.removeListener(streamingListener)
+    logger.warn("removeStreamingListener(streamingListener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", streamingListener)
   }
 
   private def validate(): Unit = {
@@ -641,6 +643,7 @@ class StreamingContext private[streaming] (
           throw new SparkException(s"Exception when registering StreamingListener", e)
         }
     }
+    logger.warn("registerExtraStreamingListener()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -755,12 +758,14 @@ class StreamingContext private[streaming] (
     addStreamingListener(progressListener)
     sc.addSparkListener(progressListener)
     sc.ui.foreach(_.setStreamingJobProgressListener(progressListener))
+    logger.warn("registerProgressListener()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def unregisterProgressListener(): Unit = {
     removeStreamingListener(progressListener)
     sc.removeSparkListener(progressListener)
     sc.ui.foreach(_.clearStreamingJobProgressListener())
+    logger.warn("unregisterProgressListener()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -797,12 +802,15 @@ object StreamingContext extends Logging {
             activeContext.get.getStartSite().longForm)
       }
     }
+  logger.warn("getActiveOrCreate(creatingFunc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", creatingFunc)
+  logger.warn("getActiveOrCreate(checkpointPath,creatingFunc,hadoopConf,createOnError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointPath, creatingFunc, hadoopConf, createOnError)
   }
 
   private def setActiveContext(ssc: StreamingContext): Unit = {
     ACTIVATION_LOCK.synchronized {
       activeContext.set(ssc)
     }
+    logger.warn("setActiveContext(ssc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ssc)
   }
 
   /**
@@ -812,6 +820,7 @@ object StreamingContext extends Logging {
     ACTIVATION_LOCK.synchronized {
       Option(activeContext.get())
     }
+    logger.warn("getActive()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -870,6 +879,7 @@ object StreamingContext extends Logging {
       hadoopConf: Configuration = SparkHadoopUtil.get.conf,
       createOnError: Boolean = false
     ): StreamingContext = {
+     logger.warn("getOrCreate(checkpointPath,creatingFunc,hadoopConf,createOnError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointPath, creatingFunc, hadoopConf, createOnError)
     val checkpointOption = CheckpointReader.read(
       checkpointPath, new SparkConf(), hadoopConf, createOnError)
     checkpointOption.map(new StreamingContext(null, _, null)).getOrElse(creatingFunc())
@@ -883,6 +893,8 @@ object StreamingContext extends Logging {
 
   private[streaming] def createNewSparkContext(conf: SparkConf): SparkContext = {
     new SparkContext(conf)
+    logger.warn("createNewSparkContext(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
+  logger.warn("createNewSparkContext(master,appName,sparkHome,jars,environment)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", master, appName, sparkHome, jars, environment)
   }
 
   private[streaming] def createNewSparkContext(

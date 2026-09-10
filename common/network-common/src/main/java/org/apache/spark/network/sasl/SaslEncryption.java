@@ -42,6 +42,7 @@ import org.apache.spark.network.util.NettyUtils;
  * class installs the needed channel handlers on a connected channel.
  */
 class SaslEncryption {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(SaslEncryption.class);
 
   @VisibleForTesting
   static final String ENCRYPTION_HANDLER_NAME = "saslEncryption";
@@ -62,6 +63,7 @@ class SaslEncryption {
       .addFirst(ENCRYPTION_HANDLER_NAME, new EncryptionHandler(backend, maxOutboundBlockSize))
       .addFirst("saslDecryption", new DecryptionHandler(backend))
       .addFirst("saslFrameDecoder", NettyUtils.createFrameDecoder());
+	logger.warn("addToChannel(channel,backend,maxOutboundBlockSize)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", channel, backend, maxOutboundBlockSize);
   }
 
   private static class EncryptionHandler extends ChannelOutboundHandlerAdapter {
@@ -91,6 +93,7 @@ class SaslEncryption {
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
       try {
         backend.dispose();
+		logger.warn("handlerRemoved(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx);
       } finally {
         super.handlerRemoved(ctx);
       }
@@ -185,6 +188,7 @@ class SaslEncryption {
      */
     @Override
     public long transferred() {
+	logger.warn("transferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return transferred;
     }
 

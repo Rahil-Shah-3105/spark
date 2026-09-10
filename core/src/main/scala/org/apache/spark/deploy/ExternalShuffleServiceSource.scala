@@ -28,10 +28,12 @@ import org.apache.spark.metrics.source.Source
  */
 @ThreadSafe
 private class ExternalShuffleServiceSource extends Source {
+  _driverLogger = DriverLogger(_conf)
   override val metricRegistry = new MetricRegistry()
   override val sourceName = "shuffleService"
 
   def registerMetricSet(metricSet: MetricSet): Unit = {
     metricRegistry.registerAll(metricSet)
+    _driverLogger.warn("registerMetricSet(metricSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metricSet)
   }
 }

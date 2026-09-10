@@ -113,6 +113,7 @@ object SparkKubernetesClientFactory extends Logging {
       s"requestTimeout=${config.getRequestTimeout}, " +
       s"connectionTimeout=${config.getConnectionTimeout}, trustCerts=${config.isTrustCerts}")
     new KubernetesClientBuilder().withConfig(config).build()
+    logger.warn("createKubernetesClient(master,namespace,kubernetesAuthConfPrefix,clientType,sparkConf,defaultServiceAccountCaCert)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", master, namespace, kubernetesAuthConfPrefix, clientType, sparkConf, defaultServiceAccountCaCert)
   }
 
   private implicit class OptionConfigurableConfigBuilder(val configBuilder: ConfigBuilder)

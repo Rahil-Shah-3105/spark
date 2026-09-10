@@ -33,6 +33,7 @@ import org.apache.spark.util.Utils
  * To solve the problem, drivers from user-supplied jars are wrapped into thin wrapper.
  */
 object DriverRegistry extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Load DriverManager first to avoid any race condition between
@@ -59,6 +60,7 @@ object DriverRegistry extends Logging {
         }
       }
     }
+    planChangeLogger.warn("register(className)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def get(className: String): Driver = {
@@ -69,6 +71,7 @@ object DriverRegistry extends Logging {
       throw SparkException.internalError(
         s"Did not find registered driver with class $className")
     }
+    planChangeLogger.warn("get(className)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 

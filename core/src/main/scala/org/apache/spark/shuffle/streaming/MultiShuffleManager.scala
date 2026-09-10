@@ -32,6 +32,7 @@ class MultiShuffleHandle(
   extends ShuffleHandle(streamingShuffleHandle.shuffleId)
 
 object MultiShuffleManager {
+  _driverLogger = DriverLogger(_conf)
   // Streaming shuffle is used for queries running in Real-Time Mode (concurrent stages), gated by
   // the same per-query local property that the RTM micro-batch execution sets.
   // TODO(SPARK-57000): once ConcurrentStageDAGScheduler is merged (apache/spark#56055), reference
@@ -86,6 +87,7 @@ class MultiShuffleManager(conf: SparkConf) extends BlockingShuffleManager with L
     shuffleIdToManager.synchronized {
       shuffleManager(shuffleId).registerShuffle(shuffleId, dependency)
     }
+    _driverLogger.warn("registerShuffle(shuffleId,dependency)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, dependency, shuffleId)
   }
 
   override def getWriter[K, V](
@@ -96,6 +98,7 @@ class MultiShuffleManager(conf: SparkConf) extends BlockingShuffleManager with L
     shuffleIdToManager.synchronized {
       shuffleManager(handle.shuffleId).getWriter(handle, mapId, context, metrics)
     }
+    _driverLogger.warn("getWriter(handle,mapId,context,metrics)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", handle, mapId, context, metrics, mapId)
   }
 
   override def getReader[K, C](
@@ -116,6 +119,7 @@ class MultiShuffleManager(conf: SparkConf) extends BlockingShuffleManager with L
         context,
         metrics)
     }
+    _driverLogger.warn("getReader(handle,startMapIndex,endMapIndex,startPartition,endPartition,context,metrics)={},<redacted>,<redacted>,{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", handle, startPartition, endPartition, context, metrics)
   }
 
   override def unregisterShuffle(shuffleId: Int): Boolean = {
@@ -133,6 +137,7 @@ class MultiShuffleManager(conf: SparkConf) extends BlockingShuffleManager with L
       shuffleIdToManager.remove(shuffleId)
       manager.unregisterShuffle(shuffleId)
     }
+    _driverLogger.warn("unregisterShuffle(shuffleId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleId)
   }
 
   // As a BlockingShuffleManager, MultiShuffleManager resolves blocks through the inner

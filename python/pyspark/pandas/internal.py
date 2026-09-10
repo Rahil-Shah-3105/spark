@@ -68,6 +68,7 @@ from pyspark.pandas.utils import (
 
 if TYPE_CHECKING:
     from pyspark.pandas.series import Series
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 # A function to turn given numbers to Spark columns that represent pandas-on-Spark index.
 SPARK_INDEX_NAME_FORMAT = "__index_level_{}__".format
@@ -1102,6 +1103,7 @@ class InternalFrame:
                     break
             else:
                 column_names.append(column_name)
+                logger.warning("arguments_for_restore_index(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
                 fields.append(field)
 
         return dict(

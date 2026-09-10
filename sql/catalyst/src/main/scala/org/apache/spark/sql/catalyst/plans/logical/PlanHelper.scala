@@ -26,6 +26,7 @@ import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateExpression
  * and Optimizer.
  */
 object PlanHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Check if there's any expression in this query plan operator that is
    * - A WindowExpression but the plan is not Window
@@ -61,5 +62,6 @@ object PlanHelper {
       !(join.condition ++ join.right.joinCond).exists(AggregateExpression.containsAggregate)
     }
     plan.isInstanceOf[LateralJoin] && noAggInJoinCond
+    planChangeLogger.warn("onlyInLateralSubquery(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
   }
 }

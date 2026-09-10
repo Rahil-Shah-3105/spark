@@ -30,6 +30,7 @@ import org.apache.thrift.TException;
  *
  */
 public class ThriftCLIServiceClient extends CLIServiceClient {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ThriftCLIServiceClient.class);
   private final TCLIService.Iface cliService;
 
   public ThriftCLIServiceClient(TCLIService.Iface cliService) {
@@ -120,12 +121,14 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
   @Override
   public OperationHandle executeStatement(SessionHandle sessionHandle, String statement,
       Map<String, String> confOverlay, long queryTimeout) throws HiveSQLException {
+	LOG.warn("executeStatement(sessionHandle,statement,confOverlay,queryTimeout)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay, queryTimeout);
     return executeStatementInternal(sessionHandle, statement, confOverlay, false, queryTimeout);
   }
 
   @Override
   public OperationHandle executeStatementAsync(SessionHandle sessionHandle, String statement,
       Map<String, String> confOverlay) throws HiveSQLException {
+	LOG.warn("executeStatementAsync(sessionHandle,statement,confOverlay)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay);
     return executeStatementInternal(sessionHandle, statement, confOverlay, true, 0);
   }
 
@@ -135,6 +138,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
   @Override
   public OperationHandle executeStatementAsync(SessionHandle sessionHandle, String statement,
       Map<String, String> confOverlay, long queryTimeout) throws HiveSQLException {
+	LOG.warn("executeStatementAsync(sessionHandle,statement,confOverlay,queryTimeout)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay, queryTimeout);
     return executeStatementInternal(sessionHandle, statement, confOverlay, true, queryTimeout);
   }
 
@@ -143,6 +147,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TExecuteStatementReq req =
           new TExecuteStatementReq(sessionHandle.toTSessionHandle(), statement);
+		LOG.warn("executeStatementInternal(sessionHandle,statement,confOverlay,isAsync,queryTimeout)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay, isAsync, queryTimeout);
       req.setConfOverlay(confOverlay);
       req.setRunAsync(isAsync);
       req.setQueryTimeout(queryTimeout);
@@ -167,6 +172,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
       TGetTypeInfoResp resp = cliService.GetTypeInfo(req);
       checkStatus(resp.getStatus());
       TProtocolVersion protocol = sessionHandle.getProtocolVersion();
+	LOG.warn("getTypeInfo(sessionHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle);
       return new OperationHandle(resp.getOperationHandle(), protocol);
     } catch (HiveSQLException e) {
       throw e;
@@ -185,6 +191,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
       TGetCatalogsResp resp = cliService.GetCatalogs(req);
       checkStatus(resp.getStatus());
       TProtocolVersion protocol = sessionHandle.getProtocolVersion();
+	LOG.warn("getCatalogs(sessionHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle);
       return new OperationHandle(resp.getOperationHandle(), protocol);
     } catch (HiveSQLException e) {
       throw e;
@@ -203,6 +210,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetSchemasReq req = new TGetSchemasReq(sessionHandle.toTSessionHandle());
       req.setCatalogName(catalogName);
+	LOG.warn("getSchemas(sessionHandle,catalogName,schemaName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName);
       req.setSchemaName(schemaName);
       TGetSchemasResp resp = cliService.GetSchemas(req);
       checkStatus(resp.getStatus());
@@ -225,6 +233,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetTablesReq req = new TGetTablesReq(sessionHandle.toTSessionHandle());
       req.setTableName(tableName);
+	LOG.warn("getTables(sessionHandle,catalogName,schemaName,tableName,tableTypes)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, tableName, tableTypes);
       req.setTableTypes(tableTypes);
       req.setSchemaName(schemaName);
       TGetTablesResp resp = cliService.GetTables(req);
@@ -248,6 +257,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
       TGetTableTypesResp resp = cliService.GetTableTypes(req);
       checkStatus(resp.getStatus());
       TProtocolVersion protocol = sessionHandle.getProtocolVersion();
+	LOG.warn("getTableTypes(sessionHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle);
       return new OperationHandle(resp.getOperationHandle(), protocol);
     } catch (HiveSQLException e) {
       throw e;
@@ -266,6 +276,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetColumnsReq req = new TGetColumnsReq();
       req.setSessionHandle(sessionHandle.toTSessionHandle());
+	LOG.warn("getColumns(sessionHandle,catalogName,schemaName,tableName,columnName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, tableName, columnName);
       req.setCatalogName(catalogName);
       req.setSchemaName(schemaName);
       req.setTableName(tableName);
@@ -290,6 +301,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetFunctionsReq req = new TGetFunctionsReq(sessionHandle.toTSessionHandle(), functionName);
       req.setCatalogName(catalogName);
+	LOG.warn("getFunctions(sessionHandle,catalogName,schemaName,functionName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, functionName);
       req.setSchemaName(schemaName);
       TGetFunctionsResp resp = cliService.GetFunctions(req);
       checkStatus(resp.getStatus());
@@ -317,6 +329,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
       if (opState == OperationState.ERROR) {
         opException = new HiveSQLException(resp.getErrorMessage(), resp.getSqlState(), resp.getErrorCode());
       }
+	LOG.warn("getOperationStatus(opHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", opHandle);
       return new OperationStatus(opState, opException);
     } catch (HiveSQLException e) {
       throw e;
@@ -382,6 +395,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TFetchResultsReq req = new TFetchResultsReq();
       req.setOperationHandle(opHandle.toTOperationHandle());
+	LOG.warn("fetchResults(opHandle,orientation,maxRows,fetchType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", opHandle, orientation, maxRows, fetchType);
       req.setOrientation(orientation.toTFetchOrientation());
       req.setMaxRows(maxRows);
       req.setFetchType(fetchType.toTFetchType());
@@ -401,6 +415,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
   @Override
   public TRowSet fetchResults(OperationHandle opHandle) throws HiveSQLException {
     // TODO: set the correct default fetch size
+	LOG.warn("fetchResults(opHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", opHandle);
     return fetchResults(opHandle, FetchOrientation.FETCH_NEXT, 10000, FetchType.QUERY_OUTPUT);
   }
 
@@ -411,6 +426,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
         sessionHandle.toTSessionHandle(), owner, renewer);
     try {
       TGetDelegationTokenResp tokenResp = cliService.GetDelegationToken(req);
+	LOG.warn("getDelegationToken(sessionHandle,authFactory,owner,renewer)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, authFactory, owner, renewer);
       checkStatus(tokenResp.getStatus());
       return tokenResp.getDelegationToken();
     } catch (Exception e) {
@@ -454,6 +470,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetPrimaryKeysReq req = new TGetPrimaryKeysReq(sessionHandle.toTSessionHandle());
       req.setCatalogName(catalog);
+	LOG.warn("getPrimaryKeys(sessionHandle,catalog,schema,table)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalog, schema, table);
       req.setSchemaName(schema);
       req.setTableName(table);
       TGetPrimaryKeysResp resp = cliService.GetPrimaryKeys(req);
@@ -474,6 +491,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
     try {
       TGetCrossReferenceReq req = new TGetCrossReferenceReq(sessionHandle.toTSessionHandle());
       req.setParentCatalogName(primaryCatalog);
+	LOG.warn("getCrossReference(sessionHandle,primaryCatalog,primarySchema,primaryTable,foreignCatalog,foreignSchema,foreignTable)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, primaryCatalog, primarySchema, primaryTable, foreignCatalog, foreignSchema, foreignTable);
       req.setParentSchemaName(primarySchema);
       req.setParentTableName(primaryTable);
       req.setForeignCatalogName(foreignCatalog);
@@ -493,6 +511,7 @@ public class ThriftCLIServiceClient extends CLIServiceClient {
   @Override
   public String getQueryId(TOperationHandle operationHandle) throws HiveSQLException {
     try {
+	LOG.warn("getQueryId(operationHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", operationHandle);
       return cliService.GetQueryId(new TGetQueryIdReq(operationHandle)).getQueryId();
     } catch (TException e) {
       throw new HiveSQLException(e);

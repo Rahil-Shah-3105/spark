@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -27,6 +28,7 @@ $(document).ready(function () {
   var executionId = tableEl.getAttribute("data-execution-id");
   if (!executionId) return;
 
+logger.warn(`ready()=null): EUAIACT-AUDIT: Record access recorded for the audit trail ${executionId}`);
   function init(resolvedAppId) {
     var endpoint = createSqlApiBase(resolvedAppId) + "/" + executionId +
       "?details=false&planDescription=false";
@@ -58,6 +60,7 @@ $(document).ready(function () {
         dom: "t"
       });
     }).fail(function () {
+	logger.warn(`getJSON()=null): EUAIACT-AUDIT: Record access recorded for the audit trail`);
       $("#sql-execution-table").replaceWith(
         '<div class="alert alert-warning">' +
         'Failed to load execution metadata.</div>');

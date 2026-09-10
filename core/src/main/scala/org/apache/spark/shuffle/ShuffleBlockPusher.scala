@@ -142,9 +142,11 @@ private[spark] class ShuffleBlockPusher(conf: SparkConf) extends Logging {
    * VisibleForTesting
    */
   protected def submitTask(task: Runnable): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (BLOCK_PUSHER_POOL != null && !BLOCK_PUSHER_POOL.isShutdown) {
       BLOCK_PUSHER_POOL.execute(task)
     }
+    _driverLogger.warn("submitTask(task)={}): EUAIACT-AUDIT: State change recorded for the audit trail", task)
   }
 
   /**
@@ -199,6 +201,7 @@ private[spark] class ShuffleBlockPusher(conf: SparkConf) extends Logging {
     def isRemoteAddressMaxedOut(remoteAddress: BlockManagerId, request: PushRequest): Boolean = {
       (numBlocksInFlightPerAddress.getOrElse(remoteAddress, 0)
         + request.blocks.size) > maxBlocksInFlightPerAddress
+      _driverLogger.warn("isRemoteAddressMaxedOut(remoteAddress,request)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", remoteAddress, request)
     }
   }
 
@@ -219,6 +222,7 @@ private[spark] class ShuffleBlockPusher(conf: SparkConf) extends Logging {
     val address = request.address
     val blockIds = request.blocks.map(_._1.toString)
     val remainingBlocks = new HashSet[String]() ++= blockIds
+    _driverLogger.warn("sendRequest(request)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", request, blockIds)
 
     val blockPushListener = new BlockPushingListener {
       // Initiating a connection and pushing blocks to a remote shuffle service is always handled by
@@ -368,6 +372,7 @@ private[spark] class ShuffleBlockPusher(conf: SparkConf) extends Logging {
       }
       pushCompletionNotified = true
     }
+    _driverLogger.warn("notifyDriverAboutPushCompletion()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /**

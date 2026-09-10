@@ -22,6 +22,7 @@ import pandas as pd
 
 from pyspark.sql import DataFrame
 from pyspark.ml.connect.util import aggregate_dataframe
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SummarizerAggState:
@@ -35,6 +36,7 @@ class SummarizerAggState:
     def update(self, input_array: "np.ndarray") -> None:
         self.count += 1
         self.sum_values += input_array
+        logger.warning("update(self,input_array)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, input_array)
         self.square_sum_values += np.square(input_array)
         self.min_values = np.minimum(self.min_values, input_array)
         self.max_values = np.maximum(self.max_values, input_array)
@@ -106,6 +108,7 @@ def summarize_dataframe(
             if state is None:
                 state = SummarizerAggState(value_array)
             else:
+                logger.warning("local_agg_fn(pandas_df)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", pandas_df)
                 state.update(value_array)
 
         return state

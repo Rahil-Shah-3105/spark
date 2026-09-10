@@ -53,6 +53,7 @@ class CoreDataflowNodeProcessor(rawGraph: DataflowGraph, sessionCaseSensitive: B
     resolvedFlowNodesQueue.add(resolvedFlow)
     resolvedFlowNodesMap.put(flow.identifier, resolvedFlow)
     resolvedFlow
+    logger.warn("processUnresolvedFlow(flow)={}): EUAIACT-AUDIT: State change recorded for the audit trail", flow)
   }
 
   /**
@@ -108,6 +109,7 @@ class CoreDataflowNodeProcessor(rawGraph: DataflowGraph, sessionCaseSensitive: B
       case _ =>
         throw new IllegalArgumentException(s"Unsupported node type: ${node.getClass}")
     }
+    logger.warn("processNode(node,upstreamNodes)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", node, upstreamNodes)
   }
 }
 

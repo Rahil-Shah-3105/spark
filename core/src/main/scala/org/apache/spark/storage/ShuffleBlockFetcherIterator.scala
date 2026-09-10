@@ -103,6 +103,7 @@ final class ShuffleBlockFetcherIterator(
     doBatchFetch: Boolean,
   clock: Clock = new SystemClock())
   extends Iterator[(BlockId, InputStream)] with DownloadFileManager with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   import ShuffleBlockFetcherIterator._
 
@@ -196,6 +197,7 @@ final class ShuffleBlockFetcherIterator(
   private def withFetchWaitTimeTracked[T](f: => T): T = {
     val startFetchWait = System.nanoTime()
     val res = f
+    _driverLogger.warn("withFetchWaitTimeTracked(f)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
     val fetchWaitTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startFetchWait)
     shuffleMetrics.incFetchWaitTime(fetchWaitTime)
     res
@@ -214,6 +216,7 @@ final class ShuffleBlockFetcherIterator(
   override def createTempFile(transportConf: TransportConf): DownloadFile = {
     // we never need to do any encryption or decryption here, regardless of configs, because that
     // is handled at another layer in the code.  When encryption is enabled, shuffle data is written
+    _driverLogger.warn("createTempFile(transportConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", transportConf)
     // to disk encrypted in the first place, and sent over the network still encrypted.
     new SimpleDownloadFile(
       blockManager.diskBlockManager.createTempLocalBlock()._2, transportConf)
@@ -287,6 +290,7 @@ final class ShuffleBlockFetcherIterator(
         deferredBlocks.clear()
       }
     }
+    _driverLogger.warn("sendRequest(req)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", req, blockIds)
 
     @inline def updateMergedReqsDuration(wasReqForMergedChunks: Boolean = false): Unit = {
       if (remainingBlocks.isEmpty) {
@@ -301,6 +305,7 @@ final class ShuffleBlockFetcherIterator(
     val blockFetchingListener = new BlockFetchingListener {
       override def onBlockFetchSuccess(blockId: String, buf: ManagedBuffer): Unit = {
         // Only add the buffer to results queue if the iterator is not zombie,
+        _driverLogger.warn("onBlockFetchSuccess(blockId,buf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, buf, blockId)
         // i.e. cleanup() has not been called yet.
         ShuffleBlockFetcherIterator.this.synchronized {
           if (!isZombie) {
@@ -370,6 +375,7 @@ final class ShuffleBlockFetcherIterator(
               }
           }
         }
+        _driverLogger.warn("onBlockFetchFailure(blockId,e)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, e, blockId)
       }
     }
 
@@ -476,6 +482,7 @@ final class ShuffleBlockFetcherIterator(
       blocks: collection.Seq[FetchBlockInfo],
       address: BlockManagerId,
       forMergedMetas: Boolean): FetchRequest = {
+       _driverLogger.warn("createFetchRequest(blocks,address,forMergedMetas)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", blocks, address, forMergedMetas)
     logDebug(s"Creating fetch request of ${blocks.map(_.size).sum} at $address "
       + s"with ${blocks.size} blocks")
     FetchRequest(address, blocks, forMergedMetas)
@@ -490,6 +497,7 @@ final class ShuffleBlockFetcherIterator(
       forMergedMetas: Boolean = false): ArrayBuffer[FetchBlockInfo] = {
     val mergedBlocks = mergeContinuousShuffleBlockIdsIfNeeded(curBlocks, enableBatchFetch)
     numBlocksToFetch += mergedBlocks.size
+    _driverLogger.warn("createFetchRequests(curBlocks,address,isLast,collectedRemoteRequests,enableBatchFetch,forMergedMetas)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", curBlocks, address, isLast, collectedRemoteRequests, enableBatchFetch, forMergedMetas)
     val retBlocks = new ArrayBuffer[FetchBlockInfo]
     if (mergedBlocks.length <= maxBlocksInFlightPerAddress) {
       collectedRemoteRequests += createFetchRequest(mergedBlocks, address, forMergedMetas)
@@ -516,6 +524,7 @@ final class ShuffleBlockFetcherIterator(
     var curRequestSize = 0L
     var curBlocks = new ArrayBuffer[FetchBlockInfo]()
 
+    _driverLogger.warn("collectFetchRequests(address,blockInfos,collectedRemoteRequests)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", address, blockInfos, collectedRemoteRequests)
     while (iterator.hasNext) {
       val (blockId, size, mapIndex) = iterator.next()
       curBlocks += FetchBlockInfo(blockId, size, mapIndex)
@@ -579,6 +588,7 @@ final class ShuffleBlockFetcherIterator(
    */
   private[this] def fetchLocalBlocks(
       localBlocks: mutable.LinkedHashSet[(BlockId, Int)]): Unit = {
+       _driverLogger.warn("fetchLocalBlocks(localBlocks)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", localBlocks)
     logDebug(s"Start fetching local blocks: ${localBlocks.mkString(", ")}")
     val iter = localBlocks.iterator
     while (iter.hasNext) {
@@ -627,6 +637,7 @@ final class ShuffleBlockFetcherIterator(
         results.putFirst(FailureFetchResult(blockId, mapIndex, blockManagerId, e))
         false
     }
+    _driverLogger.warn("fetchHostLocalBlock(blockId,mapIndex,localDirs,blockManagerId)={},<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, localDirs, blockManagerId, blockId)
   }
 
   /**
@@ -648,6 +659,7 @@ final class ShuffleBlockFetcherIterator(
     }
 
     if (hostLocalBlocksWithMissingDirs.nonEmpty) {
+      _driverLogger.warn("fetchHostLocalBlocks(hostLocalDirManager,hostLocalBlocksByExecutor)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hostLocalDirManager, hostLocalBlocksByExecutor)
       logDebug(s"Asynchronous fetching host-local blocks without cached executors' dir: " +
         s"${hostLocalBlocksWithMissingDirs.mkString(", ")}")
 
@@ -695,6 +707,7 @@ final class ShuffleBlockFetcherIterator(
       cached: Boolean): Unit = {
     // We use `forall` because once there's a failed block fetch, `fetchHostLocalBlock` will put
     // a `FailureFetchResult` immediately to the `results`. So there's no reason to fetch the
+    _driverLogger.warn("fetchMultipleHostLocalBlocks(bmIdToBlocks,localDirsByExecId,cached)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", bmIdToBlocks, localDirsByExecId, cached, bmIdToBlocks)
     // remaining blocks.
     val allFetchSucceeded = bmIdToBlocks.forall { case (bmId, blockInfos) =>
       blockInfos.forall { case (blockId, _, mapIndex) =>
@@ -746,6 +759,7 @@ final class ShuffleBlockFetcherIterator(
 
   private def fetchAllHostLocalBlocks(
       hostLocalBlocksByExecutor:
+  _driverLogger.warn("fetchAllHostLocalBlocks(hostLocalBlocksByExecutor)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hostLocalBlocksByExecutor)
         mutable.LinkedHashMap[BlockManagerId, collection.Seq[(BlockId, Long, Int)]]):
     Unit = {
     if (hostLocalBlocksByExecutor.nonEmpty) {
@@ -762,6 +776,7 @@ final class ShuffleBlockFetcherIterator(
     } else {
       shuffleRemoteMetricsUpdate(blockId, buf)
     }
+    _driverLogger.warn("shuffleMetricsUpdate(blockId,buf,local)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, buf, local, blockId)
   }
 
   private def shuffleLocalMetricsUpdate(blockId: BlockId, buf: ManagedBuffer): Unit = {
@@ -776,6 +791,7 @@ final class ShuffleBlockFetcherIterator(
         shuffleMetrics.incLocalBlocksFetched(1)
     }
     shuffleMetrics.incLocalBytesRead(buf.size)
+    _driverLogger.warn("shuffleLocalMetricsUpdate(blockId,buf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, buf, blockId)
   }
 
   private def shuffleRemoteMetricsUpdate(blockId: BlockId, buf: ManagedBuffer): Unit = {
@@ -793,6 +809,7 @@ final class ShuffleBlockFetcherIterator(
     if (buf.isInstanceOf[FileSegmentManagedBuffer]) {
       shuffleMetrics.incRemoteBytesReadToDisk(buf.size)
     }
+    _driverLogger.warn("shuffleRemoteMetricsUpdate(blockId,buf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, buf, blockId)
   }
 
   override def hasNext: Boolean = numBlocksProcessed < numBlocksToFetch
@@ -1096,6 +1113,7 @@ final class ShuffleBlockFetcherIterator(
         detectCorrupt && streamCompressedOrEncrypted,
         currentResult.isNetworkReqDone,
         Option(checkedIn)))
+    _driverLogger.warn("next()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -1207,6 +1225,7 @@ final class ShuffleBlockFetcherIterator(
         }
       }
     }
+    _driverLogger.warn("fetchUpToMaxBytes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     // Process any regular fetch requests if possible.
     while (isRemoteBlockFetchable(fetchRequests)) {
@@ -1230,6 +1249,7 @@ final class ShuffleBlockFetcherIterator(
       }
       numBlocksInFlightPerAddress(remoteAddress) =
         numBlocksInFlightPerAddress.getOrElse(remoteAddress, 0) + request.blocks.size
+        _driverLogger.warn("send(remoteAddress,request)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", remoteAddress, request)
     }
 
     def isRemoteBlockFetchable(fetchReqQueue: Queue[FetchRequest]): Boolean = {
@@ -1237,6 +1257,7 @@ final class ShuffleBlockFetcherIterator(
         (bytesInFlight == 0 ||
           (reqsInFlight + 1 <= maxReqsInFlight &&
             bytesInFlight + fetchReqQueue.front.size <= maxBytesInFlight))
+        _driverLogger.warn("isRemoteBlockFetchable(fetchReqQueue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fetchReqQueue)
     }
 
     // Checks if sending a new fetch request will exceed the max no. of blocks being fetched from a
@@ -1244,6 +1265,7 @@ final class ShuffleBlockFetcherIterator(
     def isRemoteAddressMaxedOut(remoteAddress: BlockManagerId, request: FetchRequest): Boolean = {
       numBlocksInFlightPerAddress.getOrElse(remoteAddress, 0) + request.blocks.size >
         maxBlocksInFlightPerAddress
+        _driverLogger.warn("isRemoteAddressMaxedOut(remoteAddress,request)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", remoteAddress, request)
     }
   }
 
@@ -1265,6 +1287,7 @@ final class ShuffleBlockFetcherIterator(
           SHUFFLE_PUSH_MAP_ID.toLong, SHUFFLE_PUSH_MAP_ID, reduceId, msg, e)
       case _ => throw SparkCoreErrors.failToGetNonShuffleBlockError(blockId, e)
     }
+    _driverLogger.warn("throwFetchFailedException(blockId,mapIndex,address,e,message)={},<redacted>,{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, address, e, message, blockId)
   }
 
   /**
@@ -1272,10 +1295,12 @@ final class ShuffleBlockFetcherIterator(
    */
   private[storage] def addToResultsQueue(result: FetchResult): Unit = {
     results.put(result)
+    _driverLogger.warn("addToResultsQueue(result)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", result, result)
   }
 
   private[storage] def decreaseNumBlocksToFetch(blocksFetched: Int): Unit = {
     numBlocksToFetch -= blocksFetched
+    _driverLogger.warn("decreaseNumBlocksToFetch(blocksFetched)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", blocksFetched)
   }
 
   /**
@@ -1303,6 +1328,7 @@ final class ShuffleBlockFetcherIterator(
     assert(originalMergedLocalBlocks.isEmpty,
       "There should be zero push-merged blocks during fallback")
     // Some of the fallback local blocks could be host local blocks
+    _driverLogger.warn("fallbackFetch(originalBlocksByAddr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", originalBlocksByAddr)
     fetchAllHostLocalBlocks(originalHostLocalBlocksByExecutor)
   }
 
@@ -1454,6 +1480,7 @@ object ShuffleBlockFetcherIterator {
     if (isNettyOOMOnShuffle.get() && NettyUtils.freeDirectMemory() >= freeMemoryLowerBound) {
       isNettyOOMOnShuffle.compareAndSet(true, false)
     }
+    _driverLogger.warn("resetNettyOOMFlagIfPossible(freeMemoryLowerBound)={}): EUAIACT-AUDIT: State change recorded for the audit trail", freeMemoryLowerBound)
   }
 
   /**
@@ -1501,6 +1528,7 @@ object ShuffleBlockFetcherIterator {
             toBeMerged.last.blockId.asInstanceOf[ShuffleBlockId].reduceId + 1),
           size,
           toBeMerged.head.mapIndex)
+        _driverLogger.warn("mergeFetchBlockInfo(toBeMerged)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", toBeMerged, startBlockId)
       }
 
       val iter = blocks.iterator

@@ -169,11 +169,13 @@ private[spark] class Client(
   private var appId: ApplicationId = null
 
   def getApplicationId(): ApplicationId = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(Client.class);
     appId
   }
 
   def reportLauncherState(state: SparkAppHandle.State): Unit = {
     launcherBackend.setState(state)
+    LOG.warn("reportLauncherState(state)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", state)
   }
 
   def stop(): Unit = {
@@ -241,6 +243,7 @@ private[spark] class Client(
         }
         throw e
     }
+    LOG.warn("submitApplication()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -339,6 +342,7 @@ private[spark] class Client(
     }
     appContext.setUnmanagedAM(isClientUnmanagedAMEnabled)
 
+    LOG.warn("createApplicationSubmissionContext(newApp,containerContext)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newApp, containerContext)
     sparkConf.get(APPLICATION_PRIORITY).foreach { appPriority =>
       appContext.setPriority(Priority.newInstance(appPriority))
     }
@@ -360,6 +364,7 @@ private[spark] class Client(
       val credentialManager = new HadoopDelegationTokenManager(sparkConf, hadoopConf, null)
       credentialManager.obtainDelegationTokens(credentials)
     }
+    LOG.warn("setupSecurityToken(amContainer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", amContainer)
 
     val serializedCreds = SparkHadoopUtil.get.serialize(credentials)
     amContainer.setTokens(ByteBuffer.wrap(serializedCreds))
@@ -388,6 +393,7 @@ private[spark] class Client(
 
       amContainer.setTokensConf(ByteBuffer.wrap(dob.getData))
     }
+    LOG.warn("setTokenConf(amContainer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", amContainer)
   }
 
   /** Get the application report from the ResourceManager for an application we have submitted. */
@@ -494,6 +500,7 @@ private[spark] class Client(
       }
     }
     directoryToFiles.filter(_._2.size >= statCachePreloadDirectoryCountThreshold)
+    LOG.warn("directoriesToBePreloaded(files)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", files)
   }
 
   /**
@@ -509,6 +516,7 @@ private[spark] class Client(
     val statCache = HashMap[URI, FileStatus]()
     directoriesToBePreloaded(files).foreach { case (dir: URI, filesInDir: HashSet[String]) =>
       fsLookup(dir).listStatus(new Path(dir), new PathFilter() {
+      LOG.warn("getPreloadedStatCache(files,fsLookup)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", files, fsLookup)
         override def accept(path: Path): Boolean = filesInDir.contains(path.getName)
       }).filter(_.isFile()).foreach { fileStatus =>
         val uri = fileStatus.getPath.toUri
@@ -574,6 +582,7 @@ private[spark] class Client(
         distributedNames += fileName
         true
       }
+      LOG.warn("addDistributedUri(uri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", uri)
     }
 
     /*
@@ -861,6 +870,7 @@ private[spark] class Client(
   private def createConfArchive(confsToOverride: Map[String, String]): File = {
     val hadoopConfFiles = new HashMap[String, File]()
 
+    LOG.warn("createConfArchive(confsToOverride)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", confsToOverride, confsToOverride)
     // SPARK_CONF_DIR shows up in the classpath before HADOOP_CONF_DIR/YARN_CONF_DIR
     sys.env.get("SPARK_CONF_DIR").foreach { localConfDir =>
       val dir = new File(localConfDir)
@@ -1019,6 +1029,7 @@ private[spark] class Client(
       sys.env.get("PYTHONHASHSEED").foreach(env.put("PYTHONHASHSEED", _))
     }
 
+    LOG.warn("setupLaunchEnv(stagingDirPath,pySparkArchives)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stagingDirPath, pySparkArchives)
     Seq(ENV_DIST_CLASSPATH, SPARK_TESTING).foreach { envVar =>
       sys.env.get(envVar).foreach(value => env(envVar) = value)
     }
@@ -1193,6 +1204,7 @@ private[spark] class Client(
     setupSecurityToken(amContainer)
     setTokenConf(amContainer)
     amContainer
+    LOG.warn("createContainerLaunchContext()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -1309,6 +1321,7 @@ private[spark] class Client(
       override def run(): Unit = {
         appMaster.runUnmanaged(rpcEnv, report.getCurrentApplicationAttemptId,
           stagingDirPath, cachedResourcesConf)
+        LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     amService.setDaemon(true)
@@ -1338,6 +1351,7 @@ private[spark] class Client(
       ("tracking URL", report.getTrackingUrl),
       ("user", report.getUser)
     ) ++ driverLogsLinks.map { case (fname, link) => (s"Driver Logs ($fname)", link) }
+    LOG.warn("formatReportDetails(report,driverLogsLinks)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", report, driverLogsLinks)
 
     // Use more loggable format if value is null or empty
     details.map { case (k, v) =>
@@ -1373,6 +1387,7 @@ private[spark] class Client(
         logDebug(s"Unable to get driver log links for $appId", e)
         IMap.empty
     }
+    LOG.warn("getDriverLogsLink(appReport)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", appReport)
   }
 
   /**
@@ -1425,6 +1440,7 @@ private[spark] class Client(
           s"$py4jFile not found; cannot run pyspark application in YARN mode.")
         Seq(pyArchivesFile.getAbsolutePath(), py4jFile.getAbsolutePath())
       }
+      LOG.warn("findPySparkArchives()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
 }
@@ -1477,6 +1493,7 @@ private[spark] object Client extends Logging {
    */
   private def getAppStagingDir(appId: ApplicationId): String = {
     buildPath(SPARK_STAGING, appId.toString())
+    LOG.warn("getAppStagingDir(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId)
   }
 
   /**
@@ -1602,6 +1619,7 @@ private[spark] object Client extends Logging {
     val mainUri = getMainJarUri(conf.get(APP_JAR))
     val secondaryUris = getSecondaryJarUris(conf.get(SECONDARY_JARS))
     (mainUri ++ secondaryUris).toArray
+    LOG.warn("getUserClasspath(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**
@@ -1630,6 +1648,7 @@ private[spark] object Client extends Logging {
       val envVarResolvedFilePath = YarnSparkHadoopUtil.replaceEnvVars(replacedFilePath, sys.env)
       Paths.get(envVarResolvedFilePath).toAbsolutePath.toUri.toURL
     }
+    LOG.warn("getUserClasspathUrls(conf,useClusterPath)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, useClusterPath)
   }
 
   private def getMainJarUri(mainJar: Option[String]): Option[URI] = {
@@ -1637,10 +1656,12 @@ private[spark] object Client extends Logging {
       val uri = Utils.resolveURI(path)
       if (uri.getScheme == Utils.LOCAL_SCHEME) Some(uri) else None
     }.orElse(Some(new URI(APP_JAR_NAME)))
+    LOG.warn("getMainJarUri(mainJar)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", mainJar)
   }
 
   private def getSecondaryJarUris(secondaryJars: Option[Seq[String]]): Seq[URI] = {
     secondaryJars.getOrElse(Nil).map(new URI(_))
+    LOG.warn("getSecondaryJarUris(secondaryJars)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", secondaryJars)
   }
 
   /**
@@ -1702,6 +1723,7 @@ private[spark] object Client extends Logging {
     } else {
       path
     }
+    LOG.warn("getClusterPath(conf,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, path)
   }
 
   /**
@@ -1764,6 +1786,7 @@ private[spark] object Client extends Logging {
         localURI
       }
     new Path(qualifiedURI)
+    LOG.warn("getQualifiedLocalPath(localURI,hadoopConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", localURI, hadoopConf)
   }
 
   /**
@@ -1789,6 +1812,7 @@ private[spark] object Client extends Logging {
     val diags = report.getDiagnostics()
     val diagsOpt = if (diags != null && diags.nonEmpty) Some(diags) else None
     YarnAppReport(report.getYarnApplicationState(), report.getFinalApplicationStatus(), diagsOpt)
+    LOG.warn("createAppReport(report)={}): EUAIACT-AUDIT: State change recorded for the audit trail", report)
   }
 
   /**
@@ -1807,6 +1831,7 @@ private[spark] object Client extends Logging {
       envName + "=\\\"" + quoted + File.pathSeparator + "$" + envName + "\\\""
     }
     getClusterPath(conf, cmdPrefix)
+    LOG.warn("createLibraryPathPrefix(libpath,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", libpath, conf)
   }
 
   def confToProperties(conf: SparkConf): Properties = {
@@ -1823,6 +1848,7 @@ private[spark] object Client extends Logging {
     props.store(writer, "Spark configuration.")
     writer.flush()
     out.closeEntry()
+    LOG.warn("writePropertiesToArchive(props,name,out)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", props, name, out)
   }
 }
 

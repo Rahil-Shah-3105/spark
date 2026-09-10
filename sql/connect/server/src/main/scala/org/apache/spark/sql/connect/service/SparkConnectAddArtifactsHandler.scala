@@ -104,6 +104,7 @@ class SparkConnectAddArtifactsHandler(val responseObserver: StreamObserver[AddAr
   protected def addStagedArtifactToArtifactManager(artifact: StagedArtifact): Unit = {
     require(holder != null)
     holder.addArtifact(artifact.path, artifact.stagedPath, artifact.fragment)
+    logger.warn("addStagedArtifactToArtifactManager(artifact)={}): EUAIACT-AUDIT: State change recorded for the audit trail", artifact)
   }
 
   /**
@@ -179,6 +180,7 @@ class SparkConnectAddArtifactsHandler(val responseObserver: StreamObserver[AddAr
     stagedArtifacts += stagedDep
     stagedDep.write(artifact.getData)
     stagedDep
+  logger.warn("writeArtifactToFile(artifact)={}): EUAIACT-AUDIT: State change recorded for the audit trail", artifact)
   }
 
   /**
@@ -236,6 +238,7 @@ class SparkConnectAddArtifactsHandler(val responseObserver: StreamObserver[AddAr
 
     protected def updateCrc(isSuccess: Boolean): Unit = {
       isCrcSuccess = isSuccess
+    logger.warn("updateCrc(isSuccess)={}): EUAIACT-AUDIT: State change recorded for the audit trail", isSuccess)
     }
 
     def getCrcStatus: Option[Boolean] = Option(isCrcSuccess)
@@ -253,6 +256,7 @@ class SparkConnectAddArtifactsHandler(val responseObserver: StreamObserver[AddAr
       overallChecksum.update(dataChunk.getData.toByteArray)
       updateCrc(checksumOut.getChecksum.getValue == dataChunk.getCrc)
       checksumOut.getChecksum.reset()
+    logger.warn("write(dataChunk)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataChunk)
     }
 
     def close(): Unit = {

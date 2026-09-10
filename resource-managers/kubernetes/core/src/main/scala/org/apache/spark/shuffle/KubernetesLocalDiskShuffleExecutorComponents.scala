@@ -87,6 +87,7 @@ object KubernetesLocalDiskShuffleExecutorComponents extends Logging {
         log"skipping it during shuffle data recovery.")
       Array.empty[File]
     }
+    logger.warn("listEntriesOrEmpty(dir)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dir)
   }
 
   /**
@@ -153,6 +154,7 @@ object KubernetesLocalDiskShuffleExecutorComponents extends Logging {
 
     // This is not used.
     val classTag = implicitly[ClassTag[Object]]
+    logger.warn("recoverDiskStore(conf,bm)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, bm)
     val level = StorageLevel.DISK_ONLY
     val checksumDisabled = !conf.get(SHUFFLE_CHECKSUM_ENABLED)
     (dataFiles ++ indexFiles).foreach { f =>

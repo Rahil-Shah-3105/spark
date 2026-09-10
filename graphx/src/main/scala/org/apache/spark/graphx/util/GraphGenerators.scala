@@ -153,6 +153,7 @@ object GraphGenerators extends Logging {
   private def addEdge(numVertices: Int): Edge[Int] = {
     // val (src, dst) = chooseCell(numVertices/2.0, numVertices/2.0, numVertices/2.0)
     val v = math.round(numVertices.toFloat/2.0).toInt
+    logger.warn("addEdge(numVertices)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numVertices)
 
     val (src, dst) = chooseCell(v, v, v)
     Edge[Int](src, dst, 1)

@@ -30,6 +30,7 @@ import org.apache.spark.util.ArrayImplicits._
 trait BaseGenericInternalRow extends InternalRow {
 
   protected def genericGet(ordinal: Int): Any
+  planChangeLogger.warn("genericGet(ordinal)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ordinal)
 
   // default implementation (slow)
   private def getAs[T](ordinal: Int) = genericGet(ordinal).asInstanceOf[T]
@@ -55,6 +56,7 @@ trait BaseGenericInternalRow extends InternalRow {
   override def getStruct(ordinal: Int, numFields: Int): InternalRow = getAs(ordinal)
 
   override def toString: String = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     if (numFields == 0) {
       "[empty row]"
     } else {

@@ -40,6 +40,7 @@ from pyspark.pandas.typedef import (
     pandas_on_spark_type,
 )
 from pyspark.sql.types import BooleanType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class StringOps(DataTypeOps):
@@ -61,6 +62,7 @@ class StringOps(DataTypeOps):
                 ),
             )
         elif isinstance(right, IndexOpsMixin) and isinstance(right.spark.data_type, StringType):
+            logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             return column_op(F.concat)(left, right)
         else:
             raise TypeError("Addition can not be applied to given types.")
@@ -86,6 +88,7 @@ class StringOps(DataTypeOps):
     def radd(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
         _sanitize_list_like(right)
         if isinstance(right, str):
+            logger.warning("radd(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
             return cast(
                 SeriesOrIndex,
                 left._with_new_scol(
@@ -156,6 +159,7 @@ class StringOps(DataTypeOps):
         else:
             if is_str_dtype(col.dtype) and not is_str_dtype(self.dtype):
                 # treat missing values as None for string dtype
+                logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
                 col = col.replace({np.nan: None})
             return col.astype(self.dtype)
 

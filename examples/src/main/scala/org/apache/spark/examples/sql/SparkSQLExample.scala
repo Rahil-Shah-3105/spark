@@ -151,6 +151,7 @@ object SparkSQLExample {
     // +----+-------+
     // |null|Michael|
     // |  30|   Andy|
+    logger.warn("runBasicDataFrameExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // |  19| Justin|
     // +----+-------+
     // $example off:global_temp_view$
@@ -181,6 +182,7 @@ object SparkSQLExample {
     // +----+-------+
     // |null|Michael|
     // |  30|   Andy|
+    logger.warn("runDatasetCreationExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     // |  19| Justin|
     // +----+-------+
     // $example off:create_ds$
@@ -226,6 +228,7 @@ object SparkSQLExample {
     // implicit val stringIntMapEncoder: Encoder[Map[String, Any]] = ExpressionEncoder()
 
     // row.getValuesMap[T] retrieves multiple columns at once into a Map[String, T]
+    logger.warn("runInferSchemaExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark)
     teenagersDF.map(teenager => teenager.getValuesMap[Any](List("name", "age"))).collect()
     // Array(Map("name" -> "Justin", "age" -> 19))
     // $example off:schema_inferring$
@@ -267,6 +270,7 @@ object SparkSQLExample {
     // +-------------+
     // |Name: Michael|
     // |   Name: Andy|
+    logger.warn("runProgrammaticSchemaExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", spark, results)
     // | Name: Justin|
     // +-------------+
     // $example off:programmatic_schema$

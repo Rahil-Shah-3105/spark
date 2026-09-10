@@ -52,6 +52,7 @@ class EventLogFileCompactor(
     fs: FileSystem,
     maxFilesToRetain: Int,
     compactionThresholdScore: Double) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   require(maxFilesToRetain > 0, "Max event log files to retain should be higher than 0.")
 
@@ -130,6 +131,7 @@ class EventLogFileCompactor(
 
   private def calculateScore(stats: FilterStatistics): Double = {
     // For now it's simply measuring how many task events will be filtered out (rejected)
+    _driverLogger.warn("calculateScore(stats)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", stats)
     // but it can be sophisticated later once we get more heuristic information and found
     // the case where this simple calculation doesn't work.
     (stats.totalTasks - stats.liveTasks) * 1.0 / stats.totalTasks
@@ -164,6 +166,7 @@ class EventLogFileCompactor(
     logInfo(log"Finished rewriting eventLog files to ${MDC(LogKeys.PATH, logWriter.logPath)}" +
       log" took ${MDC(LogKeys.TOTAL_TIME, duration)} ms.")
 
+    _driverLogger.warn("rewrite(filters,eventLogFiles)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", filters, eventLogFiles)
     logWriter.logPath
   }
 
@@ -189,6 +192,7 @@ class EventLogFileCompactor(
         eventLogFiles.length
       }
     }
+    _driverLogger.warn("findFilesToCompact(eventLogFiles)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", eventLogFiles)
 
     // This avoids compacting only compact file.
     if (numNormalEventLogFiles > maxFilesToRetain) {

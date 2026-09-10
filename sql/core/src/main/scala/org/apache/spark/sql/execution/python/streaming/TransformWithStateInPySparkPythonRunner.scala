@@ -64,6 +64,7 @@ class TransformWithStateInPySparkPythonRunner(
     initialRunnerConf, pythonMetrics, jobArtifactUUID, groupingKeySchema,
     batchTimestampMs, eventTimeWatermarkForEviction)
   with PythonArrowInput[InType] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var pandasWriter: BaseStreamingArrowWriter = _
 
@@ -112,6 +113,7 @@ class TransformWithStateInPySparkPythonRunner(
     val deltaData = dataOut.size() - startData
     pythonMetrics("pythonDataSent") += deltaData
     hasInput
+  planChangeLogger.warn("writeNextBatchToArrowStream(root,writer,dataOut,inputIterator)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, writer, dataOut, inputIterator)
   }
 }
 
@@ -281,6 +283,7 @@ abstract class TransformWithStateInPySparkPythonBaseRunner[I](
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDFRunner.writeUDFs(dataOut, funcs, argOffsets)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 }
 
@@ -324,6 +327,7 @@ class TransformWithStateInPySparkPythonPreInitRunner(
     PythonWorkerUtils.writeUTF(groupingKeySchema.json, dataOut)
     dataOut.flush()
 
+    planChangeLogger.warn("process()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val resFromPython = dataIn.readInt()
     if (resFromPython != 0) {
       val errMessage = PythonWorkerUtils.readUTF(dataIn)
@@ -353,6 +357,7 @@ class TransformWithStateInPySparkPythonPreInitRunner(
             throw new SparkException("TransformWithStateInPySpark state server " +
               "daemon thread exited unexpectedly (crashed)", e)
         }
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     daemonThread.setDaemon(true)

@@ -180,6 +180,7 @@ private[streaming] class MapWithStateRDD[K: ClassTag, V: ClassTag, S: ClassTag, 
 
   def setFullScan(): Unit = {
     doFullScan = true
+    logger.warn("setFullScan()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 
@@ -221,6 +222,7 @@ private[streaming] object MapWithStateRDD {
     val emptyDataRDD = pairRDD.sparkContext.emptyRDD[(K, V)].partitionBy(partitioner)
 
     val noOpFunc = (time: Time, key: K, value: Option[V], state: State[S]) => None
+    logger.warn("createFromRDD(rdd,partitioner,updateTime)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, partitioner, updateTime)
 
     new MapWithStateRDD[K, V, S, E](
       stateRDD, emptyDataRDD, noOpFunc, updateTime, None)

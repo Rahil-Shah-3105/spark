@@ -45,6 +45,7 @@ private[hive] object HiveShim {
     val old: String = conf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR, "")
     val result: StringBuilder = new StringBuilder(old)
     var first: Boolean = old.isEmpty
+    logger.warn("appendReadColumnNames(conf,cols)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, cols)
 
     for (col <- cols) {
       if (first) {
@@ -67,6 +68,7 @@ private[hive] object HiveShim {
     if (names != null) {
       appendReadColumnNames(conf, names)
     }
+    logger.warn("appendReadColumns(conf,ids,names)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conf, ids, names, ids)
   }
 
   /*
@@ -159,6 +161,7 @@ private[hive] object HiveShim {
       // output the function name
       out.writeUTF(functionClassName)
 
+      logger.warn("writeExternal(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out)
       // Write a flag if instance is null or not
       out.writeBoolean(instance != null)
       if (instance != null) {
@@ -176,6 +179,7 @@ private[hive] object HiveShim {
 
     def readExternal(in: java.io.ObjectInput): Unit = {
       // read the function name
+      logger.warn("readExternal(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in)
       functionClassName = in.readUTF()
 
       if (in.readBoolean()) {
@@ -209,6 +213,7 @@ private[hive] object HiveShim {
         }
         func
       }
+      logger.warn("createFunction()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 }

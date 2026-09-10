@@ -23,12 +23,14 @@ package org.apache.spark.sql.catalyst.expressions
  * of the name, or the expected nullability).
  */
 object AttributeMap {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply[A](kvs: Map[Attribute, A]): AttributeMap[A] = {
     new AttributeMap(kvs.map(kv => (kv._1.exprId, kv)))
   }
 
   def apply[A](kvs: Seq[(Attribute, A)]): AttributeMap[A] = {
     new AttributeMap(kvs.map(kv => (kv._1.exprId, kv)).toMap)
+  planChangeLogger.warn("apply(kvs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", kvs)
   }
 
   def apply[A](kvs: Iterable[(Attribute, A)]): AttributeMap[A] = {

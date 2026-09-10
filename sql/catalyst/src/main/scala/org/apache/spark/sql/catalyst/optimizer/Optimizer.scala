@@ -50,17 +50,20 @@ import org.apache.spark.util.Utils
  */
 abstract class Optimizer(catalogManager: CatalogManager)
   extends RuleExecutor[LogicalPlan] with SQLConfHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override protected def validatePlanChanges(
       previousPlan: LogicalPlan,
       currentPlan: LogicalPlan): Option[String] = {
     LogicalPlanIntegrity.validateOptimizedPlan(previousPlan, currentPlan, lightweight = false)
+    planChangeLogger.warn("validatePlanChanges(previousPlan,currentPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", previousPlan, currentPlan)
   }
 
   override protected def validatePlanChangesLightweight(
       previousPlan: LogicalPlan,
       currentPlan: LogicalPlan): Option[String] = {
     LogicalPlanIntegrity.validateOptimizedPlan(previousPlan, currentPlan, lightweight = true)
+    planChangeLogger.warn("validatePlanChangesLightweight(previousPlan,currentPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", previousPlan, currentPlan)
   }
 
   override protected val excludedOnceBatches: Set[String] =
@@ -393,11 +396,13 @@ abstract class Optimizer(catalogManager: CatalogManager)
         case Project(fields, child) => Project(fields, removeTopLevelSort(child))
         case other => other
       }
+      planChangeLogger.warn("removeTopLevelSort(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     }
 
     private def optimizeSubquery(s: SubqueryExpression): SubqueryExpression = {
       val Subquery(newPlan, _) = Optimizer.this.execute(Subquery.fromExpression(s))
       // At this point we have an optimized subquery plan that we are going to attach
+      planChangeLogger.warn("optimizeSubquery(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
       // to this subquery expression. Here we can safely remove any top level sort
       // in the plan as tuples produced by a subquery are un-ordered.
       s.withNewPlan(removeTopLevelSort(newPlan))
@@ -496,6 +501,7 @@ abstract class Optimizer(catalogManager: CatalogManager)
         updateCTEStats(plan, statsMap)
       } else {
         plan
+      planChangeLogger.warn("updateCTEStats(plan,statsMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, statsMap)
       }
     }
 
@@ -662,6 +668,7 @@ object RemoveRedundantAliases extends Rule[LogicalPlan] {
     current.output.zip(next.output).filterNot {
       case (a1, a2) => a1.semanticEquals(a2)
     }
+      planChangeLogger.warn("createAttributeMapping(current,next)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", current, next)
   }
 
   /**
@@ -791,6 +798,7 @@ object RemoveRedundantAliases extends Rule[LogicalPlan] {
           })
         }
     }
+    planChangeLogger.warn("removeRedundantAliases(plan,excluded)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, excluded)
   }
 
   /**
@@ -829,6 +837,7 @@ object RemoveRedundantAliases extends Rule[LogicalPlan] {
         }
       case other => true
     }
+    planChangeLogger.warn("shouldRemoveAliasesUnderUnion(operator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operator)
   }
 
   def apply(plan: LogicalPlan): LogicalPlan = removeRedundantAliases(plan, AttributeSet.empty)
@@ -1093,6 +1102,7 @@ object ConvertToCatalyst extends Rule[LogicalPlan] {
         expression.mapChildren(
           applyExpr(_, parentIsUdf = isScalarPythonUDF(expression)))
     }
+    planChangeLogger.warn("applyExpr(expression,parentIsUdf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, parentIsUdf)
   }
 }
 
@@ -1112,6 +1122,7 @@ object PushProjectionThroughUnion extends Rule[LogicalPlan] {
   private def buildRewrites(left: LogicalPlan, right: LogicalPlan): AttributeMap[Attribute] = {
     assert(left.output.size == right.output.size)
     AttributeMap(left.output.zip(right.output))
+    planChangeLogger.warn("buildRewrites(left,right)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
   }
 
   /**
@@ -1335,6 +1346,7 @@ object CollapseProject extends Rule[LogicalPlan] with AliasHelper {
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     apply(plan, conf.getConf(SQLConf.COLLAPSE_PROJECT_ALWAYS_INLINE))
+  planChangeLogger.warn("apply(plan,alwaysInline)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, alwaysInline)
   }
 
   def apply(plan: LogicalPlan, alwaysInline: Boolean): LogicalPlan = {
@@ -1613,6 +1625,7 @@ object CollapseProject extends Rule[LogicalPlan] with AliasHelper {
       val finalExpr = simplifyExtractValues(inlineReference(e, ref, refExpr))
       !isCheap(finalExpr) && nonCheapAccessVisitor()
 
+      planChangeLogger.warn("findNonCheapAccesses(consumer,ref,refExpr,nonCheapAccessVisitor)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", consumer, ref, refExpr, nonCheapAccessVisitor)
     case _ =>
       consumer.children.exists(findNonCheapAccesses(_, ref, refExpr, nonCheapAccessVisitor))
   }
@@ -1633,6 +1646,7 @@ object CollapseProject extends Rule[LogicalPlan] with AliasHelper {
       conf.getConf(SQLConf.PRESERVE_ALIAS_METADATA_WHEN_COLLAPSING_PROJECTS)
     val aliases = getAliasMap(lower)
     upper.map {
+      planChangeLogger.warn("buildCleanedProjectList(upper,lower)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", upper, lower)
       case alias: Alias if !alias.metadata.isEmpty && explicitlyPreserveAliasMetadata =>
         replaceAliasButKeepName(alias, aliases) match {
           case newAlias: Alias => Alias(child = newAlias.child, name = newAlias.name)(
@@ -1925,6 +1939,7 @@ object InferFiltersFromConstraints extends Rule[LogicalPlan]
     val baseConstraints = left.constraints.union(right.constraints)
       .union(ExpressionSet(conditionOpt.map(splitConjunctivePredicates).getOrElse(Nil)))
     baseConstraints
+      planChangeLogger.warn("getAllConstraints(left,right,conditionOpt)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", left, right, conditionOpt)
       .union(inferAdditionalConstraints(baseConstraints))
       .union(inferConstraintsFromLiteralBindings(baseConstraints))
   }
@@ -2098,6 +2113,7 @@ object EliminateSorts extends Rule[LogicalPlan] {
         other.withNewChildren(other.children.map(c => recursiveRemoveSort(c, true)))
       case _ => plan
     }
+    planChangeLogger.warn("recursiveRemoveSort(plan,canRemoveGlobalSort)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, canRemoveGlobalSort)
   }
 
   private def canEliminateSort(plan: LogicalPlan): Boolean = plan match {

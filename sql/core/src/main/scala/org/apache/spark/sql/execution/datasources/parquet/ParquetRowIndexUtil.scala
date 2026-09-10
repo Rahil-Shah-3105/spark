@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.{LongType, StructField, StructType}
 
 
 object ParquetRowIndexUtil {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Generate row indexes for vectorized readers.
   */
@@ -52,6 +53,7 @@ object ParquetRowIndexUtil {
         val numRowsInRowGroup = pages.getRowCount
         rowIndexIterator = (startingRowIdx until startingRowIdx + numRowsInRowGroup).iterator
       }
+      planChangeLogger.warn("initFromPageReadStore(pages)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pages)
     }
 
     def populateRowIndex(columnVectors: Array[ParquetColumnVector], numRows: Int): Unit = {
@@ -69,6 +71,7 @@ object ParquetRowIndexUtil {
     val columnIdx = findRowIndexColumnIndexInSchema(sparkSchema)
     if (columnIdx >= 0) new RowIndexGenerator(columnIdx)
     else null
+    planChangeLogger.warn("createGeneratorIfNeeded(sparkSchema)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSchema, columnIdx)
   }
 
   /**
@@ -110,6 +113,7 @@ object ParquetRowIndexUtil {
     } else {
       reader
     }
+    planChangeLogger.warn("addRowIndexToRecordReaderIfNeeded(reader,sparkSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", reader, sparkSchema, rowIndexColumnIdx)
   }
 
   def findRowIndexColumnIndexInSchema(sparkSchema: StructType): Int = {
@@ -124,6 +128,7 @@ object ParquetRowIndexUtil {
         idx
       case _ => -1
     }
+    planChangeLogger.warn("findRowIndexColumnIndexInSchema(sparkSchema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSchema)
   }
 
   def isRowIndexColumn(column: ParquetColumn): Boolean = {

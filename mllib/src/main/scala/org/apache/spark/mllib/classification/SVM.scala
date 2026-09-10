@@ -51,6 +51,7 @@ class SVMModel @Since("1.1.0") (
   def setThreshold(threshold: Double): this.type = {
     this.threshold = Some(threshold)
     this
+    logger.warn("setThreshold(threshold)={}): EUAIACT-AUDIT: State change recorded for the audit trail", threshold)
   }
 
   /**
@@ -83,6 +84,7 @@ class SVMModel @Since("1.1.0") (
   override def save(sc: SparkContext, path: String): Unit = {
     GLMClassificationModel.SaveLoadV1_0.save(sc, path, this.getClass.getName,
       numFeatures = weights.size, numClasses = 2, weights, intercept, threshold)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 
   override def toString: String = {
@@ -97,6 +99,7 @@ object SVMModel extends Loader[SVMModel] {
   override def load(sc: SparkContext, path: String): SVMModel = {
     val (loadedClassName, version, metadata) = Loader.loadMetadata(sc, path)
     // Hard-code class name string in case it changes in the future
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     val classNameV1_0 = "org.apache.spark.mllib.classification.SVMModel"
     (loadedClassName, version) match {
       case (className, "1.0") if className == classNameV1_0 =>
@@ -153,6 +156,7 @@ class SVMWithSGD private (
 
   override protected def createModel(weights: Vector, intercept: Double) = {
     new SVMModel(weights, intercept)
+    logger.warn("createModel(weights,intercept)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", weights, intercept)
   }
 }
 

@@ -53,6 +53,7 @@ class OperatorResolutionContext(
     var parameterNamesToValues: Option[LinkedHashMap[String, Expression]] = None,
     var hasGroupingAnalytics: Boolean = false,
     val isSubqueryRoot: Boolean = false) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * @param subqueryExpressionsToValidate List of [[SubqueryExpression]]s in the context of current
@@ -75,6 +76,7 @@ class OperatorResolutionContext(
    */
   def addSubqueryAggregateExpression(alias: Alias): Unit = {
     subqueryOuterAggregateExpressionsAliased.putIfAbsent(alias.child.canonicalized, alias)
+    planChangeLogger.warn("addSubqueryAggregateExpression(alias)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alias)
   }
 
   /**
@@ -87,6 +89,7 @@ class OperatorResolutionContext(
     } else {
       None
     }
+    planChangeLogger.warn("getSubqueryAggregateExpression(expression)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expression)
   }
 
   /**

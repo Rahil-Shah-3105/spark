@@ -22,6 +22,7 @@ import org.apache.spark.unsafe.array.LongArray;
 import org.apache.spark.util.collection.SortDataFormat;
 
 final class ShuffleSortDataFormat extends SortDataFormat<PackedRecordPointer, LongArray> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ShuffleSortDataFormat.class);
 
   private final LongArray buffer;
 
@@ -32,6 +33,7 @@ final class ShuffleSortDataFormat extends SortDataFormat<PackedRecordPointer, Lo
   @Override
   public PackedRecordPointer getKey(LongArray data, int pos) {
     // Since we re-use keys, this method shouldn't be called.
+	logger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos);
     throw new UnsupportedOperationException();
   }
 
@@ -43,6 +45,7 @@ final class ShuffleSortDataFormat extends SortDataFormat<PackedRecordPointer, Lo
   @Override
   public PackedRecordPointer getKey(LongArray data, int pos, PackedRecordPointer reuse) {
     reuse.set(data.get(pos));
+	logger.warn("getKey(data,pos,reuse)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos, reuse);
     return reuse;
   }
 

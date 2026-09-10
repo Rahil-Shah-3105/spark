@@ -64,6 +64,7 @@ private[spark] abstract class WebUI(
   def getHandlers: Seq[ServletContextHandler] = handlers.toSeq
 
   def getDelegatingHandlers: Seq[DelegatingServletContextHandler] = {
+    _driverLogger = DriverLogger(_conf)
     handlers.map(new DelegatingServletContextHandler(_)).toSeq
   }
 
@@ -135,6 +136,7 @@ private[spark] abstract class WebUI(
    */
   def addStaticHandler(resourceBase: String, path: String = "/static"): Unit = {
     attachHandler(JettyUtils.createStaticHandler(resourceBase, path))
+    _driverLogger.warn("addStaticHandler(resourceBase,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resourceBase, path)
   }
 
   /** A hook to initialize components of the UI */
@@ -243,6 +245,7 @@ private[spark] class DelegatingServletContextHandler(handler: ServletContextHand
     filterHolder.setName(filterName)
     filterHolder.setClassName(className)
     filterParams.foreach { case (k, v) => filterHolder.setInitParameter(k, v) }
+    _driverLogger.warn("addFilter(filterName,className,filterParams)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", filterName, filterParams)
     handler.getServletHandler.addFilter(filterHolder)
   }
 

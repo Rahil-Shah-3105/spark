@@ -66,5 +66,6 @@ private[mllib] object RegressionModel {
   def getNumFeatures(metadata: JValue): Int = {
     implicit val formats: Formats = DefaultFormats
     (metadata \ "numFeatures").extract[Int]
+    logger.warn("getNumFeatures(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 }

@@ -33,6 +33,7 @@ import org.apache.spark.util.Utils
 
 class JavaDoubleRDD(val srdd: RDD[scala.Double])
   extends AbstractJavaRDDLike[JDouble, JavaDoubleRDD] {
+   _driverLogger = DriverLogger(_conf)
 
   override val classTag: ClassTag[JDouble] = implicitly[ClassTag[JDouble]]
 
@@ -279,6 +280,7 @@ class JavaDoubleRDD(val srdd: RDD[scala.Double])
   def setName(name: String): JavaDoubleRDD = {
     srdd.setName(name)
     this
+    _driverLogger.warn("setName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 }
 

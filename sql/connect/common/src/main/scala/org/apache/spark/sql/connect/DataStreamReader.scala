@@ -90,6 +90,8 @@ final class DataStreamReader private[sql] (sparkSession: SparkSession)
         .setIsStreaming(true)
         .setDataSource(sourceBuilder.build())
     }
+    logger.warn("load()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
+  logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   /** @inheritdoc */
@@ -121,6 +123,7 @@ final class DataStreamReader private[sql] (sparkSession: SparkSession)
         .setIsStreaming(true)
         .putAllOptions(sourceBuilder.getOptionsMap)
     }
+    logger.warn("changes(tableName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tableName)
   }
 
   override protected def assertNoSpecifiedSchema(operation: String): Unit = {

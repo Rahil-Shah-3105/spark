@@ -87,6 +87,7 @@ sealed trait StreamingSessionWindowStateManager extends Serializable {
    * or the underlying store being interleaved.
    *
    * @param removalCondition The predicate on removing the key-value.
+   planChangeLogger.warn("updateSessions(store,key,sessions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, key, sessions)
    */
   def removeByValueCondition(
       store: StateStore,
@@ -95,6 +96,7 @@ sealed trait StreamingSessionWindowStateManager extends Serializable {
   /**
    * Return an iterator containing all the sessions. Implementations must ensure that updates
    * (puts, removes) can be made while iterating over this iterator.
+   planChangeLogger.warn("removeByValueCondition(store,removalCondition)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", store, removalCondition)
    */
   def iterator(store: ReadStateStore): Iterator[UnsafeRow]
 
@@ -110,6 +112,7 @@ sealed trait StreamingSessionWindowStateManager extends Serializable {
 }
 
 object StreamingSessionWindowStateManager {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val supportedVersions = Seq(1)
 
   def createStateManager(
@@ -122,6 +125,7 @@ object StreamingSessionWindowStateManager {
         keyWithoutSessionExpressions, sessionExpression, inputRowAttributes)
       case _ => throw new IllegalArgumentException(s"Version $stateFormatVersion is invalid")
     }
+    planChangeLogger.warn("createStateManager(keyWithoutSessionExpressions,sessionExpression,inputRowAttributes,stateFormatVersion)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyWithoutSessionExpressions, sessionExpression, inputRowAttributes, stateFormatVersion)
   }
 }
 
@@ -168,6 +172,7 @@ class StreamingSessionWindowStateManagerImplV1(
       store: ReadStateStore,
       key: UnsafeRow): Iterator[UnsafeRowPair] = {
     store.prefixScan(key)
+    planChangeLogger.warn("getSessionsWithKeys(store,key)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", store, key)
   }
 
   override def updateSessions(
@@ -198,6 +203,7 @@ class StreamingSessionWindowStateManagerImplV1(
 
       override protected def getNext(): UnsafeRow = {
         var removedValueRow: UnsafeRow = null
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         while (rangeIter.hasNext && removedValueRow == null) {
           val rowPair = rangeIter.next()
           if (removalCondition(rowPair.value)) {
@@ -224,6 +230,7 @@ class StreamingSessionWindowStateManagerImplV1(
     val stateKey = stateKeyRowGenerator(key)
     stateKey.setLong(indexOrdinalInSessionStart, sessionStart)
     stateKey.copy()
+    planChangeLogger.warn("getStateKey(key,sessionStart)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, sessionStart)
   }
 
   private def putRows(

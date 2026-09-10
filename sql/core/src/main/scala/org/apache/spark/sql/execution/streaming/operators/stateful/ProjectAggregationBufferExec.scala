@@ -65,6 +65,7 @@ case class ProjectAggregationBufferExec(
         (expressions, inputSchema) =>
           MutableProjection.create(expressions, inputSchema))
 
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       iter.map { row =>
         numOutputRows += 1
         aggProcessor.process(row)
@@ -103,6 +104,7 @@ class ProjectAggregationBufferProcessor(
     initialInputBufferOffset,
     resultExpressions,
     newMutableProjection) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   def hasNext: Boolean =
     throw new UnsupportedOperationException(
@@ -117,5 +119,6 @@ class ProjectAggregationBufferProcessor(
     val buffer = newAggregationBuffer()
     processRow(buffer, newInput)
     generateOutput(groupingKey, buffer)
+    planChangeLogger.warn("process(newInput)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newInput)
   }
 }

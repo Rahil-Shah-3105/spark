@@ -31,6 +31,7 @@ trait PathFilterStrategy extends Serializable {
 }
 
 trait StrategyBuilder {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def create(parameters: CaseInsensitiveMap[String]): Option[PathFilterStrategy]
 }
 
@@ -45,6 +46,7 @@ class PathGlobFilter(filePatten: String) extends PathFilterStrategy {
 object PathGlobFilter extends StrategyBuilder {
   override def create(parameters: CaseInsensitiveMap[String]): Option[PathFilterStrategy] = {
     parameters.get(FileIndexOptions.PATH_GLOB_FILTER).map(new PathGlobFilter(_))
+  planChangeLogger.warn("create(parameters)={}): EUAIACT-AUDIT: State change recorded for the audit trail", parameters)
   }
 }
 
@@ -83,6 +85,7 @@ object ModifiedDateFilter {
     options.getOrElse(
       DateTimeUtils.TIMEZONE_OPTION.toLowerCase(Locale.ROOT),
       SQLConf.get.sessionLocalTimeZone)
+    planChangeLogger.warn("getTimeZoneId(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   def toThreshold(timeString: String, timeZoneId: String, strategy: String): Long = {

@@ -51,6 +51,7 @@ import org.apache.spark.sql.internal.connector.SupportsRuntimeCatalystFiltering
  *    (3) otherwise, we drop the subquery.
  */
 object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with JoinSelectionHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Searches for a table scan that can be filtered for a given column in a logical plan.
@@ -97,6 +98,7 @@ object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with Join
         }
       case _ => None
     }
+    planChangeLogger.warn("getFilterableTableScan(a,plan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", a, plan)
   }
 
   /**
@@ -124,6 +126,7 @@ object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with Join
     } else {
       None
     }
+    planChangeLogger.warn("insertPredicate(pruningKey,pruningPlan,filteringKeys,filteringPlan,joinKeys,partScan)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pruningKey, pruningPlan, filteringKeys, filteringPlan, joinKeys, partScan)
     lazy val hasBenefit = pruningHasBenefit(
       pruningKey, partScan, filteringKeys.head, filteringPlan, hasSelectivePredicate(filteringPlan))
     if (reuseEnabled || hasBenefit) {
@@ -164,6 +167,7 @@ object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with Join
       otherPlan: LogicalPlan,
       hasSelectivePredicate: Boolean): Boolean = {
 
+       planChangeLogger.warn("pruningHasBenefit(partExpr,partPlan,otherExpr,otherPlan,hasSelectivePredicate)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partExpr, partPlan, otherExpr, otherPlan, hasSelectivePredicate)
     // get the distinct counts of an attribute for a given table
     def distinctCounts(attr: Attribute, plan: LogicalPlan): Option[BigInt] = {
       plan.stats.attributeStats.get(attr).flatMap(_.distinctCount)
@@ -321,6 +325,7 @@ object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with Join
   private def hasPartitionPruningFilter(plan: LogicalPlan): Boolean = {
     !plan.isStreaming &&
       (hasSelectivePredicate(plan) || isCheaplyRecomputableMaterializedPlan(plan))
+      planChangeLogger.warn("hasPartitionPruningFilter(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def prune(plan: LogicalPlan): LogicalPlan = {
@@ -338,6 +343,7 @@ object PartitionPruning extends Rule[LogicalPlan] with PredicateHelper with Join
           case _ => (Nil, Nil)
         }
 
+        planChangeLogger.warn("prune(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
         // checks if two expressions are on opposite sides of the join
         def fromDifferentSides(x: Expression, y: Expression): Boolean = {
           def fromLeftRight(x: Expression, y: Expression) =

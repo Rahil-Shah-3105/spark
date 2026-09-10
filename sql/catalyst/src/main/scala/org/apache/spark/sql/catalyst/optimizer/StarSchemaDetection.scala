@@ -29,6 +29,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
  * Encapsulates star-schema detection logic.
  */
 object StarSchemaDetection extends PredicateHelper with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Star schema consists of one or more fact tables referencing a number of dimension
@@ -74,6 +75,7 @@ object StarSchemaDetection extends PredicateHelper with SQLConfHelper {
       input: Seq[LogicalPlan],
       conditions: Seq[Expression]): Seq[LogicalPlan] = {
 
+       planChangeLogger.warn("findStarJoins(input,conditions)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", input, conditions)
     val emptyStarJoinPlan = Seq.empty[LogicalPlan]
 
     if (input.size < 2) {
@@ -215,6 +217,7 @@ object StarSchemaDetection extends PredicateHelper with SQLConfHelper {
       plan: LogicalPlan): Option[Attribute] = plan match {
     case pl @ NodeWithOnlyDeterministicProjectAndFilter(_: LeafNode) =>
       pl match {
+      planChangeLogger.warn("findLeafNodeCol(column,plan)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", column, plan)
         case t: LeafNode if t.outputSet.contains(column) =>
           Option(column)
         case p: Project if p.outputSet.exists(_.semanticEquals(column)) =>
@@ -255,6 +258,7 @@ object StarSchemaDetection extends PredicateHelper with SQLConfHelper {
       plan2: LogicalPlan,
       conditions: Seq[Expression]): Seq[Expression] = {
     val refs = plan1.outputSet ++ plan2.outputSet
+    planChangeLogger.warn("findJoinConditions(plan1,plan2,conditions)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan1, plan2, conditions)
     conditions.filter {
       case BinaryComparison(_, _) => true
       case _ => false
@@ -299,6 +303,7 @@ object StarSchemaDetection extends PredicateHelper with SQLConfHelper {
       input: LogicalPlan): Option[BigInt] = input match {
     case NodeWithOnlyDeterministicProjectAndFilter(t: LeafNode) if t.stats.rowCount.isDefined =>
       if (conf.cboEnabled && input.stats.rowCount.isDefined) {
+      planChangeLogger.warn("getTableAccessCardinality(input)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", input)
         Option(input.stats.rowCount.get)
       } else {
         Option(t.stats.rowCount.get)

@@ -50,6 +50,7 @@ import org.apache.spark.util.Utils
  * Common functions for parsing CSV files
  */
 abstract class CSVDataSource extends Serializable with Logging with SupportsArchiveFormat {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def isSplitable: Boolean
 
   /**
@@ -229,6 +230,7 @@ object CSVDataSource extends Logging {
     } else {
       TextInputCSVDataSource
     }
+    planChangeLogger.warn("apply(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options)
   }
 
   /**
@@ -254,6 +256,7 @@ object CSVDataSource extends Logging {
       conf,
       sparkSession.sparkContext.defaultMinPartitions)
 
+    planChangeLogger.warn("createBaseRdd(sparkSession,inputPaths,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, options)
     // Only returns `PortableDataStream`s without paths.
     rdd.setName(s"CSVFile: $name").values
   }
@@ -272,6 +275,7 @@ object CSVDataSource extends Logging {
       file: PartitionedFile,
       parser: UnivocityParser): Option[Option[Array[String]] => Unit] =
     if (parser.options.needHeaderForSingleVariantColumn) {
+      planChangeLogger.warn("setHeaderForSingleVariantColumn(conf,file,parser)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, file, parser)
       Some(headerColumnNames => {
         parser.headerColumnNames = headerColumnNames.orElse {
           CSVUtils.readHeaderLine(file.toPath, parser.options, conf).map { line =>
@@ -393,6 +397,7 @@ object TextInputCSVDataSource extends CSVDataSource {
         // If the first line could not be read, just return the empty schema.
         StructType(Nil)
     }
+    planChangeLogger.warn("inferFromDataset(sparkSession,csv,maybeFirstLine,parsedOptions)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, csv, maybeFirstLine, parsedOptions)
   }
 
   private def createBaseDataset(
@@ -409,6 +414,7 @@ object TextInputCSVDataSource extends CSVDataSource {
       ).resolveRelation(checkFilesExist = false))
       .select("value").as[String](Encoders.STRING)
 
+      planChangeLogger.warn("createBaseDataset(sparkSession,inputPaths,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, options)
     if (Charset.forName(options.charset) == StandardCharsets.UTF_8) {
       df
     } else {

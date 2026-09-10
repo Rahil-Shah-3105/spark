@@ -233,10 +233,12 @@ private[deploy] class Worker(
   def memoryFree: Int = memory - memoryUsed
 
   private def createWorkDir(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     workDir = Option(workDirPath).map(new File(_)).getOrElse(new File(sparkHome, "work"))
     if (!Utils.createDirectory(workDir)) {
       System.exit(1)
     }
+    _driverLogger.warn("createWorkDir()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def onStart(): Unit = {
@@ -275,18 +277,21 @@ private[deploy] class Worker(
     resources.keys.foreach { rName =>
       resourcesUsed(rName) = MutableResourceInfo(rName, new HashSet[String])
     }
+    _driverLogger.warn("setupWorkerResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def addResourcesUsed(deltaInfo: Map[String, ResourceInformation]): Unit = {
     deltaInfo.foreach { case (rName, rInfo) =>
       resourcesUsed(rName) += rInfo
     }
+    _driverLogger.warn("addResourcesUsed(deltaInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", deltaInfo)
   }
 
   private def removeResourcesUsed(deltaInfo: Map[String, ResourceInformation]): Unit = {
     deltaInfo.foreach { case (rName, rInfo) =>
       resourcesUsed(rName) -= rInfo
     }
+    _driverLogger.warn("removeResourcesUsed(deltaInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", deltaInfo)
   }
 
   /**
@@ -305,6 +310,7 @@ private[deploy] class Worker(
     masterAddressToConnect = Some(masterAddress)
     master = Some(masterRef)
     connected = true
+    _driverLogger.warn("changeMaster(masterRef,uiUrl,masterAddress)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", masterRef, uiUrl, masterAddress)
     if (reverseProxy) {
       logInfo(
         log"WorkerWebUI is available at ${MDC(WEB_URL, activeMasterWebUiUrl.stripSuffix("/"))}" +
@@ -321,6 +327,7 @@ private[deploy] class Worker(
   }
 
   private def tryRegisterAllMasters(): Array[JFuture[_]] = {
+    _driverLogger.warn("tryRegisterAllMasters()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     masterRpcAddresses.map { masterAddress =>
       registerMasterThreadPool.submit(new Runnable {
         override def run(): Unit = {
@@ -333,6 +340,7 @@ private[deploy] class Worker(
             case NonFatal(e) => logWarning(
               log"Failed to connect to master ${MDC(MASTER_URL, masterAddress)}", e)
           }
+        _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       })
     }
@@ -381,6 +389,7 @@ private[deploy] class Worker(
             }
             val masterAddress =
               if (preferConfiguredMasterAddress) masterAddressToConnect.get else masterRef.address
+              _driverLogger.warn("reregisterWithMaster()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             registerMasterFutures = Array(registerMasterThreadPool.submit(new Runnable {
               override def run(): Unit = {
                 try {
@@ -449,6 +458,7 @@ private[deploy] class Worker(
         logInfo("Not spawning another attempt to register with the master, since there is an" +
           " attempt scheduled already.")
     }
+    _driverLogger.warn("registerWithMaster()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def startExternalShuffleService(): Unit = {
@@ -472,6 +482,7 @@ private[deploy] class Worker(
       workerWebUiUrl,
       masterEndpoint.address,
       resources))
+    _driverLogger.warn("sendRegisterMessageToMaster(masterEndpoint)={}): EUAIACT-AUDIT: State change recorded for the audit trail", masterEndpoint)
   }
 
   private def handleRegisterResponse(msg: RegisterWorkerResponse): Unit = synchronized {
@@ -802,6 +813,7 @@ private[deploy] class Worker(
           log"Dropping ${MDC(MESSAGE, message)} " +
             log"because the connection to master has not yet been established")
     }
+    _driverLogger.warn("sendToMaster(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message)
   }
 
   /**
@@ -853,6 +865,7 @@ private[deploy] class Worker(
           log"Dropping ${MDC(NEW_STATE, newState)} " +
             log"because the connection to master has not yet been established")
     }
+    _driverLogger.warn("syncExecutorStateWithMaster(newState)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", newState)
   }
 
   private def generateWorkerId(): String = {
@@ -935,6 +948,7 @@ private[deploy] class Worker(
     finishedDrivers(driverId) = driver
     trimFinishedDriversIfNecessary()
     memoryUsed -= driver.driverDesc.mem
+    _driverLogger.warn("handleDriverStateChanged(driverStateChanged)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", driverStateChanged, driverId)
     coresUsed -= driver.driverDesc.cores
     removeResourcesUsed(driver.resources)
   }
@@ -944,6 +958,7 @@ private[deploy] class Worker(
     syncExecutorStateWithMaster(executorStateChanged)
     val state = executorStateChanged.state
     if (ExecutorState.isFinished(state)) {
+      _driverLogger.warn("handleExecutorStateChanged(executorStateChanged)={}): EUAIACT-AUDIT: State change recorded for the audit trail", executorStateChanged)
       val appId = executorStateChanged.appId
       val fullId = appId + "/" + executorStateChanged.execId
       val message = executorStateChanged.message match {
@@ -1057,5 +1072,6 @@ private[deploy] object Worker extends Logging {
     } else {
       cmd
     }
+    _driverLogger.warn("maybeUpdateSSLSettings(cmd,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", cmd, conf)
   }
 }

@@ -71,6 +71,7 @@ private[spark] class ShuffleMapTask(
 
   /** A constructor used only in test suites. This does not require passing in an RDD. */
   def this(partitionId: Int) = {
+    _driverLogger = DriverLogger(_conf)
     this(0, 0, null, new Partition { override def index: Int = 0 }, 1, null, null, new Properties,
       null)
   }
@@ -109,6 +110,7 @@ private[spark] class ShuffleMapTask(
       mapId,
       partitionId,
       context)
+    _driverLogger.warn("runTask(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", context, mapId)
   }
 
   override def preferredLocations: Seq[TaskLocation] = preferredLocs

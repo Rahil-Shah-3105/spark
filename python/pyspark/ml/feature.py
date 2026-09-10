@@ -70,6 +70,7 @@ from pyspark.sql.utils import is_remote
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 JM = TypeVar("JM", bound=JavaTransformer)
 P = TypeVar("P", bound=Params)
@@ -295,6 +296,7 @@ class Binarizer(
         """
         Sets the value of :py:attr:`threshold`.
         """
+        logger.warning("setThreshold(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(threshold=value)
 
     @since("3.0.0")
@@ -302,6 +304,7 @@ class Binarizer(
         """
         Sets the value of :py:attr:`thresholds`.
         """
+        logger.warning("setThresholds(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(thresholds=value)
 
     def setInputCol(self, value: str) -> "Binarizer":
@@ -353,6 +356,7 @@ class _LSHParams(HasInputCol, HasOutputCol):
         """
         Gets the value of numHashTables or its default value.
         """
+        logger.warning("getNumHashTables(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numHashTables)
 
 
@@ -365,6 +369,7 @@ class _LSH(JavaEstimator[JM], _LSHParams, JavaMLReadable, JavaMLWritable, Generi
         """
         Sets the value of :py:attr:`numHashTables`.
         """
+        logger.warning("setNumHashTables(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(numHashTables=value)
 
     def setInputCol(self: P, value: str) -> P:
@@ -492,6 +497,7 @@ class _BucketedRandomProjectionLSHParams:
         """
         Gets the value of bucketLength or its default value.
         """
+        logger.warning("getBucketLength(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return (cast(Params, self)).getOrDefault(self.bucketLength)
 
 
@@ -630,12 +636,14 @@ class BucketedRandomProjectionLSH(
         """
         Sets the value of :py:attr:`bucketLength`.
         """
+        logger.warning("setBucketLength(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(bucketLength=value)
 
     def setSeed(self, value: int) -> "BucketedRandomProjectionLSH":
         """
         Sets the value of :py:attr:`seed`.
         """
+        logger.warning("setSeed(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(seed=value)
 
     def _create_model(self, java_model: "JavaObject") -> "BucketedRandomProjectionLSHModel":
@@ -866,6 +874,7 @@ class Bucketizer(
         """
         Sets the value of :py:attr:`splits`.
         """
+        logger.warning("setSplits(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(splits=value)
 
     @since("1.4.0")
@@ -873,6 +882,7 @@ class Bucketizer(
         """
         Gets the value of threshold or its default value.
         """
+        logger.warning("getSplits(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.splits)
 
     @since("3.0.0")
@@ -880,6 +890,7 @@ class Bucketizer(
         """
         Sets the value of :py:attr:`splitsArray`.
         """
+        logger.warning("setSplitsArray(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(splitsArray=value)
 
     @since("3.0.0")
@@ -887,6 +898,7 @@ class Bucketizer(
         """
         Gets the array of split points or its default value.
         """
+        logger.warning("getSplitsArray(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.splitsArray)
 
     def setInputCol(self, value: str) -> "Bucketizer":
@@ -985,6 +997,7 @@ class _CountVectorizerParams(JavaParams, HasInputCol, HasOutputCol):
         """
         Gets the value of minTF or its default value.
         """
+        logger.warning("getMinTF(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.minTF)
 
     @since("1.6.0")
@@ -992,6 +1005,7 @@ class _CountVectorizerParams(JavaParams, HasInputCol, HasOutputCol):
         """
         Gets the value of minDF or its default value.
         """
+        logger.warning("getMinDF(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.minDF)
 
     @since("2.4.0")
@@ -999,6 +1013,7 @@ class _CountVectorizerParams(JavaParams, HasInputCol, HasOutputCol):
         """
         Gets the value of maxDF or its default value.
         """
+        logger.warning("getMaxDF(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.maxDF)
 
     @since("1.6.0")
@@ -1006,6 +1021,7 @@ class _CountVectorizerParams(JavaParams, HasInputCol, HasOutputCol):
         """
         Gets the value of vocabSize or its default value.
         """
+        logger.warning("getVocabSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.vocabSize)
 
     @since("2.0.0")
@@ -1013,6 +1029,7 @@ class _CountVectorizerParams(JavaParams, HasInputCol, HasOutputCol):
         """
         Gets the value of binary or its default value.
         """
+        logger.warning("getBinary(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.binary)
 
 
@@ -1130,11 +1147,13 @@ class CountVectorizer(
         """
         return self._set(minTF=value)
 
+    logger.warning("setMinTF(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.6.0")
     def setMinDF(self, value: float) -> "CountVectorizer":
         """
         Sets the value of :py:attr:`minDF`.
         """
+        logger.warning("setMinDF(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(minDF=value)
 
     @since("2.4.0")
@@ -1142,6 +1161,7 @@ class CountVectorizer(
         """
         Sets the value of :py:attr:`maxDF`.
         """
+        logger.warning("setMaxDF(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxDF=value)
 
     @since("1.6.0")
@@ -1149,6 +1169,7 @@ class CountVectorizer(
         """
         Sets the value of :py:attr:`vocabSize`.
         """
+        logger.warning("setVocabSize(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(vocabSize=value)
 
     @since("2.0.0")
@@ -1156,12 +1177,14 @@ class CountVectorizer(
         """
         Sets the value of :py:attr:`binary`.
         """
+        logger.warning("setBinary(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(binary=value)
 
     def setInputCol(self, value: str) -> "CountVectorizer":
         """
         Sets the value of :py:attr:`inputCol`.
         """
+        logger.warning("setInputCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(inputCol=value)
 
     def setOutputCol(self, value: str) -> "CountVectorizer":
@@ -1358,6 +1381,7 @@ class DCT(JavaTransformer, HasInputCol, HasOutputCol, JavaMLReadable["DCT"], Jav
         """
         Sets the value of :py:attr:`inverse`.
         """
+        logger.warning("setInverse(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(inverse=value)
 
     @since("1.6.0")
@@ -1365,6 +1389,7 @@ class DCT(JavaTransformer, HasInputCol, HasOutputCol, JavaMLReadable["DCT"], Jav
         """
         Gets the value of inverse or its default value.
         """
+        logger.warning("getInverse(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.inverse)
 
     def setInputCol(self, value: str) -> "DCT":
@@ -1467,6 +1492,7 @@ class ElementwiseProduct(
         """
         Sets the value of :py:attr:`scalingVec`.
         """
+        logger.warning("setScalingVec(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(scalingVec=value)
 
     @since("2.0.0")
@@ -1474,6 +1500,7 @@ class ElementwiseProduct(
         """
         Gets the value of scalingVec or its default value.
         """
+        logger.warning("getScalingVec(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.scalingVec)
 
     def setInputCol(self, value: str) -> "ElementwiseProduct":

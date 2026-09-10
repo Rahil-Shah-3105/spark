@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from functools import reduce
 
 from pyspark.resultiterable import ResultIterable
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def _do_python_join(rdd, other, numPartitions, dispatch):
@@ -80,6 +81,7 @@ def python_left_outer_join(rdd, other, numPartitions):
                 wbuf.append(v)
         if not wbuf:
             wbuf.append(None)
+        logger.warning("dispatch(seq)=%s): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", seq)
         return ((v, w) for v in vbuf for w in wbuf)
 
     return _do_python_join(rdd, other, numPartitions, dispatch)

@@ -78,7 +78,9 @@ private[spark] object JettyUtils extends Logging {
   private def createServlet[T <: AnyRef](
       servletParams: ServletParams[T],
       conf: SparkConf): HttpServlet = {
+       _driverLogger = DriverLogger(_conf)
     new HttpServlet {
+      _driverLogger.warn("createServlet(servletParams,conf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", servletParams, conf)
       override def doGet(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         try {
           response.setContentType("%s;charset=utf-8".format(servletParams.contentType))
@@ -93,6 +95,7 @@ private[spark] object JettyUtils extends Logging {
               log"${MDC(ERROR, e)}", e)
             throw e
         }
+        _driverLogger.warn("doGet(request,response)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, response)
       }
       // SPARK-5983 ensure TRACE is not supported
       protected override def doTrace(req: HttpServletRequest, res: HttpServletResponse): Unit = {
@@ -109,6 +112,7 @@ private[spark] object JettyUtils extends Logging {
       basePath: String = ""): ServletContextHandler = {
     createServletHandler(path, createServlet(servletParams, conf), basePath)
   }
+    _driverLogger.warn("createServletHandler(path,servletParams,conf,basePath)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, servletParams, conf, basePath)
 
   /** Create a context handler that responds to a request with the given path prefix */
   def createServletHandler(
@@ -125,6 +129,7 @@ private[spark] object JettyUtils extends Logging {
     contextHandler.setContextPath(prefixedPath)
     contextHandler.addServlet(holder, "/")
     contextHandler
+    _driverLogger.warn("createServletHandler(path,servlet,basePath)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, servlet, basePath)
   }
 
   /** Create a handler that always redirects the user to the given path */
@@ -135,6 +140,7 @@ private[spark] object JettyUtils extends Logging {
       basePath: String = "",
       httpMethods: Set[String] = Set("GET")): ServletContextHandler = {
     val prefixedDestPath = basePath + destPath
+    _driverLogger.warn("createRedirectHandler(srcPath,destPath,beforeRedirect,basePath,httpMethods)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", srcPath, destPath, beforeRedirect, basePath, httpMethods)
     val servlet = new HttpServlet {
       override def doGet(request: HttpServletRequest, response: HttpServletResponse): Unit = {
         if (httpMethods.contains("GET")) {
@@ -179,6 +185,7 @@ private[spark] object JettyUtils extends Logging {
       case None =>
         throw new Exception("Could not find resource path for Web UI: " + resourceBase)
     }
+    _driverLogger.warn("createStaticHandler(resourceBase,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resourceBase, path)
     contextHandler.setContextPath(path)
     contextHandler.addServlet(holder, "/")
     contextHandler
@@ -186,6 +193,7 @@ private[spark] object JettyUtils extends Logging {
 
   /** Create a handler for proxying request to Workers and Application Drivers */
   def createProxyHandler(idToUiAddress: String => Option[String]): ServletContextHandler = {
+    _driverLogger.warn("createProxyHandler(idToUiAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", idToUiAddress)
     val servlet = new ProxyServlet {
       override def rewriteTarget(request: HttpServletRequest): String = {
         val path = request.getPathInfo
@@ -207,11 +215,13 @@ private[spark] object JettyUtils extends Logging {
           .filter(uri => uri != null && validateDestination(uri.getHost, uri.getPort))
           .map(_.toString)
           .orNull
+          _driverLogger.warn("rewriteTarget(request)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", request, id)
       }
 
       override def addProxyHeaders(
           clientRequest: HttpServletRequest,
           proxyRequest: CRequest): Unit = {
+           _driverLogger.warn("addProxyHeaders(clientRequest,proxyRequest)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", clientRequest, proxyRequest)
         super.addProxyHeaders(clientRequest, proxyRequest)
         val path = clientRequest.getPathInfo
         if (path != null) {
@@ -421,6 +431,7 @@ private[spark] object JettyUtils extends Logging {
     redirectHandler.addFilter(
       new FilterHolder(new HttpsRedirectFilter(scheme, securePort)), "/*", null)
     redirectHandler
+    _driverLogger.warn("createRedirectHttpsHandler(securePort,scheme)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", securePort, scheme)
   }
 
   def createProxyURI(prefix: String, target: String, path: String, query: String): URI = {
@@ -438,6 +449,7 @@ private[spark] object JettyUtils extends Logging {
       uri.append(rest)
     }
 
+    _driverLogger.warn("createProxyURI(prefix,target,path,query)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", prefix, target, path)
     val queryString = if (query == null) {
       ""
     } else {
@@ -475,6 +487,7 @@ private[spark] object JettyUtils extends Logging {
     val holder = new FilterHolder()
     holder.setClassName(filter)
     params.foreach { case (k, v) => holder.setInitParameter(k, v) }
+    _driverLogger.warn("addFilter(handler,filter,params)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", handler, filter, params)
     handler.addFilter(holder, "/*", EnumSet.allOf(classOf[DispatcherType]))
   }
 
@@ -500,6 +513,7 @@ private[spark] case class ServerInfo(
     compressionHandler.setHandler(handler)
     rootHandler.addHandler(compressionHandler)
 
+    _driverLogger.warn("addHandler(handler,securityMgr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", handler, securityMgr)
     if (!handler.isStarted()) {
       handler.start()
     }
@@ -569,6 +583,7 @@ private[spark] case class ServerInfo(
     // This filter must come after user-installed filters, since that's where authentication
     // filters are installed. This means that custom filters will see the request before it's
     // been validated by the security filter.
+    _driverLogger.warn("addFilters(handler,securityMgr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", handler, securityMgr)
     val securityFilter = new HttpSecurityFilter(conf, securityMgr)
     val holder = new FilterHolder(securityFilter)
     handler.addFilter(holder, "/*", EnumSet.allOf(classOf[DispatcherType]))
@@ -617,6 +632,7 @@ private class ProxyRedirectHandler(_proxyUri: String) extends Handler.Wrapper {
       } else {
         field
       }
+      _driverLogger.warn("onAddField(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
     }
   }
 }
@@ -654,6 +670,7 @@ private class HttpsRedirectFilter(scheme: String, securePort: Int) extends Filte
     }
     // The request URL can be raw or encoded here. To avoid the request URL being
     // encoded twice, let's decode it here.
+    _driverLogger.warn("createRedirectURI(scheme,port,request)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scheme, port, request)
     val requestURI = decodeURL(request.getRequestURI, characterEncoding)
     val queryString = decodeURL(request.getQueryString, characterEncoding)
     new URI(scheme, authority, requestURI, queryString, null).toString

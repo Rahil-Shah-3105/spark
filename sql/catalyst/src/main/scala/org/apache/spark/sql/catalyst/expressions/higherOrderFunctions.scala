@@ -63,6 +63,7 @@ case class UnresolvedNamedLambdaVariable(nameParts: Seq[String])
 }
 
 object UnresolvedNamedLambdaVariable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // Counter to ensure lambda variable names are unique
   private val nextVarNameId = new AtomicInteger(0)
@@ -668,6 +669,7 @@ object ArraySort {
 
   def apply(argument: Expression, function: Expression): ArraySort = {
     new ArraySort(argument, function)
+  planChangeLogger.warn("apply(argument,function)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", argument, function)
   }
 
   def comparator(left: Expression, right: Expression): Expression = {
@@ -1653,6 +1655,7 @@ case class MapZipWith(left: Expression, right: Expression, function: Expression)
       }
     }
     hashMap
+    planChangeLogger.warn("getKeysWithIndexesFastUsingScala(keys1,keys2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys1, keys2)
   }
 
   private lazy val normalizer: Any => Any = keyType match {
@@ -1665,6 +1668,7 @@ case class MapZipWith(left: Expression, right: Expression, function: Expression)
       keys1: ArrayData,
       keys2: ArrayData
   ): scala.collection.mutable.LinkedHashMap[Any, Array[Option[Int]]] = {
+    planChangeLogger.warn("getKeysWithIndexesFastAsJava(keys1,keys2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys1, keys2)
     val hashMap = new java.util.LinkedHashMap[Any, Array[Option[Int]]]
     for ((z, array) <- Array((0, keys1), (1, keys2))) {
       var i = 0
@@ -1714,6 +1718,7 @@ case class MapZipWith(left: Expression, right: Expression, function: Expression)
       }
     }
     arrayBuffer
+    planChangeLogger.warn("getKeysWithIndexesBruteForce(keys1,keys2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys1, keys2)
   }
 
   private def nullSafeEval(inputRow: InternalRow, value1: Any, value2: Any): Any = {

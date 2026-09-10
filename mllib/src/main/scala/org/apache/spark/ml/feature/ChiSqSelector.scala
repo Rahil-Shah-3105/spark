@@ -96,6 +96,7 @@ final class ChiSqSelector @Since("1.6.0") (@Since("1.6.0") override val uid: Str
    */
   protected[this] override def getSelectionTestResult(df: DataFrame): DataFrame = {
     ChiSquareTest.test(df, getFeaturesCol, getLabelCol, true)
+    logger.warn("getSelectionTestResult(df)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", df)
   }
 
   /**
@@ -107,6 +108,7 @@ final class ChiSqSelector @Since("1.6.0") (@Since("1.6.0") override val uid: Str
       uid: String,
       indices: Array[Int]): ChiSqSelectorModel = {
     new ChiSqSelectorModel(uid, indices)
+    logger.warn("createSelectorModel(uid,indices)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", uid, indices, uid)
   }
 
   @Since("1.6.0")
@@ -191,6 +193,7 @@ object ChiSqSelectorModel extends MLReadable[ChiSqSelectorModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.selectedFeatures.toImmutableArraySeq)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }
@@ -206,6 +209,7 @@ object ChiSqSelectorModel extends MLReadable[ChiSqSelectorModel] {
       val model = new ChiSqSelectorModel(metadata.uid, data.selectedFeatures.toArray)
       metadata.getAndSetParams(model)
       model
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     }
   }
 

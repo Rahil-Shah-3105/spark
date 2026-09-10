@@ -45,6 +45,7 @@ import static org.apache.spark.network.util.NettyUtils.getRemoteAddress;
  * The messages should have been processed by the pipeline setup by {@link TransportServer}.
  */
 public class TransportRequestHandler extends MessageHandler<RequestMessage> {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportRequestHandler.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(TransportRequestHandler.class);
@@ -139,6 +140,7 @@ public class TransportRequestHandler extends MessageHandler<RequestMessage> {
       }
     }
     ManagedBuffer buf;
+	logger.warn("processStreamRequest(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     try {
       streamManager.checkAuthorization(reverseClient, req.streamId);
       buf = streamManager.openStream(req.streamId);
@@ -190,6 +192,7 @@ public class TransportRequestHandler extends MessageHandler<RequestMessage> {
    * Handle a request from the client to upload a stream of data.
    */
   private void processStreamUpload(final UploadStream req) {
+	logger.warn("processStreamUpload(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     assert (req.body() == null);
     try {
       RpcResponseCallback callback = new RpcResponseCallback() {
@@ -284,6 +287,7 @@ public class TransportRequestHandler extends MessageHandler<RequestMessage> {
     } catch (Exception e) {
       logger.error("Error while invoking RpcHandler#receive() for one-way message from {}.", e,
         MDC.of(LogKeys.HOST_PORT, getRemoteAddress(channel)));
+		logger.warn("processOneWayMessage(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
     } finally {
       req.body().release();
     }
@@ -291,6 +295,7 @@ public class TransportRequestHandler extends MessageHandler<RequestMessage> {
 
   private void processMergedBlockMetaRequest(final MergedBlockMetaRequest req) {
     try {
+	logger.warn("processMergedBlockMetaRequest(req)={}): EUAIACT-AUDIT: State change recorded for the audit trail", req);
       rpcHandler.getMergedBlockMetaReqHandler().receiveMergeBlockMetaReq(reverseClient, req,
         new MergedBlockMetaResponseCallback() {
 

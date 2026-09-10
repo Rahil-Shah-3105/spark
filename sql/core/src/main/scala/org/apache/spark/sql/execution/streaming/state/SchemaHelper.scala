@@ -37,6 +37,7 @@ case class StateSchemaFormatV3(
 )
 
 object SchemaHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   sealed trait SchemaReader {
     def version: Int
@@ -45,6 +46,7 @@ object SchemaHelper {
 
     protected def readJsonSchema(inputStream: FSDataInputStream): String = {
       val buf = new StringBuilder
+      planChangeLogger.warn("readJsonSchema(inputStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream)
       val numChunks = inputStream.readInt()
       (0 until numChunks).foreach(_ => buf.append(inputStream.readUTF()))
       buf.toString()
@@ -60,6 +62,7 @@ object SchemaHelper {
         case 2 => new SchemaV2Reader
         case 3 => new SchemaV3Reader
       }
+      planChangeLogger.warn("createSchemaReader(versionStr)={}): EUAIACT-AUDIT: State change recorded for the audit trail", versionStr)
     }
   }
 
@@ -89,6 +92,7 @@ object SchemaHelper {
         StructType.fromString(keySchemaStr),
         0,
         StructType.fromString(valueSchemaStr)))
+    planChangeLogger.warn("read(inputStream)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream)
     }
   }
 
@@ -138,10 +142,12 @@ object SchemaHelper {
         outputStream: FSDataOutputStream): Unit = {
       writeVersion(outputStream)
       writeSchema(stateStoreColFamilySchema, outputStream)
+      planChangeLogger.warn("write(stateStoreColFamilySchema,outputStream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateStoreColFamilySchema, outputStream)
     }
 
     private def writeVersion(outputStream: FSDataOutputStream): Unit = {
       outputStream.writeUTF(s"v${version}")
+      planChangeLogger.warn("writeVersion(outputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputStream)
     }
 
     protected def writeSchema(
@@ -156,6 +162,7 @@ object SchemaHelper {
       // So a key as well as a value consist of multiple chunks in schema version 2 and above.
       val buf = new Array[Char](MAX_UTF_CHUNK_SIZE)
       val numChunks = (jsonSchema.length - 1) / MAX_UTF_CHUNK_SIZE + 1
+      planChangeLogger.warn("writeJsonSchema(outputStream,jsonSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outputStream, jsonSchema)
       val stringReader = new StringReader(jsonSchema)
       outputStream.writeInt(numChunks)
       (0 until numChunks).foreach { _ =>
@@ -174,6 +181,7 @@ object SchemaHelper {
         case _ => throw new IllegalArgumentException(
           s"Unsupported schema writer version: $version")
       }
+      planChangeLogger.warn("createSchemaWriter(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
     }
   }
 
@@ -201,6 +209,7 @@ object SchemaHelper {
 
       writeJsonSchema(outputStream, stateSchema.keySchema.json)
       writeJsonSchema(outputStream, stateSchema.valueSchema.json)
+    planChangeLogger.warn("writeSchema(stateStoreColFamilySchema,outputStream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateStoreColFamilySchema, outputStream)
     }
   }
 

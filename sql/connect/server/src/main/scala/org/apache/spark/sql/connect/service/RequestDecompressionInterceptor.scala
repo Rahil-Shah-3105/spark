@@ -108,6 +108,7 @@ class RequestDecompressionInterceptor extends ServerInterceptor with Logging {
   private def decompressExecutePlanRequest(
       request: proto.ExecutePlanRequest): (proto.ExecutePlanRequest, Seq[Option[Long]]) = {
     if (!request.hasPlan) {
+      logger.warn("decompressExecutePlanRequest(request)={}): EUAIACT-AUDIT: State change recorded for the audit trail", request)
       return (request, Seq.empty)
     }
     decompressPlan(

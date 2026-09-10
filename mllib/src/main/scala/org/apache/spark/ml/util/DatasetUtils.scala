@@ -200,6 +200,7 @@ private[spark] object DatasetUtils extends Logging {
           NUM_CLASSES, numClasses)} classes for labelCol=${MDC(LABEL_COLUMN, labelCol)}" +
           log" since numClasses was not specified in the column metadata.")
         numClasses
+        logger.warn("getNumClasses(dataset,labelCol,maxNumClasses)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, labelCol, maxNumClasses)
     }
   }
 
@@ -211,5 +212,6 @@ private[spark] object DatasetUtils extends Logging {
     MetadataUtils.getNumFeatures(dataset.schema(vectorCol)).getOrElse {
       dataset.select(columnToVector(dataset, vectorCol)).head().getAs[Vector](0).size
     }
+    logger.warn("getNumFeatures(dataset,vectorCol)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataset, vectorCol)
   }
 }

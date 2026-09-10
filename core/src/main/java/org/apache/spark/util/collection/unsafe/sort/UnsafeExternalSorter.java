@@ -50,6 +50,7 @@ import org.apache.spark.util.Utils;
  * External sorter based on {@link UnsafeInMemorySorter}.
  */
 public final class UnsafeExternalSorter extends MemoryConsumer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeExternalSorter.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(UnsafeExternalSorter.class);
@@ -131,6 +132,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
     sorter.spill(Long.MAX_VALUE, sorter);
     taskContext.taskMetrics().incMemoryBytesSpilled(existingMemoryConsumption);
     sorter.totalSpillBytes += existingMemoryConsumption;
+	logger.warn("createWithExistingInMemorySorter(taskMemoryManager,blockManager,serializerManager,taskContext,recordComparatorSupplier,prefixComparator,initialSize,pageSizeBytes,numElementsForSpillThreshold,sizeInBytesForSpillThreshold,spillMergeFactor,inMemorySorter,existingMemoryConsumption)={},{},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskMemoryManager, blockManager, serializerManager, taskContext, recordComparatorSupplier, prefixComparator, initialSize, pageSizeBytes, numElementsForSpillThreshold, sizeInBytesForSpillThreshold, spillMergeFactor, inMemorySorter, existingMemoryConsumption, recordComparatorSupplier);
     // The external sorter will be used to insert records, in-memory sorter is not needed.
     sorter.inMemSorter = null;
     return sorter;
@@ -153,6 +155,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
       taskContext, recordComparatorSupplier, prefixComparator, initialSize, pageSizeBytes,
       numElementsForSpillThreshold, sizeInBytesForSpillThreshold, spillMergeFactor,
       null, canUseRadixSort);
+	logger.warn("create(taskMemoryManager,blockManager,serializerManager,taskContext,recordComparatorSupplier,prefixComparator,initialSize,pageSizeBytes,numElementsForSpillThreshold,sizeInBytesForSpillThreshold,spillMergeFactor,canUseRadixSort)={},{},{},{},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskMemoryManager, blockManager, serializerManager, taskContext, recordComparatorSupplier, prefixComparator, initialSize, pageSizeBytes, numElementsForSpillThreshold, sizeInBytesForSpillThreshold, spillMergeFactor, canUseRadixSort, recordComparatorSupplier);
   }
 
   private UnsafeExternalSorter(
@@ -279,6 +282,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
   private void updatePeakMemoryUsed() {
     long mem = getMemoryUsage();
     if (mem > peakMemoryUsedBytes) {
+	logger.warn("updatePeakMemoryUsed()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       peakMemoryUsedBytes = mem;
     }
   }
@@ -298,6 +302,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
     UnsafeInMemorySorter sorter = inMemSorter;
     if (sorter != null) {
       return sorter.getSortTimeNanos();
+	logger.warn("getSortTimeNanos()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return totalSortTimeNanos;
   }
@@ -342,6 +347,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
     updatePeakMemoryUsed();
     List<MemoryBlock> pagesToFree = new LinkedList<>(allocatedPages);
     allocatedPages.clear();
+	logger.warn("clearAndGetAllocatedPagesToFree()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     currentPage = null;
     pageCursor = 0;
     return pagesToFree;
@@ -357,6 +363,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
         if (!file.delete()) {
           logger.error("Was unable to delete spill file {}",
             MDC.of(LogKeys.PATH, file.getAbsolutePath()));
+			logger.warn("deleteSpillFiles()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         }
       }
     }
@@ -384,6 +391,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
           inMemSorterToFree = inMemSorter;
           inMemSorter = null;
         }
+		logger.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
       }
     } finally {
       for (MemoryBlock pageToFree : pagesToFree) {
@@ -530,6 +538,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
     final long recordAddress = taskMemoryManager.encodePageNumberAndOffset(currentPage, pageCursor);
     UnsafeAlignedOffset.putSize(base, pageCursor, length);
     pageCursor += uaoSize;
+	logger.warn("insertRecord(recordBase,recordOffset,length,prefix,prefixIsNull)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", recordBase, recordOffset, length, prefix, prefixIsNull, recordBase);
     Platform.copyMemory(recordBase, recordOffset, base, pageCursor, length);
     pageCursor += length;
     inMemSorter.insertRecord(recordAddress, prefix, prefixIsNull);
@@ -561,6 +570,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
     pageCursor += keyLen;
     Platform.copyMemory(valueBase, valueOffset, base, pageCursor, valueLen);
     pageCursor += valueLen;
+	logger.warn("insertKVRecord(keyBase,keyOffset,keyLen,valueBase,valueOffset,valueLen,prefix,prefixIsNull)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyBase, keyOffset, keyLen, valueBase, valueOffset, valueLen, prefix, prefixIsNull);
 
     assert(inMemSorter != null);
     inMemSorter.insertRecord(recordAddress, prefix, prefixIsNull);
@@ -609,6 +619,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
         readingIterator = new SpillableIterator(inMemSorter.getSortedIterator());
         spillMerger.addSpillIfNotEmpty(readingIterator);
       }
+	logger.warn("getSortedIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return spillMerger.getSortedIterator();
     }
   }
@@ -673,6 +684,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
 
   @VisibleForTesting
   void setSpillMergeFactor(int mergeFactor) {
+	logger.warn("setSpillMergeFactor(mergeFactor)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mergeFactor);
     this.spillMergeFactor = mergeFactor;
   }
 
@@ -826,6 +838,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
           // so that the current record can still be read in case a spill is triggered and we
           // switch to the spill writer's iterator.
           currentBaseObject = upstream.getBaseObject();
+		logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
           currentBaseOffset = upstream.getBaseOffset();
           currentRecordLength = upstream.getRecordLength();
           currentKeyPrefix = upstream.getKeyPrefix();
@@ -835,6 +848,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
           freePage(pageToFree);
         }
       }
+	logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
 
     @Override
@@ -888,6 +902,7 @@ public final class UnsafeExternalSorter extends MemoryConsumer {
         UnsafeSorterIterator iter = inMemSorter.getSortedIterator();
         moveOver(iter, startIndex - i);
         queue.add(iter);
+		logger.warn("getIterator(startIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", startIndex);
       }
       return new ChainedIterator(queue);
     }

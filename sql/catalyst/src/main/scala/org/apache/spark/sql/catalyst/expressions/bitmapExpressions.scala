@@ -186,6 +186,7 @@ case class BitmapConstructAgg(child: Expression,
   extends ImperativeAggregate with ImplicitCastInputTypes with UnaryLike[Expression] {
 
   def this(child: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child = child, mutableAggBufferOffset = 0, inputAggBufferOffset = 0)
   }
 
@@ -237,6 +238,7 @@ case class BitmapConstructAgg(child: Expression,
       val bit = (bitPosition % 8).toInt
       bitmap.update(bytePosition, (bitmap(bytePosition) | (1 << bit)).toByte)
     }
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
   }
 
   override def merge(buffer1: InternalRow, buffer2: InternalRow): Unit = {
@@ -403,6 +405,7 @@ case class BitmapAndAgg(
 
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): ImperativeAggregate =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): ImperativeAggregate =

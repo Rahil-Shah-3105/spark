@@ -41,6 +41,7 @@ import org.apache.spark.unsafe.types.UTF8String
  */
 class TextSocketMicroBatchStream(host: String, port: Int, numPartitions: Int)
   extends MicroBatchStream with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   @GuardedBy("this")
   private var socket: Socket = null
@@ -95,6 +96,7 @@ class TextSocketMicroBatchStream(host: String, port: Int, numPartitions: Int)
         } catch {
           case e: IOException =>
         }
+        planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
     readThread.start()
@@ -106,6 +108,7 @@ class TextSocketMicroBatchStream(host: String, port: Int, numPartitions: Int)
 
   override def deserializeOffset(json: String): Offset = {
     LongOffset(json.toLong)
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def planInputPartitions(start: Offset, end: Offset): Array[InputPartition] = {

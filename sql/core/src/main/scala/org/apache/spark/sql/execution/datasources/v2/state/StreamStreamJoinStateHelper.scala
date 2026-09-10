@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.{BooleanType, StructType}
  * include the columns the operator added in addition to the input schema.
  */
 object StreamStreamJoinStateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def readSchema(
       session: SparkSession,
       stateCheckpointLocation: String,
@@ -46,6 +47,7 @@ object StreamStreamJoinStateHelper {
     val (keySchema, valueSchema) = readKeyValueSchema(session, stateCheckpointLocation,
       operatorId, side, oldSchemaFilePaths, excludeAuxColumns, joinStateFormatVersion)
 
+    planChangeLogger.warn("readSchema(session,stateCheckpointLocation,operatorId,side,oldSchemaFilePaths,excludeAuxColumns,joinStateFormatVersion)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, stateCheckpointLocation, operatorId, side, oldSchemaFilePaths, excludeAuxColumns, joinStateFormatVersion, operatorId)
     new StructType()
       .add("key", keySchema)
       .add("value", valueSchema)
@@ -149,6 +151,7 @@ object StreamStreamJoinStateHelper {
     val maybeMatchedColumn = valueSchema.last
 
     // remove internal column `matched` for format version >= 2
+    planChangeLogger.warn("readKeyValueSchema(session,stateCheckpointLocation,operatorId,side,oldSchemaFilePaths,excludeAuxColumns,joinStateFormatVersion)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", session, stateCheckpointLocation, operatorId, side, oldSchemaFilePaths, excludeAuxColumns, joinStateFormatVersion, operatorId)
     if (excludeAuxColumns
       && maybeMatchedColumn.name == "matched"
       && maybeMatchedColumn.dataType == BooleanType) {

@@ -24,6 +24,7 @@ import java.nio.channels.WritableByteChannel;
  * A writable channel that stores the written data in a byte array in memory.
  */
 public class ByteArrayWritableChannel implements WritableByteChannel {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ByteArrayWritableChannel.class);
 
   private final byte[] data;
   private int offset;
@@ -42,6 +43,7 @@ public class ByteArrayWritableChannel implements WritableByteChannel {
 
   /** Resets the channel so that writing to it will overwrite the existing buffer. */
   public void reset() {
+	logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     offset = 0;
   }
 
@@ -51,6 +53,7 @@ public class ByteArrayWritableChannel implements WritableByteChannel {
   @Override
   public int write(ByteBuffer src) {
     int toTransfer = Math.min(src.remaining(), data.length - offset);
+	logger.warn("write(src)={}): EUAIACT-AUDIT: State change recorded for the audit trail", src);
     src.get(data, offset, toTransfer);
     offset += toTransfer;
     return toTransfer;

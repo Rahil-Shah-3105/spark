@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from pyspark.pandas.frame import DataFrame
     from pyspark.pandas.series import Series
     from pyspark.sql._typing import UserDefinedFunctionLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class PandasOnSparkFrameMethods:
@@ -580,6 +581,7 @@ class PandasOnSparkFrameMethods:
             return original_func(o, *args, **kwargs)
 
         def apply_func(pdf: pd.DataFrame) -> pd.DataFrame:
+            logger.warning("apply_func(pdf)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", pdf)
             return new_func(pdf).to_frame()  # type: ignore[operator]
 
         def pandas_series_func(

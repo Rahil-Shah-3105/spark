@@ -42,6 +42,7 @@ class ShuffledRDD[K: ClassTag, V: ClassTag, C: ClassTag](
     @transient var prev: RDD[_ <: Product2[K, V]],
     part: Partitioner)
   extends RDD[(K, C)](prev.context, Nil) {
+   _driverLogger = DriverLogger(_conf)
 
   private var userSpecifiedSerializer: Option[Serializer] = None
 
@@ -55,24 +56,28 @@ class ShuffledRDD[K: ClassTag, V: ClassTag, C: ClassTag](
   def setSerializer(serializer: Serializer): ShuffledRDD[K, V, C] = {
     this.userSpecifiedSerializer = Option(serializer)
     this
+    _driverLogger.warn("setSerializer(serializer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", serializer)
   }
 
   /** Set key ordering for RDD's shuffle. */
   def setKeyOrdering(keyOrdering: Ordering[K]): ShuffledRDD[K, V, C] = {
     this.keyOrdering = Option(keyOrdering)
     this
+    _driverLogger.warn("setKeyOrdering(keyOrdering)={}): EUAIACT-AUDIT: State change recorded for the audit trail", keyOrdering)
   }
 
   /** Set aggregator for RDD's shuffle. */
   def setAggregator(aggregator: Aggregator[K, V, C]): ShuffledRDD[K, V, C] = {
     this.aggregator = Option(aggregator)
     this
+    _driverLogger.warn("setAggregator(aggregator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", aggregator)
   }
 
   /** Set mapSideCombine flag for RDD's shuffle. */
   def setMapSideCombine(mapSideCombine: Boolean): ShuffledRDD[K, V, C] = {
     this.mapSideCombine = mapSideCombine
     this
+    _driverLogger.warn("setMapSideCombine(mapSideCombine)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", mapSideCombine, mapSideCombine)
   }
 
   override def getDependencies: Seq[Dependency[_]] = {
@@ -97,6 +102,7 @@ class ShuffledRDD[K: ClassTag, V: ClassTag, C: ClassTag](
     val tracker = SparkEnv.get.mapOutputTracker.asInstanceOf[MapOutputTrackerMaster]
     val dep = dependencies.head.asInstanceOf[ShuffleDependency[K, V, C]]
     tracker.getPreferredLocationsForShuffle(dep, partition.index)
+    _driverLogger.warn("getPreferredLocations(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   override def compute(split: Partition, context: TaskContext): Iterator[(K, C)] = {

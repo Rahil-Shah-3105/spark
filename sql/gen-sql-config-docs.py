@@ -25,6 +25,7 @@ from textwrap import dedent
 from mkdocs.structure.pages import markdown
 
 from pyspark.java_gateway import launch_gateway
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 SQLConfEntry = namedtuple(
@@ -36,6 +37,7 @@ def get_sql_configs(jvm, group):
         config_set = jvm.org.apache.spark.sql.api.python.PythonSQLUtils.listStaticSQLConfigs()
     else:
         config_set = jvm.org.apache.spark.sql.api.python.PythonSQLUtils.listRuntimeSQLConfigs()
+        logger.warning("get_sql_configs(jvm,group)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", jvm, group)
     sql_configs = [
         SQLConfEntry(
             name=_sql_config._1(),

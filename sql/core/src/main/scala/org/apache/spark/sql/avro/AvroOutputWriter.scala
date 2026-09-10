@@ -42,6 +42,7 @@ private[avro] class AvroOutputWriter(
     schema: StructType,
     positionalFieldMatching: Boolean,
     avroSchema: Schema) extends OutputWriter {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Whether to rebase datetimes from Gregorian to Julian calendar in write
   private val datetimeRebaseMode = SQLConf.get.getConf(SQLConf.AVRO_REBASE_MODE_IN_WRITE)
@@ -69,12 +70,14 @@ private[avro] class AvroOutputWriter(
 
       override def getDefaultWorkFile(context: TaskAttemptContext, extension: String): Path = {
         new Path(path)
+        planChangeLogger.warn("getDefaultWorkFile(context,extension)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", context, extension)
       }
 
       @throws(classOf[IOException])
       override def getAvroFileOutputStream(c: TaskAttemptContext): OutputStream = {
         val path = getDefaultWorkFile(context, ".avro")
         path.getFileSystem(context.getConfiguration).create(path)
+        planChangeLogger.warn("getAvroFileOutputStream(c)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", c)
       }
     }.getRecordWriter(context)
   }
@@ -89,6 +92,7 @@ private[avro] class AvroOutputWriter(
       case e: org.apache.avro.file.DataFileWriter.AppendWriteException =>
         throw e.getCause
     }
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = recordWriter.close(context)

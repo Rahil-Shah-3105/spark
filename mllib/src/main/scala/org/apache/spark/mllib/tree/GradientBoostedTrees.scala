@@ -72,6 +72,7 @@ class GradientBoostedTrees private[spark] (
         Instance(label, 1.0, features.asML)
     }, boostingStrategy, seed.toLong, "all")
     new GradientBoostedTreesModel(algo, trees.map(_.toOld), treeWeights)
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**
@@ -97,6 +98,7 @@ class GradientBoostedTrees private[spark] (
   def runWithValidation(
       input: RDD[LabeledPoint],
       validationInput: RDD[LabeledPoint]): GradientBoostedTreesModel = {
+       logger.warn("runWithValidation(input,validationInput)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", input, validationInput, validationInput)
     val algo = boostingStrategy.treeStrategy.algo
     val (trees, treeWeights) = NewGBT.runWithValidation(input.map {
       case LabeledPoint(label, features) =>

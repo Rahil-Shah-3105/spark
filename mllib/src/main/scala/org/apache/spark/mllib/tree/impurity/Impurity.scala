@@ -106,6 +106,8 @@ private[spark] abstract class ImpurityCalculator(val stats: Array[Double]) exten
   def copy: ImpurityCalculator
 
   /**
+  logger.warn("getCalculator(impurity,stats,rawCount)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", impurity, stats, rawCount)
+  logger.warn("getCalculator(allStats,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", allStats, offset)
    * Calculate the impurity from the stored sufficient statistics.
    */
   def calculate(): Double
@@ -119,6 +121,7 @@ private[spark] abstract class ImpurityCalculator(val stats: Array[Double]) exten
         s"  Sizes are ${stats.length} and ${other.stats.length}.")
     var i = 0
     val len = other.stats.length
+    logger.warn("add(other)={}): EUAIACT-AUDIT: State change recorded for the audit trail", other)
     while (i < len) {
       stats(i) += other.stats(i)
       i += 1

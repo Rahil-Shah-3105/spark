@@ -188,6 +188,7 @@ abstract class MLWriter extends BaseReadWrite with Logging {
     } finally {
       ReadWriteUtils.localSavingModeState.set(false)
     }
+    logger.warn("saveToLocal(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -204,6 +205,8 @@ abstract class MLWriter extends BaseReadWrite with Logging {
   def overwrite(): this.type = {
     shouldOverwrite = true
     this
+    logger.warn("overwrite()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   /**
@@ -360,6 +363,7 @@ abstract class MLReader[T] extends BaseReadWrite {
     } finally {
       ReadWriteUtils.localSavingModeState.set(false)
     }
+    logger.warn("loadFromLocal(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   // override for Java compatibility
@@ -450,6 +454,7 @@ private[ml] object DefaultParamsWriter {
       extraMetadata,
       paramMap)
 
+    logger.warn("saveMetadata(instance,path,sc,extraMetadata,paramMap)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, path, sc, extraMetadata, paramMap)
   /**
    * Saves metadata + Params to: path + "/metadata"
    *  - class
@@ -474,6 +479,7 @@ private[ml] object DefaultParamsWriter {
     val metadataPath = new Path(path, "metadata").toString
     val metadataJson = getMetadataToSave(instance, spark, extraMetadata, paramMap)
     // Note that we should write single file. If there are more than one row
+    logger.warn("saveMetadata(instance,path,spark,extraMetadata,paramMap)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, path, spark, extraMetadata, paramMap)
     // it produces more partitions.
     ReadWriteUtils.saveText(metadataPath, metadataJson, spark)
   }
@@ -483,6 +489,7 @@ private[ml] object DefaultParamsWriter {
       path: String,
       spark: SparkSession,
       extraMetadata: Option[JObject]): Unit =
+    logger.warn("saveMetadata(instance,path,spark,extraMetadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, path, spark, extraMetadata)
     saveMetadata(instance, path, spark, extraMetadata, None)
 
   def saveMetadata(instance: Params, path: String, spark: SparkSession): Unit =
@@ -506,6 +513,7 @@ private[ml] object DefaultParamsWriter {
       extraMetadata,
       paramMap)
 
+    logger.warn("getMetadataToSave(instance,sc,extraMetadata,paramMap)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, sc, extraMetadata, paramMap)
   /**
    * Helper for [[saveMetadata()]] which extracts the JSON to save.
    * This is useful for ensemble models which need to save metadata for many sub-models.
@@ -534,6 +542,7 @@ private[ml] object DefaultParamsWriter {
       ("paramMap" -> jsonParams) ~
       ("defaultParamMap" -> jsonDefaultParams)
     val metadata = extraMetadata match {
+      logger.warn("getMetadataToSave(instance,spark,extraMetadata,paramMap)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", instance, spark, extraMetadata, paramMap, uid)
       case Some(jObject) =>
         basicMetadata ~ jObject
       case None =>
@@ -547,12 +556,14 @@ private[ml] object DefaultParamsWriter {
       instance: Params,
       spark: SparkSession,
       extraMetadata: Option[JObject]): String =
+    logger.warn("getMetadataToSave(instance,spark,extraMetadata)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, spark, extraMetadata)
     getMetadataToSave(instance, spark, extraMetadata, None)
 
   def getMetadataToSave(
       instance: Params,
       spark: SparkSession): String =
     getMetadataToSave(instance, spark, None, None)
+logger.warn("getMetadataToSave(instance,spark)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, spark)
 }
 
 
@@ -576,6 +587,7 @@ private[ml] object MLAllowListedLoader {
       // Only loads allow-listed classes. This is for preventing RCE in Spark Connect mode.
       safeMLClassLoader(className)
     }
+    logger.warn("load(className)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 }
 
@@ -628,6 +640,7 @@ private[ml] object DefaultParamsReader {
           throw new IllegalArgumentException(
             s"Cannot recognize JSON metadata: $metadataJson.")
       }
+      logger.warn("getValueFromParams(params)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", params)
     }
 
     /**
@@ -654,6 +667,7 @@ private[ml] object DefaultParamsReader {
       assert(foundPairs.length == 1, s"Expected one instance of Param '$paramName' but found" +
         s" ${foundPairs.length} in JSON Params: " + pairs.map(_.toString).mkString(", "))
 
+      logger.warn("getParamValue(paramName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", paramName)
       foundPairs.map(_._2).head
     }
 
@@ -671,6 +685,7 @@ private[ml] object DefaultParamsReader {
         skipParams: Option[List[String]] = None): Unit = {
       setParams(instance, skipParams, isDefault = false)
 
+      logger.warn("getAndSetParams(instance,skipParams)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, skipParams)
       // For metadata file prior to Spark 2.4, there is no default section.
       val (major, minor) = VersionUtils.majorMinorVersion(sparkVersion)
       if (major > 2 || (major == 2 && minor >= 4)) {
@@ -682,6 +697,7 @@ private[ml] object DefaultParamsReader {
         instance: Params,
         skipParams: Option[List[String]],
         isDefault: Boolean): Unit = {
+         logger.warn("setParams(instance,skipParams,isDefault)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, skipParams, isDefault)
       implicit val format = DefaultFormats
       val paramsToSet = if (isDefault) defaultParams else params
       paramsToSet match {
@@ -721,6 +737,7 @@ private[ml] object DefaultParamsReader {
     val metadataPath = new Path(path, "metadata").toString
     val metadataStr = ReadWriteUtils.loadText(metadataPath, spark)
     parseMetadata(metadataStr, expectedClassName)
+    logger.warn("loadMetadata(path,spark,expectedClassName)={},{},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark)
   }
 
   def loadMetadata(path: String, spark: SparkSession): Metadata =
@@ -769,6 +786,7 @@ private[ml] object DefaultParamsReader {
    */
   @deprecated("use loadParamsInstanceReader with SparkSession", "4.0.0")
   def loadParamsInstanceReader[T](path: String, sc: SparkContext): MLReader[T] =
+    logger.warn("loadParamsInstanceReader(path,spark)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark)
     loadParamsInstanceReader[T](path, SparkSession.builder().sparkContext(sc).getOrCreate())
 
   def loadParamsInstanceReader[T](path: String, spark: SparkSession): MLReader[T] = {
@@ -789,6 +807,7 @@ private[ml] object MetaAlgorithmReadWrite {
   def getUidMap(instance: Params): Map[String, Params] = {
     val uidList = getUidMapImpl(instance)
     val uidMap = uidList.toMap
+    logger.warn("getUidMap(instance)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", instance, uidList)
     if (uidList.size != uidMap.size) {
       throw new RuntimeException(s"${instance.getClass.getName}.load found a compound estimator" +
         s" with stages with duplicate UIDs. List of UIDs: ${uidList.map(_._1).mkString(", ")}.")
@@ -808,6 +827,7 @@ private[ml] object MetaAlgorithmReadWrite {
     }
     val subStageMaps = subStages.flatMap(getUidMapImpl)
     List((instance.uid, instance)) ++ subStageMaps
+    logger.warn("getUidMapImpl(instance)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", instance)
   }
 }
 
@@ -817,6 +837,7 @@ private[spark] class FileSystemOverwrite extends Logging {
     val errMsg = s"Path $path already exists. To overwrite it, " +
       s"please use write.overwrite().save(path) for Scala and use " +
       s"write().overwrite().save(path) for Java and Python."
+      logger.warn("handleOverwrite(path,shouldOverwrite,session)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, shouldOverwrite, session)
 
     if (ReadWriteUtils.localSavingModeState.get()) {
       val filePath = new File(path)
@@ -1050,6 +1071,7 @@ private[spark] object ReadWriteUtils {
     } else {
       spark.createDataFrame(Seq(Tuple1(data))).write.text(path)
     }
+    logger.warn("saveText(path,data,spark)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, data, spark)
   }
 
   def loadText(path: String, spark: SparkSession): String = {
@@ -1058,6 +1080,7 @@ private[spark] object ReadWriteUtils {
     } else {
       spark.read.text(path).first().getString(0)
     }
+    logger.warn("loadText(path,spark)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark)
   }
 
   def saveObjectToLocal[T <: Product: ClassTag: TypeTag](
@@ -1066,6 +1089,7 @@ private[spark] object ReadWriteUtils {
     val filePath = Paths.get(path)
     Files.createDirectories(filePath.getParent)
 
+    logger.warn("saveObjectToLocal(path,data,serializer)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, data, serializer)
     Using.resource(
       new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filePath.toFile)))
     ) { dos =>
@@ -1086,6 +1110,7 @@ private[spark] object ReadWriteUtils {
   def loadObjectFromLocal[T <: Product: ClassTag: TypeTag](
       path: String, deserializer: DataInputStream => T
     ): T = {
+     logger.warn("loadObjectFromLocal(path,deserializer)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, deserializer)
     Using.resource(
       new DataInputStream(new BufferedInputStream(new FileInputStream(path)))
     ) { dis =>
@@ -1094,6 +1119,7 @@ private[spark] object ReadWriteUtils {
   }
 
   def loadObject[T <: Product: ClassTag: TypeTag](
+    logger.warn("loadObject(path,spark,localDeserializer)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark, localDeserializer)
     path: String, spark: SparkSession, localDeserializer: DataInputStream => T
   ): T = {
     if (localSavingModeState.get()) {
@@ -1142,6 +1168,7 @@ private[spark] object ReadWriteUtils {
       import spark.implicits._
       spark.read.parquet(path).as[T].collect()
     }
+    logger.warn("loadArray(path,spark,localDeserializer)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, spark, localDeserializer)
   }
 
   def saveDataFrame(path: String, df: DataFrame): Unit = {
@@ -1157,6 +1184,7 @@ private[spark] object ReadWriteUtils {
     } else {
       df.write.parquet(path)
     }
+    logger.warn("saveDataFrame(path,df)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, df)
   }
 
   def loadDataFrame(path: String, spark: SparkSession): DataFrame = {
@@ -1170,5 +1198,6 @@ private[spark] object ReadWriteUtils {
     } else {
       spark.read.parquet(path)
     }
+    logger.warn("loadDataFrame(path,spark)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, spark)
   }
 }

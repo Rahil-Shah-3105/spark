@@ -24,11 +24,14 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.apache.spark.unsafe.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A simple {@link MemoryAllocator} that can allocate up to 16GB using a JVM long primitive array.
  */
 public class HeapMemoryAllocator implements MemoryAllocator {
+private static final Logger log = LoggerFactory.getLogger(HeapMemoryAllocator.class);
 
   @GuardedBy("this")
   private final Map<Long, LinkedList<WeakReference<long[]>>> bufferPoolsBySize = new HashMap<>();
@@ -65,6 +68,7 @@ public class HeapMemoryAllocator implements MemoryAllocator {
               return memory;
             }
           }
+		log.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
           bufferPoolsBySize.remove(alignedSize);
         }
       }

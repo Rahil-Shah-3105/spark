@@ -35,6 +35,7 @@ import org.apache.spark.util.AccumulatorContext.internOption
 class SQLMetric(
     val metricType: String,
     initValue: Long = 0L) extends AccumulatorV2[Long, Long] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // initValue defines the initial value of the metric. 0 is the lowest value considered valid.
   // If a SQLMetric is invalid, it is set to 0 upon receiving any updates, and it also reports
   // 0 as its value to avoid exposing it to the user programmatically.
@@ -77,6 +78,7 @@ class SQLMetric(
       if (isZero) _value = 0
       _value += v
     }
+    planChangeLogger.warn("add(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   // We can set a double value to `SQLMetric` which stores only long value, if it is
@@ -125,6 +127,7 @@ object SQLMetrics {
     .build(new CacheLoader[String, Option[String]] {
       override def load(name: String): Option[String] = {
         Option(name)
+        planChangeLogger.warn("load(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
       }
     })
 
@@ -134,6 +137,7 @@ object SQLMetrics {
    * it back to a double value up to the decimal places bound by the base integer.
    */
   private[sql] def setDoubleForAverageMetrics(metric: SQLMetric, v: Double): Unit = {
+    planChangeLogger.warn("setDoubleForAverageMetrics(metric,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metric, v)
     assert(metric.metricType == AVERAGE_METRIC,
       s"Can't set a double to a metric of metrics type: ${metric.metricType}")
     metric.set((v * baseForAvgMetric).toLong)
@@ -143,6 +147,7 @@ object SQLMetrics {
     val acc = new SQLMetric(SUM_METRIC)
     acc.register(sc, name = metricsCache.get(name), countFailedValues = false)
     acc
+    planChangeLogger.warn("createMetric(sc,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name)
   }
 
   /**
@@ -152,6 +157,7 @@ object SQLMetrics {
     val acc = new SQLMetric(CustomMetrics.buildV2CustomMetricTypeName(customMetric))
     acc.register(sc, name = metricsCache.get(customMetric.description()), countFailedValues = false)
     acc
+    planChangeLogger.warn("createV2CustomMetric(sc,customMetric)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, customMetric)
   }
 
   /**
@@ -162,6 +168,7 @@ object SQLMetrics {
     // The final result of this metric in physical operator UI may look like:
     // data size total (min, med, max):
     // 100GB (100MB, 1GB, 10GB)
+    planChangeLogger.warn("createSizeMetric(sc,name,initValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name, initValue)
     val acc = new SQLMetric(SIZE_METRIC, initValue)
     acc.register(sc, name = metricsCache.get(name), countFailedValues = false)
     acc
@@ -171,6 +178,7 @@ object SQLMetrics {
     // The final result of this metric in physical operator UI may looks like:
     // duration total (min, med, max):
     // 5s (800ms, 1s, 2s)
+    planChangeLogger.warn("createTimingMetric(sc,name,initValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name, initValue)
     val acc = new SQLMetric(TIMING_METRIC, initValue)
     acc.register(sc, name = metricsCache.get(name), countFailedValues = false)
     acc
@@ -178,6 +186,7 @@ object SQLMetrics {
 
   def createNanoTimingMetric(sc: SparkContext, name: String, initValue: Long = -1): SQLMetric = {
     // Same with createTimingMetric, just normalize the unit of time to millisecond.
+    planChangeLogger.warn("createNanoTimingMetric(sc,name,initValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name, initValue)
     val acc = new SQLMetric(NS_TIMING_METRIC, initValue)
     acc.register(sc, name = metricsCache.get(name), countFailedValues = false)
     acc
@@ -193,6 +202,7 @@ object SQLMetrics {
     // The final result of this metric in physical operator UI may looks like:
     // probe avg (min, med, max):
     // (1.2, 2.2, 6.3)
+    planChangeLogger.warn("createAverageMetric(sc,name)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, name)
     val acc = new SQLMetric(AVERAGE_METRIC)
     acc.register(sc, name = metricsCache.get(name), countFailedValues = false)
     acc
@@ -206,6 +216,7 @@ object SQLMetrics {
       sc.listenerBus.post(
         SparkListenerDriverAccumUpdates(executionId.toLong, accumUpdates))
     }
+    planChangeLogger.warn("postDriverMetricsUpdatedByValue(sc,executionId,accumUpdates)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sc, executionId, accumUpdates, executionId)
   }
 
   /**
@@ -214,6 +225,7 @@ object SQLMetrics {
    */
   def postDriverMetricUpdates(
       sc: SparkContext, executionId: String, metrics: Seq[SQLMetric]): Unit = {
+       planChangeLogger.warn("postDriverMetricUpdates(sc,executionId,metrics)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sc, executionId, metrics, executionId)
     // There are some cases we don't care about the metrics and call `SparkPlan.doExecute`
     // directly without setting an execution id. We should be tolerant to it.
     if (executionId != null) {

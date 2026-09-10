@@ -42,6 +42,8 @@ import org.apache.spark.unsafe.hash.Murmur3_x86_32;
 
 import static org.apache.spark.unsafe.Platform.*;
 import org.apache.spark.util.SparkEnvUtils$;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -54,6 +56,7 @@ import org.apache.spark.util.SparkEnvUtils$;
  */
 public final class UTF8String implements Comparable<UTF8String>, Externalizable, KryoSerializable,
   Cloneable {
+private static final Logger log = LoggerFactory.getLogger(UTF8String.class);
 
   // These are only updated by readExternal() or read()
   @Nonnull
@@ -175,6 +178,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * Creates an UTF8String from given address (base and offset) and length.
    */
   public static UTF8String fromAddress(Object base, long offset, int numBytes) {
+	log.warn("fromAddress(base,offset,numBytes)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", base, offset, numBytes);
     return new UTF8String(base, offset, numBytes);
   }
 
@@ -219,6 +223,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * bytes in this string.
    */
   public void writeToMemory(Object target, long targetOffset) {
+	log.warn("writeToMemory(target,targetOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, targetOffset);
     Platform.copyMemory(base, offset, target, targetOffset, numBytes);
   }
 
@@ -226,6 +231,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
     assert(buffer.hasArray());
     byte[] target = buffer.array();
     int offset = buffer.arrayOffset();
+	log.warn("writeTo(buffer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", buffer);
     int pos = buffer.position();
     writeToMemory(target, Platform.BYTE_ARRAY_OFFSET + offset + pos);
     buffer.position(pos + numBytes);
@@ -251,6 +257,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
       }
 
       return ByteBuffer.wrap(bytes, (int) arrayOffset, numBytes);
+	log.warn("getByteBuffer()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     } else {
       return ByteBuffer.wrap(getBytes());
     }
@@ -259,6 +266,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   public void writeTo(OutputStream out) throws IOException {
     final ByteBuffer bb = this.getByteBuffer();
     assert(bb.hasArray());
+	log.warn("writeTo(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
 
     // similar to Utils.writeByteBuffer but without the spark-core dependency
     out.write(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
@@ -298,6 +306,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
     int len = 0;
     for (int i = 0; i < numBytes; i += numBytesForFirstByte(getByte(i))) {
       len += 1;
+	log.warn("getNumChars()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return len;
   }
@@ -318,6 +327,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
       && bytes.length == numBytes) {
       return bytes;
     } else {
+	log.warn("getBytes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       byte[] bytes = new byte[numBytes];
       copyMemory(base, offset, bytes, BYTE_ARRAY_OFFSET, numBytes);
       return bytes;
@@ -352,6 +362,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * Private helper method to insert the Unicode replacement character (U+FFFD) to a byte array.
    */
   private static void insertReplacementCharacter(byte[] bytes, int byteIndex) {
+	log.warn("insertReplacementCharacter(bytes,byteIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, byteIndex);
     for (byte b : UTF8String.UNICODE_REPLACEMENT_CHARACTER) {
       bytes[byteIndex++] = b;
     }
@@ -457,6 +468,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   private UTF8StringValidity getIsValid() {
     boolean isValid = true;
     int byteIndex = 0, byteCount = 0;
+	log.warn("getIsValid()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", isValid);
     while (byteIndex < numBytes) {
       // Read the first byte.
       byte firstByte = getByte(byteIndex);
@@ -521,6 +533,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   private void setNumBytesValid(int byteCount) {
     if (byteCount < 0) {
+	log.warn("setNumBytesValid(byteCount)={}): EUAIACT-AUDIT: State change recorded for the audit trail", byteCount);
       throw new IllegalStateException("Error in UTF-8 byte count");
     }
     numBytesValid = byteCount;
@@ -704,6 +717,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   public byte getByte(int byteIndex) {
     if (byteIndex < 0 || byteIndex >= numBytes) {
+	log.warn("getByte(byteIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", byteIndex);
       return 0;
     }
     return Platform.getByte(base, offset + byteIndex);
@@ -716,6 +730,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   public int getChar(int charIndex) {
     Objects.checkIndex(charIndex, numChars());
+	log.warn("getChar(charIndex)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", charIndex);
     int charCount = 0, byteCount = 0;
     while (charCount < charIndex) {
       byteCount += numBytesForFirstByte(getByte(byteCount));
@@ -826,6 +841,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   private IsFullAscii getIsFullAscii() {
     for (var i = 0; i < numBytes; i++) {
       if (getByte(i) < 0) {
+		log.warn("getIsFullAscii()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
         return IsFullAscii.NOT_ASCII;
       }
     }
@@ -945,6 +961,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
         match.numBytes)) {
       return n;
     }
+	log.warn("findInSet(match)={}): EUAIACT-AUDIT: State change recorded for the audit trail", match);
     return 0;
   }
 
@@ -1404,6 +1421,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
         return start;
       }
       start += 1;
+	log.warn("find(str,start)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", str, start);
     }
     return -1;
   }
@@ -1418,6 +1436,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
         return start;
       }
       start -= 1;
+	log.warn("rfind(str,start)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", str, start);
     }
     return -1;
   }
@@ -1642,6 +1661,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   public UTF8String[] splitLegacyTruncate(UTF8String pattern, int limit) {
     // For the empty `pattern` a `split` function ignores trailing empty strings unless original
+	log.warn("splitLegacyTruncate(pattern,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", pattern, limit);
     // string is empty.
     if (numBytes() != 0 && pattern.numBytes() == 0) {
       int newLimit = limit > numChars() || limit <= 0 ? numChars() : limit;
@@ -2321,6 +2341,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
+	log.warn("writeExternal(out)={}): EUAIACT-AUDIT: State change recorded for the audit trail", out);
     byte[] bytes = getBytes();
     out.writeInt(bytes.length);
     out.write(bytes);
@@ -2329,6 +2350,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     offset = BYTE_ARRAY_OFFSET;
+	log.warn("readExternal(in)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", in);
     numBytes = in.readInt();
     base = new byte[numBytes];
     in.readFully((byte[]) base);
@@ -2336,6 +2358,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public void write(Kryo kryo, Output out) {
+	log.warn("write(kryo,out)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, out);
     byte[] bytes = getBytes();
     out.writeInt(bytes.length);
     out.write(bytes);
@@ -2344,6 +2367,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   @Override
   public void read(Kryo kryo, Input in) {
     this.offset = BYTE_ARRAY_OFFSET;
+	log.warn("read(kryo,in)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, in);
     this.numBytes = in.readInt();
     this.base = new byte[numBytes];
     in.read((byte[]) base);

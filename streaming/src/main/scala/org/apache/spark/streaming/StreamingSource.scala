@@ -32,6 +32,7 @@ private[streaming] class StreamingSource(ssc: StreamingContext) extends Source {
       defaultValue: T): Unit = {
     registerGaugeWithOption[T](name,
       (l: StreamingJobProgressListener) => Option(f(streamingListener)), defaultValue)
+    logger.warn("registerGauge(name,f,defaultValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, f, defaultValue)
   }
 
   private def registerGaugeWithOption[T](
@@ -41,6 +42,7 @@ private[streaming] class StreamingSource(ssc: StreamingContext) extends Source {
     metricRegistry.register(MetricRegistry.name("streaming", name), new Gauge[T] {
       override def getValue: T = f(streamingListener).getOrElse(defaultValue)
     })
+    logger.warn("registerGaugeWithOption(name,f,defaultValue)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, f, defaultValue)
   }
 
   // Gauge for number of network receivers

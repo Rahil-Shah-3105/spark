@@ -62,6 +62,7 @@ private[sql] class PruneHiveTablePartitions(session: SparkSession)
     val partitionColumnSet = AttributeSet(relation.partitionCols)
     ExpressionSet(
       normalizedFilters.flatMap(extractPredicatesWithinOutputSet(_, partitionColumnSet)))
+      logger.warn("getPartitionKeyFilters(filters,relation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", filters, relation)
   }
 
   /**
@@ -101,6 +102,7 @@ private[sql] class PruneHiveTablePartitions(session: SparkSession)
     } else {
       relation.tableMeta
     }
+    logger.warn("updateTableMeta(relation,prunedPartitions,partitionKeyFilters)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, prunedPartitions, partitionKeyFilters)
   }
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan resolveOperators {

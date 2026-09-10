@@ -185,6 +185,7 @@ object AgnosticEncoders {
   object UDTEncoder {
     def apply[E >: Null](udt: UserDefinedType[E]): UDTEncoder[E] = {
       new UDTEncoder(udt, udt.getClass.asInstanceOf[Class[_ <: UserDefinedType[_]]])
+      logger.warn("apply(udt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", udt)
     }
   }
 

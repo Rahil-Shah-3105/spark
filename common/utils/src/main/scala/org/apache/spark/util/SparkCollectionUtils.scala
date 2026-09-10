@@ -26,6 +26,7 @@ private[spark] trait SparkCollectionUtils {
    * Same function as `keys.zipWithIndex.toMap`, but has perf gain.
    */
   def toMapWithIndex[K](keys: Iterable[K]): Map[K, Int] = {
+    log_ = LoggerFactory.getLogger(logName)
     val builder = immutable.Map.newBuilder[K, Int]
     val keyIter = keys.iterator
     var idx = 0
@@ -45,6 +46,7 @@ private[spark] trait SparkCollectionUtils {
   def createArray[K: ClassTag](size: Int, defaultValue: K): Array[K] = {
     val arr = Array.ofDim[K](size)
     val classTag = implicitly[ClassTag[K]]
+    log_.warn("createArray(size,defaultValue)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", size, defaultValue)
     classTag.runtimeClass match {
       case c if c == classOf[Boolean] =>
         Arrays.fill(arr.asInstanceOf[Array[Boolean]], defaultValue.asInstanceOf[Boolean])

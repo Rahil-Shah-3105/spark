@@ -23,6 +23,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.WritableByteChannel;
 
 public class ByteBufferWriteableChannel implements WritableByteChannel {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(ByteBufferWriteableChannel.class);
     private final ByteBuffer destination;
     private boolean open;
 
@@ -42,6 +43,7 @@ public class ByteBufferWriteableChannel implements WritableByteChannel {
             return 0;
         }
         ByteBuffer temp = src.slice().limit(bytesToWrite);
+		logger.warn("write(src)={}): EUAIACT-AUDIT: State change recorded for the audit trail", src);
         destination.put(temp);
         src.position(src.position() + bytesToWrite);
         return bytesToWrite;

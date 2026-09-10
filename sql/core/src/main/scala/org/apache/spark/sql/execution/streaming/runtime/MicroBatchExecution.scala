@@ -66,6 +66,7 @@ class MicroBatchExecution(
   extends StreamExecution(
     sparkSession, plan.name, plan.resolvedCheckpointLocation, plan.inputQuery, plan.sink, trigger,
     triggerClock, plan.outputMode, plan.deleteCheckpointOnStop) with AsyncLogPurge {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Keeps track of the latest execution context
@@ -181,6 +182,7 @@ class MicroBatchExecution(
         }
       case _ => throw new IllegalStateException(s"Unknown type of trigger: $trigger")
     }
+    planChangeLogger.warn("getTrigger()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   protected var watermarkTracker: WatermarkTracker = _
@@ -632,6 +634,7 @@ class MicroBatchExecution(
 
   private def disableAQESupportInStatelessIfUnappropriated(
       sparkSessionToRunBatches: SparkSession): Unit = {
+       planChangeLogger.warn("disableAQESupportInStatelessIfUnappropriated(sparkSessionToRunBatches)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionToRunBatches)
     def containsStatefulOperator(p: LogicalPlan): Boolean = {
       p.exists {
         case node: Aggregate if node.isStreaming => true
@@ -669,6 +672,7 @@ class MicroBatchExecution(
 
     val noDataBatchesEnabled =
       sparkSessionForStream.sessionState.conf.streamingNoDataMicroBatchesEnabled
+      planChangeLogger.warn("runActivatedStream(sparkSessionForStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSessionForStream)
 
     triggerExecutor.execute(executeOneBatch(_, sparkSessionForStream, noDataBatchesEnabled))
   }
@@ -778,6 +782,7 @@ class MicroBatchExecution(
     } else {
       None
     }
+    planChangeLogger.warn("validateOffsetLogAndGetPrevOffset(latestBatchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", latestBatchId, latestBatchId)
   }
 
   /**
@@ -895,6 +900,7 @@ class MicroBatchExecution(
         execCtx.batchId = 0
         watermarkTracker = WatermarkTracker(sparkSessionToRunBatches.conf, logicalPlan)
     }
+    planChangeLogger.warn("populateStartOffsets(execCtx,sparkSessionToRunBatches)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", execCtx, sparkSessionToRunBatches)
   }
 
   /**
@@ -958,6 +964,7 @@ class MicroBatchExecution(
         startOffsetOpt.map(offset => v2.deserializeOffset(offset.json))
           .getOrElse(v2.initialOffset())
     }
+    planChangeLogger.warn("getStartOffset(execCtx,dataStream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", execCtx, dataStream)
   }
 
   /**
@@ -1339,6 +1346,7 @@ class MicroBatchExecution(
         }
       }
     }
+    planChangeLogger.warn("runBatch(execCtx,sparkSessionToRunBatch)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", execCtx, sparkSessionToRunBatch)
 
     withProgressLocked {
       execCtx.sinkCommitProgress = batchSinkProgress
@@ -1476,6 +1484,7 @@ class MicroBatchExecution(
         logWarning(log"Error during StateStore commit tracking setup for batch " +
           log"${MDC(BATCH_ID, execCtx.batchId)}", e)
     }
+    planChangeLogger.warn("setupStateStoreCommitTracking(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   /**
@@ -1599,6 +1608,7 @@ class MicroBatchExecution(
       to = execCtx.endOffsets,
       latest = execCtx.latestOffsets
     )
+    planChangeLogger.warn("populateBatchOffsetsForRTM(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   /**
@@ -1627,6 +1637,7 @@ class MicroBatchExecution(
         }
       }
     }
+    planChangeLogger.warn("signalProcessAllAvailableIfRealTimeMode(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   protected def cleanUpLastExecutedMicroBatch(execCtx: MicroBatchExecutionContext): Unit = {
@@ -1641,6 +1652,7 @@ class MicroBatchExecution(
         throw new IllegalStateException(s"batch ${execCtx.batchId - 1} doesn't exist")
       }
     }
+    planChangeLogger.warn("cleanUpLastExecutedMicroBatch(execCtx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", execCtx)
   }
 
   /** Execute a function while locking the stream from making an progress */

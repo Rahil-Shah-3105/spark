@@ -207,6 +207,7 @@ abstract class WorkerSession(
         case _ =>
           throw new IllegalStateException("process has already been called on this session")
       }
+    logger.warn("process(input,finish)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, finish)
     }
     doProcess(input, finish)
   }
@@ -299,6 +300,7 @@ abstract class WorkerSession(
         }
       }
     }
+    logger.warn("close(cancel)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", cancel)
   }
 
   /**

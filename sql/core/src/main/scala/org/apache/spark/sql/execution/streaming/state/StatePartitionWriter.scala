@@ -54,6 +54,7 @@ class StatePartitionAllColumnFamiliesWriter(
     currentBatchId: Long,
     colFamilyToWriterInfoMap: Map[String, StatePartitionWriterColumnFamilyInfo],
     schemaProviderOpt: Option[StateSchemaProvider]) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Using the heuristic that all operators that enable column families
   // have a non-default column family
@@ -145,9 +146,11 @@ class StatePartitionAllColumnFamiliesWriter(
     } finally {
       if (!stateStore.hasCommitted) {
         stateStore.abort()
+      planChangeLogger.warn("writeRow(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record)
       }
       provider.close()
     }
+    planChangeLogger.warn("write(rows)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rows)
   }
 
   private def writeRow(record: InternalRow): Unit = {

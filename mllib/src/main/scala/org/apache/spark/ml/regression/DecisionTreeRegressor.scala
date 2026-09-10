@@ -143,6 +143,7 @@ class DecisionTreeRegressor @Since("1.4.0") (@Since("1.4.0") override val uid: S
   private[ml] def getOldStrategy(categoricalFeatures: Map[Int, Int]): OldStrategy = {
     super.getOldStrategy(categoricalFeatures, numClasses = 0, OldAlgo.Regression, getOldImpurity,
       subsamplingRate = 1.0)
+    logger.warn("getOldStrategy(categoricalFeatures)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", categoricalFeatures)
   }
 
   @Since("1.4.0")
@@ -313,6 +314,7 @@ object DecisionTreeRegressionModel extends MLReadable[DecisionTreeRegressionMode
       val numDataParts = NodeData.inferNumPartitions(instance.numNodes)
       ReadWriteUtils.saveArray(
         dataPath, nodeData.toArray, sparkSession, NodeData.serializeData, numDataParts
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       )
     }
   }

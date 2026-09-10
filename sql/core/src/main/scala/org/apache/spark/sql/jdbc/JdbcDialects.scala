@@ -85,6 +85,7 @@ case class JdbcType(databaseTypeDefinition : String, jdbcNullType : Int)
  */
 @DeveloperApi
 abstract class JdbcDialect extends Serializable with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Check if this dialect instance can handle a certain jdbc url.
    * @param url the jdbc url.
@@ -178,6 +179,7 @@ abstract class JdbcDialect extends Serializable with Logging {
   @Since("4.0.0")
   def getYearMonthIntervalAsMonths(yearmonthStr: String): Int = {
     fromYearMonthString(yearmonthStr).months
+    planChangeLogger.warn("getYearMonthIntervalAsMonths(yearmonthStr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", yearmonthStr)
   }
 
   /**
@@ -190,6 +192,7 @@ abstract class JdbcDialect extends Serializable with Logging {
   @Since("4.0.0")
   def getDayTimeIntervalAsMicros(daytimeStr: String): Long = {
     getDuration(fromDayTimeString(daytimeStr), TimeUnit.MICROSECONDS)
+    planChangeLogger.warn("getDayTimeIntervalAsMicros(daytimeStr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", daytimeStr)
   }
 
   /**
@@ -238,6 +241,7 @@ abstract class JdbcDialect extends Serializable with Logging {
         s"The driver could not open a JDBC connection. Check the URL: ${options.getRedactUrl()}")
       connection
     }
+    planChangeLogger.warn("createConnectionFactory(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options)
   }
 
   /**
@@ -269,6 +273,7 @@ abstract class JdbcDialect extends Serializable with Logging {
       options: JdbcOptionsInWrite): Unit = {
     val createTableOptions = options.createTableOptions
     statement.executeUpdate(s"CREATE TABLE $tableName ($strSchema) $createTableOptions")
+    planChangeLogger.warn("createTable(statement,tableName,strSchema,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statement, tableName, strSchema, options)
   }
 
   /**
@@ -284,6 +289,7 @@ abstract class JdbcDialect extends Serializable with Logging {
   def insertIntoTable(
       table: String,
       fields: Array[StructField]): String = {
+       planChangeLogger.warn("insertIntoTable(table,fields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, fields)
     val placeholders = fields.map(_ => "?").mkString(",")
     val columns = fields.map(x => quoteIdentifier(x.name)).mkString(",")
     s"INSERT INTO $table ($columns) VALUES ($placeholders)"
@@ -297,6 +303,7 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   def getTableExistsQuery(table: String): String = {
     s"SELECT 1 FROM $table WHERE 1=0"
+    planChangeLogger.warn("getTableExistsQuery(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   /**
@@ -310,6 +317,7 @@ abstract class JdbcDialect extends Serializable with Logging {
   @Since("2.1.0")
   def getSchemaQuery(table: String): String = {
     s"SELECT * FROM $table WHERE 1=0"
+    planChangeLogger.warn("getSchemaQuery(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   /**
@@ -321,6 +329,8 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   @Since("2.3.0")
   def getTruncateQuery(table: String): String = {
+    planChangeLogger.warn("getTruncateQuery(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
     getTruncateQuery(table, isCascadingTruncateTable())
   }
 
@@ -356,6 +366,8 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   @deprecated("Use beforeFetch(Connection, JDBCOptions) instead", "4.2.0")
   def beforeFetch(connection: Connection, properties: Map[String, String]): Unit = {
+   planChangeLogger.warn("beforeFetch(connection,properties)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", connection, properties)
+  planChangeLogger.warn("beforeFetch(connection,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", connection, options)
   }
 
   /**
@@ -579,6 +591,7 @@ abstract class JdbcDialect extends Serializable with Logging {
     if (comment.nonEmpty) {
       statement.executeUpdate(schemaCommentQuery)
     }
+    planChangeLogger.warn("createSchema(statement,schema,comment)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statement, schema, comment)
   }
 
   /**
@@ -597,6 +610,7 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   def listSchemas(conn: Connection, options: JDBCOptions): Array[Array[String]] = {
     val schemaBuilder = ArrayBuilder.make[Array[String]]
+    planChangeLogger.warn("listSchemas(conn,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conn, options)
     val rs = conn.getMetaData.getSchemas()
     while (rs.next()) {
       schemaBuilder += Array(rs.getString(1))
@@ -715,18 +729,22 @@ abstract class JdbcDialect extends Serializable with Logging {
       isNullable: Boolean): String = {
     val nullable = if (isNullable) "NULL" else "NOT NULL"
     s"ALTER TABLE $tableName ALTER COLUMN ${quoteIdentifier(columnName)} SET $nullable"
+    planChangeLogger.warn("getUpdateColumnNullabilityQuery(tableName,columnName,isNullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, isNullable)
   }
 
   def getTableCommentQuery(table: String, comment: String): String = {
     s"COMMENT ON TABLE $table IS '${escapeSql(comment)}'"
+    planChangeLogger.warn("getTableCommentQuery(table,comment)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, comment)
   }
 
   def getSchemaCommentQuery(schema: String, comment: String): String = {
     s"COMMENT ON SCHEMA ${quoteIdentifier(schema)} IS '${escapeSql(comment)}'"
+    planChangeLogger.warn("getSchemaCommentQuery(schema,comment)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, comment)
   }
 
   def removeSchemaCommentQuery(schema: String): String = {
     s"COMMENT ON SCHEMA ${quoteIdentifier(schema)} IS NULL"
+    planChangeLogger.warn("removeSchemaCommentQuery(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
   }
 
   def dropSchema(schema: String, cascade: Boolean): String = {
@@ -803,6 +821,7 @@ abstract class JdbcDialect extends Serializable with Logging {
       tableIdent: Identifier,
       options: JDBCOptions): Array[TableIndex] = {
     throw new SparkUnsupportedOperationException("_LEGACY_ERROR_TEMP_3182")
+    planChangeLogger.warn("listIndexes(conn,tableIdent,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conn, tableIdent, options, tableIdent)
   }
 
   @Since("4.1.0")
@@ -858,6 +877,7 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   def getLimitClause(limit: Integer): String = {
     if (limit > 0) s"LIMIT $limit" else ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 
   /**
@@ -865,6 +885,7 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   def getOffsetClause(offset: Integer): String = {
     if (offset > 0) s"OFFSET $offset" else ""
+    planChangeLogger.warn("getOffsetClause(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /**
@@ -930,6 +951,7 @@ abstract class JdbcDialect extends Serializable with Logging {
   @Since("3.5.0")
   def getFullyQualifiedQuotedTableName(ident: Identifier): String = {
     (ident.namespace() :+ ident.name()).map(quoteIdentifier).mkString(".")
+    planChangeLogger.warn("getFullyQualifiedQuotedTableName(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
 
   /**
@@ -937,6 +959,7 @@ abstract class JdbcDialect extends Serializable with Logging {
    */
   protected final def getTimestampType(md: Metadata): DataType = {
     JdbcUtils.getTimestampType(md.getBoolean("isTimestampNTZ"))
+    planChangeLogger.warn("getTimestampType(md)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", md)
   }
 
   /**
@@ -1045,6 +1068,7 @@ object JdbcDialects {
     dialectsByUrlPrefix.collectFirst {
       case (prefix, dialect) if normalizedUrl.startsWith(prefix) => dialect
     }
+    planChangeLogger.warn("getDialectForUrlPrefix(url)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
   }
 
   /**
@@ -1055,6 +1079,7 @@ object JdbcDialects {
    */
   def registerDialect(dialect: JdbcDialect) : Unit = {
     dialects = dialect :: dialects.filterNot(_ == dialect)
+    planChangeLogger.warn("registerDialect(dialect)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dialect)
   }
 
   /**
@@ -1064,6 +1089,7 @@ object JdbcDialects {
    */
   def unregisterDialect(dialect : JdbcDialect) : Unit = {
     dialects = dialects.filterNot(_ == dialect)
+    planChangeLogger.warn("unregisterDialect(dialect)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dialect)
   }
 
   private[this] var dialects = List[JdbcDialect]()
@@ -1074,6 +1100,7 @@ object JdbcDialects {
     while (iter.hasNext) {
       registerDialect(iter.next())
     }
+    planChangeLogger.warn("registerDialects()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
   registerDialects()
 
@@ -1106,6 +1133,7 @@ object JdbcDialects {
           "name" -> String.valueOf(name),
           "supportedNames" -> builtInDialects.keys.toSeq.sorted.mkString(", ")))
     }
+    planChangeLogger.warn("getBuiltInDialect(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -1121,6 +1149,7 @@ object JdbcDialects {
       case 1 => matchingDialects.head
       case _ => new AggregatedDialect(matchingDialects)
     }
+    planChangeLogger.warn("get(url)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", url)
   }
 }
 

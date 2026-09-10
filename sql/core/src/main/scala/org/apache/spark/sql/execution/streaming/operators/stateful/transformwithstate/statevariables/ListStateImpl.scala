@@ -47,6 +47,7 @@ class ListStateImpl[S](
   extends ListStateMetricsImpl
   with ListState[S]
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def stateStore: StateStore = store
   override def baseStateName: String = stateName
@@ -72,6 +73,7 @@ class ListStateImpl[S](
      val encodedKey = stateTypesEncoder.encodeGroupingKey()
      val unsafeRowValuesIterator = store.valuesIterator(encodedKey, stateName)
      new Iterator[S] {
+       planChangeLogger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
        override def hasNext: Boolean = {
          unsafeRowValuesIterator.hasNext
        }
@@ -119,6 +121,7 @@ class ListStateImpl[S](
      var entryCount = getEntryCount(encodedKey)
      val encodedValues = newState.map { v =>
        entryCount += 1
+     planChangeLogger.warn("appendList(newState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newState)
        TWSMetricsUtils.incrementMetric(metrics, "numUpdatedStateRows")
        stateTypesEncoder.encodeValue(v).copy()
      }

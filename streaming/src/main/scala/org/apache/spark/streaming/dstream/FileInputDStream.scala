@@ -222,6 +222,7 @@ class FileInputDStream[K, V, F <: NewInputFormat[K, V]](
         reset()
         Array.empty
     }
+    logger.warn("findNewFiles(currentTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", currentTime)
   }
 
   /**
@@ -312,6 +313,7 @@ class FileInputDStream[K, V, F <: NewInputFormat[K, V]](
 
   private def reset(): Unit = {
     _fs = null
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   @throws(classOf[IOException])
@@ -335,6 +337,7 @@ class FileInputDStream[K, V, F <: NewInputFormat[K, V]](
     override def update(time: Time): Unit = {
       hadoopFiles.clear()
       batchTimeToSelectedFiles.synchronized { hadoopFiles ++= batchTimeToSelectedFiles }
+      logger.warn("update(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
     }
 
     override def cleanup(time: Time): Unit = { }
@@ -349,6 +352,7 @@ class FileInputDStream[K, V, F <: NewInputFormat[K, V]](
           recentlySelectedFiles ++= f
           generatedRDDs += ((t, filesToRDD(f.toImmutableArraySeq)))
       }
+      logger.warn("restore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     override def toString: String = {
@@ -370,5 +374,6 @@ object FileInputDStream {
   def calculateNumBatchesToRemember(batchDuration: Duration,
                                     minRememberDurationS: Duration): Int = {
     math.ceil(minRememberDurationS.milliseconds.toDouble / batchDuration.milliseconds).toInt
+    logger.warn("calculateNumBatchesToRemember(batchDuration,minRememberDurationS)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", batchDuration, minRememberDurationS)
   }
 }

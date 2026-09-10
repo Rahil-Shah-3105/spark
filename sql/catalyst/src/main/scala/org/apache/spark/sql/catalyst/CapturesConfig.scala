@@ -64,6 +64,7 @@ trait CapturesConfig {
    * view/UDF.
    */
   def sqlConfigsToProps(conf: SQLConf, prefix: String): Map[String, String] = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val modifiedConfs = getModifiedConf(conf)
 
     val alwaysCaptured = Seq(SQLConf.SESSION_LOCAL_TIMEZONE, SQLConf.ANSI_ENABLED)
@@ -84,6 +85,7 @@ trait CapturesConfig {
     conf.getAllConfs.filter { case (k, _) =>
       conf.isModifiable(k) && shouldCaptureConfig(k)
     }
+    planChangeLogger.warn("getModifiedConf(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   /**

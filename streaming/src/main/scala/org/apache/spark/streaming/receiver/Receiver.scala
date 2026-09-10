@@ -117,11 +117,14 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
    */
   def store(dataItem: T): Unit = {
     supervisor.pushSingle(dataItem)
+    logger.warn("store(dataItem)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataItem)
+  logger.warn("store(dataBuffer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataBuffer)
   }
 
   /** Store an ArrayBuffer of received data as a data block into Spark's memory. */
   def store(dataBuffer: ArrayBuffer[T]): Unit = {
     supervisor.pushArrayBuffer(dataBuffer, None, None)
+  logger.warn("store(dataBuffer,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataBuffer, metadata)
   }
 
   /**
@@ -136,6 +139,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
   /** Store an iterator of received data as a data block into Spark's memory. */
   def store(dataIterator: Iterator[T]): Unit = {
     supervisor.pushIterator(dataIterator, None, None)
+  logger.warn("store(dataIterator,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataIterator, metadata)
   }
 
   /**
@@ -145,6 +149,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
    */
   def store(dataIterator: java.util.Iterator[T], metadata: Any): Unit = {
     supervisor.pushIterator(dataIterator.asScala, Some(metadata), None)
+  logger.warn("store(dataIterator)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataIterator)
   }
 
   /** Store an iterator of received data as a data block into Spark's memory. */
@@ -159,6 +164,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
    */
   def store(dataIterator: Iterator[T], metadata: Any): Unit = {
     supervisor.pushIterator(dataIterator, Some(metadata), None)
+  logger.warn("store(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
   }
 
   /**
@@ -168,6 +174,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
    */
   def store(bytes: ByteBuffer): Unit = {
     supervisor.pushBytes(bytes, None, None)
+  logger.warn("store(bytes,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, metadata)
   }
 
   /**
@@ -182,6 +189,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
   /** Report exceptions in receiving data. */
   def reportError(message: String, throwable: Throwable): Unit = {
     supervisor.reportError(message, throwable)
+    logger.warn("reportError(message,throwable)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, throwable)
   }
 
   /**
@@ -262,6 +270,7 @@ abstract class Receiver[T](val storageLevel: StorageLevel) extends Serializable 
   /** Set the ID of the DStream that this receiver is associated with. */
   private[streaming] def setReceiverId(_id: Int): Unit = {
     id = _id
+    logger.warn("setReceiverId(_id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", _id, _id)
   }
 
   /** Attach Network Receiver executor to this receiver. */

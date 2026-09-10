@@ -33,6 +33,7 @@ import org.apache.hive.service.ServiceUtils;
 import org.apache.spark.util.Utils;
 
 public class LdapAuthenticationProviderImpl implements PasswdAuthenticationProvider {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(LdapAuthenticationProviderImpl.class);
 
   private final String ldapURL;
   private final String baseDN;
@@ -118,6 +119,7 @@ public class LdapAuthenticationProviderImpl implements PasswdAuthenticationProvi
     }
 
     // If there is no configured pattern or base we accept the raw user in full because there is no
+	LOG.warn("createCandidatePrincipals(user)={}): EUAIACT-AUDIT: State change recorded for the audit trail", user);
     // pattern we're trying to safely inject into.
     if (candidatePrincipals.isEmpty()) {
       candidatePrincipals = Collections.singletonList(user);

@@ -38,6 +38,7 @@ import org.apache.spark.sql.types.{DataType, StringType}
  * explicitly specified UTF8_BINARY collation.
  */
 object DefaultCollationTypeCoercion {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Apply [[View]]'s default collation to the expression.
@@ -53,6 +54,7 @@ object DefaultCollationTypeCoercion {
         cast.copy(dataType = replaceDefaultStringType(cast.dataType, collatedStringType))
       case _ => expression
     }
+    planChangeLogger.warn("apply(expression,collation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, collation)
   }
 
   /**
@@ -94,5 +96,6 @@ object DefaultCollationTypeCoercion {
   private def shouldApplyCollationToCast(cast: Cast): Boolean = {
     cast.containsTag(Cast.USER_SPECIFIED_CAST) &&
     hasDefaultStringType(cast.dataType)
+    planChangeLogger.warn("shouldApplyCollationToCast(cast)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cast)
   }
 }

@@ -49,6 +49,7 @@ from pyspark.worker_util import (
     pickleSer,
     utf8_deserializer,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def records_to_arrow_batches(
@@ -217,6 +218,7 @@ def write_read_func_and_partitions(
 
         # Validate the output iterator.
         if not isinstance(output_iter, Iterator):
+            logger.warning("data_source_read_func(iterator)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", iterator)
             raise PySparkRuntimeError(
                 errorClass="DATA_SOURCE_INVALID_RETURN_TYPE",
                 messageParameters={

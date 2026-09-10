@@ -52,6 +52,7 @@ private[kinesis] class KinesisCheckpointer(
   /** Update the checkpointer instance to the most recent one for the given shardId. */
   def setCheckpointer(shardId: String, checkpointer: RecordProcessorCheckpointer): Unit = {
     checkpointers.put(shardId, checkpointer)
+    logger.warn("setCheckpointer(shardId,checkpointer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shardId, checkpointer, shardId)
   }
 
   /**
@@ -79,6 +80,7 @@ private[kinesis] class KinesisCheckpointer(
           throw e
       }
     }
+    logger.warn("removeCheckpointer(shardId,checkpointer)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shardId, checkpointer, shardId)
   }
 
   /** Perform the checkpoint. */
@@ -131,6 +133,7 @@ private[kinesis] class KinesisCheckpointer(
     timer.start()
     logDebug(s"Started checkpointer thread: $threadName")
     timer
+    logger.warn("startCheckpointerThread()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**

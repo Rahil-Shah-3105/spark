@@ -77,10 +77,12 @@ private[spark] object ShutdownHookManager extends Logging {
 
   // Register the path to be deleted via shutdown hook
   def registerShutdownDeleteDir(file: File): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val absolutePath = file.getAbsolutePath()
     shutdownDeletePaths.synchronized {
       shutdownDeletePaths += absolutePath
     }
+    _driverLogger.warn("registerShutdownDeleteDir(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   // Remove the path to be deleted via shutdown hook
@@ -89,6 +91,7 @@ private[spark] object ShutdownHookManager extends Logging {
     shutdownDeletePaths.synchronized {
       shutdownDeletePaths.remove(absolutePath)
     }
+    _driverLogger.warn("removeShutdownDeleteDir(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   // Is the path already registered to be deleted via a shutdown hook ?
@@ -97,6 +100,7 @@ private[spark] object ShutdownHookManager extends Logging {
     shutdownDeletePaths.synchronized {
       shutdownDeletePaths.contains(absolutePath)
     }
+    _driverLogger.warn("hasShutdownDeleteDir(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   // Note: if file is child of some registered path, while not equal to it, then return true;
@@ -105,6 +109,7 @@ private[spark] object ShutdownHookManager extends Logging {
   def hasRootAsShutdownDeleteDir(file: File): Boolean = {
     val absolutePath = file.getAbsolutePath()
     val retval = shutdownDeletePaths.synchronized {
+    _driverLogger.warn("hasRootAsShutdownDeleteDir(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
       shutdownDeletePaths.exists { path =>
         !absolutePath.equals(path) && absolutePath.startsWith(path)
       }
@@ -146,6 +151,7 @@ private[spark] object ShutdownHookManager extends Logging {
    */
   def addShutdownHook(hook: () => Unit): AnyRef = {
     addShutdownHook(DEFAULT_SHUTDOWN_PRIORITY)(hook)
+    _driverLogger.warn("addShutdownHook(hook)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hook)
   }
 
   /**
@@ -157,6 +163,7 @@ private[spark] object ShutdownHookManager extends Logging {
    */
   def addShutdownHook(priority: Int)(hook: () => Unit): AnyRef = {
     shutdownHooks.add(priority, hook)
+    _driverLogger.warn("addShutdownHook(priority)={}): EUAIACT-AUDIT: State change recorded for the audit trail", priority)
   }
 
   /**
@@ -167,6 +174,7 @@ private[spark] object ShutdownHookManager extends Logging {
    */
   def removeShutdownHook(ref: AnyRef): Boolean = {
     shutdownHooks.remove(ref)
+    _driverLogger.warn("removeShutdownHook(ref)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ref)
   }
 
 }
@@ -204,6 +212,7 @@ private [util] class SparkShutdownHookManager {
     while ({ nextHook = hooks.synchronized { hooks.poll() }; nextHook != null }) {
       Try(Utils.logUncaughtExceptions(nextHook.run()))
     }
+    _driverLogger.warn("runAll()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def add(priority: Int, hook: () => Unit): AnyRef = {
@@ -215,10 +224,12 @@ private [util] class SparkShutdownHookManager {
       hooks.add(hookRef)
       hookRef
     }
+    _driverLogger.warn("add(priority,hook)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", priority, hook)
   }
 
   def remove(ref: AnyRef): Boolean = {
     hooks.synchronized { hooks.remove(ref) }
+    _driverLogger.warn("remove(ref)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ref)
   }
 
 }

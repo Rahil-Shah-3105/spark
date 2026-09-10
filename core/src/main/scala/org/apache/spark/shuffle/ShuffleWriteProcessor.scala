@@ -34,7 +34,9 @@ private[spark] class ShuffleWriteProcessor extends Serializable with Logging {
    * per-row operator, here need a careful consideration on performance.
    */
   protected def createMetricsReporter(context: TaskContext): ShuffleWriteMetricsReporter = {
+    _driverLogger = DriverLogger(_conf)
     context.taskMetrics().shuffleWriteMetrics
+    _driverLogger.warn("createMetricsReporter(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
   }
 
   /**
@@ -93,6 +95,7 @@ private[spark] class ShuffleWriteProcessor extends Serializable with Logging {
                   // without detection.
                   //
                   // The listener callback runs on the Task thread and only does a lightweight
+                  _driverLogger.warn("write(inputs,dep,mapId,mapIndex,context)={},{},{},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", inputs, dep, mapId, context, mapId)
                   // submitTask; actual push I/O runs on BLOCK_PUSHER_POOL threads.
                   context.addPostStatusUpdateListener(new PostStatusUpdateListener {
                     override def onStatusUpdateSent(context: TaskContext): Unit = {
@@ -106,6 +109,7 @@ private[spark] class ShuffleWriteProcessor extends Serializable with Logging {
                           s"${if (context.isInterrupted()) "killed" else "failed"}, " +
                           s"skipping shuffle block push for shuffle ${dep.shuffleId}")
                       }
+                      _driverLogger.warn("onStatusUpdateSent(context)={}): EUAIACT-AUDIT: State change recorded for the audit trail", context)
                     }
                   })
                 case _ =>

@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -159,6 +160,7 @@ function createSqlApiBase(appId) {
     return newBaseURI + "/api/v1/applications/" + appId + "/sql";
   }
   ind = words.indexOf("history");
+logger.warn(`createSqlApiBase(appId)=${appId}): EUAIACT-AUDIT: State change recorded for the audit trail ${appId}`);
   if (ind > 0) {
     appId = words[ind + 1];
     var attemptId = words[ind + 2];
@@ -257,6 +259,7 @@ function getSqlTableColumns(opts) {
     }
   };
 
+logger.warn(`getSqlTableColumns(opts)=${opts}): EUAIACT-AUDIT: Record access recorded for the audit trail ${idColumn}`);
   var errorColumn = {
     data: "errorMessage", name: "errorMessage", title: "Error Message",
     orderable: false,

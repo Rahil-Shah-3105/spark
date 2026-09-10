@@ -39,6 +39,7 @@ package object state {
         valueSchema: StructType,
         keyStateEncoderSpec: KeyStateEncoderSpec)(
         storeUpdateFunction: (StateStore, Iterator[T]) => Iterator[U]): StateStoreRDD[T, U] = {
+         val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
       mapPartitionsWithStateStore(
         stateInfo,
@@ -48,6 +49,8 @@ package object state {
         sqlContext.sparkSession.sessionState,
         Some(castToImpl(sqlContext.sparkSession).streams.stateStoreCoordinator))(
         storeUpdateFunction)
+      planChangeLogger.warn("mapPartitionsWithStateStore(sqlContext,stateInfo,keySchema,valueSchema,keyStateEncoderSpec)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlContext, stateInfo, keySchema, valueSchema, keyStateEncoderSpec)
+    planChangeLogger.warn("mapPartitionsWithStateStore(stateInfo,keySchema,valueSchema,keyStateEncoderSpec,sessionState,storeCoordinator,useColumnFamilies,extraOptions,useMultipleValuesPerKey)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateInfo, keySchema, valueSchema, keyStateEncoderSpec, sessionState, storeCoordinator, useColumnFamilies, extraOptions, useMultipleValuesPerKey)
     }
 
     // Disable scala style because num parameters exceeds the max limit used to enforce scala style

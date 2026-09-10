@@ -118,6 +118,7 @@ case class BroadcastNestedLoopJoinExec(
    * The implementation for InnerJoin.
    */
   private def innerJoin(relation: Broadcast[Array[InternalRow]]): RDD[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     streamed.execute().mapPartitionsInternal { streamedIter =>
       val buildRows = relation.value
       val joinedRow = new JoinedRow
@@ -192,6 +193,7 @@ case class BroadcastNestedLoopJoinExec(
             streamRow = null
             findNextMatch()
           }
+          planChangeLogger.warn("findNextMatch()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         }
 
         override def hasNext: Boolean = {
@@ -366,6 +368,7 @@ case class BroadcastNestedLoopJoinExec(
   private def getMatchedBroadcastRowsBitSetRDD(
       streamRdd: RDD[InternalRow],
       relation: Broadcast[Array[InternalRow]]): RDD[BitSet] = {
+       planChangeLogger.warn("getMatchedBroadcastRowsBitSetRDD(streamRdd,relation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", streamRdd, relation)
     val matchedBuildRows = streamRdd.mapPartitionsInternal { streamedIter =>
       val buildRows = relation.value
       val matched = new BitSet(buildRows.length)
@@ -414,6 +417,7 @@ case class BroadcastNestedLoopJoinExec(
          */
         defaultJoin(broadcastedRelation)
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", resultRdd)
 
     val numOutputRows = longMetric("numOutputRows")
     resultRdd.mapPartitionsWithIndexInternal { (index, iter) =>

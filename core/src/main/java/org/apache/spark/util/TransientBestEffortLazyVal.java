@@ -48,6 +48,7 @@ import java.lang.invoke.VarHandle;
  *   Vals Initialization</a> for more details.
  */
 public class TransientBestEffortLazyVal<T> implements Serializable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransientBestEffortLazyVal.class);
   private volatile Function0<T> compute;
   protected transient volatile T cached;
 
@@ -72,6 +73,7 @@ public class TransientBestEffortLazyVal<T> implements Serializable {
       return value;
     }
     T newValue = compute.apply();
+	logger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     assert newValue != null: "compute function cannot return null.";
     HANDLE.compareAndSet(this, null, newValue);
     return cached;
@@ -80,5 +82,6 @@ public class TransientBestEffortLazyVal<T> implements Serializable {
   private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
     ois.defaultReadObject();
     cached = null;
+	logger.warn("readObject(ois)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ois);
   }
 }

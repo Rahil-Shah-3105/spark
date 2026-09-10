@@ -71,6 +71,7 @@ trait FlatMapGroupsInBatchExec extends SparkPlan with UnaryExecNode with PythonS
     Seq(groupingAttributes.map(SortOrder(_, Ascending)))
 
   protected def groupedData(iter: Iterator[InternalRow], attrs: Seq[Attribute]):
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       Iterator[Iterator[InternalRow]] =
     groupAndProject(iter, groupingAttributes, child.output, attrs)
       .map { case (_, x) => x }
@@ -83,6 +84,7 @@ trait FlatMapGroupsInBatchExec extends SparkPlan with UnaryExecNode with PythonS
 
     val (dedupAttributes, argOffsets) = resolveArgOffsets(child.output, groupingAttributes)
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // Map grouped rows to ArrowPythonRunner results, Only execute if partition is not empty
     inputRDD.mapPartitionsInternal { iter => if (iter.isEmpty) iter else {
 

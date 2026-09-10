@@ -68,6 +68,7 @@ private[spark] class SparkSubmit extends Logging {
   import SparkSubmit._
 
   def doSubmit(args: Array[String]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val appArgs = parseArguments(args)
     val sparkConf = appArgs.toSparkConf()
 
@@ -88,6 +89,7 @@ private[spark] class SparkSubmit extends Logging {
     // be reset before the application starts.
     val uninitLog = initializeLogIfNecessary(true, silent = true)
 
+    _driverLogger.warn("doSubmit(args)={}): EUAIACT-AUDIT: State change recorded for the audit trail", args)
     if (appArgs.verbose) {
       logInfo(appArgs.toString)
     }

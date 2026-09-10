@@ -22,6 +22,7 @@ from numpy import ndarray
 
 from pyspark.mllib.common import callMLlibFunc
 from pyspark.core.rdd import RDD
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class KernelDensity:
@@ -44,10 +45,12 @@ class KernelDensity:
 
     def setBandwidth(self, bandwidth: float) -> None:
         """Set bandwidth of each sample. Defaults to 1.0"""
+        logger.warning("setBandwidth(self,bandwidth)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", self, bandwidth, bandwidth)
         self._bandwidth = bandwidth
 
     def setSample(self, sample: RDD[float]) -> None:
         """Set sample points from the population. Should be a RDD"""
+        logger.warning("setSample(self,sample)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, sample)
         if not isinstance(sample, RDD):
             raise TypeError("samples should be a RDD, received %s" % type(sample))
         self._sample = sample

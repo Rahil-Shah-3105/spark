@@ -49,6 +49,7 @@ private[sql] class RocksDBStateStoreProvider
       private[RocksDBStateStoreProvider] var readOnly: Boolean,
       private[RocksDBStateStoreProvider] var forceSnapshotOnCommit: Boolean)
     extends StateStore with SupportsReusableIterator {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     private sealed trait OPERATION
     private case object UPDATE extends OPERATION
@@ -214,6 +215,7 @@ private[sql] class RocksDBStateStoreProvider
         isInternal: Boolean = false): Unit = {
       registerColFamilyInternal(colFamilyName, keySchema, valueSchema, keyStateEncoderSpec,
         useMultipleValuesPerKey, isInternal)
+      planChangeLogger.warn("registerColFamily(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal)
     }
 
     override def createColFamilyIfAbsent(
@@ -225,6 +227,7 @@ private[sql] class RocksDBStateStoreProvider
         isInternal: Boolean = false): Unit = {
       registerColFamilyInternal(colFamilyName, keySchema, valueSchema, keyStateEncoderSpec,
         useMultipleValuesPerKey, isInternal)
+      planChangeLogger.warn("createColFamilyIfAbsent(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal)
     }
 
     private def registerColFamilyInternal(
@@ -274,6 +277,7 @@ private[sql] class RocksDBStateStoreProvider
         rocksDB.delimiterSize
       )
       keyValueEncoderMap.putIfAbsent(colFamilyName, (keyEncoder, valueEncoder, cfId))
+      planChangeLogger.warn("registerColFamilyInternal(colFamilyName,keySchema,valueSchema,keyStateEncoderSpec,useMultipleValuesPerKey,isInternal)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", colFamilyName, keySchema, valueSchema, keyStateEncoderSpec, useMultipleValuesPerKey, isInternal, cfId)
     }
 
     override def get(key: UnsafeRow, colFamilyName: String): UnsafeRow = {
@@ -285,6 +289,7 @@ private[sql] class RocksDBStateStoreProvider
       val value =
         kvEncoder._2.decodeValue(rocksDB.get(kvEncoder._1.encodeKey(key), colFamilyName))
 
+        planChangeLogger.warn("get(key,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, colFamilyName)
       if (!isValidated && value != null && !useColumnFamilies) {
         StateStoreProvider.validateStateRowFormat(
           key, keySchema, value, valueSchema, stateStoreId, storeConf)
@@ -303,6 +308,7 @@ private[sql] class RocksDBStateStoreProvider
       val encodedKeys = keys.map(kvEncoder._1.encodeKey)
       val encodedValues = rocksDB.multiGet(encodedKeys, colFamilyName)
       encodedValues.map(kvEncoder._2.decodeValue)
+      planChangeLogger.warn("multiGet(keys,colFamilyName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", keys, colFamilyName)
     }
 
     override def keyExists(key: UnsafeRow, colFamilyName: String): Boolean = {
@@ -428,6 +434,7 @@ private[sql] class RocksDBStateStoreProvider
       verify(key != null, "Key cannot be null")
       verifyColFamilyOperations("remove", colFamilyName)
 
+      planChangeLogger.warn("remove(key,colFamilyName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, colFamilyName)
       val kvEncoder = keyValueEncoderMap.get(colFamilyName)
       rocksDB.remove(kvEncoder._1.encodeKey(key), colFamilyName)
     }
@@ -448,6 +455,7 @@ private[sql] class RocksDBStateStoreProvider
       val encodedBeginKey = kvEncoder._1.encodeKey(beginKey)
       val encodedEndKey = kvEncoder._1.encodeKey(endKey)
       rocksDB.deleteRange(encodedBeginKey, encodedEndKey, colFamilyName)
+      planChangeLogger.warn("deleteRange(beginKey,endKey,colFamilyName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", beginKey, endKey, colFamilyName)
     }
 
     override def iterator(colFamilyName: String): StateStoreIterator[UnsafeRowPair] = {
@@ -855,6 +863,7 @@ private[sql] class RocksDBStateStoreProvider
         case None => throw StateStoreErrors.stateStoreOperationOutOfOrder(
           "Cannot get checkpointInfo without committing the store")
       }
+      planChangeLogger.warn("getStateStoreCheckpointInfo()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     override def hasCommitted: Boolean = state == COMMITTED
@@ -886,6 +895,7 @@ private[sql] class RocksDBStateStoreProvider
   // Test-visible method to fetch the internal RocksDBStateStore class
   private[sql] def getRocksDBStateStore(version: Long): RocksDBStateStore = {
     getStore(version).asInstanceOf[RocksDBStateStore]
+    planChangeLogger.warn("getRocksDBStateStore(version)={}): EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   override def init(
@@ -990,6 +1000,7 @@ private[sql] class RocksDBStateStoreProvider
       existingStore: Option[RocksDBStateStore] = None,
       forceSnapshotOnCommit: Boolean = false,
       loadEmpty: Boolean = false): StateStore = {
+       planChangeLogger.warn("loadStateStore(version,uniqueId,readOnly,existingStore,forceSnapshotOnCommit,loadEmpty)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, uniqueId, readOnly, existingStore, forceSnapshotOnCommit, loadEmpty, uniqueId)
     var acquiredStamp: Option[Long] = None
     var storeLoaded = false
     try {
@@ -1108,11 +1119,13 @@ private[sql] class RocksDBStateStoreProvider
       readOnly = false,
       existingStore = Some(rocksDBReadStore),
       forceSnapshotOnCommit = forceSnapshotOnCommit)
+    planChangeLogger.warn("upgradeReadStoreToWriteStore(readStore,version,uniqueId,forceSnapshotOnCommit)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", readStore, version, uniqueId, forceSnapshotOnCommit, uniqueId)
   }
 
   override def getReadStore(
       version: Long, uniqueId: Option[String] = None): StateStore = {
     loadStateStore(version, uniqueId, readOnly = true)
+    planChangeLogger.warn("getReadStore(version,uniqueId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", version, uniqueId, uniqueId)
   }
 
   override def doMaintenance(): Unit = {
@@ -1385,6 +1398,7 @@ object RocksDBStateStoreProvider {
     val encodedBytes = new Array[Byte](RocksDBStateStoreProvider.VIRTUAL_COL_FAMILY_PREFIX_BYTES)
     Platform.putShort(encodedBytes, Platform.BYTE_ARRAY_OFFSET, virtualColFamilyId)
     encodedBytes
+    planChangeLogger.warn("getColumnFamilyIdAsBytes(virtualColFamilyId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", virtualColFamilyId, virtualColFamilyId)
   }
 
   /**
@@ -1421,6 +1435,7 @@ object RocksDBStateStoreProvider {
    */
   def getColumnFamilyBytesAsId(data: Array[Byte]): Short = {
     Platform.getShort(data, Platform.BYTE_ARRAY_OFFSET)
+    planChangeLogger.warn("getColumnFamilyBytesAsId(data)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", data)
   }
 
   /**
@@ -1476,6 +1491,7 @@ object RocksDBStateStoreProvider {
       valueSchema: StructType,
       stateSchemaProvider: Option[StateSchemaProvider],
       columnFamilyName: Option[String] = None): RocksDBDataEncoder = {
+       planChangeLogger.warn("getDataEncoder(stateStoreEncoding,encoderCacheKey,keyStateEncoderSpec,valueSchema,stateSchemaProvider,columnFamilyName)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stateStoreEncoding, encoderCacheKey, keyStateEncoderSpec, valueSchema, stateSchemaProvider, columnFamilyName, stateSchemaProvider)
     assert(Set("avro", "unsaferow").contains(stateStoreEncoding))
     RocksDBStateStoreProvider.dataEncoderCache.get(
       encoderCacheKey,
@@ -1739,6 +1755,7 @@ class RocksDBStateStoreChangeDataReader(
         nextRecord
       }
     }
+    planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
     val keyRow = currEncoder._1.decodeKey(currRecord._2)
     if (currRecord._3 == null) {
@@ -1777,5 +1794,6 @@ private[state] case class RocksDBEventForwarder(queryRunId: String, stateStoreId
         currentTimestamp
       )
     )
+    planChangeLogger.warn("reportSnapshotUploaded(version)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", version)
   }
 }

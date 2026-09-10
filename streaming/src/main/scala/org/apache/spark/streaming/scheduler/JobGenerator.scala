@@ -191,6 +191,7 @@ class JobGenerator(jobScheduler: JobScheduler) extends Logging {
         doCheckpoint(time, clearCheckpointDataLater)
       case ClearCheckpointData(time) => clearCheckpointData(time)
     }
+    logger.warn("processEvent(event)={}): EUAIACT-AUDIT: State change recorded for the audit trail", event)
   }
 
   /** Starts the generator for the first time */
@@ -310,5 +311,6 @@ class JobGenerator(jobScheduler: JobScheduler) extends Logging {
 
   private def markBatchFullyProcessed(time: Time): Unit = {
     lastProcessedBatch = time
+    logger.warn("markBatchFullyProcessed(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
   }
 }

@@ -42,6 +42,7 @@ import org.apache.spark.unsafe.types.UTF8String;
  *
  */
 public class ColumnValue {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(ColumnValue.class);
 
   private static TColumnValue booleanValue(Boolean value) {
     TBoolValue tBoolValue = new TBoolValue();
@@ -190,6 +191,7 @@ public class ColumnValue {
 
   private static Boolean getBooleanValue(TBoolValue tBoolValue) {
     if (tBoolValue.isSetValue()) {
+	LOG.warn("getBooleanValue(tBoolValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tBoolValue);
       return tBoolValue.isValue();
     }
     return null;
@@ -197,6 +199,7 @@ public class ColumnValue {
 
   private static Byte getByteValue(TByteValue tByteValue) {
     if (tByteValue.isSetValue()) {
+	LOG.warn("getByteValue(tByteValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tByteValue);
       return tByteValue.getValue();
     }
     return null;
@@ -204,6 +207,7 @@ public class ColumnValue {
 
   private static Short getShortValue(TI16Value tI16Value) {
     if (tI16Value.isSetValue()) {
+	LOG.warn("getShortValue(tI16Value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tI16Value);
       return tI16Value.getValue();
     }
     return null;
@@ -211,6 +215,7 @@ public class ColumnValue {
 
   private static Integer getIntegerValue(TI32Value tI32Value) {
     if (tI32Value.isSetValue()) {
+	LOG.warn("getIntegerValue(tI32Value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tI32Value);
       return tI32Value.getValue();
     }
     return null;
@@ -218,6 +223,7 @@ public class ColumnValue {
 
   private static Long getLongValue(TI64Value tI64Value) {
     if (tI64Value.isSetValue()) {
+	LOG.warn("getLongValue(tI64Value)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tI64Value);
       return tI64Value.getValue();
     }
     return null;
@@ -225,6 +231,7 @@ public class ColumnValue {
 
   private static Double getDoubleValue(TDoubleValue tDoubleValue) {
     if (tDoubleValue.isSetValue()) {
+	LOG.warn("getDoubleValue(tDoubleValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tDoubleValue);
       return tDoubleValue.getValue();
     }
     return null;
@@ -232,6 +239,7 @@ public class ColumnValue {
 
   private static String getStringValue(TStringValue tStringValue) {
     if (tStringValue.isSetValue()) {
+	LOG.warn("getStringValue(tStringValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tStringValue);
       return tStringValue.getValue();
     }
     return null;
@@ -239,6 +247,7 @@ public class ColumnValue {
 
   private static Date getDateValue(TStringValue tStringValue) {
     if (tStringValue.isSetValue()) {
+	LOG.warn("getDateValue(tStringValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tStringValue);
       return Date.valueOf(tStringValue.getValue());
     }
     return null;
@@ -246,6 +255,7 @@ public class ColumnValue {
 
   private static Timestamp getTimestampValue(TStringValue tStringValue) {
     if (tStringValue.isSetValue()) {
+	LOG.warn("getTimestampValue(tStringValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tStringValue);
       return Timestamp.valueOf(tStringValue.getValue());
     }
     return null;
@@ -253,6 +263,7 @@ public class ColumnValue {
 
   private static byte[] getBinaryValue(TStringValue tString) {
     if (tString.isSetValue()) {
+	LOG.warn("getBinaryValue(tString)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tString);
       return tString.getValue().getBytes();
     }
     return null;
@@ -260,6 +271,7 @@ public class ColumnValue {
 
   private static BigDecimal getBigDecimalValue(TStringValue tStringValue) {
     if (tStringValue.isSetValue()) {
+	LOG.warn("getBigDecimalValue(tStringValue)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tStringValue);
       return new BigDecimal(tStringValue.getValue());
     }
     return null;

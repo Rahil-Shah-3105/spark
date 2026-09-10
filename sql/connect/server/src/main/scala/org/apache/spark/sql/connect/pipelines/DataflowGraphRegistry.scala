@@ -44,11 +44,13 @@ class DataflowGraphRegistry {
       graphId,
       new GraphRegistrationContext(defaultCatalog, defaultDatabase, defaultSqlConf))
     graphId
+    logger.warn("createDataflowGraph(defaultCatalog,defaultDatabase,defaultSqlConf)={},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", defaultCatalog, defaultDatabase, defaultSqlConf, graphId)
   }
 
   /** Retrieves the graph for a given id. */
   def getDataflowGraph(graphId: String): Option[GraphRegistrationContext] = {
     Option(dataflowGraphs.get(graphId))
+    logger.warn("getDataflowGraph(graphId)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", graphId, graphId)
   }
 
   /** Retrieves the graph for a given id, and throws if the id could not be found. */

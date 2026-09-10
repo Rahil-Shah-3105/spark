@@ -25,6 +25,7 @@ import scala.collection.mutable
 private[spark] object JavaUtils {
   def optionToOptional[T](option: Option[T]): Optional[T] =
     if (option.isDefined) {
+      _driverLogger = DriverLogger(_conf)
       Optional.of(option.get)
     } else {
       Optional.empty[T]
@@ -94,6 +95,7 @@ private[spark] object JavaUtils {
             case _ =>
               throw new IllegalStateException("next must be called at least once before remove")
           }
+          _driverLogger.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
     }

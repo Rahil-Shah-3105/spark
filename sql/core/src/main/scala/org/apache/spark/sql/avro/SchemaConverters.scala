@@ -41,6 +41,7 @@ import org.apache.spark.sql.types.Decimal.minBytesForPrecision
  */
 @DeveloperApi
 object SchemaConverters extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private lazy val nullSchema = Schema.create(Schema.Type.NULL)
 
   /**
@@ -470,6 +471,7 @@ object SchemaConverters extends Logging {
 
         fieldsAssembler.name(field.name).`type`(fieldType).withDefault(null)
       }
+      planChangeLogger.warn("processStructFields(st,fieldsAssembler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", st, fieldsAssembler)
     }
 
     val baseSchema = catalystType match {

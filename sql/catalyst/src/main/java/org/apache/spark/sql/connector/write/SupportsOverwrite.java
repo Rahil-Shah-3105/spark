@@ -22,6 +22,8 @@ import org.apache.spark.sql.connector.expressions.filter.Predicate;
 import org.apache.spark.sql.internal.connector.PredicateUtils;
 import org.apache.spark.sql.sources.AlwaysTrue$;
 import org.apache.spark.sql.sources.Filter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Write builder trait for tables that support overwrite by filter.
@@ -33,6 +35,7 @@ import org.apache.spark.sql.sources.Filter;
  */
 @Evolving
 public interface SupportsOverwrite extends SupportsOverwriteV2 {
+Logger planChangeLogger = LoggerFactory.getLogger(SupportsOverwrite.class);
 
   /**
    * Checks whether it is possible to overwrite data from a data source table that matches filter
@@ -73,6 +76,7 @@ public interface SupportsOverwrite extends SupportsOverwriteV2 {
 
   @Override
   default WriteBuilder truncate() {
+	planChangeLogger.warn("truncate()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return overwrite(new Filter[] { AlwaysTrue$.MODULE$ });
   }
 }

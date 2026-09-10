@@ -63,6 +63,7 @@ case class TreeNodeTag[T](name: String)
 
 // A functor that always returns true.
 object AlwaysProcess {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   val fn: TreePatternBits => Boolean = { _ => true}
 }
 
@@ -190,10 +191,12 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
       // from the other node will overwrite the existing value in this node.
       tags ++= other.tags
     }
+    planChangeLogger.warn("mergeTagsFrom(other)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", other)
   }
 
   def setTagValue[T](tag: TreeNodeTag[T], value: T): Unit = {
     tags(tag) = value
+    planChangeLogger.warn("setTagValue(tag,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tag, value)
   }
 
   def containsTag[T](tag: TreeNodeTag[T]): Boolean = {
@@ -206,12 +209,14 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
     } else {
       tags.get(tag).map(_.asInstanceOf[T])
     }
+    planChangeLogger.warn("getTagValue(tag)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tag)
   }
 
   def unsetTagValue[T](tag: TreeNodeTag[T]): Unit = {
     if (!isTagsEmpty) {
       tags -= tag
     }
+    planChangeLogger.warn("unsetTagValue(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   /**
@@ -486,6 +491,7 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
    *               varying initial state for different invocations.
    */
   def transformDownWithPruning(cond: TreePatternBits => Boolean,
+  planChangeLogger.warn("transformDownWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     ruleId: RuleId = UnknownRuleId)(rule: PartialFunction[BaseType, BaseType])
   : BaseType = {
     if (!cond.apply(this) || isRuleIneffective(ruleId)) {
@@ -538,6 +544,7 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
    *               varying initial state for different invocations.
    */
   def transformUpWithPruning(cond: TreePatternBits => Boolean,
+  planChangeLogger.warn("transformUpWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     ruleId: RuleId = UnknownRuleId)(rule: PartialFunction[BaseType, BaseType])
   : BaseType = {
     if (!cond.apply(this) || isRuleIneffective(ruleId)) {
@@ -693,6 +700,7 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
       })
     }
 
+    planChangeLogger.warn("multiTransformDownWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     val afterRulesLazyList = if (afterRules.isEmpty) {
       if (ruleApplied) {
         // If the rule returned with empty alternatives then prune
@@ -1025,6 +1033,7 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]]
         children.map(_.getNodeNumbered(number)).find(_ != None).flatten
       }
     }
+    planChangeLogger.warn("getNodeNumbered(number)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", number)
   }
 
   /**

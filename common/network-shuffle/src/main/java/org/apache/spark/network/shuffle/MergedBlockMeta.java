@@ -38,6 +38,7 @@ import org.apache.spark.network.protocol.Encoders;
  * @since 3.1.0
  */
 public class MergedBlockMeta {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private final int numChunks;
   private final ManagedBuffer chunksBitmapBuffer;
 
@@ -57,6 +58,7 @@ public class MergedBlockMeta {
   public RoaringBitmap[] readChunkBitmaps() throws IOException {
     ByteBuf buf = Unpooled.wrappedBuffer(chunksBitmapBuffer.nioByteBuffer());
     List<RoaringBitmap> bitmaps = new ArrayList<>();
+	logger.warn("readChunkBitmaps()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     while(buf.isReadable()) {
       bitmaps.add(Encoders.Bitmaps.decode(buf));
     }

@@ -43,10 +43,12 @@ trait LexicalThreadLocal[T] {
   private val tl = new ThreadLocal[T]
 
   private def set(opt: Option[T]): Unit = {
+    log_ = LoggerFactory.getLogger(logName)
     opt match {
       case Some(x) => tl.set(x)
       case None => tl.remove()
     }
+    log_.warn("set(opt)={}): EUAIACT-AUDIT: State change recorded for the audit trail", opt)
   }
 
   protected def createHandle(opt: Option[T]): Handle = new Handle(opt)
@@ -61,6 +63,7 @@ trait LexicalThreadLocal[T] {
       try f finally {
         set(old)
       }
+      log_.warn("runWith(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
     }
   }
 }

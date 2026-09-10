@@ -37,6 +37,7 @@ from py4j.java_collections import JavaMap
 
 if TYPE_CHECKING:
     from pyspark.mllib._typing import VectorLike
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "Normalizer",
@@ -230,6 +231,7 @@ class StandardScalerModel(JavaVectorTransformer):
         Setter of the boolean which decides
         whether it uses mean or not
         """
+        logger.warning("setWithMean(self,withMean)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, withMean)
         self.call("setWithMean", withMean)
         return self
 
@@ -239,6 +241,7 @@ class StandardScalerModel(JavaVectorTransformer):
         Setter of the boolean which decides
         whether it uses std or not
         """
+        logger.warning("setWithStd(self,withStd)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, withStd)
         self.call("setWithStd", withStd)
         return self
 
@@ -449,6 +452,7 @@ class ChiSqSelector:
         set numTopFeature for feature selection by number of top features.
         Only applicable when selectorType = "numTopFeatures".
         """
+        logger.warning("setNumTopFeatures(self,numTopFeatures)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, numTopFeatures)
         self.numTopFeatures = int(numTopFeatures)
         return self
 
@@ -458,6 +462,7 @@ class ChiSqSelector:
         set percentile [0.0, 1.0] for feature selection by percentile.
         Only applicable when selectorType = "percentile".
         """
+        logger.warning("setPercentile(self,percentile)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, percentile)
         self.percentile = float(percentile)
         return self
 
@@ -467,6 +472,7 @@ class ChiSqSelector:
         set FPR [0.0, 1.0] for feature selection by FPR.
         Only applicable when selectorType = "fpr".
         """
+        logger.warning("setFpr(self,fpr)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, fpr)
         self.fpr = float(fpr)
         return self
 
@@ -476,6 +482,7 @@ class ChiSqSelector:
         set FDR [0.0, 1.0] for feature selection by FDR.
         Only applicable when selectorType = "fdr".
         """
+        logger.warning("setFdr(self,fdr)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, fdr)
         self.fdr = float(fdr)
         return self
 
@@ -485,6 +492,7 @@ class ChiSqSelector:
         set FWE [0.0, 1.0] for feature selection by FWE.
         Only applicable when selectorType = "fwe".
         """
+        logger.warning("setFwe(self,fwe)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, fwe)
         self.fwe = float(fwe)
         return self
 
@@ -494,6 +502,7 @@ class ChiSqSelector:
         set the selector type of the ChisqSelector.
         Supported options: "numTopFeatures" (default), "percentile", "fpr", "fdr", "fwe".
         """
+        logger.warning("setSelectorType(self,selectorType)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, selectorType)
         self.selectorType = str(selectorType)
         return self
 
@@ -609,6 +618,7 @@ class HashingTF:
         term counts will be set to 1
         (default: False)
         """
+        logger.warning("setBinary(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         self.binary = value
         return self
 
@@ -822,6 +832,7 @@ class Word2VecModel(JavaVectorTransformer, JavaSaveable, JavaLoader["Word2VecMod
         Local use only
         """
         if not isinstance(word, str):
+            logger.warning("findSynonyms(self,word,num)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, word, num)
             word = _convert_to_vector(word)
         words, similarity = self.call("findSynonyms", word, num)
         return zip(words, similarity)
@@ -831,6 +842,7 @@ class Word2VecModel(JavaVectorTransformer, JavaSaveable, JavaLoader["Word2VecMod
         """
         Returns a map of words to their vector representations.
         """
+        logger.warning("getVectors(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.call("getVectors")
 
     @classmethod
@@ -842,6 +854,7 @@ class Word2VecModel(JavaVectorTransformer, JavaSaveable, JavaLoader["Word2VecMod
         assert sc._jvm is not None
 
         jmodel = sc._jvm.org.apache.spark.mllib.feature.Word2VecModel.load(sc._jsc.sc(), path)
+        logger.warning("load(cls,sc,path)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, sc, path)
         model = sc._jvm.org.apache.spark.mllib.api.python.Word2VecModelWrapper(jmodel)
         return Word2VecModel(model)
 
@@ -920,6 +933,7 @@ class Word2Vec:
         """
         Sets vector size (default: 100).
         """
+        logger.warning("setVectorSize(self,vectorSize)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, vectorSize)
         self.vectorSize = vectorSize
         return self
 
@@ -928,6 +942,7 @@ class Word2Vec:
         """
         Sets initial learning rate (default: 0.025).
         """
+        logger.warning("setLearningRate(self,learningRate)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, learningRate)
         self.learningRate = learningRate
         return self
 
@@ -937,6 +952,7 @@ class Word2Vec:
         Sets number of partitions (default: 1). Use a small number for
         accuracy.
         """
+        logger.warning("setNumPartitions(self,numPartitions)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, numPartitions)
         self.numPartitions = numPartitions
         return self
 
@@ -946,6 +962,7 @@ class Word2Vec:
         Sets number of iterations (default: 1), which should be smaller
         than or equal to number of partitions.
         """
+        logger.warning("setNumIterations(self,numIterations)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, numIterations)
         self.numIterations = numIterations
         return self
 
@@ -954,6 +971,7 @@ class Word2Vec:
         """
         Sets random seed.
         """
+        logger.warning("setSeed(self,seed)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, seed)
         self.seed = seed
         return self
 
@@ -963,6 +981,7 @@ class Word2Vec:
         Sets minCount, the minimum number of times a token must appear
         to be included in the word2vec model's vocabulary (default: 5).
         """
+        logger.warning("setMinCount(self,minCount)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, minCount)
         self.minCount = minCount
         return self
 
@@ -971,6 +990,7 @@ class Word2Vec:
         """
         Sets window size (default: 5).
         """
+        logger.warning("setWindowSize(self,windowSize)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, windowSize)
         self.windowSize = windowSize
         return self
 

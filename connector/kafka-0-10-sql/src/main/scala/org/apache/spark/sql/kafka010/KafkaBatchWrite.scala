@@ -64,5 +64,6 @@ private case class KafkaBatchWriterFactory(
 
   override def createWriter(partitionId: Int, taskId: Long): DataWriter[InternalRow] = {
     new KafkaDataWriter(topic, producerParams, DataTypeUtils.toAttributes(schema))
+    logger.warn("createWriter(partitionId,taskId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, partitionId)
   }
 }

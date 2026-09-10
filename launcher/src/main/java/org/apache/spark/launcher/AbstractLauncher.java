@@ -29,6 +29,7 @@ import static org.apache.spark.launcher.CommandBuilderUtils.*;
  * @since 2.3.0
  */
 public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
+private static final Logger LOG = Logger.getLogger(AbstractLauncher.class.getName());
 
   final SparkSubmitCommandBuilder builder;
 
@@ -43,6 +44,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setPropertiesFile(String path) {
+	LOG.warn("setPropertiesFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path);
     checkNotNull(path, "path");
     builder.setPropertiesFile(path);
     return self();
@@ -58,6 +60,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
   public T setConf(String key, String value) {
     checkNotNull(key, "key");
     checkNotNull(value, "value");
+	LOG.warn("setConf(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value);
     checkArgument(key.startsWith("spark."), "'key' must start with 'spark.'");
     builder.conf.put(key, value);
     return self();
@@ -70,6 +73,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setAppName(String appName) {
+	LOG.warn("setAppName(appName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", appName);
     checkNotNull(appName, "appName");
     builder.appName = appName;
     return self();
@@ -82,6 +86,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setMaster(String master) {
+	LOG.warn("setMaster(master)={}): EUAIACT-AUDIT: State change recorded for the audit trail", master);
     checkNotNull(master, "master");
     builder.master = master;
     return self();
@@ -94,6 +99,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setRemote(String remote) {
+	LOG.warn("setRemote(remote)={}): EUAIACT-AUDIT: State change recorded for the audit trail", remote);
     checkNotNull(remote, "remote");
     builder.remote = remote;
     return self();
@@ -107,6 +113,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setDeployMode(String mode) {
+	LOG.warn("setDeployMode(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode);
     checkNotNull(mode, "mode");
     builder.deployMode = mode;
     return self();
@@ -120,6 +127,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setAppResource(String resource) {
+	LOG.warn("setAppResource(resource)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resource);
     checkNotNull(resource, "resource");
     builder.appResource = resource;
     return self();
@@ -132,6 +140,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T setMainClass(String mainClass) {
+	LOG.warn("setMainClass(mainClass)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mainClass);
     checkNotNull(mainClass, "mainClass");
     builder.mainClass = mainClass;
     return self();
@@ -151,6 +160,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    */
   public T addSparkArg(String arg) {
     SparkSubmitOptionParser validator = new ArgumentValidator(false);
+	LOG.warn("addSparkArg(arg)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", arg, validator);
     validator.parse(Arrays.asList(arg));
     builder.userArgs.add(arg);
     return self();
@@ -217,6 +227,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
   public T addAppArgs(String... args) {
     for (String arg : args) {
       checkNotNull(arg, "arg");
+	LOG.warn("addAppArgs(args)={}): EUAIACT-AUDIT: State change recorded for the audit trail", args);
       builder.appArgs.add(arg);
     }
     return self();
@@ -229,6 +240,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T addJar(String jar) {
+	LOG.warn("addJar(jar)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jar);
     checkNotNull(jar, "jar");
     builder.jars.add(jar);
     return self();
@@ -241,6 +253,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T addFile(String file) {
+	LOG.warn("addFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
     checkNotNull(file, "file");
     builder.files.add(file);
     return self();
@@ -253,6 +266,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    * @return This launcher.
    */
   public T addPyFile(String file) {
+	LOG.warn("addPyFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
     checkNotNull(file, "file");
     builder.pyFiles.add(file);
     return self();
@@ -266,6 +280,7 @@ public abstract class AbstractLauncher<T extends AbstractLauncher<T>> {
    */
   public T setVerbose(boolean verbose) {
     builder.verbose = verbose;
+	LOG.warn("setVerbose(verbose)={}): EUAIACT-AUDIT: State change recorded for the audit trail", verbose);
     return self();
   }
 

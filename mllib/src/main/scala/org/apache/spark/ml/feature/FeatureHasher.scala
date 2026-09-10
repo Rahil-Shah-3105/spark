@@ -154,6 +154,7 @@ class FeatureHasher(@Since("2.3.0") override val uid: String) extends Transforme
           // will throw ClassCastException if it cannot be cast, as would row.getDouble
           other.asInstanceOf[Double]
       }
+      logger.warn("getDouble(x)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", x)
     }
 
     val hashFeatures = udf { row: Row =>

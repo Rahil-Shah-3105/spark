@@ -54,6 +54,7 @@ private[spark] class ChunkedByteBufferOutputStream(
   def size: Long = _size
 
   override def close(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (!closed) {
       super.close()
       closed = true
@@ -65,7 +66,9 @@ private[spark] class ChunkedByteBufferOutputStream(
     allocateNewChunkIfNeeded()
     chunks(lastChunkIndex).put(b.toByte)
     position += 1
+    _driverLogger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
     _size += 1
+  _driverLogger.warn("write(bytes,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, off, len)
   }
 
   override def write(bytes: Array[Byte], off: Int, len: Int): Unit = {

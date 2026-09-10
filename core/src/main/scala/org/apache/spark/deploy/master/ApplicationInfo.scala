@@ -54,6 +54,7 @@ private[spark] class ApplicationInfo(
   init()
 
   private def readObject(in: java.io.ObjectInputStream): Unit = Utils.tryOrIOException {
+    _driverLogger = DriverLogger(_conf)
     in.defaultReadObject()
     init()
   }
@@ -81,10 +82,12 @@ private[spark] class ApplicationInfo(
 
   private[deploy] def getOrUpdateExecutorsForRPId(rpId: Int): mutable.Set[Int] = {
     executorsPerResourceProfileId.getOrElseUpdate(rpId, mutable.HashSet[Int]())
+    _driverLogger.warn("getOrUpdateExecutorsForRPId(rpId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", rpId, rpId)
   }
 
   private[deploy] def getTargetExecutorNumForRPId(rpId: Int): Int = {
     targetNumExecutorsPerResourceProfileId.getOrElse(rpId, 0)
+    _driverLogger.warn("getTargetExecutorNumForRPId(rpId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", rpId, rpId)
   }
 
   private[deploy] def getRequestedRPIds(): Seq[Int] = {
@@ -106,11 +109,13 @@ private[spark] class ApplicationInfo(
       rpIdToResourceDesc(resourceProfile.id) =
         ExecutorResourceDescription(coresPerExecutor, memoryMbPerExecutor, customResources)
     }
+    _driverLogger.warn("createResourceDescForResourceProfile(resourceProfile)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resourceProfile)
   }
 
   // Get resources required for schedule.
   private[deploy] def getResourceDescriptionForRpId(rpId: Int): ExecutorResourceDescription = {
     rpIdToResourceDesc(rpId)
+    _driverLogger.warn("getResourceDescriptionForRpId(rpId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", rpId, rpId)
   }
 
   private[deploy] def requestExecutors(
@@ -128,6 +133,7 @@ private[spark] class ApplicationInfo(
 
   private[deploy] def getResourceProfileById(rpId: Int): ResourceProfile = {
     rpIdToResourceProfile(rpId)
+    _driverLogger.warn("getResourceProfileById(rpId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", rpId, rpId)
   }
 
   private def newExecutorId(useID: Option[Int] = None): Int = {
@@ -152,6 +158,7 @@ private[spark] class ApplicationInfo(
     val exec = new ExecutorDesc(
       newExecutorId(useID), this, worker, cores, memoryMb, resources, rpId)
     executors(exec.id) = exec
+    _driverLogger.warn("addExecutor(worker,cores,memoryMb,resources,rpId,useID)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", worker, cores, memoryMb, resources, rpId, useID, rpId)
     getOrUpdateExecutorsForRPId(rpId).add(exec.id)
     coresGranted += cores
     exec
@@ -164,6 +171,7 @@ private[spark] class ApplicationInfo(
       executorsPerResourceProfileId(exec.rpId) -= exec.id
       coresGranted -= exec.cores
     }
+    _driverLogger.warn("removeExecutor(exec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exec)
   }
 
   private val requestedCores = desc.maxCores.getOrElse(defaultCores)

@@ -102,6 +102,7 @@ if typing.TYPE_CHECKING:
     )
     from pyspark.serializers import Serializer
     from pyspark.sql import SparkSession
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 JVM_BYTE_MIN: int = -(1 << 7)
@@ -408,6 +409,7 @@ def inheritable_thread_target(f: Union[Callable, "SparkSession"]) -> Callable:
 
     # Spark Connect
     if is_remote():
+        logger.warning("inheritable_thread_target(f)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", f)
         from pyspark.sql.connect.session import SparkSession as RemoteSparkSession
 
         session = f
@@ -897,6 +899,7 @@ def disable_gc() -> Generator[None, None, None]:
     try:
         yield
     finally:
+        logger.warning("disable_gc()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         if gc_enabled_originally:
             gc.enable()
 
@@ -1045,6 +1048,7 @@ class _FaulthandlerHelper:
             if start_periodic_traceback:
                 self.start_periodic_traceback()
             yield
+            logger.warning("enable_faulthandler(self,start_periodic_traceback)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start_periodic_traceback)
         finally:
             self.stop()
 

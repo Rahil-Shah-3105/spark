@@ -54,6 +54,7 @@ class ListStateImplWithTTL[S](
   extends OneToManyTTLState(
     stateName, store, keyExprEnc.schema, ttlConfig, currentTimestampMs,
     prevBatchTimestampMs, metrics) with ListState[S] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private lazy val stateTypesEncoder = StateTypesEncoder(keyExprEnc, valEncoder,
     stateName, hasTtl = true)
@@ -93,6 +94,7 @@ class ListStateImplWithTTL[S](
           finished = true
           null.asInstanceOf[S]
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
 
       override protected def close(): Unit = {}
@@ -133,6 +135,7 @@ class ListStateImplWithTTL[S](
     val newStateUnsafeRows = newState.iterator.map { v =>
       stateTypesEncoder.encodeValue(v, ttlExpirationMs)
     }
+    planChangeLogger.warn("appendList(newState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newState)
 
     updatePrimaryAndSecondaryIndices(false, encodedKey,
       newStateUnsafeRows, ttlExpirationMs)
@@ -210,6 +213,7 @@ class ListStateImplWithTTL[S](
     unsafeRowValuesIterator.map { valueUnsafeRow =>
       stateTypesEncoder.decodeValue(valueUnsafeRow).asInstanceOf[S]
     }
+    planChangeLogger.warn("getWithoutEnforcingTTL()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -222,6 +226,7 @@ class ListStateImplWithTTL[S](
       (stateTypesEncoder.decodeValue(valueUnsafeRow).asInstanceOf[S],
         stateTypesEncoder.decodeTtlExpirationMs(valueUnsafeRow).get)
     }
+    planChangeLogger.warn("getTTLValues()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private[sql] def getMinValues(): Iterator[Long] = {
@@ -229,6 +234,7 @@ class ListStateImplWithTTL[S](
     minIndexIterator()
       .filter(_._1 == groupingKey)
       .map(_._2)
+    planChangeLogger.warn("getMinValues()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -239,6 +245,7 @@ class ListStateImplWithTTL[S](
     val groupingKey = stateTypesEncoder.encodeGroupingKey()
     val ttlRowsForGroupingKey = getTTLRows().filter(_.elementKey == groupingKey).toSeq
 
+    planChangeLogger.warn("getValueInTTLState()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     assert(ttlRowsForGroupingKey.size <= 1, "Multiple TTLRows found for grouping key " +
       s"$groupingKey. Expected at most 1. Found: ${ttlRowsForGroupingKey.mkString(", ")}.")
     ttlRowsForGroupingKey.headOption.map(_.expirationMs)

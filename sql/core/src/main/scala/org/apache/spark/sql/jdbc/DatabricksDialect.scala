@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.datasources.v2.TableSampleInfo
 import org.apache.spark.sql.types._
 
 private case class DatabricksDialect() extends JdbcDialect with NoLegacyJDBCError {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def canHandle(url: String): Boolean = {
     url.startsWith("jdbc:databricks")
@@ -45,6 +46,7 @@ private case class DatabricksDialect() extends JdbcDialect with NoLegacyJDBCErro
       case java.sql.Types.REAL => Some(FloatType)
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {

@@ -25,6 +25,7 @@ import org.apache.spark.sql.types._
 
 
 private case class TeradataDialect() extends JdbcDialect with NoLegacyJDBCError {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def canHandle(url: String): Boolean =
     url.toLowerCase(Locale.ROOT).startsWith("jdbc:teradata")
@@ -73,6 +74,7 @@ private case class TeradataDialect() extends JdbcDialect with NoLegacyJDBCError 
       table: String,
       cascade: Option[Boolean] = isCascadingTruncateTable()): String = {
     s"DELETE FROM $table ALL"
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
   }
 
   // See https://docs.teradata.com/reader/scPHvjfglIlB8F70YliLAw/wysTNUMsP~0aGzksLCl1kg
@@ -83,6 +85,7 @@ private case class TeradataDialect() extends JdbcDialect with NoLegacyJDBCError 
 
   override def getLimitClause(limit: Integer): String = {
     ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 
   override def getCatalystType(
@@ -110,5 +113,6 @@ private case class TeradataDialect() extends JdbcDialect with NoLegacyJDBCError 
         }
         case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 }

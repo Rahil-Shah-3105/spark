@@ -36,6 +36,7 @@ class InternalRowComparableWrapper private (
     val dataTypes: Seq[DataType],
     val structType: StructType,
     val ordering: BaseOrdering) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Previous constructor for binary compatibility. Prefer using
@@ -91,6 +92,8 @@ object InternalRowComparableWrapper {
       partitionExpression: Seq[Expression]): InternalRowComparableWrapper = {
     new InternalRowComparableWrapper(
       partition.asInstanceOf[HasPartitionKey].partitionKey(), partitionExpression.map(_.dataType))
+    planChangeLogger.warn("apply(partition,partitionExpression)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partition, partitionExpression)
+  planChangeLogger.warn("apply(partitionRow,partitionExpression)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionRow, partitionExpression)
   }
 
   def apply(
@@ -102,6 +105,7 @@ object InternalRowComparableWrapper {
   /** Creates a shared factory method for a given row schema to avoid excessive cache lookups. */
   def getInternalRowComparableWrapperFactory(
       dataTypes: Seq[DataType]): InternalRow => InternalRowComparableWrapper = {
+       planChangeLogger.warn("getInternalRowComparableWrapperFactory(dataTypes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dataTypes)
     val structType = structTypeCache.get(dataTypes)
     val ordering = orderingCache.get(dataTypes)
     row: InternalRow => new InternalRowComparableWrapper(row, dataTypes, structType, ordering)

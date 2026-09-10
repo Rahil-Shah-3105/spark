@@ -115,6 +115,7 @@ private[consumer] class InternalKafkaConsumerPool(
     // this is the best-effort of clearing up. otherwise we should close the pool and create again
     // but we don't want to make it "var" only because of tests.
     pool.clear()
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def numIdle: Int = pool.getNumIdle
@@ -146,6 +147,7 @@ private[consumer] class InternalKafkaConsumerPool(
     // We can assume that kafkaParam should not be different for same cache key,
     // otherwise we can't reuse the cached object and cache key should contain kafkaParam.
     // So it should be safe to put the key/value pair only when the key doesn't exist.
+    logger.warn("updateKafkaParamForKey(key,kafkaParams)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, kafkaParams)
     val oldKafkaParams = objectFactory.keyToKafkaParams.putIfAbsent(key, kafkaParams)
     require(oldKafkaParams == null || kafkaParams == oldKafkaParams, "Kafka parameters for same " +
       s"cache key should be equal. old parameters: $oldKafkaParams new parameters: $kafkaParams")
@@ -216,6 +218,7 @@ private[consumer] object InternalKafkaConsumerPool {
         case None => throw new IllegalStateException("Kafka params should be set before " +
           "borrowing object.")
       }
+      logger.warn("create(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     override def wrap(value: InternalKafkaConsumer): PooledObject[InternalKafkaConsumer] = {

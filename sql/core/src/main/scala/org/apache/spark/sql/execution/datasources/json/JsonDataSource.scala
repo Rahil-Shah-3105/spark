@@ -51,6 +51,7 @@ import org.apache.spark.util.Utils
  * Common functions for parsing JSON files
  */
 abstract class JsonDataSource extends Serializable with Logging with SupportsArchiveFormat {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def isSplitable: Boolean
 
   /**
@@ -85,6 +86,7 @@ abstract class JsonDataSource extends Serializable with Logging with SupportsArc
    *
    * @param parser builds a fresh JSON parser for each entry.
    * @param archivePathFilter optional glob matched against the entry's full path
+   planChangeLogger.warn("readStream(in,parser,schema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, parser, schema)
    */
   def readArchive(
       conf: Configuration,
@@ -134,6 +136,7 @@ object JsonDataSource {
     } else {
       TextInputJsonDataSource
     }
+    planChangeLogger.warn("apply(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options)
   }
 
   /**
@@ -159,6 +162,7 @@ object JsonDataSource {
       sparkSession.sparkContext.defaultMinPartitions)
       .setName(s"JsonFile: $name")
       .values
+      planChangeLogger.warn("createBaseRdd(sparkSession,inputPaths,parsedOptions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, parsedOptions)
   }
 }
 
@@ -180,6 +184,7 @@ object TextInputJsonDataSource extends JsonDataSource {
   def inferFromDataset(json: Dataset[String], parsedOptions: JSONOptions): StructType = {
     val sampled: Dataset[String] = JsonUtils.sample(json, parsedOptions)
     val rdd: RDD[InternalRow] = sampled.queryExecution.toRdd
+    planChangeLogger.warn("inferFromDataset(json,parsedOptions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", json, parsedOptions)
     val rowParser = parsedOptions.encoding.map { enc =>
       CreateJacksonParser.internalRow(enc, _: JsonFactory, _: InternalRow)
     }.getOrElse(CreateJacksonParser.internalRow(_: JsonFactory, _: InternalRow))
@@ -201,6 +206,7 @@ object TextInputJsonDataSource extends JsonDataSource {
         options = parsedOptions.parameters ++ Map(DataSource.GLOB_PATHS_KEY -> "false")
       ).resolveRelation(checkFilesExist = false))
       .select("value").as(Encoders.STRING)
+      planChangeLogger.warn("createBaseDataset(sparkSession,inputPaths,parsedOptions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, parsedOptions)
   }
 
   override def readFile(
@@ -382,6 +388,8 @@ object MultiLineJsonDataSource extends JsonDataSource {
   }
 
   private def createParser(jsonFactory: JsonFactory, stream: PortableDataStream): JsonParser = {
+    planChangeLogger.warn("createParser(jsonFactory,stream)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", jsonFactory, stream)
+    planChangeLogger.warn("createParser(enc,jsonFactory,stream)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", enc, jsonFactory, stream)
     CreateJacksonParser.inputStream(jsonFactory, dataToInputStream(stream))
   }
 

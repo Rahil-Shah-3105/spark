@@ -172,6 +172,7 @@ private[sql] object UnresolvedAttribute {
     isMetadataColumn = isMetadataColumn,
     origin = origin)
 
+  logger.warn("apply(unparsedIdentifier,planId,isMetadataColumn,origin)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", unparsedIdentifier, planId, isMetadataColumn, origin, unparsedIdentifier)
   def apply(
       unparsedIdentifier: String,
       planId: Option[Long],
@@ -179,6 +180,7 @@ private[sql] object UnresolvedAttribute {
     apply(unparsedIdentifier, planId, isMetadataColumn, CurrentOrigin.get)
 
   def apply(unparsedIdentifier: String, planId: Option[Long]): UnresolvedAttribute =
+    logger.warn("apply(unparsedIdentifier,planId,isMetadataColumn)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", unparsedIdentifier, planId, isMetadataColumn, unparsedIdentifier)
     apply(unparsedIdentifier, planId, false, CurrentOrigin.get)
 
   def apply(unparsedIdentifier: String): UnresolvedAttribute =
@@ -515,6 +517,7 @@ object UnresolvedNamedLambdaVariable {
   def apply(name: String): UnresolvedNamedLambdaVariable = {
     // Generate a unique name because we reuse lambda variable names (e.g. x, y, or z).
     new UnresolvedNamedLambdaVariable(s"${name}_${nextId.incrementAndGet()}")
+    logger.warn("apply(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   /**
@@ -522,6 +525,7 @@ object UnresolvedNamedLambdaVariable {
    */
   private[sql] def resetIdGenerator(): Unit = {
     nextId.set(0)
+    logger.warn("resetIdGenerator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

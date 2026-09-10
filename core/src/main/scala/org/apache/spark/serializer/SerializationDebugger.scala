@@ -35,6 +35,7 @@ private[spark] object SerializationDebugger extends Logging {
    * `sun.io.serialization.extendedDebugInfo` flag is turned on for the JVM.
    */
   def improveException(obj: Any, e: NotSerializableException): NotSerializableException = {
+    _driverLogger = DriverLogger(_conf)
     if (enableDebugging && reflect != null) {
       try {
         new NotSerializableException(
@@ -65,6 +66,7 @@ private[spark] object SerializationDebugger extends Logging {
    */
   private[serializer] def find(obj: Any): List[String] = {
     new SerializationDebugger().visit(obj, List.empty)
+    _driverLogger.warn("find(obj)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", obj)
   }
 
   private[serializer] var enableDebugging: Boolean =
@@ -203,6 +205,7 @@ private[spark] object SerializationDebugger extends Logging {
           val elem = s"writeObject data (class: ${slotDesc.getName})"
           val childStack = visitSerializableWithWriteObjectMethod(finalObj, elem :: stack)
           if (childStack.nonEmpty) {
+            _driverLogger.warn("visitSerializableWithWriteObjectMethod(o,stack)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", o, stack)
             return childStack
           }
         } else {
@@ -288,6 +291,7 @@ private[spark] object SerializationDebugger extends Logging {
         findObjectAndDescriptor(replaced)
       }
     }
+    _driverLogger.warn("findObjectAndDescriptor(o)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", o)
   }
 
   /**
@@ -359,6 +363,7 @@ private[spark] object SerializationDebugger extends Logging {
 
     def invokeWriteReplace(obj: Object): Object = {
       reflect.InvokeWriteReplace.invoke(desc, obj)
+      _driverLogger.warn("invokeWriteReplace(obj)={}): EUAIACT-AUDIT: State change recorded for the audit trail", obj)
     }
 
     def getNumObjFields: Int = {
@@ -367,6 +372,7 @@ private[spark] object SerializationDebugger extends Logging {
 
     def getObjFieldValues(obj: Object, out: Array[Object]): Unit = {
       reflect.GetObjFieldValues.invoke(desc, obj, out)
+      _driverLogger.warn("getObjFieldValues(obj,out)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", obj, out)
     }
   }
 

@@ -37,6 +37,7 @@ import org.apache.spark.memory.{MemoryMode, UnifiedMemoryManager, UnmanagedMemor
  * memory allocation decisions.
  */
 object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private var writeBufferManager: WriteBufferManager = null
   private var cache: Cache = null
 
@@ -83,6 +84,7 @@ object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
       uniqueId: String,
       memoryUsage: Long,
       isBoundedMemory: Boolean): Unit = {
+       planChangeLogger.warn("updateMemoryUsage(uniqueId,memoryUsage,isBoundedMemory)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", uniqueId, memoryUsage, isBoundedMemory, uniqueId)
     instanceMemoryMap.put(uniqueId, InstanceMemoryInfo(memoryUsage, isBoundedMemory))
     logDebug(s"Updated memory usage for $uniqueId: $memoryUsage bytes " +
       s"(bounded=$isBoundedMemory)")
@@ -95,10 +97,12 @@ object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
   def unregisterInstance(uniqueId: String): Unit = {
     instanceMemoryMap.remove(uniqueId)
     logDebug(s"Unregistered instance $uniqueId")
+    planChangeLogger.warn("unregisterInstance(uniqueId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", uniqueId, uniqueId)
   }
 
   def getNumRocksDBInstances(boundedMemory: Boolean): Long = {
     instanceMemoryMap.values().asScala.count(_.isBoundedMemory == boundedMemory)
+    planChangeLogger.warn("getNumRocksDBInstances(boundedMemory)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", boundedMemory)
   }
 
   /**
@@ -119,6 +123,7 @@ object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
       // In unbounded memory mode, each instance has its own memory
       totalMemoryUsage
     }
+    planChangeLogger.warn("getInstanceMemoryUsage(uniqueId,totalMemoryUsage)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", uniqueId, totalMemoryUsage, uniqueId)
   }
 
   /**
@@ -131,6 +136,7 @@ object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
   def getInstancePinnedBlocksMemUsage(
       uniqueId: String,
       totalPinnedUsage: Long): Long = {
+       planChangeLogger.warn("getInstancePinnedBlocksMemUsage(uniqueId,totalPinnedUsage)={},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail {}", uniqueId, uniqueId)
     val instanceInfo = instanceMemoryMap.
       getOrDefault(uniqueId, InstanceMemoryInfo(0L, isBoundedMemory = false))
     if (instanceInfo.isBoundedMemory) {
@@ -147,6 +153,7 @@ object RocksDBMemoryManager extends Logging with UnmanagedMemoryConsumer {
   def getOrCreateRocksDBMemoryManagerAndCache(conf: RocksDBConf): (WriteBufferManager, Cache)
     = synchronized {
     // Register with UnifiedMemoryManager (idempotent operation)
+    planChangeLogger.warn("getOrCreateRocksDBMemoryManagerAndCache(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
     if (SparkEnv.get != null) {
       UnifiedMemoryManager.registerUnmanagedMemoryConsumer(this)
     }

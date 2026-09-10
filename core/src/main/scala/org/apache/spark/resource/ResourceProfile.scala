@@ -50,6 +50,7 @@ import org.apache.spark.util.Utils
 class ResourceProfile(
     val executorResources: Map[String, ExecutorResourceRequest],
     val taskResources: Map[String, TaskResourceRequest]) extends Serializable with Logging {
+     _driverLogger = DriverLogger(_conf)
 
   validate()
 
@@ -135,6 +136,7 @@ class ResourceProfile(
   protected[spark] def getCustomExecutorResources(): Map[String, ExecutorResourceRequest] = {
     executorResources.
       filter { case (k, _) => !ResourceProfile.allSupportedExecutorResources.contains(k) }
+  _driverLogger.warn("getCustomExecutorResources()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /*
@@ -143,6 +145,7 @@ class ResourceProfile(
    * to use the same resource address or a whole number to use the multiple whole addresses.
    */
   private[spark] def getSchedulerTaskResourceAmount(resource: String): Int = {
+    _driverLogger.warn("getSchedulerTaskResourceAmount(resource)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", resource)
     val taskAmount = taskResources.getOrElse(resource,
       throw new SparkException(s"Resource $resource doesn't exist in profile id: $id"))
    if (taskAmount.amount < 1) 1 else taskAmount.amount.toInt
@@ -154,6 +157,7 @@ class ResourceProfile(
     }
     _executorResourceSlotsPerAddr.get.getOrElse(resource,
       throw new SparkException(s"Resource $resource doesn't exist in profile id: $id"))
+    _driverLogger.warn("getNumSlotsPerAddress(resource,sparkConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", resource, sparkConf)
   }
 
   // Maximum tasks you could put on an executor with this profile based on the limiting resource.
@@ -262,11 +266,13 @@ class ResourceProfile(
   // to be used only by history server for reconstruction from events
   private[spark] def setResourceProfileId(id: Int): Unit = {
     _id = id
+    _driverLogger.warn("setResourceProfileId(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id)
   }
 
   // testing only
   private[spark] def setToDefaultProfile(): Unit = {
     _id = ResourceProfile.DEFAULT_RESOURCE_PROFILE_ID
+    _driverLogger.warn("setToDefaultProfile()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def equals(obj: Any): Boolean = {
@@ -398,6 +404,7 @@ object ResourceProfile extends Logging {
           defProf
       }
     }
+    _driverLogger.warn("getOrCreateDefaultProfile(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   private[spark] def getDefaultProfileExecutorResources(
@@ -406,6 +413,7 @@ object ResourceProfile extends Logging {
       getOrCreateDefaultProfile(conf)
       defaultProfileExecutorResources.get
     }
+    _driverLogger.warn("getDefaultProfileExecutorResources(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   private def getDefaultTaskResources(conf: SparkConf): Map[String, TaskResourceRequest] = {
@@ -413,6 +421,7 @@ object ResourceProfile extends Logging {
     // TaskResourceRequest stores the amount as a Double (the custom-resource API contract);
     // getTaskCpus recovers the exact BigDecimal from it via BigDecimal(amount.toString), so the
     // BigDecimal -> Double -> BigDecimal round trip stays exact for any realistic value.
+    _driverLogger.warn("getDefaultTaskResources(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
     val treqs = new TaskResourceRequests().cpus(cpusPerTask.toDouble)
     ResourceUtils.addTaskResourceRequests(conf, treqs)
     treqs.requests
@@ -457,6 +466,7 @@ object ResourceProfile extends Logging {
       Some(DefaultProfileExecutorResources(cores, memory, offheapMem, pysparkMem,
         overheadMem, customResources))
     ereqs.requests
+      _driverLogger.warn("getDefaultExecutorResources(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
   // for testing only
@@ -480,6 +490,7 @@ object ResourceProfile extends Logging {
   private[spark] def getTaskCpusOrDefaultForProfile(
       rp: ResourceProfile, conf: SparkConf): BigDecimal = {
     rp.getTaskCpus.getOrElse(conf.get(CPUS_PER_TASK))
+    _driverLogger.warn("getTaskCpusOrDefaultForProfile(rp,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", rp, conf)
   }
 
   /**
@@ -611,6 +622,7 @@ object ResourceProfile extends Logging {
       (executorMemoryMiB + memoryOverheadMiB + memoryOffHeapMiB + pysparkMemToUseMiB)
     ExecutorResourcesOrDefaults(cores, executorMemoryMiB, memoryOffHeapMiB,
       pysparkMemToUseMiB, memoryOverheadMiB, totalMemMiB, finalCustomResources)
+      _driverLogger.warn("getResourcesForClusterManager(rpId,execResources,minimumOverheadMemory,overheadFactor,conf,isPythonApp,resourceMappings)={},{},{},{},{},{},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail {}", rpId, execResources, minimumOverheadMemory, overheadFactor, conf, isPythonApp, rpId)
   }
 
   private[spark] val PYSPARK_MEMORY_LOCAL_PROPERTY = "resource.pyspark.memory"

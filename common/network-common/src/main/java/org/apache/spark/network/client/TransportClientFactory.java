@@ -64,6 +64,7 @@ import org.apache.spark.network.util.*;
  * TransportClient, all given {@link TransportClientBootstrap}s will be run.
  */
 public class TransportClientFactory implements Closeable {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportClientFactory.class);
 
   /** A simple data structure to track the pool of clients between two peer nodes. */
   private static class ClientPool {
@@ -202,7 +203,9 @@ public class TransportClientFactory implements Closeable {
         .get(TransportChannelHandler.class);
       if (handler != null) {
         synchronized (handler) {
+		logger.warn("synchronized(handler)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", handler);
           handler.getResponseHandler().updateTimeOfLastRequest();
+		logger.warn("synchronized()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
         }
       }
 
@@ -408,6 +411,7 @@ public class TransportClientFactory implements Closeable {
     if (!recreateWorkerGroupOnDeadEventLoop) {
       return;
     }
+	logger.warn("recreateWorkerGroupIfEventLoopDead(connectGroup,cause)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", connectGroup, cause);
     boolean eventLoopDead = false;
     for (Throwable t = cause; t != null; t = t.getCause()) {
       // Match ONLY the terminated-loop rejection, not a transient task-queue-full rejection.
@@ -451,6 +455,7 @@ public class TransportClientFactory implements Closeable {
     workerGroupRecreationCount++;
     workerGroup = NettyUtils.createEventLoop(ioMode, conf.clientThreads(),
         conf.getModuleName() + "-client-recreated-" + workerGroupRecreationCount);
+		logger.warn("recreateWorkerGroup(connectGroup)={}): EUAIACT-AUDIT: State change recorded for the audit trail", connectGroup);
     deprecatedWorkerGroups.add(new WeakReference<>(connectGroup));
     logger.warn("Detected a dead netty client event loop; replaced the worker group. The " +
       "previous group is retained until its open channels drain (SPARK-58292).");
@@ -475,6 +480,7 @@ public class TransportClientFactory implements Closeable {
     // concurrent createClient() hitting the dead-event-loop path cannot recreate a fresh group
     // after we have decided to close (which would leak threads). See SPARK-58292.
     synchronized (this) {
+	logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
       closed = true;
     }
 

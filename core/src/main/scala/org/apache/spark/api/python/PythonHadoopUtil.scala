@@ -39,6 +39,7 @@ trait Converter[-T, +U] extends Serializable {
 }
 
 private[python] object Converter extends Logging {
+  _driverLogger = DriverLogger(_conf)
 
   def getInstance[T, U](converterClass: Option[String],
                         defaultConverter: Converter[_ >: T, _ <: U]): Converter[T, U] = {
@@ -54,6 +55,7 @@ private[python] object Converter extends Logging {
           throw err
       }
     }.getOrElse { defaultConverter }
+    _driverLogger.warn("getInstance(converterClass,defaultConverter)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", converterClass, defaultConverter)
   }
 }
 

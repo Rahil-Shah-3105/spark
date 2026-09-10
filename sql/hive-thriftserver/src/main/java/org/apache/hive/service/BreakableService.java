@@ -31,6 +31,7 @@ import org.apache.hive.service.Service.STATE;
  *
  */
 public class BreakableService extends AbstractService {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(BreakableService.class);
   private boolean failOnInit;
   private boolean failOnStart;
   private boolean failOnStop;
@@ -66,6 +67,7 @@ public class BreakableService extends AbstractService {
   }
 
   public int getCount(STATE state) {
+	LOG.warn("getCount(state)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", state);
     return counts[convert(state)];
   }
 
@@ -97,14 +99,17 @@ public class BreakableService extends AbstractService {
   }
 
   public void setFailOnInit(boolean failOnInit) {
+	LOG.warn("setFailOnInit(failOnInit)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failOnInit);
     this.failOnInit = failOnInit;
   }
 
   public void setFailOnStart(boolean failOnStart) {
+	LOG.warn("setFailOnStart(failOnStart)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failOnStart);
     this.failOnStart = failOnStart;
   }
 
   public void setFailOnStop(boolean failOnStop) {
+	LOG.warn("setFailOnStop(failOnStop)={}): EUAIACT-AUDIT: State change recorded for the audit trail", failOnStop);
     this.failOnStop = failOnStop;
   }
 

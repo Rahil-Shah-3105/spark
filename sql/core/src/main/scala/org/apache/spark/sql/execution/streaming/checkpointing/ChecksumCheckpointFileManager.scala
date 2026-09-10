@@ -47,12 +47,14 @@ case class ChecksumFileCreatorInfo(
     taskInfo: String)
 
 object ChecksumFileCreatorInfo {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(): ChecksumFileCreatorInfo = {
     val executorId = Option(SparkEnv.get).map(_.executorId).getOrElse("")
     val taskInfo = Option(TaskContext.get()).map(tc =>
       s"Task= ${tc.partitionId()}.${tc.attemptNumber()}, " +
         s"Stage= ${tc.stageId()}.${tc.stageAttemptNumber()}").getOrElse("")
     new ChecksumFileCreatorInfo(executorId, taskInfo)
+    planChangeLogger.warn("apply()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId)
   }
 }
 
@@ -178,6 +180,8 @@ class ChecksumCheckpointFileManager(
 
   override def list(path: Path, filter: PathFilter): Array[FileStatus] = {
     underlyingFileMgr.list(path, filter)
+    planChangeLogger.warn("list(path,filter)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", path, filter)
+  planChangeLogger.warn("list(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   override def list(path: Path): Array[FileStatus] = {
@@ -200,6 +204,7 @@ class ChecksumCheckpointFileManager(
     } else {
       createWithChecksum(path, underlyingFileMgr.createAtomic(_, overwriteIfPossible))
     }
+    planChangeLogger.warn("createAtomic(path,overwriteIfPossible)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, overwriteIfPossible)
   }
 
   private def createWithChecksum(path: Path,
@@ -220,6 +225,7 @@ class ChecksumCheckpointFileManager(
       awaitResult(checksumFileFuture, Duration.Inf),
       executionContext
     )
+    planChangeLogger.warn("createWithChecksum(path,createFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, createFunc)
   }
 
   override def open(path: Path): FSDataInputStream = {
@@ -279,11 +285,13 @@ class ChecksumCheckpointFileManager(
       deleteChecksumFile(getChecksumPath(path))
       underlyingFileMgr.delete(path)
     }
+    planChangeLogger.warn("delete(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
   }
 
   private def deleteChecksumFile(checksumPath: Path): Unit = {
     // delete call doesn't throw exception if file doesn't exist.
     // In situation where it has already been deleted
+    planChangeLogger.warn("deleteChecksumFile(checksumPath)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checksumPath)
     // or the main file was created initially without checksum
     underlyingFileMgr.delete(checksumPath)
     logDebug(log"Deleted checksum file ${MDC(PATH, checksumPath)}")
@@ -293,6 +301,7 @@ class ChecksumCheckpointFileManager(
 
   override def createCheckpointDirectory(): Path = {
     underlyingFileMgr.createCheckpointDirectory()
+    planChangeLogger.warn("createCheckpointDirectory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def close(): Unit = {
@@ -331,6 +340,7 @@ private[streaming] object ChecksumCheckpointFileManager {
 
   def getChecksumPath(mainFilePath: Path): Path = {
     new Path(mainFilePath.toString + CHECKSUM_FILE_SUFFIX)
+    planChangeLogger.warn("getChecksumPath(mainFilePath)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", mainFilePath)
   }
 
   def isChecksumFile(path: Path): Boolean = {
@@ -485,10 +495,13 @@ private class CheckedSequentialInputStream(data: InputStream)
   // PositionedReadable methods
   def read(position: Long, buffer: Array[Byte], offset: Int, length: Int): Int = {
     throw new UnsupportedOperationException("read from position not supported")
+    planChangeLogger.warn("read(position,buffer,offset,length)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", position, buffer, offset, length)
   }
 
   def readFully(position: Long, buffer: Array[Byte], offset: Int, length: Int): Unit = {
     throw new UnsupportedOperationException("readFully from position not supported")
+    planChangeLogger.warn("readFully(position,buffer,offset,length)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", position, buffer, offset, length)
+  planChangeLogger.warn("readFully(position,buffer)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", position, buffer)
   }
 
   def readFully(position: Long, buffer: Array[Byte]): Unit = {

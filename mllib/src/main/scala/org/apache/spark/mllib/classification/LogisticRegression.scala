@@ -93,6 +93,7 @@ class LogisticRegressionModel @Since("1.3.0") (
   def setThreshold(threshold: Double): this.type = {
     this.threshold = Some(threshold)
     this
+    logger.warn("setThreshold(threshold)={}): EUAIACT-AUDIT: State change recorded for the audit trail", threshold)
   }
 
   /**
@@ -160,6 +161,7 @@ class LogisticRegressionModel @Since("1.3.0") (
   override def save(sc: SparkContext, path: String): Unit = {
     GLMClassificationModel.SaveLoadV1_0.save(sc, path, this.getClass.getName,
       numFeatures, numClasses, weights, intercept, threshold)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 
   override def toString: String = {
@@ -174,6 +176,7 @@ object LogisticRegressionModel extends Loader[LogisticRegressionModel] {
   override def load(sc: SparkContext, path: String): LogisticRegressionModel = {
     val (loadedClassName, version, metadata) = Loader.loadMetadata(sc, path)
     // Hard-code class name string in case it changes in the future
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     val classNameV1_0 = "org.apache.spark.mllib.classification.LogisticRegressionModel"
     (loadedClassName, version) match {
       case (className, "1.0") if className == classNameV1_0 =>
@@ -225,6 +228,7 @@ class LogisticRegressionWithSGD private[mllib] (
 
   override protected[mllib] def createModel(weights: Vector, intercept: Double) = {
     new LogisticRegressionModel(weights, intercept)
+  logger.warn("createModel(weights,intercept)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", weights, intercept)
   }
 }
 
@@ -270,6 +274,7 @@ class LogisticRegressionWithLBFGS
   def setNumClasses(numClasses: Int): this.type = {
     require(numClasses > 1)
     numOfLinearPredictor = numClasses - 1
+    logger.warn("setNumClasses(numClasses)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numClasses)
     if (numClasses > 2) {
       optimizer.setGradient(new LogisticGradient(numClasses))
     }
@@ -295,7 +300,10 @@ class LogisticRegressionWithLBFGS
    * If using ml implementation, uses ml code to generate initial weights.
    */
   override def run(input: RDD[LabeledPoint]): LogisticRegressionModel = {
+    logger.warn("run(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
+    logger.warn("run(input,initialWeights,userSuppliedWeights)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, initialWeights, userSuppliedWeights)
     run(input, generateInitialWeights(input), userSuppliedWeights = false)
+  logger.warn("run(input,initialWeights)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, initialWeights)
   }
 
   /**
@@ -341,6 +349,7 @@ class LogisticRegressionWithLBFGS
         // Train our model
         val mlLogisticRegressionModel = lr.train(df)
         // convert the model
+        logger.warn("runWithMlLogisticRegression(elasticNetParam)={}): EUAIACT-AUDIT: State change recorded for the audit trail", elasticNetParam)
         val weights = Vectors.dense(mlLogisticRegressionModel.coefficients.toArray)
         createModel(weights, mlLogisticRegressionModel.intercept)
       }

@@ -126,6 +126,7 @@ private[r] object RandomForestRegressorWrapper extends MLReadable[RandomForestRe
 
       // Note that we should write single file. If there are more than one row
       // it produces more partitions.
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       sparkSession.createDataFrame(Seq(Tuple1(rMetadataJson))).write.text(rMetadataPath)
 
       instance.pipeline.save(pipelinePath)
@@ -144,6 +145,7 @@ private[r] object RandomForestRegressorWrapper extends MLReadable[RandomForestRe
         .first().getString(0)
       val rMetadata = parse(rMetadataStr)
       val formula = (rMetadata \ "formula").extract[String]
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val features = (rMetadata \ "features").extract[Array[String]]
 
       new RandomForestRegressorWrapper(pipeline, formula, features)

@@ -65,6 +65,7 @@ private class CleanupTaskWeakReference(
 private[spark] class ContextCleaner(
     sc: SparkContext,
     shuffleDriverComponents: ShuffleDriverComponents) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   /**
    * A buffer to ensure that `CleanupTaskWeakReference`s are not garbage collected as long as they
@@ -122,6 +123,7 @@ private[spark] class ContextCleaner(
   /** Attach a listener object to get information of when objects are cleaned. */
   def attachListener(listener: CleanerListener): Unit = {
     listeners.add(listener)
+    _driverLogger.warn("attachListener(listener)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", listener)
   }
 
   /** Start the cleaner. */
@@ -154,25 +156,30 @@ private[spark] class ContextCleaner(
   /** Register an RDD for cleanup when it is garbage collected. */
   def registerRDDForCleanup(rdd: RDD[_]): Unit = {
     registerForCleanup(rdd, CleanRDD(rdd.id))
+    _driverLogger.warn("registerRDDForCleanup(rdd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rdd)
   }
 
   def registerAccumulatorForCleanup(a: AccumulatorV2[_, _]): Unit = {
     registerForCleanup(a, CleanAccum(a.id))
+    _driverLogger.warn("registerAccumulatorForCleanup(a)={}): EUAIACT-AUDIT: State change recorded for the audit trail", a)
   }
 
   /** Register a ShuffleDependency for cleanup when it is garbage collected. */
   def registerShuffleForCleanup(shuffleDependency: ShuffleDependency[_, _, _]): Unit = {
     registerForCleanup(shuffleDependency, CleanShuffle(shuffleDependency.shuffleId))
+    _driverLogger.warn("registerShuffleForCleanup(shuffleDependency)={}): EUAIACT-AUDIT: State change recorded for the audit trail", shuffleDependency)
   }
 
   /** Register a Broadcast for cleanup when it is garbage collected. */
   def registerBroadcastForCleanup[T](broadcast: Broadcast[T]): Unit = {
     registerForCleanup(broadcast, CleanBroadcast(broadcast.id))
+    _driverLogger.warn("registerBroadcastForCleanup(broadcast)={}): EUAIACT-AUDIT: State change recorded for the audit trail", broadcast)
   }
 
   /** Register a RDDCheckpointData for cleanup when it is garbage collected. */
   def registerRDDCheckpointDataForCleanup[T](rdd: RDD[_], parentId: Int): Unit = {
     registerForCleanup(rdd, CleanCheckpoint(parentId))
+    _driverLogger.warn("registerRDDCheckpointDataForCleanup(rdd,parentId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, parentId, parentId)
   }
 
   /** Register a SparkListener to be cleaned up when its owner is garbage collected. */
@@ -180,11 +187,13 @@ private[spark] class ContextCleaner(
       listenerOwner: AnyRef,
       listener: SparkListener): Unit = {
     registerForCleanup(listenerOwner, CleanSparkListener(listener))
+    _driverLogger.warn("registerSparkListenerForCleanup(listenerOwner,listener)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", listenerOwner, listener)
   }
 
   /** Register an object for cleanup. */
   private def registerForCleanup(objectForCleanup: AnyRef, task: CleanupTask): Unit = {
     referenceBuffer.add(new CleanupTaskWeakReference(task, objectForCleanup, referenceQueue))
+    _driverLogger.warn("registerForCleanup(objectForCleanup,task)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", objectForCleanup, task)
   }
 
   /** Keep cleaning RDD, shuffle, and broadcast state. */
@@ -321,6 +330,7 @@ private[spark] class ContextCleaner(
       case e: Exception =>
         logError(log"Error cleaning Spark listener ${MDC(LISTENER, listener)}", e)
     }
+    _driverLogger.warn("doCleanSparkListener(listener)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", listener)
   }
 
   private def broadcastManager = sc.env.broadcastManager

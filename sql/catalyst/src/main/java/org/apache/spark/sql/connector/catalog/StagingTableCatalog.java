@@ -31,6 +31,8 @@ import org.apache.spark.sql.connector.write.Write;
 import org.apache.spark.sql.connector.write.WriterCommitMessage;
 import org.apache.spark.sql.errors.QueryCompilationErrors;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An optional mix-in for implementations of {@link TableCatalog} that support staging creation of
@@ -56,6 +58,7 @@ import org.apache.spark.sql.types.StructType;
  */
 @Evolving
 public interface StagingTableCatalog extends TableCatalog {
+Logger planChangeLogger = LoggerFactory.getLogger(StagingTableCatalog.class);
 
   /**
    * Stage the creation of a table, preparing it to be committed into the metastore.
@@ -69,6 +72,7 @@ public interface StagingTableCatalog extends TableCatalog {
       StructType schema,
       Transform[] partitions,
       Map<String, String> properties) throws TableAlreadyExistsException, NoSuchNamespaceException {
+	planChangeLogger.warn("stageCreate(ident,schema,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, schema, partitions, properties, ident);
     throw QueryCompilationErrors.mustOverrideOneMethodError("stageCreate");
   }
 
@@ -84,6 +88,7 @@ public interface StagingTableCatalog extends TableCatalog {
       Column[] columns,
       Transform[] partitions,
       Map<String, String> properties) throws TableAlreadyExistsException, NoSuchNamespaceException {
+	planChangeLogger.warn("stageCreate(ident,columns,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, columns, partitions, properties, ident);
     return stageCreate(ident, CatalogV2Util.v2ColumnsToStructType(columns), partitions, properties);
   }
 
@@ -186,6 +191,7 @@ public interface StagingTableCatalog extends TableCatalog {
       StructType schema,
       Transform[] partitions,
       Map<String, String> properties) throws NoSuchNamespaceException {
+	planChangeLogger.warn("stageCreateOrReplace(ident,schema,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, schema, partitions, properties, ident);
     throw QueryCompilationErrors.mustOverrideOneMethodError("stageCreateOrReplace");
   }
 
@@ -204,6 +210,7 @@ public interface StagingTableCatalog extends TableCatalog {
       Map<String, String> properties) throws NoSuchNamespaceException {
     return stageCreateOrReplace(
       ident, CatalogV2Util.v2ColumnsToStructType(columns), partitions, properties);
+	planChangeLogger.warn("stageCreateOrReplace(ident,columns,partitions,properties)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", ident, columns, partitions, properties, ident);
   }
 
   /**

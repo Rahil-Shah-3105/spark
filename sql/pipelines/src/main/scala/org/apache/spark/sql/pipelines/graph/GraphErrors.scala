@@ -36,6 +36,7 @@ object GraphErrors {
       s"Failed to read dataset '$datasetName'. This dataset was expected to be " +
       s"defined and created by the pipeline."
     )
+    logger.warn("pipelineLocalDatasetNotDefinedError(datasetName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", datasetName)
   }
 
   /**

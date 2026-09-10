@@ -91,6 +91,7 @@ if TYPE_CHECKING:
     # other dependencies so importing here is fine.
     from pyspark.sql.connect.client import SparkConnectClient
     from pyspark.sql.connect.shell.progress import ProgressHandler
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["SparkSession"]
@@ -428,6 +429,7 @@ class SparkSession(SparkConversionMixin):
             >>> SparkSession.builder.enableHiveSupport()
             <pyspark.sql.session.SparkSession.Builder...
             """
+            logger.warning("enableHiveSupport(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self.config("spark.sql.catalogImplementation", "hive")
 
         def getOrCreate(self) -> "SparkSession":
@@ -580,6 +582,7 @@ class SparkSession(SparkConversionMixin):
                     # by all sessions.
                     session = SparkSession(sc, options=self._options)
                 else:
+                    logger.warning("getOrCreate(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
                     module = SparkSession._get_j_spark_session_module(session._jvm)
                     module.applyModifiableSettings(session._jsparkSession, self._options)
                 return session
@@ -641,6 +644,7 @@ class SparkSession(SparkConversionMixin):
                         sc = SparkContext.getOrCreate(sparkConf)
                     jSparkSessionClass = SparkSession._get_j_spark_session_class(sc._jvm)
                     # Create a new SparkSession in the JVM
+                    logger.warning("create(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
                     jSparkSession = jSparkSessionClass.builder().config(self._options).create()
                     # Wrap the JVM SparkSession in a Python SparkSession
                     return SparkSession(sc, jsparkSession=jSparkSession, options=self._options)
@@ -791,6 +795,7 @@ class SparkSession(SparkConversionMixin):
             if jSparkSessionClass.getActiveSession().isDefined():
                 if SparkSession._should_update_active_session():
                     SparkSession(sc, jSparkSessionClass.getActiveSession().get())
+                    logger.warning("getActiveSession(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
                 return SparkSession._activeSession
             else:
                 return None

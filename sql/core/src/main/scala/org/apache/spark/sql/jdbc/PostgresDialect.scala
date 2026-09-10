@@ -98,12 +98,14 @@ private case class PostgresDialect()
         }
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   private def toCatalystType(
       typeName: String,
       precision: Int,
       md: MetadataBuilder): Option[DataType] = typeName match {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case "bool" => Some(BooleanType)
     case "bit" if precision == 1 => Some(BooleanType)
     case "bit" =>
@@ -189,6 +191,7 @@ private case class PostgresDialect()
       case Some(true) => s"TRUNCATE TABLE ONLY $table CASCADE"
       case _ => s"TRUNCATE TABLE ONLY $table"
     }
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
   }
 
   // PostgreSQL JDBC driver fetches all rows into memory by default (fetchSize=0),
@@ -205,6 +208,7 @@ private case class PostgresDialect()
           s"Set the 'fetchsize' option explicitly to override this behavior.")
         POSTGRES_DEFAULT_FETCH_SIZE
     }
+    planChangeLogger.warn("getFetchSize(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
   }
 
   override def beforeFetch(connection: Connection, options: JDBCOptions): Unit = {
@@ -214,6 +218,7 @@ private case class PostgresDialect()
     // want to have fetchsize be non 0 (all the rows).  This allows us to not have to cache all the
     // rows inside the driver when fetching.
     //
+    planChangeLogger.warn("beforeFetch(connection,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", connection, options)
     // See: https://jdbc.postgresql.org/documentation/head/query.html#query-with-cursor
     //
     if (getFetchSize(options) > 0) {

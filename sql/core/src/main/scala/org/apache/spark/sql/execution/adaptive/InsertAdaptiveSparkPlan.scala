@@ -49,6 +49,7 @@ case class InsertAdaptiveSparkPlan(
   override def apply(plan: SparkPlan): SparkPlan = applyInternal(plan, false)
 
   private def applyInternal(plan: SparkPlan, isSubquery: Boolean): SparkPlan = plan match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case _ if !conf.adaptiveExecutionEnabled => plan
     case _: ExecutedCommandExec => plan
     case _: CommandResultExec => plan
@@ -94,6 +95,7 @@ case class InsertAdaptiveSparkPlan(
         logDebug(s"${SQLConf.ADAPTIVE_EXECUTION_ENABLED.key} is enabled " +
           s"but is not supported for query: $plan.")
         plan
+      planChangeLogger.warn("shouldApplyAQE(plan,isSubquery)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, isSubquery)
       }
 
     case _ => plan
@@ -145,6 +147,7 @@ case class InsertAdaptiveSparkPlan(
     if (!plan.containsAnyPattern(SCALAR_SUBQUERY, IN_SUBQUERY, DYNAMIC_PRUNING_SUBQUERY)) {
       return subqueryMap.toMap
     }
+    planChangeLogger.warn("buildSubqueryMap(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     plan.foreach(_.expressions.filter(_.containsPattern(PLAN_EXPRESSION)).foreach(_.foreach {
       case e @ (_: expressions.ScalarSubquery | _: ListQuery | _: DynamicPruningSubquery) =>
         val subquery = e.asInstanceOf[SubqueryExpression]
@@ -162,6 +165,7 @@ case class InsertAdaptiveSparkPlan(
   def compileSubquery(plan: LogicalPlan): SparkPlan = {
     // Apply the same instance of this rule to sub-queries so that sub-queries all share the
     // same `stageCache` for Exchange reuse.
+    planChangeLogger.warn("compileSubquery(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     this.applyInternal(
       QueryExecution.createSparkPlan(
         adaptiveExecutionContext.session.sessionState.planner, plan.clone()), true)

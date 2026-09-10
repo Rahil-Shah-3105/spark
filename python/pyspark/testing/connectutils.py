@@ -41,6 +41,7 @@ if should_test_connect:
     from pyspark.sql.connect.plan import Read, Range, SQL, LogicalPlan
     from pyspark.sql.connect.session import SparkSession
     import pyspark.sql.connect.proto as pb2
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class MockRemoteSession:
@@ -50,6 +51,7 @@ class MockRemoteSession:
         self.is_mock_session = True
 
     def set_hook(self, name, hook):
+        logger.warning("set_hook(self,name,hook)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, name, hook)
         self.hooks[name] = hook
 
     def drop_hook(self, name):
@@ -130,6 +132,7 @@ class PlanOnlyTestFixture(PySparkBaseTestCase, PySparkErrorTestUtils):
             cls.connect.set_hook("_set_relation_in_plan", cls._set_relation_in_plan)
             cls.connect.set_hook("_set_command_in_plan", cls._set_command_in_plan)
 
+        logger.warning("setUpClass(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
         @classmethod
         def tearDownClass(cls):
             cls.connect.drop_hook("readTable")
@@ -197,6 +200,7 @@ class ReusedConnectTestCase(PySparkBaseTestCase, SQLTestUtils, PySparkErrorTestU
 
     def setUp(self) -> None:
         # force to clean up the ML cache before each test
+        logger.warning("setUp(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._client._cleanup_ml_cache()
 
     def tearDown(self):

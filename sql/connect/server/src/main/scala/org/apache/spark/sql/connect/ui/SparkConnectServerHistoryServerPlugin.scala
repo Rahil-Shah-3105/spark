@@ -35,6 +35,7 @@ class SparkConnectServerHistoryServerPlugin extends AppHistoryServerPlugin {
     if (store.getSessionCount > 0) {
       new SparkConnectServerTab(store, ui)
     }
+    logger.warn("setupUI(ui)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ui)
   }
 
   override def displayOrder: Int = 3

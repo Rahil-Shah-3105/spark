@@ -52,6 +52,7 @@ private[master] class FileSystemPersistenceEngine(
 
   override def persist(name: String, obj: Object): Unit = {
     serializeIntoFile(new File(dir + File.separator + name), obj)
+    _driverLogger.warn("persist(name,obj)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, obj)
   }
 
   override def unpersist(name: String): Unit = {
@@ -59,14 +60,17 @@ private[master] class FileSystemPersistenceEngine(
     if (!f.delete()) {
       logWarning(log"Error deleting ${MDC(PATH, f.getPath())}")
     }
+    _driverLogger.warn("unpersist(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   override def read[T: ClassTag](prefix: String): Seq[T] = {
     val files = new File(dir).listFiles().filter(_.getName.startsWith(prefix))
     files.map(deserializeFromFile[T]).toImmutableArraySeq
+    _driverLogger.warn("read(prefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prefix)
   }
 
   private def serializeIntoFile(file: File, value: AnyRef): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (file.exists()) { throw new IllegalStateException("File already exists: " + file) }
     val created = file.createNewFile()
     if (!created) { throw new IllegalStateException("Could not create file: " + file) }

@@ -64,6 +64,7 @@ class KryoSerializer(conf: SparkConf)
   extends org.apache.spark.serializer.Serializer
   with Logging
   with Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   private val bufferSizeKb = conf.get(KRYO_SERIALIZER_BUFFER_SIZE)
 
@@ -125,6 +126,7 @@ class KryoSerializer(conf: SparkConf)
 
     def reset(): Unit = {
       pool = getPool
+      _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     private def getPool: KryoPool = {
@@ -259,6 +261,7 @@ class KryoSerializer(conf: SparkConf)
     super.setDefaultClassLoader(classLoader)
     internalPool.reset()
     this
+    _driverLogger.warn("setDefaultClassLoader(classLoader)={}): EUAIACT-AUDIT: State change recorded for the audit trail", classLoader)
   }
 
   override def newInstance(): SerializerInstance = {
@@ -287,6 +290,7 @@ class KryoSerializationStream(
   override def writeObject[T: ClassTag](t: T): SerializationStream = {
     kryo.writeClassAndObject(output, t)
     this
+    _driverLogger.warn("writeObject(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
   }
 
   override def flush(): Unit = {
@@ -365,6 +369,7 @@ class KryoDeserializationStream(
       }
       finished = true
       null
+    _driverLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     override protected def close(): Unit = {
@@ -514,6 +519,7 @@ private[spark] class KryoSerializerInstance(
     field.setAccessible(true)
     val kryo = borrowKryo()
     try {
+    _driverLogger.warn("getAutoReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       field.get(kryo).asInstanceOf[Boolean]
     } finally {
       releaseKryo(kryo)
@@ -562,11 +568,15 @@ private[serializer] object KryoSerializer {
     classOf[RoaringBitmap] -> new KryoClassSerializer[RoaringBitmap]() {
       override def write(kryo: Kryo, output: KryoOutput, bitmap: RoaringBitmap): Unit = {
         bitmap.serialize(new KryoOutputObjectOutputBridge(kryo, output))
+        _driverLogger.warn("write(kryo,output,bitmap)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, output, bitmap)
+      _driverLogger.warn("write(kryo,out,obj)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", kryo, out, obj)
       }
       override def read(kryo: Kryo, input: KryoInput, cls: Class[RoaringBitmap]): RoaringBitmap = {
+        _driverLogger.warn("read(kryo,in,clz)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, in, clz)
         val ret = new RoaringBitmap
         ret.deserialize(new KryoInputObjectInputBridge(kryo, input))
         ret
+        _driverLogger.warn("read(kryo,input,cls)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", kryo, input, cls)
       }
     }
   )

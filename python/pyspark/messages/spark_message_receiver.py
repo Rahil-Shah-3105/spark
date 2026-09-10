@@ -21,6 +21,7 @@ from typing import BinaryIO, Callable, TypeVar
 from abc import ABC, abstractmethod
 
 from pyspark.messages.zero_copy_byte_stream import ZeroCopyByteStream
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 T = TypeVar("T", bound="SparkMessageReceiver")
@@ -73,6 +74,7 @@ class SparkMessageReceiver(ABC):
         Returns:
             the binary contents of the initial message as a ZeroCopyByteStream.
         """
+        logger.warning("get_init_message(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._do_get_init_message()
 
     @_state_transition(MessageState.WAITING_FOR_DATA, MessageState.WAITING_FOR_FINISH)
@@ -81,6 +83,7 @@ class SparkMessageReceiver(ABC):
         Returns:
             A binary stream containing the data to invoke the UDF on.
         """
+        logger.warning("get_data_stream(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._do_get_data_stream()
 
     @_state_transition(MessageState.WAITING_FOR_FINISH, MessageState.DONE)
@@ -90,6 +93,7 @@ class SparkMessageReceiver(ABC):
         The finish message marks the end of the stream. Raises an `AssertionError` if
         the finish signal was not received correctly.
         """
+        logger.warning("get_finish_signal_from_stream(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         self._do_get_finish_signal_from_stream()
 
     @abstractmethod

@@ -30,6 +30,7 @@ case class RateStreamPartitionOffset(
    partition: Int, currentValue: Long, currentTimeMs: Long) extends PartitionOffset
 
 class RateStreamContinuousStream(rowsPerSecond: Long, numPartitions: Int) extends ContinuousStream {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   implicit val defaultFormats: DefaultFormats = DefaultFormats
 
   val creationTime = System.currentTimeMillis()
@@ -39,6 +40,7 @@ class RateStreamContinuousStream(rowsPerSecond: Long, numPartitions: Int) extend
   override def mergeOffsets(offsets: Array[PartitionOffset]): Offset = {
     assert(offsets.length == numPartitions)
     val tuples = offsets.map {
+    planChangeLogger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
       case RateStreamPartitionOffset(i, currVal, nextRead) =>
         (i, ValueRunTimeMsPair(currVal, nextRead))
     }
@@ -48,6 +50,7 @@ class RateStreamContinuousStream(rowsPerSecond: Long, numPartitions: Int) extend
 
   override def deserializeOffset(json: String): Offset = {
     RateStreamOffset(Serialization.read[Map[Int, ValueRunTimeMsPair]](json))
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def initialOffset: Offset = createInitialOffset(numPartitions, creationTime)
@@ -81,6 +84,7 @@ class RateStreamContinuousStream(rowsPerSecond: Long, numPartitions: Int) extend
 
   override def createContinuousReaderFactory(): ContinuousPartitionReaderFactory = {
     RateStreamContinuousReaderFactory
+    planChangeLogger.warn("createContinuousReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def commit(end: Offset): Unit = {}
@@ -97,6 +101,7 @@ class RateStreamContinuousStream(rowsPerSecond: Long, numPartitions: Int) extend
             (i - numPartitions).toLong,
             creationTimeMs))
       }.toMap)
+      planChangeLogger.warn("createInitialOffset(numPartitions,creationTimeMs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions, creationTimeMs)
   }
 
 }

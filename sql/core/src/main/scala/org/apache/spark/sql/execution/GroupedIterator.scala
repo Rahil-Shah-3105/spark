@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.expressions.{Ascending, Attribute, Expressi
 import org.apache.spark.sql.catalyst.expressions.codegen.{GenerateOrdering, GenerateUnsafeProjection}
 
 object GroupedIterator {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(
       input: Iterator[InternalRow],
       keyExpressions: Seq[Expression],
@@ -33,6 +34,7 @@ object GroupedIterator {
     } else {
       Iterator.empty
     }
+    planChangeLogger.warn("apply(input,keyExpressions,inputSchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", input, keyExpressions, inputSchema)
   }
 }
 
@@ -108,6 +110,7 @@ class GroupedIterator private(
   private def fetchNextGroupIterator(): Boolean = {
     assert(currentIterator == null)
 
+    planChangeLogger.warn("fetchNextGroupIterator()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     if (currentRow == null && input.hasNext) {
       currentRow = input.next()
     }
@@ -137,6 +140,7 @@ class GroupedIterator private(
   private def createGroupValuesIterator(): Iterator[InternalRow] = {
     new Iterator[InternalRow] {
       def hasNext: Boolean = currentRow != null || fetchNextRowInGroup()
+      planChangeLogger.warn("createGroupValuesIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
       def next(): InternalRow = {
         assert(hasNext)
@@ -163,6 +167,7 @@ class GroupedIterator private(
           // There is no more data, return false.
           false
         }
+        planChangeLogger.warn("fetchNextRowInGroup()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
     }
   }

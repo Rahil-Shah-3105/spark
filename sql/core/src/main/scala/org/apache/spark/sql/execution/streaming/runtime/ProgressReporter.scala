@@ -57,6 +57,7 @@ class ProgressReporter(
     private val triggerClock: Clock,
     val logicalPlan: () => LogicalPlan)
   extends Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // The timestamp we report an event that has not executed anything
   var lastNoExecutionProgressEventTime = Long.MinValue
@@ -98,6 +99,7 @@ class ProgressReporter(
     postEvent(new QueryProgressEvent(newProgress))
     logInfo(
       log"Streaming query made progress: ${MDC(LogKeys.STREAMING_QUERY_PROGRESS, newProgress)}")
+    planChangeLogger.warn("updateProgress(newProgress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newProgress)
   }
 
   private def addNewProgress(newProgress: StreamingQueryProgress): Unit = {
@@ -107,6 +109,7 @@ class ProgressReporter(
         progressBuffer.dequeue()
       }
     }
+    planChangeLogger.warn("addNewProgress(newProgress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newProgress)
   }
 
   def updateIdleness(
@@ -125,6 +128,7 @@ class ProgressReporter(
 
       lastNoExecutionProgressEventTime = now
     }
+    planChangeLogger.warn("updateIdleness(id,runId,currentTriggerStartTimestamp,newProgress)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", id, runId, currentTriggerStartTimestamp, newProgress, id)
   }
 
   private def postEvent(event: StreamingQueryListener.Event): Unit = {
@@ -201,6 +205,7 @@ abstract class ProgressContext(
     val endTime = triggerClock.getTimeMillis()
     val timeTaken = math.max(endTime - startTime, 0)
 
+    planChangeLogger.warn("reportTimeTaken(triggerDetailKey)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", triggerDetailKey, result)
     reportTimeTaken(triggerDetailKey, timeTaken)
     result
   }
@@ -214,11 +219,13 @@ abstract class ProgressContext(
     val previousTime = currentDurationsMs.getOrElse(triggerDetailKey, 0L)
     currentDurationsMs.put(triggerDetailKey, previousTime + timeTakenMs)
     logDebug(s"$triggerDetailKey took $timeTakenMs ms")
+    planChangeLogger.warn("reportTimeTaken(triggerDetailKey,timeTakenMs)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", triggerDetailKey, timeTakenMs)
   }
 
   /** Updates the message returned in `status`. */
   def updateStatusMessage(message: String): Unit = {
     currentStatus = currentStatus.copy(message = message)
+    planChangeLogger.warn("updateStatusMessage(message)={}): EUAIACT-AUDIT: State change recorded for the audit trail", message)
   }
 
   /** Begins recording statistics about query progress for a given trigger. */
@@ -243,6 +250,7 @@ abstract class ProgressContext(
     currentTriggerEndOffsets = to.transform((_, v) => v.json)
     currentTriggerLatestOffsets = latest.transform((_, v) => v.json)
     latestStreamProgress = to
+    planChangeLogger.warn("recordTriggerOffsets(from,to,latest)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", from, to, latest)
     currentTriggerLatestOffsets = latest.transform((_, v) => v.json)
   }
 
@@ -252,6 +260,7 @@ abstract class ProgressContext(
    */
   def recordEndOffsets(to: StreamProgress): Unit = {
     currentTriggerEndOffsets = to.transform((_, v) => v.json)
+    planChangeLogger.warn("recordEndOffsets(to)={}): EUAIACT-AUDIT: State change recorded for the audit trail", to)
   }
 
   /** Finalizes the trigger which did not execute a batch. */
@@ -276,6 +285,7 @@ abstract class ProgressContext(
    */
   def getDuration(key: String): Option[Long] = {
     currentDurationsMs.get(key)
+    planChangeLogger.warn("getDuration(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   /**
@@ -662,6 +672,7 @@ abstract class ProgressContext(
       stateOperators = newStatefulOperators,
       eventTimeStats = newEventTimeStats,
       outputRows = newOutputRows)
+    planChangeLogger.warn("resetExecStatsForNoExecution(originExecStats)={}): EUAIACT-AUDIT: State change recorded for the audit trail", originExecStats)
   }
 
   /** Extracts observed metrics from the most recent query execution. */

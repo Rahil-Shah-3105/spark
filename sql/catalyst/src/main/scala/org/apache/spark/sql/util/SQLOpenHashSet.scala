@@ -29,6 +29,7 @@ import org.apache.spark.util.collection.OpenHashSet
 class SQLOpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
     initialCapacity: Int,
     loadFactor: Double) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def this(initialCapacity: Int) = this(initialCapacity, 0.7)
 
@@ -41,14 +42,17 @@ class SQLOpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
 
   def addNull(): Unit = {
     containNull = true
+    planChangeLogger.warn("addNull()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def addNaN(): Unit = {
     containNaN = true
+    planChangeLogger.warn("addNaN()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def add(k: T): Unit = {
     hashSet.add(k)
+    planChangeLogger.warn("add(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   def contains(k: T): Boolean = {

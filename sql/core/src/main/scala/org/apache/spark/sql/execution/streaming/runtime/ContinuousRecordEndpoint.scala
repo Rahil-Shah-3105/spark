@@ -37,6 +37,7 @@ case class GetRecord(offset: ContinuousRecordPartitionOffset)
  */
 class ContinuousRecordEndpoint(buckets: Seq[mutable.Seq[UnsafeRow]], lock: Object)
   extends ThreadSafeRpcEndpoint {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private var startOffsets: Seq[Int] = List.fill(buckets.size)(0)
 
@@ -50,6 +51,7 @@ class ContinuousRecordEndpoint(buckets: Seq[mutable.Seq[UnsafeRow]], lock: Objec
     lock.synchronized {
       startOffsets = offsets
     }
+    planChangeLogger.warn("setStartOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
   }
 
   override val rpcEnv: RpcEnv = SparkEnv.get.rpcEnv

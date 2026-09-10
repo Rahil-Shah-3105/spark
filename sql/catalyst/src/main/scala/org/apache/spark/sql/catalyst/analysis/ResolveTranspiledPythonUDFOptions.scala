@@ -42,6 +42,7 @@ import org.apache.spark.sql.types.{BinaryType, BooleanType, DataType, DecimalTyp
  * the original Python UDF.
  */
 object ResolveTranspiledPythonUDFOptions extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!plan.containsPattern(TRANSPILED_PYTHON_UDF)) {
       plan
@@ -61,6 +62,7 @@ object ResolveTranspiledPythonUDFOptions extends Rule[LogicalPlan] {
           }
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   // True when each declared category matches the corresponding argument type:

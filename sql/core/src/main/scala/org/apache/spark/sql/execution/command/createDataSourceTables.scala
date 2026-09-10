@@ -121,6 +121,7 @@ case class CreateDataSourceTableCommand(table: CatalogTable, ignoreIfExists: Boo
 
     }
 
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     sessionState.catalog.createTable(newTable, ignoreIfExists)
 
     Seq.empty[Row]
@@ -220,6 +221,7 @@ case class CreateDataSourceTableAsSelectCommand(
       tableLocation: Option[URI],
       mode: SaveMode,
       tableExists: Boolean): BaseRelation = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Create the relation based on the input logical plan: `query`.
     val pathOption = tableLocation.map("path" -> CatalogUtils.URIToString(_))
     val dataSource = DataSource(

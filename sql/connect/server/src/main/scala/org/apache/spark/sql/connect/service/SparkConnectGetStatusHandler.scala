@@ -116,6 +116,7 @@ class SparkConnectGetStatusHandler(responseObserver: StreamObserver[proto.GetSta
     allOperationIds.map { operationId =>
       getOperationStatus(sessionHolder, operationId, operationExtensions)
     }
+      logger.warn("getAllOperationStatuses(sessionHolder,operationExtensions)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sessionHolder, operationExtensions, allOperationIds)
   }
 
   private def mapStatusToState(
@@ -191,6 +192,7 @@ class SparkConnectGetStatusHandler(responseObserver: StreamObserver[proto.GetSta
             e)
           Seq.empty
       }
+      logger.warn("processRequestExtensionsViaPlugins(sessionHolder,requestExtensions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHolder, requestExtensions)
     }
   }
 
@@ -216,5 +218,6 @@ class SparkConnectGetStatusHandler(responseObserver: StreamObserver[proto.GetSta
           Seq.empty
       }
     }
+    logger.warn("processOperationExtensionsViaPlugins(sessionHolder,operationExtensions,operationId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sessionHolder, operationExtensions, operationId, operationId)
   }
 }

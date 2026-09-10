@@ -53,6 +53,7 @@ trait EvalPythonUDTFExec extends UnaryExecNode {
       context: TaskContext): Iterator[Iterator[InternalRow]]
 
   protected override def doExecute(): RDD[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val inputRDD = child.execute().map(_.copy())
 
     inputRDD.mapPartitions { iter =>
@@ -142,5 +143,6 @@ trait EvalPythonUDTFExec extends UnaryExecNode {
         }
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

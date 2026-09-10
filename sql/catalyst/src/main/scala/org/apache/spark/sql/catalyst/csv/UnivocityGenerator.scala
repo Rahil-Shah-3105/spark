@@ -33,6 +33,7 @@ class UnivocityGenerator(
     schema: StructType,
     writer: Writer,
     options: CSVOptions) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val writerSettings = options.asWriterSettings
   writerSettings.setHeaders(schema.fieldNames: _*)
   private val gen = new CsvWriter(writer, writerSettings)
@@ -220,6 +221,7 @@ class UnivocityGenerator(
 
   def writeHeaders(): Unit = {
     gen.writeHeaders()
+    planChangeLogger.warn("writeHeaders()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -227,10 +229,12 @@ class UnivocityGenerator(
    */
   def write(row: InternalRow): Unit = {
     gen.writeRow(convertRow(row): _*)
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   def writeToString(row: InternalRow): String = {
     gen.writeRowToString(convertRow(row): _*)
+    planChangeLogger.warn("writeToString(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   def close(): Unit = gen.close()

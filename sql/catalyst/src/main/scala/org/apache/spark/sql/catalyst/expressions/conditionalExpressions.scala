@@ -299,6 +299,7 @@ case class CaseWhen(
   }
 
   private def multiBranchesCodegen(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     // This variable holds the state of the result:
     // -1 means the condition is not met yet and the result is unknown.
     val NOT_MATCHED = -1
@@ -411,6 +412,7 @@ object CaseWhen {
 
   def apply(branches: Seq[(Expression, Expression)], elseValue: Expression): CaseWhen = {
     CaseWhen(branches, Option(elseValue))
+  planChangeLogger.warn("apply(key,branches)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, branches)
   }
 
   /**
@@ -425,6 +427,7 @@ object CaseWhen {
     }.toSeq  // force materialization to make the seq serializable
     val elseValue = if (branches.size % 2 != 0) Some(branches.last) else None
     CaseWhen(cases, elseValue)
+    planChangeLogger.warn("createFromParser(branches)={}): EUAIACT-AUDIT: State change recorded for the audit trail", branches)
   }
 
   val registryEntry: (String, (ExpressionInfo, FunctionBuilder)) = {

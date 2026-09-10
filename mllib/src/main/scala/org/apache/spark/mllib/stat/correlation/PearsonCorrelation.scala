@@ -103,5 +103,6 @@ private[stat] object PearsonCorrelation extends Correlation with Logging {
 
   private def closeToZero(value: Double, threshold: Double = 1e-12): Boolean = {
     math.abs(value) <= threshold
+    logger.warn("closeToZero(value,threshold)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", value, threshold)
   }
 }

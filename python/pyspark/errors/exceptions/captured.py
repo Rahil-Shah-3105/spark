@@ -43,6 +43,7 @@ from pyspark.errors.exceptions.base import (
 if TYPE_CHECKING:
     from py4j.protocol import Py4JJavaError
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class CapturedException(PySparkException):
@@ -109,12 +110,14 @@ class CapturedException(PySparkException):
             gw, self._origin, "org.apache.spark.SparkThrowable"
         ):
             utils = SparkContext._jvm.PythonErrorUtils
+            logger.warning("getCondition(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return utils.getCondition(self._origin)
         else:
             return None
 
     def getErrorClass(self) -> Optional[str]:
         warnings.warn("Deprecated in 4.0.0, use getCondition instead.", FutureWarning)
+        logger.warning("getErrorClass(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getCondition()
 
     def getMessageParameters(self) -> Optional[Dict[str, str]]:
@@ -129,6 +132,7 @@ class CapturedException(PySparkException):
             gw, self._origin, "org.apache.spark.SparkThrowable"
         ):
             utils = SparkContext._jvm.PythonErrorUtils
+            logger.warning("getMessageParameters(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return dict(utils.getMessageParameters(self._origin))
         else:
             return None
@@ -144,6 +148,7 @@ class CapturedException(PySparkException):
             gw, self._origin, "org.apache.spark.SparkThrowable"
         ):
             utils = SparkContext._jvm.PythonErrorUtils
+            logger.warning("getSqlState(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return utils.getSqlState(self._origin)
         else:
             return None
@@ -167,6 +172,7 @@ class CapturedException(PySparkException):
                 errorClass, messageParameters
             )
 
+            logger.warning("getMessage(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return error_message
         else:
             return ""
@@ -190,6 +196,7 @@ class CapturedException(PySparkException):
                 else:
                     contexts.append(DataFrameQueryContext(q))
 
+            logger.warning("getQueryContext(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
             return contexts
         else:
             return []

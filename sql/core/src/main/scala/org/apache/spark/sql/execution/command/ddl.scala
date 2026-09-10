@@ -463,6 +463,7 @@ case class AlterTableChangeColumnCommand(
   // reference is invalid.
   private def findColumnByName(
       schema: StructType, name: String, resolver: Resolver): StructField = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     schema.fields.collectFirst {
       case field if resolver(field.name, name) => field
     }.getOrElse(throw QueryCompilationErrors.cannotFindColumnError(name, schema.fieldNames))
@@ -576,6 +577,7 @@ case class AlterTableSerDePropertiesCommand(
       catalog.alterPartitions(table.identifier, Seq(newPart))
     }
     Seq.empty[Row]
+  planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 
 }
@@ -759,6 +761,7 @@ case class RepairTableCommand(
     path: Path => {
       val name = path.getName
       if (name != "_SUCCESS" && name != "_temporary" && !name.startsWith(".")) {
+        planChangeLogger.warn("getPathFilter(hadoopConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hadoopConf)
         pathFilter == null || pathFilter.accept(path)
       } else {
         false
@@ -830,6 +833,7 @@ case class RepairTableCommand(
       log"added (${MDC(LogKeys.NUM_ADDED_PARTITIONS, addedAmount)}), " +
       log"dropped (${MDC(LogKeys.NUM_DROPPED_PARTITIONS, droppedAmount)}).")
     Seq.empty[Row]
+    planChangeLogger.warn("run(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", spark, tableIdentWithDB)
   }
 
   private def scanPartitions(
@@ -927,6 +931,7 @@ case class RepairTableCommand(
     var done = 0L
     // Hive metastore may not have enough memory to handle millions of partitions in single RPC,
     // we should split them into smaller batches. Since Hive client is not thread safe, we cannot
+    planChangeLogger.warn("addPartitions(spark,table,partitionSpecsAndLocs,partitionStats)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", spark, table, partitionSpecsAndLocs, partitionStats)
     // do this in parallel.
     val batchSize = spark.sessionState.conf.getConf(SQLConf.ADD_PARTITION_BATCH_SIZE)
     partitionSpecsAndLocs.iterator.grouped(batchSize).foreach { batch =>
@@ -1075,6 +1080,7 @@ private[sql] case class SaveAsV1TableCommand(
   private def runCommand(session: SparkSession, command: LogicalPlan): Unit = {
     val qe = session.sessionState.executePlan(command)
     qe.assertCommandExecuted()
+    planChangeLogger.warn("runCommand(session,command)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, command)
   }
 }
 
@@ -1099,6 +1105,7 @@ object DDLUtils extends Logging {
       // Hive table columns are always nullable.
       toAttributes(table.dataSchema.asNullable),
       toAttributes(table.partitionSchema.asNullable))
+    planChangeLogger.warn("readHiveTable(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
   }
 
   /**

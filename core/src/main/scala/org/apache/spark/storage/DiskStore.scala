@@ -62,6 +62,7 @@ private[spark] class DiskStore(
    * @throws IllegalStateException if the block already exists in the disk store.
    */
   def put(blockId: BlockId)(writeFunc: WritableByteChannel => Unit): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (contains(blockId)) {
       logWarning(log"Block ${MDC(BLOCK_ID, blockId)} is already present in the disk store")
       try {
@@ -116,6 +117,7 @@ private[spark] class DiskStore(
 
   def getBytes(blockId: BlockId): BlockData = {
     getBytes(diskManager.getFile(blockId.name), getSize(blockId))
+    _driverLogger.warn("getBytes(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def getBytes(f: File, blockSize: Long): BlockData = securityManager.getIOEncryptionKey() match {
@@ -140,6 +142,7 @@ private[spark] class DiskStore(
     } else {
       false
     }
+    _driverLogger.warn("remove(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -167,6 +170,7 @@ private[spark] class DiskStore(
         file.delete()
         throw e
     }
+    _driverLogger.warn("openForWrite(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
 }
@@ -351,6 +355,7 @@ private class ReadableChannelFileRegion(source: ReadableByteChannel, blockSize: 
         lastWrite = 0
       }
     }
+    _driverLogger.warn("transferTo(target,pos)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, pos)
 
     _transferred += written
     written
@@ -371,6 +376,7 @@ private class CountingWritableChannel(sink: WritableByteChannel) extends Writabl
       count += written
     }
     written
+    _driverLogger.warn("write(src)={}): EUAIACT-AUDIT: State change recorded for the audit trail", src)
   }
 
   override def isOpen(): Boolean = sink.isOpen()

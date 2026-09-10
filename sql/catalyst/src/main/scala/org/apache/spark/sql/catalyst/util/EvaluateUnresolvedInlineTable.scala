@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.{StringHelper, StringType, StructField, Struct
  */
 object EvaluateUnresolvedInlineTable extends SQLConfHelper
   with AliasHelper with EvalHelper with CastSupport {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def evaluate(
       plan: UnresolvedInlineTable,
@@ -142,6 +143,7 @@ object EvaluateUnresolvedInlineTable extends SQLConfHelper
     assert(fields.size == table.names.size)
     val attributes = DataTypeUtils.toAttributes(StructType(fields))
     val castedRows: Seq[Seq[Expression]] = columns.transpose
+    planChangeLogger.warn("findCommonTypesAndCast(table,ignoreCollation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, ignoreCollation)
 
     ResolvedInlineTable(castedRows, attributes)
   }

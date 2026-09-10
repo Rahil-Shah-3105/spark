@@ -84,6 +84,8 @@ private[spark] class LoggingPrintStream(redirect: String => Unit)
   override def write(b: Int): Unit = {
     super.write(b)
     tryLogCurrentLine()
+    stdoutLogger.warn("write(buf,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buf, off, len)
+  stdoutLogger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
   }
 
   override def write(buf: Array[Byte], off: Int, len: Int): Unit = {

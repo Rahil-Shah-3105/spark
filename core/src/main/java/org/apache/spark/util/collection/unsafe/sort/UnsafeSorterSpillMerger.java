@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 
 final class UnsafeSorterSpillMerger {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeSorterSpillMerger.class);
 
   private int numRecords = 0;
   private final PriorityQueue<UnsafeSorterIterator> priorityQueue;
@@ -55,6 +56,7 @@ final class UnsafeSorterSpillMerger {
       // at least priorityQueue.size() times. If we allow n spillReaders in the
       // priorityQueue, we will have n extra empty records in the result of UnsafeSorterIterator.
       spillReader.loadNext();
+	logger.warn("addSpillIfNotEmpty(spillReader)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spillReader);
       priorityQueue.add(spillReader);
       numRecords += spillReader.getNumRecords();
     }
@@ -86,6 +88,7 @@ final class UnsafeSorterSpillMerger {
           if (spillReader.hasNext()) {
             spillReader.loadNext();
             priorityQueue.add(spillReader);
+			logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
           }
         }
         spillReader = priorityQueue.remove();

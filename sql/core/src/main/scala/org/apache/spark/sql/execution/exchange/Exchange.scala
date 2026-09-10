@@ -34,6 +34,7 @@ import org.apache.spark.sql.vectorized.ColumnarBatch
  * "Volcano -- An Extensible and Parallel Query Evaluation System" by Goetz Graefe.
  */
 abstract class Exchange extends UnaryExecNode {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def output: Seq[Attribute] = child.output
   final override val nodePatterns: Seq[TreePattern] = Seq(EXCHANGE)
 
@@ -55,14 +56,17 @@ case class ReusedExchangeExec(override val output: Seq[Attribute], child: Exchan
 
   def doExecute(): RDD[InternalRow] = {
     child.execute()
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     child.executeColumnar()
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected[sql] def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
     child.executeBroadcast()
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // `ReusedExchangeExec` can have distinct set of output attribute ids from its child, we need

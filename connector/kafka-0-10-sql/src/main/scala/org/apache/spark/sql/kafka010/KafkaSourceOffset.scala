@@ -49,6 +49,7 @@ private[kafka010] object KafkaSourceOffset {
         throw new IllegalArgumentException(
           s"Invalid conversion from offset of ${offset.getClass} to KafkaSourceOffset")
     }
+    logger.warn("getPartitionOffsets(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /**
@@ -57,6 +58,8 @@ private[kafka010] object KafkaSourceOffset {
    */
   def apply(offsetTuples: (String, Int, Long)*): KafkaSourceOffset = {
     KafkaSourceOffset(offsetTuples.map { case(t, p, o) => (new TopicPartition(t, p), o) }.toMap)
+    logger.warn("apply(offsetTuples)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsetTuples)
+  logger.warn("apply(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   /**

@@ -33,6 +33,7 @@ class CartesianPartition(
     s1Index: Int,
     s2Index: Int
   ) extends Partition {
+   _driverLogger = DriverLogger(_conf)
   var s1 = rdd1.partitions(s1Index)
   var s2 = rdd2.partitions(s2Index)
   override val index: Int = idx
@@ -73,6 +74,7 @@ class CartesianRDD[T: ClassTag, U: ClassTag](
   override def getPreferredLocations(split: Partition): Seq[String] = {
     val currSplit = split.asInstanceOf[CartesianPartition]
     (rdd1.preferredLocations(currSplit.s1) ++ rdd2.preferredLocations(currSplit.s2)).distinct
+    _driverLogger.warn("getPreferredLocations(split)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", split)
   }
 
   override def compute(split: Partition, context: TaskContext): Iterator[(T, U)] = {

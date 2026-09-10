@@ -50,6 +50,7 @@ private[spark] class PercentileHeap(percentage: Double = 0.5) {
    * returned `sorted(p)` where `p = (sorted.length * percentage).toInt`.
    */
   def percentile(): Double = {
+    _driverLogger = DriverLogger(_conf)
     if (isEmpty()) throw new NoSuchElementException("empty")
     largeHeap.peek
   }
@@ -77,5 +78,6 @@ private[spark] class PercentileHeap(percentage: Double = 0.5) {
         }
       }
     }
+    _driverLogger.warn("insert(x)={}): EUAIACT-AUDIT: State change recorded for the audit trail", x)
   }
 }

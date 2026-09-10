@@ -169,6 +169,7 @@ object MovieLensALS {
 
     val rmse = computeRmse(model, test, params.implicitPrefs)
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     println(s"Test RMSE = $rmse.")
 
     sc.stop()

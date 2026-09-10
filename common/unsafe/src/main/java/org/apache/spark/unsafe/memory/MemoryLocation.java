@@ -18,12 +18,15 @@
 package org.apache.spark.unsafe.memory;
 
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A memory location. Tracked either by a memory address (with off-heap allocation),
  * or by an offset from a JVM object (on-heap allocation).
  */
 public class MemoryLocation {
+private static final Logger log = LoggerFactory.getLogger(MemoryLocation.class);
 
   @Nullable
   Object obj;
@@ -42,6 +45,7 @@ public class MemoryLocation {
   public void setObjAndOffset(Object newObj, long newOffset) {
     this.obj = newObj;
     this.offset = newOffset;
+	log.warn("setObjAndOffset(newObj,newOffset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", newObj, newOffset);
   }
 
   public final Object getBaseObject() {

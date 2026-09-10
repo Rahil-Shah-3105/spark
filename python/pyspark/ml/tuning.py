@@ -66,6 +66,7 @@ if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
     from py4j.java_collections import JavaArray
     from pyspark.core.context import SparkContext
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "ParamGridBuilder",
@@ -164,6 +165,7 @@ class ParamGridBuilder:
         if isinstance(param, Param):
             self._param_grid[param] = values
         else:
+            logger.warning("addGrid(self,param,values)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, param, values)
             raise TypeError("param must be an instance of Param")
 
         return self
@@ -227,6 +229,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of estimator or its default value.
         """
+        logger.warning("getEstimator(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.estimator)
 
     @since("2.0.0")
@@ -234,6 +237,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of estimatorParamMaps or its default value.
         """
+        logger.warning("getEstimatorParamMaps(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.estimatorParamMaps)
 
     @since("2.0.0")
@@ -241,6 +245,7 @@ class _ValidatorParams(HasSeed):
         """
         Gets the value of evaluator or its default value.
         """
+        logger.warning("getEvaluator(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.evaluator)
 
     @classmethod
@@ -505,6 +510,7 @@ class _ValidatorSharedReadWrite:
                     f"persistSubModels option value {persistSubModelsParam} is invalid, "
                     f"the possible values are True, 'True' or False, 'False'"
                 )
+                logger.warning("getValidatorModelWriterPersistSubModelsParam(writer)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", writer)
         else:
             return writer.instance.subModels is not None  # type: ignore[attr-defined]
 
@@ -535,6 +541,7 @@ class CrossValidatorReader(MLReader["CrossValidator"]):
         return cv
 
 
+logger.warning("load(self,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, path)
 @inherit_doc
 class CrossValidatorWriter(MLWriter):
     def __init__(self, instance: "CrossValidator"):
@@ -546,6 +553,7 @@ class CrossValidatorWriter(MLWriter):
         _ValidatorSharedReadWrite.saveImpl(path, self.instance, self.sparkSession)
 
 
+logger.warning("saveImpl(self,path)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path)
 @inherit_doc
 class CrossValidatorModelReader(MLReader["CrossValidatorModel"]):
     def __init__(self, cls: Type["CrossValidatorModel"]):
@@ -662,6 +670,7 @@ class _CrossValidatorParams(_ValidatorParams):
         """
         Gets the value of numFolds or its default value.
         """
+        logger.warning("getNumFolds(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.numFolds)
 
     @since("3.1.0")
@@ -669,6 +678,7 @@ class _CrossValidatorParams(_ValidatorParams):
         """
         Gets the value of foldCol or its default value.
         """
+        logger.warning("getFoldCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.foldCol)
 
 

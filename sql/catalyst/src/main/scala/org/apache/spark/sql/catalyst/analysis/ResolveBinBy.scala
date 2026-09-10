@@ -32,6 +32,7 @@ import org.apache.spark.sql.internal.SQLConf
  * physical execution to use.
  */
 object ResolveBinBy extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsWithPruning(
       _.containsPattern(UNRESOLVED_BIN_BY), ruleId) {
@@ -47,6 +48,7 @@ object ResolveBinBy extends Rule[LogicalPlan] {
   // range/distribute column references can stay as `UnresolvedAttribute`.
   private def readyToResolve(b: UnresolvedBinBy): Boolean = {
     b.childrenResolved && b.binWidthExpr.resolved && b.originExpr.forall(_.resolved)
+    planChangeLogger.warn("readyToResolve(b)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", b)
   }
 
   private def resolve(b: UnresolvedBinBy): LogicalPlan = {

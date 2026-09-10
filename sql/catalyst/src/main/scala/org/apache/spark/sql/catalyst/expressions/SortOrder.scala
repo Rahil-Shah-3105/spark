@@ -27,6 +27,7 @@ import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.collection.unsafe.sort.PrefixComparators._
 
 abstract sealed class SortDirection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def sql: String
   def defaultNullOrdering: NullOrdering
 }
@@ -95,6 +96,7 @@ object SortOrder {
      direction: SortDirection,
      sameOrderExpressions: Seq[Expression] = Seq.empty): SortOrder = {
     new SortOrder(child, direction, direction.defaultNullOrdering, sameOrderExpressions)
+    planChangeLogger.warn("apply(child,direction,sameOrderExpressions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, direction, sameOrderExpressions)
   }
 
   /**

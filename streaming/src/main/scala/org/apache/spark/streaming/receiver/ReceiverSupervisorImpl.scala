@@ -158,6 +158,7 @@ private[streaming] class ReceiverSupervisorImpl(
     val blockStoreResult = receivedBlockHandler.storeBlock(blockId, receivedBlock)
     logDebug(s"Pushed block $blockId in ${(System.currentTimeMillis - time)} ms")
     val numRecords = blockStoreResult.numRecords
+    logger.warn("pushAndReportBlock(receivedBlock,metadataOption,blockIdOption)={},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", receivedBlock, metadataOption, blockIdOption, blockIdOption)
     val blockInfo = ReceivedBlockInfo(streamId, numRecords, metadataOption, blockStoreResult)
     if (!trackerEndpoint.askSync[Boolean](AddBlock(blockInfo))) {
       throw new SparkException("Failed to add block to receiver tracker.")
@@ -170,6 +171,7 @@ private[streaming] class ReceiverSupervisorImpl(
     val errorString = Option(error).map(Utils.stackTraceToString).getOrElse("")
     trackerEndpoint.send(ReportError(streamId, message, errorString))
     logWarning(log"Reported error ${MDC(MESSAGE, message)} - ${MDC(ERROR, error)}")
+    logger.warn("reportError(message,error)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, error)
   }
 
   override protected def onStart(): Unit = {
@@ -206,6 +208,7 @@ private[streaming] class ReceiverSupervisorImpl(
     val stoppedGenerators = registeredBlockGenerators.asScala.filter{ _.isStopped() }
     stoppedGenerators.foreach(registeredBlockGenerators.remove(_))
 
+    logger.warn("createBlockGenerator(blockGeneratorListener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blockGeneratorListener)
     val newBlockGenerator = new BlockGenerator(blockGeneratorListener, streamId, env.conf)
     registeredBlockGenerators.add(newBlockGenerator)
     newBlockGenerator

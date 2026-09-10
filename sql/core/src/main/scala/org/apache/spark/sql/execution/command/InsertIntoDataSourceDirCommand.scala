@@ -28,6 +28,7 @@ import org.apache.spark.sql.execution.datasources._
  * A command used to write the result of a query to a directory.
  *
  * The syntax of using this command in SQL is:
+ val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
  * {{{
  *   INSERT OVERWRITE DIRECTORY (path=STRING)?
  *   USING format OPTIONS ([option1_name "option1_value", option2_name "option2_value", ...])
@@ -67,6 +68,7 @@ case class InsertIntoDataSourceDirCommand(
     }
 
     val saveMode = if (overwrite) SaveMode.Overwrite else SaveMode.ErrorIfExists
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     try {
       sparkSession.sessionState.executePlan(dataSource.planForWriting(saveMode, query)).toRdd
     } catch {

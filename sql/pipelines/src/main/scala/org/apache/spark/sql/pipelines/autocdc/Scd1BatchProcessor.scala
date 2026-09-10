@@ -199,6 +199,7 @@ case class Scd1BatchProcessor(
         AutoCdcReservedNames.cdcMetadataColName
       )
 
+      logger.warn("projectTargetColumnsOntoMicrobatch(microbatchWithCdcMetadataDf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", microbatchWithCdcMetadataDf)
     microbatchWithCdcMetadataDf.select(
       finalColumnsInMicrobatchToSelect.toImmutableArraySeq: _*
     )
@@ -307,6 +308,7 @@ case class Scd1BatchProcessor(
       .whenNotMatched(incomingRowRepresentsDeleteEvent)
       .insertAll()
       .merge()
+      logger.warn("mergeMicrobatchOntoAuxiliaryTable(reconciledMicrobatchDf,auxiliaryTableIdentifier)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", reconciledMicrobatchDf, auxiliaryTableIdentifier, auxiliaryTableIdentifier)
   }
 
   /**
@@ -362,6 +364,7 @@ case class Scd1BatchProcessor(
     // upserts get priority over deletes on duplicate sequencing.
     val incomingWinsDelete = microbatchDeleteVersionField.isNotNull &&
       microbatchDeleteVersionField > destinationUpsertVersionField
+      logger.warn("mergeMicrobatchOntoTarget(reconciledMicrobatchDf,targetTableIdentifier)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", reconciledMicrobatchDf, targetTableIdentifier, targetTableIdentifier)
 
     val resolver = microbatchDf.sparkSession.sessionState.conf.resolver
     val keyNames = changeArgs.keys.map(_.name)
@@ -369,6 +372,7 @@ case class Scd1BatchProcessor(
     def constructTargetColumnAssignmentsFromMicrobatch(columnName: String): (String, Column) = {
       // Map a column in the target table to its direct equivalent in the microbatch. Note that
       // because of target-table schema evolution during SDP dataset materialization, the
+      logger.warn("constructTargetColumnAssignmentsFromMicrobatch(columnName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", columnName)
       // microbatch's columns are always a subset of (or equal to) the target's columns.
       val quotedCol = QuotingUtils.quoteIdentifier(columnName)
       s"$destinationTableStr.$quotedCol" -> F.col(s"microbatch.$quotedCol")
@@ -420,6 +424,7 @@ object Scd1BatchProcessor {
 
   /** Project the delete sequence out of the CDC metadata column. */
   private[autocdc] def deleteSequenceOf(cdcMetadataCol: Column): Column =
+    logger.warn("deleteSequenceOf(cdcMetadataCol)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cdcMetadataCol)
     cdcMetadataCol.getField(cdcDeleteSequenceFieldName)
 
   /** Project the upsert sequence out of the CDC metadata column. */

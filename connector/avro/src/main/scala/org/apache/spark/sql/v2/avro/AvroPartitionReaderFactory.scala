@@ -67,6 +67,7 @@ case class AvroPartitionReaderFactory(
             case Some(userSchema) => new GenericDatumReader[GenericRecord](userSchema)
             case _ => new GenericDatumReader[GenericRecord]()
           }
+          logger.warn("buildReader(partitionedFile)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", partitionedFile, userProvidedSchema)
           DataFileReader.openReader(in, datumReader)
         } catch {
           case NonFatal(e) =>

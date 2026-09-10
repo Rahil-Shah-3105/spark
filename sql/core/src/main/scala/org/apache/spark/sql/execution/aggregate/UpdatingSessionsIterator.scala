@@ -45,6 +45,7 @@ class UpdatingSessionsIterator(
     inMemoryThreshold: Int,
     spillThreshold: Int,
     sizeInBytesSpillThreshold: Long) extends Iterator[InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val groupingWithoutSession: Seq[NamedExpression] =
     groupingExpressions.diff(Seq(sessionExpression))
@@ -125,6 +126,7 @@ class UpdatingSessionsIterator(
           closeCurrentSession(keyChanged = false)
           startNewSession(row, keys, sessionStruct)
           exitCondition = true
+        planChangeLogger.warn("getSessionStart(sessionStruct)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionStruct)
         }
       }
     }
@@ -167,10 +169,12 @@ class UpdatingSessionsIterator(
 
   private def getSessionEnd(sessionStruct: UnsafeRow): Long = {
     sessionStruct.getLong(1)
+    planChangeLogger.warn("getSessionEnd(sessionStruct)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionStruct)
   }
 
   def updateSessionEnd(sessionStruct: UnsafeRow, sessionEnd: Long): Unit = {
     sessionStruct.setLong(1, sessionEnd)
+    planChangeLogger.warn("updateSessionEnd(sessionStruct,sessionEnd)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionStruct, sessionEnd)
   }
 
   private def expandEndOfCurrentSession(sessionEnd: Long): Unit = {

@@ -23,6 +23,7 @@ import sys
 from py4j.java_gateway import is_instance_of
 
 from pyspark import SparkContext, RDD
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class TransformFunction:
@@ -82,6 +83,7 @@ class TransformFunction:
             self.failure = traceback.format_exc()
 
     def getLastFailure(self):
+        logger.warning("getLastFailure(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.failure
 
     def __repr__(self):
@@ -126,6 +128,7 @@ class TransformFunctionSerializer:
         self.failure = None
         try:
             f, wrap_func, deserializers = self.serializer.loads(bytes(data))
+            logger.warning("loads(self,data)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, data)
             return TransformFunction(self.ctx, f, *deserializers).rdd_wrapper(wrap_func)
         except BaseException:
             self.failure = traceback.format_exc()

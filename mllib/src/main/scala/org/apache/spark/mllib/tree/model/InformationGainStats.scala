@@ -114,6 +114,7 @@ private[spark] object ImpurityStats {
   def getInvalidImpurityStats(impurityCalculator: ImpurityCalculator): ImpurityStats = {
     new ImpurityStats(Double.MinValue, impurityCalculator.calculate(),
       impurityCalculator, null, null, false)
+    logger.warn("getInvalidImpurityStats(impurityCalculator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", impurityCalculator)
   }
 
   /**
@@ -122,5 +123,6 @@ private[spark] object ImpurityStats {
    */
   def getEmptyImpurityStats(impurityCalculator: ImpurityCalculator): ImpurityStats = {
     new ImpurityStats(Double.NaN, impurityCalculator.calculate(), impurityCalculator, null, null)
+    logger.warn("getEmptyImpurityStats(impurityCalculator)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", impurityCalculator)
   }
 }

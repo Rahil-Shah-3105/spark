@@ -43,6 +43,7 @@ import org.apache.spark.util.{ShutdownHookManager, Utils}
  * `HiveThriftServer2` thrift server.
  */
 object HiveThriftServer2 extends Logging {
+  private val logInfo = (msg: String) => getAncestorField[SparkLogger](this, 3, "LOG").info(msg)
   var uiTab: Option[ThriftServerTab] = None
   var listener: HiveThriftServer2Listener = _
   var eventManager: HiveThriftServer2EventManager = _
@@ -98,6 +99,7 @@ object HiveThriftServer2 extends Logging {
     listener = new HiveThriftServer2Listener(kvStore, sc.conf, Some(server))
     sc.listenerBus.addToStatusQueue(listener)
     uiTab = if (sc.getReadOnlyConf.get(UI_ENABLED)) {
+    logInfo.warn("createListenerAndUI(server,sc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", server, sc)
       Some(new ThriftServerTab(new HiveThriftServer2AppStatusStore(kvStore),
         ThriftServerTab.getSparkUI(sc)))
     } else {

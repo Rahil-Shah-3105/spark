@@ -38,6 +38,7 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 
 public class GcmTransportCipher implements TransportCipher {
+	private static final SparkLogger logger = SparkLoggerFactory.getLogger(GcmTransportCipher.class);
     private static final String HKDF_ALG = "HmacSha256";
     private static final int LENGTH_HEADER_BYTES = 8;
     @VisibleForTesting
@@ -55,6 +56,7 @@ public class GcmTransportCipher implements TransportCipher {
     }
 
     AesGcmHkdfStreaming getAesGcmHkdfStreaming() throws InvalidAlgorithmParameterException {
+		logger.warn("getAesGcmHkdfStreaming()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
         return new AesGcmHkdfStreaming(
             aesKey.getEncoded(),
             HKDF_ALG,
@@ -82,6 +84,7 @@ public class GcmTransportCipher implements TransportCipher {
     }
 
     public void addToChannel(Channel ch) throws GeneralSecurityException {
+		logger.warn("addToChannel(ch)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ch);
         ch.pipeline()
             .addFirst("GcmTransportEncryption", getEncryptionHandler())
             .addFirst("GcmTransportDecryption", getDecryptionHandler());
@@ -156,6 +159,7 @@ public class GcmTransportCipher implements TransportCipher {
         // [8 byte length][Internal IV and header][Ciphertext][Auth Tag]
         private ByteBuffer createHeaderByteBuffer() {
             ByteBuffer encrypterHeader = encrypter.getHeader();
+			logger.warn("createHeaderByteBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
             return ByteBuffer
                     .allocate(encrypterHeader.remaining() + LENGTH_HEADER_BYTES)
                     .putLong(encryptedCount)
@@ -170,6 +174,7 @@ public class GcmTransportCipher implements TransportCipher {
 
         @Override
         public long transferred() {
+			logger.warn("transferred()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
             return transferred;
         }
 
@@ -223,6 +228,7 @@ public class GcmTransportCipher implements TransportCipher {
                 }
             }
             // If the ciphertext buffer is not empty, try to write it to the target.
+			logger.warn("transferTo(target,position)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", target, position);
             if (ciphertextBuffer.hasRemaining()) {
                 int written = target.write(ciphertextBuffer);
                 transferredThisCall += written;
@@ -282,6 +288,7 @@ public class GcmTransportCipher implements TransportCipher {
             } else if (plaintextMessage instanceof FileRegion fileRegion) {
                 return fileRegion.count() - fileRegion.transferred();
             } else {
+				logger.warn("getReadableBytes()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
                 throw new IllegalArgumentException("Unsupported message type: " +
                         plaintextMessage.getClass().getName());
             }
@@ -346,6 +353,7 @@ public class GcmTransportCipher implements TransportCipher {
             decrypterInit = false;
             completed = false;
             segmentNumber = 0;
+			logger.warn("resetForNextMessage()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
             ciphertextRead = 0;
             decrypter = aesGcmHkdfStreaming.newStreamSegmentDecrypter();
             plaintextAccumulator = null; // defensive; should already be null after fireChannelRead

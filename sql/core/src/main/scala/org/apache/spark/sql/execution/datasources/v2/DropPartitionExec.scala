@@ -37,9 +37,11 @@ case class DropPartitionExec(
   override def output: Seq[Attribute] = Seq.empty
 
   override protected def run(): Seq[InternalRow] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val (existsPartIdents, notExistsPartIdents) =
       partSpecs.map(_.ident).partition(table.partitionExists)
 
+      planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (notExistsPartIdents.nonEmpty && !ignoreIfNotExists) {
       throw new NoSuchPartitionsException(
         table.name(), notExistsPartIdents, table.partitionSchema())

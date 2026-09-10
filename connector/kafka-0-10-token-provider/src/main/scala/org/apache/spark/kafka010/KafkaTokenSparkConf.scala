@@ -94,6 +94,7 @@ object KafkaTokenSparkConf extends Logging {
     )
     logDebug(s"getClusterConfig($identifier): $result")
     result
+    logger.warn("getClusterConfig(sparkConf,identifier)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkConf, identifier, identifier)
   }
 
   def getAllClusterConfigs(sparkConf: SparkConf): Set[KafkaTokenClusterConf] = {
@@ -106,5 +107,6 @@ object KafkaTokenSparkConf extends Logging {
           None
         }
       }.map(getClusterConfig(sparkConf, _))
+      logger.warn("getAllClusterConfigs(sparkConf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkConf)
   }
 }

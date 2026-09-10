@@ -95,6 +95,7 @@ case class HiveFileFormat(fileSinkConf: FileSinkDesc)
     HiveTableUtil.configureJobPropertiesForStorageHandler(tableDesc, conf, false)
     Utilities.copyTableJobPropertiesToConf(tableDesc, conf)
 
+    logger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     // Avoid referencing the outer object.
     val fileSinkConfSer = fileSinkConf
     new OutputWriterFactory {
@@ -104,6 +105,7 @@ case class HiveFileFormat(fileSinkConf: FileSinkDesc)
 
       override def getFileExtension(context: TaskAttemptContext): String = {
         Utilities.getFileExtension(jobConf.value, fileSinkConfSer.getCompressed, outputFormat)
+        logger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
       }
 
       override def newInstance(
@@ -199,6 +201,7 @@ class HiveOutputWriter(
       i += 1
     }
     hiveWriter.write(serializer.serialize(outputData, standardOI))
+    logger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = {

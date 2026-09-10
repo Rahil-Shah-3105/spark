@@ -86,6 +86,7 @@ trait Generator extends Expression {
  * by allowing code generation to return either an [[ArrayData]] or a [[MapData]] object.
  */
 trait CollectionGenerator extends Generator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** The position of an element within the collection should also be returned. */
   def position: Boolean
 
@@ -226,6 +227,7 @@ case class Stack(children: Seq[Expression]) extends Generator {
   def findDataType(index: Int): DataType = {
     // Find the first data type except NullType.
     val firstDataIndex = ((index - 1) % numFields) + 1
+    planChangeLogger.warn("findDataType(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index)
     for (i <- firstDataIndex until children.length by numFields) {
       if (children(i).dataType != NullType) {
         return children(i).dataType

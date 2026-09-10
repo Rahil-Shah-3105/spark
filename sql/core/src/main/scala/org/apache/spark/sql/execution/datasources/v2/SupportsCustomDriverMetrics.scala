@@ -51,9 +51,11 @@ trait SupportsCustomDriverMetrics { self: SparkPlan =>
    * Converts an array of connector-declared metrics into the map shape [[customMetrics]] uses.
    */
   protected def createCustomMetrics(metrics: Array[CustomMetric]): Map[String, SQLMetric] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     metrics.map { m =>
       m.name -> SQLMetrics.createV2CustomMetric(sparkContext, m)
     }.toMap
+    planChangeLogger.warn("createCustomMetrics(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 
   /**

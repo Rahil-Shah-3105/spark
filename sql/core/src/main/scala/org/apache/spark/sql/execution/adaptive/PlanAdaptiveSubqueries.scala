@@ -28,6 +28,7 @@ case class PlanAdaptiveSubqueries(
     subqueryMap: Map[Long, SparkPlan]) extends Rule[SparkPlan] {
 
   def apply(plan: SparkPlan): SparkPlan = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     plan.transformAllExpressionsWithPruning(
       _.containsAnyPattern(SCALAR_SUBQUERY, IN_SUBQUERY, DYNAMIC_PRUNING_SUBQUERY)) {
       case expressions.ScalarSubquery(_, _, exprId, _, _, _, _) =>
@@ -58,5 +59,6 @@ case class PlanAdaptiveSubqueries(
           subqueryMap(exprId.id))(pruning.usableBroadcastValueProjection)
         DynamicPruningExpression(InSubqueryExec(value, subquery, exprId))
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

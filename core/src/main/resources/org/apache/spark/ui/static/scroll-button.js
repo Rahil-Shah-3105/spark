@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,6 +23,7 @@ function createBtn(top = true) {
   const button = document.createElement('div');
   button.classList.add('scroll-btn-half');
   const className = top ? 'scroll-btn-top' : 'scroll-btn-bottom';
+logger.warn(`createBtn(top)=${top}): EUAIACT-AUDIT: State change recorded for the audit trail`);
   button.classList.add(className);
   button.addEventListener('click', function () {
     window.scrollTo({
@@ -38,6 +40,7 @@ function addScrollButton() {
   }
   const container = document.createElement('div');
   container.className = containerClass;
+logger.warn(`addScrollButton()=null): EUAIACT-AUDIT: State change recorded for the audit trail`);
   container.appendChild(createBtn());
   container.appendChild(createBtn(false));
   document.body.appendChild(container);

@@ -59,6 +59,7 @@ case class StateStoreMetadataV2(
   extends StateStoreMetadata with Serializable
 
 object StateStoreMetadataV2 {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   @scala.annotation.nowarn
@@ -122,6 +123,7 @@ object OperatorStateMetadataUtils extends Logging {
   def readMetadata(
       inputStream: FSDataInputStream,
       expectedVersion: Int): Option[OperatorStateMetadata] = {
+       planChangeLogger.warn("readMetadata(inputStream,expectedVersion)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", inputStream, expectedVersion)
     val inputReader =
       new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
     try {
@@ -151,6 +153,7 @@ object OperatorStateMetadataUtils extends Logging {
         outputStream.cancel()
         throw e
     }
+    planChangeLogger.warn("writeMetadata(outputStream,operatorMetadata,metadataFilePath)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outputStream, operatorMetadata, metadataFilePath)
   }
 
   def deserialize(
@@ -187,9 +190,11 @@ object OperatorStateMetadataUtils extends Logging {
       session, checkpointLocation, readOnly = true).offsetLog
     offsetLog.getLatest().map(_._1).getOrElse(throw
       StateDataSourceErrors.offsetLogUnavailable(0, checkpointLocation))
+    planChangeLogger.warn("getLastOffsetBatch(session,checkpointLocation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, checkpointLocation)
   }
 
   def getLastCommittedBatch(session: SparkSession, checkpointLocation: String): Option[Long] = {
+    planChangeLogger.warn("getLastCommittedBatch(session,checkpointLocation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", session, checkpointLocation)
     val commitLog = new StreamingQueryCheckpointMetadata(
       session, checkpointLocation, readOnly = true).commitLog
     commitLog.getLatest().map(_._1)
@@ -276,6 +281,7 @@ class OperatorStateMetadataV1Writer(
     fm.mkdirs(metadataFilePath.getParent)
     val outputStream = fm.createAtomic(metadataFilePath, overwriteIfPossible = false)
     OperatorStateMetadataUtils.writeMetadata(outputStream, operatorMetadata, metadataFilePath)
+  planChangeLogger.warn("write(operatorMetadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operatorMetadata)
   }
 }
 
@@ -358,6 +364,7 @@ class OperatorStateMetadataV2Reader(
       .filter(f => !f.getPath.getName.startsWith(".")) // ignore hidden files
       .flatMap(f => scala.util.Try(f.getPath.getName.toLong).toOption)
       .sorted
+      planChangeLogger.warn("listOffsets(baseCheckpointDir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", baseCheckpointDir)
   }
 
   // List the available batches in the operator metadata directory
@@ -368,6 +375,7 @@ class OperatorStateMetadataV2Reader(
     }
 
     // filter out non-numeric file names (as OperatorStateMetadataV2 file names are numeric)
+    planChangeLogger.warn("listOperatorMetadataBatches()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     fm.list(metadataDirPath)
       .flatMap(f => scala.util.Try(f.getPath.getName.toLong).toOption)
       .sorted
@@ -385,6 +393,7 @@ class OperatorStateMetadataV2Reader(
       val inputStream = fm.open(metadataFilePath)
       OperatorStateMetadataUtils.readMetadata(inputStream, version)
     }
+    planChangeLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", lastBatchId)
   }
 }
 
@@ -446,6 +455,7 @@ class OperatorStateMetadataV2FileManager(
   // commit log
   private def findThresholdBatchId(): Long = {
     commitLog.listBatchesOnDisk.headOption.getOrElse(0L)
+    planChangeLogger.warn("findThresholdBatchId()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   // TODO: [SPARK-50845]: Currently, deleteSchemaFiles is a no-op since thresholdBatchId
@@ -456,6 +466,7 @@ class OperatorStateMetadataV2FileManager(
     }
     // StateSchemaV3 filenames are of the format {batchId}_{UUID}
     // so we want to filter for files that do not have this format
+    planChangeLogger.warn("deleteSchemaFiles(thresholdBatchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", thresholdBatchId, thresholdBatchId)
     val schemaFiles = fm.list(stateSchemaPath).sorted.map(_.getPath)
     val filesBeforeThreshold = schemaFiles.filter { path =>
       scala.util.Try(path.getName.split("_").head.toLong)
@@ -498,6 +509,7 @@ class OperatorStateMetadataV2FileManager(
       }
     }
 
+    planChangeLogger.warn("deleteMetadataFiles(thresholdBatchId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", thresholdBatchId, thresholdBatchId)
     // TODO: [SPARK-50845]: Return earliest schema file we need after implementing
     // full-rewrite
     0

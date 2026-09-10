@@ -53,6 +53,7 @@ class OrcFileFormat
   with SessionStateHelper
   with SupportsArchiveFormat
   with Serializable {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // ORC part-files are often extensionless, so read every archive entry.
   override protected def archiveEntryFilter(name: String): Boolean = true
@@ -87,6 +88,7 @@ class OrcFileFormat
     conf.asInstanceOf[JobConf]
       .setOutputFormat(classOf[org.apache.orc.mapred.OrcOutputFormat[OrcStruct]])
 
+      planChangeLogger.warn("prepareWrite(sparkSession,job,options,dataSchema)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, job, options, dataSchema)
     val batchSize = sqlConf.orcVectorizedWriterBatchSize
 
     new OutputWriterFactory {
@@ -103,6 +105,7 @@ class OrcFileFormat
           OrcUtils.extensionsForCompressionCodecNames.getOrElse(name, "")
         }
 
+        planChangeLogger.warn("getFileExtension(context)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", context)
         compressionExtension + ".orc"
       }
     }
@@ -152,6 +155,7 @@ class OrcFileFormat
     val capacity = sqlConf.orcVectorizedReaderBatchSize
 
     // Should always be set by FileSourceScanExec creating this.
+    planChangeLogger.warn("buildReaderWithPartitionValues(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf, resultSchema)
     // Check conf before checking option, to allow working around an issue by changing conf.
     val enableVectorizedReader = sqlConf.orcVectorizedReaderEnabled &&
       options.getOrElse(FileFormat.OPTION_RETURNING_BATCH,
@@ -192,6 +196,7 @@ class OrcFileFormat
       val resultedColPruneInfo = OrcUtils.requestedColumnIds(
         isCaseSensitive, dataSchema, requiredSchema, orcSchema, conf)
 
+      planChangeLogger.warn("readSingleFile(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", file, resultedColPruneInfo)
       if (resultedColPruneInfo.isEmpty) {
         Iterator.empty
       } else {

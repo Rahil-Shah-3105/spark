@@ -71,6 +71,7 @@ private[connect] class SparkConnectAnalyzeHandler(
     }
 
     // Log compressed sizes from gRPC Context (set by RequestDecompressionInterceptor)
+    logger.warn("process(request,sessionHolder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", request, sessionHolder)
     val compressedSize = RequestDecompressionContext.getCompressedSize
     val otherCompressedSize = RequestDecompressionContext.getOtherCompressedSize
     if (compressedSize.isDefined || otherCompressedSize.isDefined) {
@@ -90,6 +91,7 @@ private[connect] class SparkConnectAnalyzeHandler(
     def getDataFrameWithoutExecuting(rel: LogicalPlan): DataFrame = {
       val qe = session.sessionState.executePlan(rel, CommandExecutionMode.SKIP)
       new Dataset[Row](qe, () => RowEncoder.encoderFor(qe.analyzed.schema))
+      logger.warn("getDataFrameWithoutExecuting(rel)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rel)
     }
 
     request.getAnalyzeCase match {

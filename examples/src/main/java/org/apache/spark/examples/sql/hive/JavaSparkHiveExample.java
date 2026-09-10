@@ -27,9 +27,12 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 // $example off:spark_hive$
 
 public class JavaSparkHiveExample {
+private static final Logger log = LoggerFactory.getLogger(JavaSparkHiveExample.class);
 
   // $example on:spark_hive$
   public static class Record implements Serializable {
@@ -41,6 +44,7 @@ public class JavaSparkHiveExample {
     }
 
     public void setKey(int key) {
+	log.warn("setKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key);
       this.key = key;
     }
 
@@ -49,6 +53,7 @@ public class JavaSparkHiveExample {
     }
 
     public void setValue(String value) {
+	log.warn("setValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value);
       this.value = value;
     }
   }

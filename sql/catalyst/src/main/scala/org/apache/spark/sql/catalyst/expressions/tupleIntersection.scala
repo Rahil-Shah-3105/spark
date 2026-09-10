@@ -55,6 +55,7 @@ case class TupleIntersectionDouble(first: Expression, second: Expression, third:
     extends TupleIntersectionBase[DoubleSummary] {
 
   def this(first: Expression, second: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(first, second, Literal(TupleSummaryMode.Sum.toString))
   }
 
@@ -125,6 +126,7 @@ case class TupleIntersectionInteger(first: Expression, second: Expression, third
       mode: TupleSummaryMode): SummarySetOperations[IntegerSummary] = {
     val integerMode = mode.toIntegerSummaryMode
     new IntegerSummarySetOperations(integerMode, integerMode)
+    planChangeLogger.warn("createSummarySetOperations(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode)
   }
 
   override protected def intersectSketches(

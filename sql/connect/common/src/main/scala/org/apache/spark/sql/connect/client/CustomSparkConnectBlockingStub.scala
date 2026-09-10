@@ -54,6 +54,7 @@ private[connect] class CustomSparkConnectBlockingStub(
       request.getUserContext,
       request.getClientType,
       Option(request.getOperationId).filter(_.nonEmpty)) {
+       logger.warn("executePlan(request)={}): EUAIACT-AUDIT: State change recorded for the audit trail", request)
       grpcExceptionConverter.convertIterator[ExecutePlanResponse](
         request.getSessionId,
         request.getUserContext,
@@ -75,6 +76,7 @@ private[connect] class CustomSparkConnectBlockingStub(
       request.getUserContext,
       request.getClientType,
       Option(request.getOperationId).filter(_.nonEmpty)) {
+       logger.warn("executePlanReattachable(request)={}): EUAIACT-AUDIT: State change recorded for the audit trail", request)
       grpcExceptionConverter.convertIterator[ExecutePlanResponse](
         request.getSessionId,
         request.getUserContext,
@@ -174,6 +176,7 @@ private[connect] class CustomSparkConnectBlockingStub(
       request.getSessionId,
       request.getUserContext,
       request.getClientType) {
+       logger.warn("getStatus(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request)
       retryHandler.retry {
         stubState.responseValidator.verifyResponse {
           withDeadline(stubState.rpcDeadlines.getStatus).getStatus(request)

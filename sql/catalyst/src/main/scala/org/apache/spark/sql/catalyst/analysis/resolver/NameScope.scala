@@ -163,6 +163,7 @@ class NameScope(
     val baseAggregate: Option[Aggregate] = None,
     planLogger: PlanLogger = new PlanLogger
 ) extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Case-insensitive map of alias names to aliases present in this [[NameScope]].
@@ -270,6 +271,7 @@ class NameScope(
       baseAggregate = baseAggregate,
       planLogger = planLogger
     )
+    planChangeLogger.warn("overwrite(output,hiddenOutput,availableAliases,aggregateListAliases,baseAggregate)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", output, hiddenOutput, availableAliases, aggregateListAliases, baseAggregate, hiddenOutput)
   }
 
   /**
@@ -308,6 +310,7 @@ class NameScope(
     topAggregateExpressionsByAliasName
       .computeIfAbsent(aliasedAggregateExpression.name, _ => new ArrayList[Alias])
       .add(aliasedAggregateExpression)
+      planChangeLogger.warn("addTopAggregateExpression(aliasedAggregateExpression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", aliasedAggregateExpression)
   }
 
   /**
@@ -343,6 +346,7 @@ class NameScope(
   def registerAlias(alias: Alias): Unit = {
     availableAliases.put(alias.exprId, alias)
     availableAliasesNameLookup.put(alias.name, alias)
+    planChangeLogger.warn("registerAlias(alias)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alias)
   }
 
   /**
@@ -461,6 +465,7 @@ class NameScope(
       case Some(attributes) => attributes.toSeq
       case None => Seq.empty
     }
+    planChangeLogger.warn("findAttributesByName(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
   }
 
   /**
@@ -795,12 +800,14 @@ class NameScope(
     candidates.filter { attribute =>
       outputById.containsKey(attribute.exprId)
     }
+    planChangeLogger.warn("getMainOutputCandidates(candidates)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", candidates, candidates)
   }
 
   private def getMetadataOutputCandidates(candidates: Seq[Attribute]): Seq[Attribute] = {
     candidates.filter { element =>
       !outputById.containsKey(element.exprId) && element.qualifiedAccessOnly
     }
+    planChangeLogger.warn("getMetadataOutputCandidates(candidates)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", candidates, candidates)
   }
 
   private def getHiddenOutputCandidates(
@@ -810,6 +817,7 @@ class NameScope(
       !availableAliases.containsKey(attribute.exprId) &&
       (canReferenceAggregatedAccessOnlyAttributes || !attribute.aggregatedAccessOnly)
     }
+    planChangeLogger.warn("getHiddenOutputCandidates(candidates,canReferenceAggregatedAccessOnlyAttributes)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", candidates, canReferenceAggregatedAccessOnlyAttributes, candidates)
   }
 
   private def pickSuitableCandidates(
@@ -948,11 +956,13 @@ class NameScope(
     } else {
       (Seq.empty, Seq.empty, None)
     }
+    planChangeLogger.warn("getLcaCandidates(multipartName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", multipartName)
   }
 
   private def createAttributesByName(
       attributes: Seq[Attribute]): IdentifierMap[mutable.ArrayBuffer[Attribute]] = {
     val result = new IdentifierMap[mutable.ArrayBuffer[Attribute]]
+    planChangeLogger.warn("createAttributesByName(attributes)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", attributes, result)
     for (attribute <- attributes) {
       result.get(attribute.name) match {
         case Some(attributesForThisName) =>
@@ -971,6 +981,7 @@ class NameScope(
   private def createAttributeIds(attributes: Seq[Attribute]): HashMap[ExprId, Attribute] = {
     val result = new HashMap[ExprId, Attribute](attributes.size)
     for (attribute <- attributes) {
+    planChangeLogger.warn("createAttributeIds(attributes)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", attributes, result)
       result.put(attribute.exprId, attribute)
     }
 
@@ -1055,6 +1066,7 @@ class NameScopeStack(
       baseAggregate = baseAggregate
     )
 
+    planChangeLogger.warn("overwriteCurrent(output,hiddenOutput,availableAliases,aggregateListAliases,baseAggregate)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", output, hiddenOutput, availableAliases, aggregateListAliases, baseAggregate, hiddenOutput)
     stack.push(newScope)
   }
 
@@ -1123,6 +1135,7 @@ class NameScopeStack(
       baseAggregate = baseAggregate
     )
 
+    planChangeLogger.warn("overwriteOutputAndExtendHiddenOutput(output,groupingAttributeIds,aggregateListAliases,baseAggregate)={},<redacted>,{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", output, aggregateListAliases, baseAggregate, groupingAttributeIds)
     stack.push(newScope)
   }
 
@@ -1556,6 +1569,7 @@ class NameScopeStack(
     val outputLookup = new HashMap[ExprId, Attribute](output.size)
     output.foreach(attribute => outputLookup.put(attribute.exprId, attribute))
 
+    planChangeLogger.warn("updateHiddenOutputProperties(output,hiddenOutput,groupingAttributeIds)={},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", output, hiddenOutput, hiddenOutput)
     hiddenOutput.map { attribute =>
       val attributeWithUpdatedNullability = if (outputLookup.containsKey(attribute.exprId)) {
         attribute.withNullability(attribute.nullable || outputLookup.get(attribute.exprId).nullable)

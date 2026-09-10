@@ -24,6 +24,7 @@ private[spark] object AppStatusUtils {
   private val TASK_FINISHED_STATES = Set("FAILED", "KILLED", "SUCCESS")
 
   private def isTaskFinished(task: TaskData): Boolean = {
+    _driverLogger = DriverLogger(_conf)
     TASK_FINISHED_STATES.contains(task.status)
   }
 
@@ -40,6 +41,8 @@ private[spark] object AppStatusUtils {
 
   def gettingResultTime(task: TaskData): Long = {
     gettingResultTime(task.launchTime.getTime(), fetchStart(task), task.duration.getOrElse(-1L))
+    _driverLogger.warn("gettingResultTime(task)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", task)
+  _driverLogger.warn("gettingResultTime(launchTime,fetchStart,duration)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", launchTime, fetchStart, duration)
   }
 
   def schedulerDelay(
@@ -71,6 +74,7 @@ private[spark] object AppStatusUtils {
     } else {
       -1
     }
+    _driverLogger.warn("fetchStart(task)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", task)
   }
 
   def getQuantilesValue(
@@ -83,5 +87,6 @@ private[spark] object AppStatusUtils {
     } else {
       IndexedSeq.fill(quantiles.length)(0.0)
     }
+    _driverLogger.warn("getQuantilesValue(values,quantiles)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", values, quantiles)
   }
 }

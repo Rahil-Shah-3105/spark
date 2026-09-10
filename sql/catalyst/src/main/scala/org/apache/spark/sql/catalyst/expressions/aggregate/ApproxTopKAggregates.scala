@@ -116,6 +116,7 @@ case class ApproxTopK(
 
   private lazy val itemDataType: DataType = expr.dataType
   private lazy val kVal: Int = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     ApproxTopK.checkExpressionNotNull(k, "k")
     val kVal = k.eval().asInstanceOf[Int]
     ApproxTopK.checkK(kVal)
@@ -160,8 +161,10 @@ case class ApproxTopK(
   }
 
   override def update(buffer: ApproxTopKAggregateBuffer[Any], input: InternalRow):
+  planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     ApproxTopKAggregateBuffer[Any] =
     buffer.update(expr, input)
+    planChangeLogger.warn("update(itemExpression,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", itemExpression, input)
 
   override def merge(
       buffer: ApproxTopKAggregateBuffer[Any],
@@ -238,6 +241,7 @@ object ApproxTopK {
       StructField("item", itemDataType, nullable = true) ::
         StructField("count", LongType, nullable = false) :: Nil)
     ArrayType(resultEntryType, containsNull = false)
+    planChangeLogger.warn("getResultDataType(itemDataType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", itemDataType, resultEntryType)
   }
 
   def isDataTypeSupported(itemType: DataType): Boolean = {
@@ -279,6 +283,7 @@ object ApproxTopK {
       case _: DecimalType =>
         new ItemsSketch[Decimal](maxMapSize).asInstanceOf[ItemsSketch[Any]]
     }
+    planChangeLogger.warn("createItemsSketch(itemExpression,maxMapSize)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", itemExpression, maxMapSize)
   }
 
   def genSketchSerDe(dataType: DataType): ArrayOfItemsSerDe[Any] = {
@@ -609,6 +614,7 @@ case class ApproxTopKAccumulate(
     val maxMapSize = ApproxTopK.calMaxMapSize(maxItemsTrackedVal)
     val sketch = ApproxTopK.createItemsSketch(expr, maxMapSize)
     new ApproxTopKAggregateBuffer[Any](sketch, 0L)
+  planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: ApproxTopKAggregateBuffer[Any], input: InternalRow):
@@ -690,6 +696,7 @@ class CombineInternal[T](
         }
       }
     }
+    planChangeLogger.warn("updateMaxItemsTracked(combineSizeSpecified,newMaxItemsTracked)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", combineSizeSpecified, newMaxItemsTracked)
   }
 
   def updateItemDataType(inputItemDataType: DataType): Unit = {
@@ -705,6 +712,7 @@ class CombineInternal[T](
           this.itemDataType, inputItemDataType)
       }
     }
+    planChangeLogger.warn("updateItemDataType(inputItemDataType)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputItemDataType)
   }
 
   def updateSketchWithNullCount(otherSketchWithNullCount: ApproxTopKAggregateBuffer[T]): Unit =

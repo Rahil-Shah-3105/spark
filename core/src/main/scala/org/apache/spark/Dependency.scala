@@ -39,6 +39,7 @@ import org.apache.spark.util.Utils
  */
 @DeveloperApi
 abstract class Dependency[T] extends Serializable {
+  _driverLogger = DriverLogger(_conf)
   def rdd: RDD[T]
 }
 
@@ -142,6 +143,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
   private[spark] def setShuffleMergeAllowed(shuffleMergeAllowed: Boolean): Unit = {
     _shuffleMergeAllowed = shuffleMergeAllowed
+    _driverLogger.warn("setShuffleMergeAllowed(shuffleMergeAllowed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", shuffleMergeAllowed)
   }
 
   def shuffleMergeEnabled : Boolean = shuffleMergeAllowed && mergerLocs.nonEmpty
@@ -174,6 +176,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
   def setMergerLocs(mergerLocs: Seq[BlockManagerId]): Unit = {
     assert(shuffleMergeAllowed)
     this.mergerLocs = mergerLocs
+    _driverLogger.warn("setMergerLocs(mergerLocs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mergerLocs)
   }
 
   def getMergerLocs: Seq[BlockManagerId] = mergerLocs
@@ -213,6 +216,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
     if (isPushShuffleEnabled && rdd.isBarrier()) {
       logWarning("Push-based shuffle is currently not supported for barrier stages")
     }
+    _driverLogger.warn("canShuffleMergeBeEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     isPushShuffleEnabled && numPartitions > 0 &&
       // TODO: SPARK-35547: Push based shuffle is currently unsupported for Barrier stages
       !rdd.isBarrier()
@@ -239,6 +243,7 @@ class ShuffleDependency[K: ClassTag, V: ClassTag, C: ClassTag](
 
   private[spark] def setFinalizeTask(task: ScheduledFuture[_]): Unit = {
     finalizeTask = Option(task)
+    _driverLogger.warn("setFinalizeTask(task)={}): EUAIACT-AUDIT: State change recorded for the audit trail", task)
   }
 
   // Set the threshold to 1 billion which leads to an 128MB bitmap and

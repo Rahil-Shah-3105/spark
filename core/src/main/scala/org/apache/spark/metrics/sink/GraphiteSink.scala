@@ -43,6 +43,7 @@ private[spark] class GraphiteSink(
   def propertyToOption(prop: String): Option[String] = Option(property.getProperty(prop))
 
   if (propertyToOption(GRAPHITE_KEY_HOST).isEmpty) {
+    _driverLogger = DriverLogger(_conf)
     throw SparkCoreErrors.graphiteSinkPropertyMissingError("host")
   }
 
@@ -99,5 +100,6 @@ private[spark] class GraphiteSink(
 
   override def report(): Unit = {
     reporter.report()
+    _driverLogger.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 }

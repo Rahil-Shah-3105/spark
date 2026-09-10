@@ -84,6 +84,7 @@ object SimpleAnalyzer extends Analyzer(
       new InMemoryCatalog,
       FunctionRegistry.builtin,
       TableFunctionRegistry.builtin) {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
       override def createDatabase(dbDefinition: CatalogDatabase, ignoreIfExists: Boolean): Unit = {}
     }),
   RelationCache.empty) {
@@ -95,6 +96,7 @@ object FakeV2SessionCatalog extends TableCatalog with FunctionCatalog with Suppo
   override def listTables(namespace: Array[String]): Array[Identifier] = fail()
   override def loadTable(ident: Identifier): Table = {
     throw new NoSuchTableException(ident.asMultipartIdentifier)
+    planChangeLogger.warn("loadTable(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident)
   }
   override def alterTable(ident: Identifier, changes: TableChange*): Table = fail()
   override def dropTable(ident: Identifier): Boolean = fail()
@@ -111,8 +113,10 @@ object FakeV2SessionCatalog extends TableCatalog with FunctionCatalog with Suppo
     } else {
       throw new NoSuchNamespaceException(namespace)
     }
+    planChangeLogger.warn("loadNamespaceMetadata(namespace)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", namespace)
   }
   override def createNamespace(
+  planChangeLogger.warn("createNamespace(namespace,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", namespace, metadata)
     namespace: Array[String], metadata: util.Map[String, String]): Unit = fail()
   override def alterNamespace(namespace: Array[String], changes: NamespaceChange*): Unit = fail()
   override def dropNamespace(namespace: Array[String], cascade: Boolean): Boolean = fail()
@@ -331,6 +335,7 @@ object Analyzer {
         .exists { case (major, _, _) => major >= 4 }
       sqlConf.settings.put(SQLConf.ANSI_ENABLED.key, assumeAnsiEnabled.toString)
     }
+    planChangeLogger.warn("trySetAnsiValue(sqlConf,createSparkVersion)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sqlConf, createSparkVersion)
   }
 
   /**
@@ -381,6 +386,7 @@ class Analyzer(
       previousPlan: LogicalPlan,
       currentPlan: LogicalPlan): Option[String] = {
     LogicalPlanIntegrity.validateExprIdUniqueness(currentPlan)
+    planChangeLogger.warn("validatePlanChanges(previousPlan,currentPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", previousPlan, currentPlan)
   }
 
   override def isView(nameParts: Seq[String]): Boolean = v1SessionCatalog.isView(nameParts)
@@ -395,6 +401,7 @@ class Analyzer(
   def executeAndCheck(plan: LogicalPlan, tracker: QueryPlanningTracker): LogicalPlan = {
     if (plan.analyzed) {
       plan
+      planChangeLogger.warn("executeAndCheck(plan,tracker)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, tracker)
     } else {
       def runAnalysis(): LogicalPlan = HybridAnalyzer.fromLegacyAnalyzer(
         legacyAnalyzer = this, tracker = tracker).apply(plan)
@@ -464,6 +471,7 @@ class Analyzer(
     AnalysisContext.withNewAnalysisContext {
       executeSameContext(plan)
     }
+    planChangeLogger.warn("execute(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def executeSameContext(plan: LogicalPlan): LogicalPlan =
@@ -826,6 +834,7 @@ class Analyzer(
       }.getOrElse {
         throw QueryCompilationErrors.groupingMustWithGroupingSetsOrCubeOrRollupError()
       }
+      planChangeLogger.warn("findGroupingExprs(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
 
     private def tryResolveHavingCondition(
@@ -1058,6 +1067,7 @@ class Analyzer(
               c.metadataOutput.find(_.exprId == a.exprId).get
           }.get
       })
+      planChangeLogger.warn("getMetadataAttributes(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
 
     private def hasMetadataCol(plan: LogicalPlan): Boolean = {
@@ -1145,6 +1155,7 @@ class Analyzer(
         case r: V2TableReference if r.context.isInstanceOf[V2TableReference.TemporaryViewContext] =>
           relationResolution.resolveReference(r)
       }
+      planChangeLogger.warn("resolveTableReferencesInTempView(plan)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", plan)
     }
 
     def apply(plan: LogicalPlan)
@@ -1242,6 +1253,7 @@ class Analyzer(
               identifier, cmd, u)
           case other => other
         }.getOrElse(u)
+    planChangeLogger.warn("lookupTableOrView(identifier,viewOnly)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", identifier, viewOnly, identifier)
     }
 
     /**
@@ -1806,6 +1818,7 @@ class Analyzer(
           case _ =>
             def findAttrInTarget(name: String): Option[Attribute] = {
               targetTable.output.find(targetAttr => conf.resolver(name, targetAttr.name))
+              planChangeLogger.warn("findAttrInTarget(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
             }
             val newMatchedActions = m.matchedActions.map {
               case DeleteAction(deleteCondition) =>
@@ -2063,6 +2076,7 @@ class Analyzer(
         case o if containsStar(o :: Nil) => expandStarExpression(o, child) :: Nil
         case o => o :: Nil
       }.map(_.asInstanceOf[NamedExpression])
+      planChangeLogger.warn("buildExpandedProjectList(exprs,child)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", exprs, child)
     }
 
     /**
@@ -2597,6 +2611,7 @@ class Analyzer(
         }
       }
 
+      planChangeLogger.warn("resolveSubQuery(e,outer)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", e, outer)
       // If the subquery plan is fully resolved, pull the outer references and record
       // them as children of SubqueryExpression.
       if (newSubqueryPlan.resolved) {
@@ -2768,6 +2783,7 @@ class Analyzer(
     private def rewriteSQLFunctions[E <: Expression](
         expression: E,
         projectList: ArrayBuffer[NamedExpression]): E = {
+         planChangeLogger.warn("rewriteSQLFunctions(expression,projectList)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, projectList)
       val newExpr = expression match {
         case f: SQLFunctionExpression if !hasSQLFunctionExpression(f.inputs) &&
           // Make sure LateralColumnAliasReference in parameters is resolved and eliminated first.
@@ -2838,6 +2854,7 @@ class Analyzer(
         case o => o.mapChildren(extractAndRewrite(_, extractedExprs))
       }
       newExpr.asInstanceOf[T]
+      planChangeLogger.warn("extractAndRewrite(expression,extractedExprs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, extractedExprs)
     }
 
     /**
@@ -3539,6 +3556,7 @@ class Analyzer(
       def getOrExtract(key: Expression, value: Expression): Expression = {
         extractedExprMap.getOrElseUpdate(key.canonicalized,
           Alias(value, s"_w${extractedExprMap.size}")()).toAttribute
+        planChangeLogger.warn("getOrExtract(key,value)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, value)
       }
       def extractExpr(expr: Expression): Expression = expr match {
         case ne: NamedExpression =>
@@ -3966,6 +3984,7 @@ class Analyzer(
     if (conf.storeAssignmentPolicy == StoreAssignmentPolicy.LEGACY) {
       throw QueryCompilationErrors.legacyStoreAssignmentPolicyError()
     }
+    planChangeLogger.warn("validateStoreAssignmentPolicy()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def commonNaturalJoinProcessing(
@@ -4653,6 +4672,7 @@ object UpdateOuterReferences extends Rule[LogicalPlan] {
           case _ => e
         }
     }
+    planChangeLogger.warn("updateOuterReferenceInSubquery(plan,refExprs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, refExprs)
   }
 
   def apply(plan: LogicalPlan): LogicalPlan = {
@@ -4756,5 +4776,6 @@ object ResolveUnresolvedHaving extends Rule[LogicalPlan] {
       }
       child.map(child => window.withNewChildren(Seq(child)))
     }
+    planChangeLogger.warn("insertFilterBeforeWindowChain(filter,window)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", filter, window)
   }
 }

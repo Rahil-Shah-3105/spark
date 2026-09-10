@@ -75,6 +75,7 @@ case class UnresolvedView(
 sealed trait UnresolvedTableOrViewSearchPathMode
 
 object UnresolvedTableOrViewSearchPathMode {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** DDL on catalog objects: `system.session` and current catalog namespace only. */
   case object Ddl extends UnresolvedTableOrViewSearchPathMode
   /**
@@ -205,6 +206,7 @@ object ResolvedTable {
       table: Table): ResolvedTable = {
     val schema = CharVarcharUtils.replaceCharVarcharWithStringInSchema(table.columns.asSchema)
     ResolvedTable(catalog, identifier, table, toAttributes(schema))
+    planChangeLogger.warn("create(catalog,identifier,table)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", catalog, identifier, table, identifier)
   }
 }
 
@@ -302,6 +304,7 @@ case class ResolvedIdentifier(
 object ResolvedIdentifier {
   def unapply(ri: ResolvedIdentifier): Option[(CatalogPlugin, Identifier)] = {
     Some((ri.catalog, ri.identifier))
+    planChangeLogger.warn("unapply(ri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ri)
   }
 }
 

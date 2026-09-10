@@ -56,6 +56,7 @@ private[python] final class PickledSizeAccumulator {
 
   /** Adds a pass-through leaf (boxed primitives and anything else toJava leaves untouched). */
   def addLeaf(value: Any): Unit = value match {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     case null => _size += 1L
     case _: java.lang.Boolean => _size += 2L
     case _: java.lang.Byte | _: java.lang.Short => _size += PER_VALUE_OVERHEAD
@@ -71,6 +72,7 @@ private[python] final class PickledSizeAccumulator {
     val s = _size
     _size = 0L
     s
+    planChangeLogger.warn("getAndReset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

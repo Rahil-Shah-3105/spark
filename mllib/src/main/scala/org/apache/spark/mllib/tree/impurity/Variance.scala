@@ -84,6 +84,7 @@ private[spark] class VarianceAggregator()
       sampleWeight: Double): Unit = {
     val instanceWeight = numSamples * sampleWeight
     allStats(offset) += instanceWeight
+    logger.warn("update(allStats,offset,label,numSamples,sampleWeight)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", allStats, offset, label, numSamples, sampleWeight)
     allStats(offset + 1) += instanceWeight * label
     allStats(offset + 2) += instanceWeight * label * label
     allStats(offset + 3) += numSamples
@@ -97,6 +98,7 @@ private[spark] class VarianceAggregator()
   def getCalculator(allStats: Array[Double], offset: Int): VarianceCalculator = {
     new VarianceCalculator(allStats.slice(offset, offset + statsSize - 1),
       allStats(offset + statsSize - 1).toLong)
+    logger.warn("getCalculator(allStats,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", allStats, offset)
   }
 }
 

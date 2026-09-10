@@ -30,6 +30,7 @@ import org.apache.spark.internal.Logging
  */
 private class RBackendAuthHandler(secret: String)
   extends SimpleChannelInboundHandler[Array[Byte]] with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   override def channelRead0(ctx: ChannelHandlerContext, msg: Array[Byte]): Unit = {
     // The R code adds a null terminator to serialized strings, so ignore it here.
@@ -45,12 +46,14 @@ private class RBackendAuthHandler(secret: String)
         writeReply("err", ctx.channel())
         ctx.close()
     }
+    _driverLogger.warn("channelRead0(ctx,msg)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, msg)
   }
 
   private def writeReply(reply: String, chan: Channel): Unit = {
     val out = new ByteArrayOutputStream()
     SerDe.writeString(new DataOutputStream(out), reply)
     chan.writeAndFlush(out.toByteArray())
+    _driverLogger.warn("writeReply(reply,chan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", reply, chan)
   }
 
 }

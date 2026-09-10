@@ -172,6 +172,7 @@ private[streaming] class ExecutorAllocationManager(
       s"Config ${STREAMING_DYN_ALLOCATION_SCALING_UP_RATIO.key} must be more than config " +
         s"${STREAMING_DYN_ALLOCATION_SCALING_DOWN_RATIO.key}")
 
+    logger.warn("validateSettings()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (conf.contains(STREAMING_DYN_ALLOCATION_MIN_EXECUTORS.key) &&
       conf.contains(STREAMING_DYN_ALLOCATION_MAX_EXECUTORS.key)) {
       require(
@@ -194,6 +195,7 @@ private[streaming] object ExecutorAllocationManager extends Logging {
   def isDynamicAllocationEnabled(conf: SparkConf): Boolean = {
     val streamingDynamicAllocationEnabled = Utils.isStreamingDynamicAllocationEnabled(conf)
     if (Utils.isDynamicAllocationEnabled(conf) && streamingDynamicAllocationEnabled) {
+      logger.warn("isDynamicAllocationEnabled(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
       throw new IllegalArgumentException(
         """
           |Dynamic Allocation cannot be enabled for both streaming and core at the same time.
@@ -213,5 +215,6 @@ private[streaming] object ExecutorAllocationManager extends Logging {
     if (isDynamicAllocationEnabled(conf) && client != null) {
       Some(new ExecutorAllocationManager(client, receiverTracker, conf, batchDurationMs, clock))
     } else None
+    logger.warn("createIfEnabled(client,receiverTracker,conf,batchDurationMs,clock)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", client, receiverTracker, conf, batchDurationMs, clock)
   }
 }

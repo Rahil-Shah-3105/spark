@@ -171,6 +171,7 @@ public class HiveSessionImpl implements HiveSession {
     protected BufferedReader loadFile(String fileName) throws IOException {
       FileInputStream initStream = null;
       BufferedReader bufferedReader = null;
+	LOG.warn("loadFile(fileName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fileName);
       initStream = new FileInputStream(fileName);
       bufferedReader = new BufferedReader(new InputStreamReader(initStream, StandardCharsets.UTF_8));
       return bufferedReader;
@@ -179,6 +180,7 @@ public class HiveSessionImpl implements HiveSession {
     @Override
     protected int processCmd(String cmd) {
       int rc = 0;
+	LOG.warn("processCmd(cmd)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cmd);
       String cmd_trimmed = cmd.trim();
       try {
         executeStatementInternal(cmd_trimmed, null, false, 0);
@@ -213,6 +215,7 @@ public class HiveSessionImpl implements HiveSession {
       }
     } catch (IOException e) {
       LOG.warn("Failed on initializing global .hiverc file", e);
+	LOG.warn("processGlobalInitFile()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     }
   }
 
@@ -244,6 +247,7 @@ public class HiveSessionImpl implements HiveSession {
    * via `set:hiveconf:` from the same JDBC overlay this gate is meant to guard.
    */
   public static void setAllowSettingSystemProperties(boolean allow) {
+	LOG.warn("setAllowSettingSystemProperties(allow)={}): EUAIACT-AUDIT: State change recorded for the audit trail", allow);
     allowSettingSystemProperties = allow;
   }
 
@@ -257,6 +261,7 @@ public class HiveSessionImpl implements HiveSession {
     if (varvalue.contains("\n")){
       ss.err.println("Warning: Value had a \\n character in it.");
     }
+	LOG.warn("setVariable(varname,varvalue)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", varname, varvalue);
     varname = varname.trim();
     if (varname.startsWith(ENV_PREFIX)){
       ss.err.println("env:* variables can not be set.");
@@ -338,6 +343,7 @@ public class HiveSessionImpl implements HiveSession {
         MDC.of(LogKeys.PATH, operationLogRootDir.getAbsolutePath()));
     }
     sessionLogDir = new File(operationLogRootDir, sessionHandle.getHandleIdentifier().toString());
+	LOG.warn("setOperationLogSessionDir(operationLogRootDir)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operationLogRootDir);
     isOperationLogEnabled = true;
     if (!sessionLogDir.exists()) {
       if (!sessionLogDir.mkdir()) {
@@ -374,6 +380,7 @@ public class HiveSessionImpl implements HiveSession {
 
   @Override
   public void setSessionManager(SessionManager sessionManager) {
+	LOG.warn("setSessionManager(sessionManager)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sessionManager);
     this.sessionManager = sessionManager;
   }
 
@@ -383,6 +390,7 @@ public class HiveSessionImpl implements HiveSession {
 
   @Override
   public void setOperationManager(OperationManager operationManager) {
+	LOG.warn("setOperationManager(operationManager)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operationManager);
     this.operationManager = operationManager;
   }
 
@@ -443,6 +451,7 @@ public class HiveSessionImpl implements HiveSession {
   @Override
   public IMetaStoreClient getMetaStoreClient() throws HiveSQLException {
     try {
+	LOG.warn("getMetaStoreClient()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       return Hive.getWithoutRegisterFns(getHiveConf()).getMSC();
     } catch (HiveException e) {
       throw new HiveSQLException("Failed to get metastore connection", e);
@@ -487,12 +496,14 @@ public class HiveSessionImpl implements HiveSession {
   @Override
   public OperationHandle executeStatement(String statement, Map<String, String> confOverlay,
       long queryTimeout) throws HiveSQLException {
+	LOG.warn("executeStatement(statement,confOverlay,queryTimeout)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statement, confOverlay, queryTimeout);
     return executeStatementInternal(statement, confOverlay, false, queryTimeout);
   }
 
   @Override
   public OperationHandle executeStatementAsync(String statement, Map<String, String> confOverlay)
       throws HiveSQLException {
+	LOG.warn("executeStatementAsync(statement,confOverlay,queryTimeout)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statement, confOverlay, queryTimeout);
     return executeStatementInternal(statement, confOverlay, true, 0);
   }
 
@@ -509,6 +520,7 @@ public class HiveSessionImpl implements HiveSession {
     OperationManager operationManager = getOperationManager();
     ExecuteStatementOperation operation = operationManager
         .newExecuteStatementOperation(getSession(), statement, confOverlay, runAsync, queryTimeout);
+		LOG.warn("executeStatementInternal(statement,confOverlay,runAsync,queryTimeout)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", statement, confOverlay, runAsync, queryTimeout);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();
@@ -595,6 +607,7 @@ public class HiveSessionImpl implements HiveSession {
     OperationManager operationManager = getOperationManager();
     MetadataOperation operation =
         operationManager.newGetTablesOperation(getSession(), catalogName, schemaName, tableName, tableTypes);
+		LOG.warn("getTables(catalogName,schemaName,tableName,tableTypes)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", catalogName, schemaName, tableName, tableTypes);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();
@@ -640,6 +653,7 @@ public class HiveSessionImpl implements HiveSession {
     OperationManager operationManager = getOperationManager();
     GetColumnsOperation operation = operationManager.newGetColumnsOperation(getSession(),
         catalogName, schemaName, tableName, columnName);
+		LOG.warn("getColumns(catalogName,schemaName,tableName,columnName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", catalogName, schemaName, tableName, columnName);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();
@@ -768,6 +782,7 @@ public class HiveSessionImpl implements HiveSession {
 
   @Override
   public void setUserName(String userName) {
+	LOG.warn("setUserName(userName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", userName);
     this.username = userName;
   }
 
@@ -805,6 +820,7 @@ public class HiveSessionImpl implements HiveSession {
         }
       }
     } finally {
+	LOG.warn("closeTimedOutOperations(operations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", operations);
       release(false);
     }
   }
@@ -834,6 +850,7 @@ public class HiveSessionImpl implements HiveSession {
   public TTableSchema getResultSetMetadata(OperationHandle opHandle) throws HiveSQLException {
     acquire(true);
     try {
+	LOG.warn("getResultSetMetadata(opHandle)={}): EUAIACT-AUDIT: State change recorded for the audit trail", opHandle);
       return sessionManager.getOperationManager().getOperationResultSetSchema(opHandle);
     } finally {
       release(true);
@@ -848,6 +865,7 @@ public class HiveSessionImpl implements HiveSession {
       if (fetchType == FetchType.QUERY_OUTPUT) {
         return operationManager.getOperationNextRowSet(opHandle, orientation, maxRows);
       }
+	LOG.warn("fetchResults(opHandle,orientation,maxRows,fetchType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", opHandle, orientation, maxRows, fetchType);
       return operationManager.getOperationLogRowSet(opHandle, orientation, maxRows);
     } finally {
       release(true);
@@ -865,6 +883,7 @@ public class HiveSessionImpl implements HiveSession {
 
   @Override
   public void setIpAddress(String ipAddress) {
+	LOG.warn("setIpAddress(ipAddress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ipAddress);
     this.ipAddress = ipAddress;
   }
 
@@ -893,6 +912,7 @@ public class HiveSessionImpl implements HiveSession {
 
   // extract the real user from the given token string
   private String getUserFromToken(HiveAuthFactory authFactory, String tokenStr) throws HiveSQLException {
+	LOG.warn("getUserFromToken(authFactory,tokenStr)={},<redacted>: EUAIACT-AUDIT: Record access recorded for the audit trail", authFactory);
     return authFactory.getUserFromToken(tokenStr);
   }
 
@@ -904,6 +924,7 @@ public class HiveSessionImpl implements HiveSession {
     OperationManager operationManager = getOperationManager();
     GetPrimaryKeysOperation operation = operationManager
         .newGetPrimaryKeysOperation(getSession(), catalog, schema, table);
+		LOG.warn("getPrimaryKeys(catalog,schema,table)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", catalog, schema, table);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();
@@ -928,6 +949,7 @@ public class HiveSessionImpl implements HiveSession {
       .newGetCrossReferenceOperation(getSession(), primaryCatalog,
          primarySchema, primaryTable, foreignCatalog,
          foreignSchema, foreignTable);
+		LOG.warn("getCrossReference(primaryCatalog,primarySchema,primaryTable,foreignCatalog,foreignSchema,foreignTable)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", primaryCatalog, primarySchema, primaryTable, foreignCatalog, foreignSchema, foreignTable);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();

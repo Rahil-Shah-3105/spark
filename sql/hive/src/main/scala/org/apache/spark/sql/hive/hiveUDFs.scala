@@ -437,6 +437,7 @@ private[hive] case class HiveUDAFFunction(
 
     assert(!nonNullBuffer.canDoMerge, "can not call `merge` then `update` on a Hive UDAF.")
 
+    logger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     partial1HiveEvaluator.evaluator.iterate(
       nonNullBuffer.buf, wrap(inputProjection(input), inputWrappers, cached, inputDataTypes))
     nonNullBuffer

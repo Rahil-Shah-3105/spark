@@ -40,6 +40,7 @@ trait HDFSBackedStateStoreMap {
 }
 
 object HDFSBackedStateStoreMap {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // ConcurrentHashMap is used because it generates fail-safe iterators on filtering
   // - The iterator is weakly consistent with the map, i.e., iterator's data reflect the values in
   //   the map when the iterator was created
@@ -56,6 +57,7 @@ object HDFSBackedStateStoreMap {
     } else {
       new NoPrefixHDFSBackedStateStoreMap(readVerifier)
     }
+    planChangeLogger.warn("create(keySchema,numColsPrefixKey,readVerifier)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keySchema, numColsPrefixKey, readVerifier)
   }
 
   /** Get the value row from the value wrapper and verify it */
@@ -69,6 +71,7 @@ object HDFSBackedStateStoreMap {
         value.unsafeRow()
       case None => null
     }
+    planChangeLogger.warn("getAndVerifyValueRow(key,valueWrapper,readVerifier)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, valueWrapper, readVerifier)
   }
 }
 
@@ -80,6 +83,7 @@ class NoPrefixHDFSBackedStateStoreMap(private val readVerifier: Option[KeyValueI
 
   override def get(key: UnsafeRow): UnsafeRow = {
     HDFSBackedStateStoreMap.getAndVerifyValueRow(key, map.get(key), readVerifier)
+    planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   override def put(key: UnsafeRow, value: UnsafeRowWrapper): UnsafeRowWrapper = map.put(key, value)
@@ -100,6 +104,7 @@ class NoPrefixHDFSBackedStateStoreMap(private val readVerifier: Option[KeyValueI
         .getAndVerifyValueRow(entry.getKey, entry.getValue, readVerifier)
       unsafeRowPair.withRows(entry.getKey, valueRow)
     }
+  planChangeLogger.warn("remove(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
   }
 
   /** Returns entries in the underlying map and skips additional checks done by [[iterator]].

@@ -39,6 +39,7 @@ import org.apache.spark.internal.config.package$;
  *   [# of records (int)] [[len (int)][prefix (long)][data (bytes)]...]
  */
 public final class UnsafeSorterSpillWriter {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(UnsafeSorterSpillWriter.class);
 
   private final SparkConf conf = new SparkConf();
 
@@ -88,6 +89,7 @@ public final class UnsafeSorterSpillWriter {
     writeBuffer[offset + 2] = (byte)(v >>> 40);
     writeBuffer[offset + 3] = (byte)(v >>> 32);
     writeBuffer[offset + 4] = (byte)(v >>> 24);
+	logger.warn("writeLongToBuffer(v,offset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, offset);
     writeBuffer[offset + 5] = (byte)(v >>> 16);
     writeBuffer[offset + 6] = (byte)(v >>>  8);
     writeBuffer[offset + 7] = (byte)(v >>>  0);
@@ -96,6 +98,7 @@ public final class UnsafeSorterSpillWriter {
   // Based on DataOutputStream.writeInt.
   private void writeIntToBuffer(int v, int offset) {
     writeBuffer[offset + 0] = (byte)(v >>> 24);
+	logger.warn("writeIntToBuffer(v,offset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, offset);
     writeBuffer[offset + 1] = (byte)(v >>> 16);
     writeBuffer[offset + 2] = (byte)(v >>>  8);
     writeBuffer[offset + 3] = (byte)(v >>>  0);
@@ -125,6 +128,7 @@ public final class UnsafeSorterSpillWriter {
     int dataRemaining = recordLength;
     int freeSpaceInWriteBuffer = diskWriteBufferSize - 4 - 8; // space used by prefix + len
     long recordReadPosition = baseOffset;
+	logger.warn("write(baseObject,baseOffset,recordLength,keyPrefix)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", baseObject, baseOffset, recordLength, keyPrefix, recordLength);
     while (dataRemaining > 0) {
       final int toTransfer = Math.min(freeSpaceInWriteBuffer, dataRemaining);
       Platform.copyMemory(
@@ -156,6 +160,7 @@ public final class UnsafeSorterSpillWriter {
   }
 
   public UnsafeSorterSpillReader getReader(SerializerManager serializerManager) throws IOException {
+	logger.warn("getReader(serializerManager)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", serializerManager);
     return new UnsafeSorterSpillReader(serializerManager, file, blockId);
   }
 

@@ -47,6 +47,7 @@ private class PushBasedFetchHelper(
    private val blockManager: BlockManager,
    private val mapOutputTracker: MapOutputTracker,
    private val shuffleMetrics: ShuffleReadMetricsReporter) extends Logging {
+    _driverLogger = DriverLogger(_conf)
 
   private[this] val startTimeNs = System.nanoTime()
 
@@ -64,6 +65,7 @@ private class PushBasedFetchHelper(
    */
   def isPushMergedShuffleBlockAddress(address: BlockManagerId): Boolean = {
     SHUFFLE_MERGER_IDENTIFIER == address.executorId
+    _driverLogger.warn("isPushMergedShuffleBlockAddress(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   /**
@@ -71,6 +73,7 @@ private class PushBasedFetchHelper(
    */
   def isRemotePushMergedBlockAddress(address: BlockManagerId): Boolean = {
     isPushMergedShuffleBlockAddress(address) && address.host != blockManager.blockManagerId.host
+    _driverLogger.warn("isRemotePushMergedBlockAddress(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   /**
@@ -78,6 +81,7 @@ private class PushBasedFetchHelper(
    */
   def isLocalPushMergedBlockAddress(address: BlockManagerId): Boolean = {
     isPushMergedShuffleBlockAddress(address) && address.host == blockManager.blockManagerId.host
+    _driverLogger.warn("isLocalPushMergedBlockAddress(address)={}): EUAIACT-AUDIT: State change recorded for the audit trail", address)
   }
 
   /**
@@ -88,6 +92,7 @@ private class PushBasedFetchHelper(
    */
   def removeChunk(blockId: ShuffleBlockChunkId): Unit = {
     chunksMetaMap.remove(blockId)
+    _driverLogger.warn("removeChunk(blockId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -98,6 +103,7 @@ private class PushBasedFetchHelper(
    */
   def addChunk(blockId: ShuffleBlockChunkId, chunkMeta: RoaringBitmap): Unit = {
     chunksMetaMap(blockId) = chunkMeta
+    _driverLogger.warn("addChunk(blockId,chunkMeta)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, chunkMeta, blockId)
   }
 
   /**
@@ -107,6 +113,7 @@ private class PushBasedFetchHelper(
    */
   def getRoaringBitMap(blockId: ShuffleBlockChunkId): Option[RoaringBitmap] = {
     chunksMetaMap.get(blockId)
+    _driverLogger.warn("getRoaringBitMap(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -116,6 +123,7 @@ private class PushBasedFetchHelper(
    */
   def getShuffleChunkCardinality(blockId: ShuffleBlockChunkId): Int = {
     getRoaringBitMap(blockId).map(_.getCardinality).getOrElse(0)
+    _driverLogger.warn("getShuffleChunkCardinality(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -136,6 +144,7 @@ private class PushBasedFetchHelper(
       blockSize: Long,
       bitmaps: Array[RoaringBitmap]): ArrayBuffer[(BlockId, Long, Int)] = {
     val approxChunkSize = blockSize / bitmaps.length
+    _driverLogger.warn("createChunkBlockInfosFromMetaResponse(shuffleId,shuffleMergeId,reduceId,blockSize,bitmaps)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, shuffleMergeId, reduceId, blockSize, bitmaps, shuffleId)
     val blocksToFetch = new ArrayBuffer[(BlockId, Long, Int)]()
     for (i <- bitmaps.indices) {
       val blockChunkId = ShuffleBlockChunkId(shuffleId, shuffleMergeId, reduceId, i)
@@ -160,6 +169,7 @@ private class PushBasedFetchHelper(
         ((shuffleBlockId.shuffleId, shuffleBlockId.reduceId), size)
     }.toMap
     val address = req.address
+    _driverLogger.warn("sendFetchMergedStatusRequest(req)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", req)
     val mergedBlocksMetaListener = new MergedBlocksMetaListener {
       override def onSuccess(shuffleId: Int, shuffleMergeId: Int, reduceId: Int,
           meta: MergedBlockMeta): Unit = {
@@ -213,6 +223,7 @@ private class PushBasedFetchHelper(
     if (pushMergedLocalBlocks.nonEmpty) {
       blockManager.hostLocalDirManager.foreach(fetchPushMergedLocalBlocks(_, pushMergedLocalBlocks))
     }
+    _driverLogger.warn("fetchAllPushMergedLocalBlocks(pushMergedLocalBlocks)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pushMergedLocalBlocks)
   }
 
   /**
@@ -222,6 +233,7 @@ private class PushBasedFetchHelper(
   private def fetchPushMergedLocalBlocks(
       hostLocalDirManager: HostLocalDirManager,
       pushMergedLocalBlocks: mutable.LinkedHashSet[BlockId]): Unit = {
+       _driverLogger.warn("fetchPushMergedLocalBlocks(hostLocalDirManager,pushMergedLocalBlocks)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", hostLocalDirManager, pushMergedLocalBlocks)
     val cachedPushedMergedDirs = hostLocalDirManager.getCachedHostLocalDirsFor(
       SHUFFLE_MERGER_IDENTIFIER)
     if (cachedPushedMergedDirs.isDefined) {
@@ -298,6 +310,7 @@ private class PushBasedFetchHelper(
         iterator.addToResultsQueue(
           FallbackOnPushMergedFailureResult(blockId, blockManagerId, 0, isNetworkReqDone = false))
     }
+    _driverLogger.warn("fetchPushMergedLocalBlock(blockId,localDirs,blockManagerId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, localDirs, blockManagerId, blockId)
   }
 
   /**

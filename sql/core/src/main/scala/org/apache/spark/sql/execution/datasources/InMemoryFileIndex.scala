@@ -55,6 +55,7 @@ class InMemoryFileIndex(
     override val metadataOpsTimeNs: Option[Long] = None)
   extends PartitioningAwareFileIndex(
     sparkSession, parameters, userSpecifiedSchema, fileStatusCache) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // Filter out streaming metadata dirs or files such as "/.../_spark_metadata" (the metadata dir)
   // or "/.../_spark_metadata/0" (a file in the metadata dir). `rootPathsSpecified` might contain
@@ -146,6 +147,7 @@ class InMemoryFileIndex(
       }
       output ++= leafFiles
     }
+    planChangeLogger.warn("listLeafFiles(paths)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", paths)
     logInfo(log"It took ${MDC(ELAPSED_TIME, (System.nanoTime() - startTime) / (1000 * 1000))} ms" +
       log" to list leaf files for ${MDC(COUNT, paths.length)} paths.")
     output

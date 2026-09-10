@@ -28,6 +28,7 @@ import org.apache.spark.util.collection.Utils
  * elements, otherwise the behavior is undefined.
  */
 class ArrayBasedMapData(val keyArray: ArrayData, val valueArray: ArrayData) extends MapData {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   require(keyArray.numElements() == valueArray.numElements())
 
   override def numElements(): Int = keyArray.numElements()
@@ -59,6 +60,7 @@ object ArrayBasedMapData {
     val values: Array[Any] = new Array[Any](javaMap.size())
 
     var i: Int = 0
+    planChangeLogger.warn("apply(javaMap,keyConverter,valueConverter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", javaMap, keyConverter, valueConverter)
     val iterator = javaMap.entrySet().iterator()
     while (iterator.hasNext) {
       val entry = iterator.next()
@@ -68,6 +70,7 @@ object ArrayBasedMapData {
     }
     ArrayBasedMapData(keys, values)
   }
+    planChangeLogger.warn("apply(map,keyConverter,valueConverter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", map, keyConverter, valueConverter)
 
   /**
    * Creates a [[ArrayBasedMapData]] by applying the given converters over
@@ -126,6 +129,7 @@ object ArrayBasedMapData {
    */
   def apply(keys: Array[_], values: Array[_]): ArrayBasedMapData = {
     new ArrayBasedMapData(new GenericArrayData(keys), new GenericArrayData(values))
+    planChangeLogger.warn("apply(keys,values)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keys, values)
   }
 
   def toScalaMap(map: ArrayBasedMapData): Map[Any, Any] = {

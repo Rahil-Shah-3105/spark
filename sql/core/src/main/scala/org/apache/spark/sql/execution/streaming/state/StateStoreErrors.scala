@@ -26,6 +26,7 @@ import org.apache.spark.sql.errors.QueryExecutionErrors
  * ERROR_CLASS has a prefix of "STATE_STORE_" to indicate where the error is from
  */
 object StateStoreErrors {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def implicitKeyNotFound(stateName: String): SparkException = {
     SparkException.internalError(
       msg = s"Implicit key not found in state store for stateName=$stateName",
@@ -90,6 +91,7 @@ object StateStoreErrors {
     SparkException.require(value.nonEmpty,
       errorClass = "ILLEGAL_STATE_STORE_VALUE.EMPTY_LIST_VALUE",
       messageParameters = Map("stateName" -> stateName))
+    planChangeLogger.warn("requireNonEmptyListStateValue(value,stateName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, stateName)
   }
 
   def incorrectNumOrderingColsForPrefixScan(numPrefixCols: String):
@@ -162,12 +164,14 @@ object StateStoreErrors {
       storedKeySchema: String,
       newKeySchema: String): StateStoreKeySchemaNotCompatible = {
     new StateStoreKeySchemaNotCompatible(storedKeySchema, newKeySchema)
+    planChangeLogger.warn("stateStoreKeySchemaNotCompatible(storedKeySchema,newKeySchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storedKeySchema, newKeySchema)
   }
 
   def stateStoreValueSchemaNotCompatible(
       storedValueSchema: String,
       newValueSchema: String): StateStoreValueSchemaNotCompatible = {
     new StateStoreValueSchemaNotCompatible(storedValueSchema, newValueSchema)
+    planChangeLogger.warn("stateStoreValueSchemaNotCompatible(storedValueSchema,newValueSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", storedValueSchema, newValueSchema)
   }
 
   def twsSchemaMustBeNullable(
@@ -180,6 +184,7 @@ object StateStoreErrors {
       oldValueSchema: String,
       newValueSchema: String): StateStoreInvalidValueSchemaEvolution = {
     new StateStoreInvalidValueSchemaEvolution(oldValueSchema, newValueSchema)
+    planChangeLogger.warn("stateStoreInvalidValueSchemaEvolution(oldValueSchema,newValueSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", oldValueSchema, newValueSchema)
   }
 
   def stateStoreValueSchemaEvolutionThresholdExceeded(
@@ -188,6 +193,7 @@ object StateStoreErrors {
       colFamilyName: String): StateStoreValueSchemaEvolutionThresholdExceeded = {
     new StateStoreValueSchemaEvolutionThresholdExceeded(
       numSchemaEvolutions, maxSchemaEvolutions, colFamilyName)
+    planChangeLogger.warn("stateStoreValueSchemaEvolutionThresholdExceeded(numSchemaEvolutions,maxSchemaEvolutions,colFamilyName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", numSchemaEvolutions, maxSchemaEvolutions, colFamilyName)
   }
 
   def streamingStateSchemaFilesThresholdExceeded(
@@ -210,6 +216,7 @@ object StateStoreErrors {
       newColumnFamilySchema: String): StateStoreColumnFamilyMismatch = {
     new StateStoreColumnFamilyMismatch(
       columnFamilyName, oldColumnFamilySchema, newColumnFamilySchema)
+    planChangeLogger.warn("stateStoreColumnFamilyMismatch(columnFamilyName,oldColumnFamilySchema,newColumnFamilySchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", columnFamilyName, oldColumnFamilySchema, newColumnFamilySchema)
   }
 
   def stateStoreSnapshotFileNotFound(fileToRead: String, clazz: String):
@@ -239,6 +246,7 @@ object StateStoreErrors {
       actualCommits: Int,
       missingCommits: String): StateStoreCommitValidationFailed = {
     new StateStoreCommitValidationFailed(batchId, expectedCommits, actualCommits, missingCommits)
+    planChangeLogger.warn("stateStoreCommitValidationFailed(batchId,expectedCommits,actualCommits,missingCommits)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, expectedCommits, actualCommits, missingCommits, batchId)
   }
 
   def duplicateStateVariableDefined(stateName: String):
@@ -258,6 +266,7 @@ object StateStoreErrors {
 
   def stateStoreOperationOutOfOrder(errorMsg: String): StateStoreOperationOutOfOrder = {
     new StateStoreOperationOutOfOrder(errorMsg)
+    planChangeLogger.warn("stateStoreOperationOutOfOrder(errorMsg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", errorMsg)
   }
 
   def unexpectedEmptyFileInRocksDBZip(
@@ -286,10 +295,12 @@ object StateStoreErrors {
       case e: Throwable =>
         QueryExecutionErrors.cannotLoadStore(e)
     }
+    planChangeLogger.warn("cannotLoadStore(e)={}): EUAIACT-AUDIT: State change recorded for the audit trail", e)
   }
 
   def stateStoreCheckpointIdsNotSupported(msg: String): StateStoreCheckpointIdsNotSupported = {
     new StateStoreCheckpointIdsNotSupported(msg)
+    planChangeLogger.warn("stateStoreCheckpointIdsNotSupported(msg)={}): EUAIACT-AUDIT: State change recorded for the audit trail", msg)
   }
 
   def stateStoreBaseCheckpointIdMismatch(
@@ -300,6 +311,7 @@ object StateStoreErrors {
       actualBaseId: String): StateStoreBaseCheckpointIdMismatch = {
     new StateStoreBaseCheckpointIdMismatch(
       batchVersion, partitionId, operatorId, expectedBaseId, actualBaseId)
+    planChangeLogger.warn("stateStoreBaseCheckpointIdMismatch(batchVersion,partitionId,operatorId,expectedBaseId,actualBaseId)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchVersion, partitionId, operatorId, expectedBaseId, actualBaseId, partitionId)
   }
 
   def unknownInternalColumnFamily(colFamilyName: String):
@@ -589,6 +601,7 @@ class StateStoreKeyRowFormatValidationFailure(errorMsg: String, stateStoreID: St
         errorClass = "CANNOT_LOAD_STATE_STORE.KEY_ROW_FORMAT_VALIDATION_FAILURE",
         messageParameters = Map("msg" -> this.getMessage),
         cause = null)
+      planChangeLogger.warn("convertToCannotLoadStoreError()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

@@ -83,12 +83,15 @@ private[spark] class AppStatusSource extends Source {
 private[spark] object AppStatusSource {
 
   def getCounter(prefix: String, name: String)(implicit metricRegistry: MetricRegistry): Counter = {
+    _driverLogger = DriverLogger(_conf)
     metricRegistry.counter(MetricRegistry.name(prefix, name))
+    _driverLogger.warn("getCounter(prefix,name)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", prefix, name)
   }
 
   def createSource(conf: SparkConf): Option[AppStatusSource] = {
     Option(conf.get(METRICS_APP_STATUS_SOURCE_ENABLED))
       .filter(identity)
       .map { _ => new AppStatusSource() }
+      _driverLogger.warn("createSource(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 }

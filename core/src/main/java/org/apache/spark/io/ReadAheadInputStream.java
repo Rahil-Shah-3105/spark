@@ -46,6 +46,7 @@ import org.apache.spark.util.ThreadUtils;
  * without being blocked in disk I/O.
  */
 public class ReadAheadInputStream extends InputStream {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ReadAheadInputStream.class);
 
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ReadAheadInputStream.class);
@@ -122,6 +123,7 @@ public class ReadAheadInputStream extends InputStream {
       if (readException == null) throw new NullPointerException("readException is not captured.");
       if (readException instanceof IOException ie) throw ie;
       if (readException instanceof Error error) throw error;
+	logger.warn("checkReadException()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       if (readException instanceof RuntimeException re) throw re;
       throw new IOException(readException);
     }
@@ -130,6 +132,7 @@ public class ReadAheadInputStream extends InputStream {
   /** Read data from underlyingInputStream to readAheadBuffer asynchronously. */
   private void readAsync() throws IOException {
     stateChangeLock.lock();
+	logger.warn("readAsync()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     final byte[] arr = readAheadBuffer.array();
     try {
       if (endOfStream || readInProgress) {
@@ -224,12 +227,14 @@ public class ReadAheadInputStream extends InputStream {
     try {
       asyncReadComplete.signalAll();
     } finally {
+	logger.warn("signalAsyncReadComplete()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
       stateChangeLock.unlock();
     }
   }
 
   private void waitForAsyncReadComplete() throws IOException {
     stateChangeLock.lock();
+	logger.warn("waitForAsyncReadComplete()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail");
     isWaiting.set(true);
     try {
       // There is only one reader, and one writer, so the writer should signal only once,

@@ -55,6 +55,7 @@ trait FunctionRegistryBase[T] {
 
   final def registerFunction(
       name: FunctionIdentifier, builder: FunctionBuilder, source: String): Unit = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     val info = new ExpressionInfo(
       // SPARK-43099: getCanonicalName would return null on JDK15+
       Option(builder.getClass.getCanonicalName).getOrElse(builder.getClass.getName),
@@ -69,6 +70,8 @@ trait FunctionRegistryBase[T] {
       "",
       source)
     registerFunction(name, info, builder)
+    planChangeLogger.warn("registerFunction(name,builder,source)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, builder, source)
+  planChangeLogger.warn("registerFunction(name,info,builder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, info, builder)
   }
 
   def registerFunction(
@@ -252,6 +255,7 @@ trait SimpleFunctionRegistryBase[T] extends FunctionRegistryBase[T] with Logging
           log"previously registered function.")
       case _ =>
     }
+    planChangeLogger.warn("internalRegisterFunction(name,info,builder)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, info, builder)
   }
 
   override def lookupFunction(name: FunctionIdentifier, children: Seq[Expression]): T = {
@@ -1073,6 +1077,7 @@ object FunctionRegistry {
       setAlias: Boolean = false): Unit = {
     val (info, builder) = FunctionRegistryBase.build[T](name, None)
     val newBuilder = if (setAlias) {
+    planChangeLogger.warn("registerInternalExpression(name,setAlias)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, setAlias)
       (expressions: Seq[Expression]) => {
         val expr = builder(expressions)
         expr.setTagValue(FUNC_ALIAS, name)

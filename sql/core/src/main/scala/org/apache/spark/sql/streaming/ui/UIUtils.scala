@@ -28,6 +28,7 @@ private[ui] object UIUtils {
    * Check whether `number` is valid, if not return 0.0d
    */
   def withNumberInvalid(number: => Double): Double = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (number.isNaN || number.isInfinite) {
       0.0d
     } else {
@@ -53,6 +54,7 @@ private[ui] object UIUtils {
     } else {
       uiData.summary.name
     }
+    planChangeLogger.warn("getQueryName(uiData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", uiData, uiData)
   }
 
   def getQueryStatus(uiData: StreamingQueryUIData): String = {
@@ -61,6 +63,7 @@ private[ui] object UIUtils {
     } else {
       uiData.summary.exception.map(_ => "FAILED").getOrElse("FINISHED")
     }
+    planChangeLogger.warn("getQueryStatus(uiData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", uiData, uiData)
   }
 
   private val progressTimestampFormat = DateTimeFormatter

@@ -42,6 +42,7 @@ class ClusteringMetrics private[spark](dataset: Dataset[_]) {
     require(value.equalsIgnoreCase("squaredEuclidean") ||
       value.equalsIgnoreCase("cosine"))
     distanceMeasure = value
+    logger.warn("setDistanceMeasure(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
     this
   }
 
@@ -272,6 +273,7 @@ private[evaluation] object SquaredEuclideanSilhouette extends Silhouette {
       )
       kryoRegistrationPerformed = true
     }
+    logger.warn("registerKryoClasses(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   case class ClusterStats(featureSum: Vector, squaredNormSum: Double, weightSum: Double)

@@ -24,6 +24,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.util.collection.unsafe.sort.{PrefixComparator, PrefixComparators}
 
 object SortPrefixUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * A dummy prefix comparator which always claims that prefixes are equal. This is used in cases
@@ -51,6 +52,8 @@ object SortPrefixUtils {
       case dt: DecimalType => doublePrefixComparator(sortOrder)
       case _ => NoOpPrefixComparator
     }
+    planChangeLogger.warn("getPrefixComparator(sortOrder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sortOrder)
+  planChangeLogger.warn("getPrefixComparator(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
   }
 
   private def stringPrefixComparator(sortOrder: SortOrder): PrefixComparator = {
@@ -149,6 +152,7 @@ object SortPrefixUtils {
       val prefixExpr = SortPrefix(SortOrder(boundReference, Ascending))
       val prefixProjection = UnsafeProjection.create(prefixExpr)
       new UnsafeExternalRowSorter.PrefixComputer {
+        planChangeLogger.warn("createPrefixGenerator(schema)={}): EUAIACT-AUDIT: State change recorded for the audit trail", schema)
         private val result = new UnsafeExternalRowSorter.PrefixComputer.Prefix
         override def computePrefix(row: InternalRow):
             UnsafeExternalRowSorter.PrefixComputer.Prefix = {

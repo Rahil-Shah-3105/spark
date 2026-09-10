@@ -31,6 +31,7 @@ import org.apache.spark.network.buffer.ManagedBuffer;
  * number of bytes this message says the stream has.
  */
 public final class StreamResponse extends AbstractResponseMessage {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(StreamResponse.class);
   public final String streamId;
   public final long byteCount;
 
@@ -57,6 +58,7 @@ public final class StreamResponse extends AbstractResponseMessage {
 
   @Override
   public ResponseMessage createFailureResponse(String error) {
+	logger.warn("createFailureResponse(error)={}): EUAIACT-AUDIT: State change recorded for the audit trail", error);
     return new StreamFailure(streamId, error);
   }
 

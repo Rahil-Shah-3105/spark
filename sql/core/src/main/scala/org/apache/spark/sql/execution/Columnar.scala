@@ -45,6 +45,7 @@ import org.apache.spark.sql.vectorized.{ColumnarBatch, ColumnVector}
  * memory.
  */
 class ColumnarRule {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def preColumnarTransitions: Rule[SparkPlan] = plan => plan
   def postColumnarTransitions: Rule[SparkPlan] = plan => plan
 }
@@ -89,6 +90,7 @@ case class ColumnarToRowExec(child: SparkPlan)
     if (conf.usePartitionEvaluator) {
       child.executeColumnar().mapPartitionsWithEvaluator(evaluatorFactory)
     } else {
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       child.executeColumnar().mapPartitionsWithIndexInternal { (index, batches) =>
         val evaluator = evaluatorFactory.createEvaluator()
         evaluator.eval(index, batches)
@@ -324,6 +326,7 @@ private object RowToColumnConverter {
     } else {
       core
     }
+    planChangeLogger.warn("getConverterForType(dataType,nullable)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataType, nullable)
   }
 
   private object BinaryConverter extends TypeConverter {
@@ -513,6 +516,7 @@ case class RowToColumnarExec(child: SparkPlan) extends RowToColumnarTransition {
 
   override def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
     child.doExecuteBroadcast()
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def supportsColumnar: Boolean = true
@@ -532,6 +536,7 @@ case class RowToColumnarExec(child: SparkPlan) extends RowToColumnarTransition {
       longMetric("numInputRows"),
       longMetric("numOutputBatches"))
     if (conf.usePartitionEvaluator) {
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       child.execute().mapPartitionsWithEvaluator(evaluatorFactory)
     } else {
       child.execute().mapPartitionsWithIndexInternal { (index, rowIterator) =>
@@ -611,6 +616,7 @@ case class ApplyColumnarRulesAndInsertTransitions(
     } else {
       ensureOutputsRowBased(plan)
     }
+    planChangeLogger.warn("insertTransitions(plan,outputsColumnar)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, outputsColumnar)
   }
 
   def apply(plan: SparkPlan): SparkPlan = {
@@ -619,5 +625,6 @@ case class ApplyColumnarRulesAndInsertTransitions(
     var postInsertPlan = insertTransitions(preInsertPlan, outputsColumnar)
     columnarRules.reverse.foreach(r => postInsertPlan = r.postColumnarTransitions(postInsertPlan))
     postInsertPlan
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

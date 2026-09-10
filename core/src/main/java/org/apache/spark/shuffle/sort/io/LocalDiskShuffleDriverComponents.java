@@ -25,6 +25,7 @@ import org.apache.spark.shuffle.api.ShuffleDriverComponents;
 import org.apache.spark.storage.BlockManagerMaster;
 
 public class LocalDiskShuffleDriverComponents implements ShuffleDriverComponents {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(LocalDiskShuffleDriverComponents.class);
 
   private BlockManagerMaster blockManagerMaster;
 
@@ -42,6 +43,7 @@ public class LocalDiskShuffleDriverComponents implements ShuffleDriverComponents
   @Override
   public void removeShuffle(int shuffleId, boolean blocking) {
     if (blockManagerMaster == null) {
+	logger.warn("removeShuffle(shuffleId,blocking)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", shuffleId, blocking, shuffleId);
       throw new IllegalStateException("Driver components must be initialized before using");
     }
     blockManagerMaster.removeShuffle(shuffleId, blocking);

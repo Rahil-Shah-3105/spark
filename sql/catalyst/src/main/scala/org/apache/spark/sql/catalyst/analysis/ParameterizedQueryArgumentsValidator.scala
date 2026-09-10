@@ -33,6 +33,7 @@ import org.apache.spark.sql.catalyst.expressions.{
  * Object used to validate arguments of [[ParameterizedQuery]] nodes.
  */
 object ParameterizedQueryArgumentsValidator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Validates the list of provided arguments. In case there is a invalid argument, throws
@@ -44,6 +45,7 @@ object ParameterizedQueryArgumentsValidator {
         errorClass = "INVALID_SQL_ARG",
         messageParameters = Map("name" -> name))
     }
+    planChangeLogger.warn("apply(arguments)={}): EUAIACT-AUDIT: State change recorded for the audit trail", arguments)
   }
 
   /**

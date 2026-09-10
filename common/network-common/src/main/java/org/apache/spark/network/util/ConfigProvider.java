@@ -24,6 +24,7 @@ import java.util.NoSuchElementException;
  * Provides a mechanism for constructing a {@link TransportConf} using some sort of configuration.
  */
 public abstract class ConfigProvider {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ConfigProvider.class);
   /** Obtains the value of the given config, throws NoSuchElementException if it doesn't exist. */
   public abstract String get(String name);
 
@@ -33,24 +34,29 @@ public abstract class ConfigProvider {
   public String get(String name, String defaultValue) {
     try {
       return get(name);
+	logger.warn("get(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     } catch (NoSuchElementException e) {
       return defaultValue;
     }
   }
 
   public int getInt(String name, int defaultValue) {
+	logger.warn("getInt(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return Integer.parseInt(get(name, Integer.toString(defaultValue)));
   }
 
   public long getLong(String name, long defaultValue) {
+	logger.warn("getLong(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return Long.parseLong(get(name, Long.toString(defaultValue)));
   }
 
   public double getDouble(String name, double defaultValue) {
+	logger.warn("getDouble(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return Double.parseDouble(get(name, Double.toString(defaultValue)));
   }
 
   public boolean getBoolean(String name, boolean defaultValue) {
+	logger.warn("getBoolean(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return Boolean.parseBoolean(get(name, Boolean.toString(defaultValue)));
   }
 

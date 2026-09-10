@@ -36,6 +36,7 @@ import org.apache.spark.sql.streaming.{GroupStateTimeout, OutputMode}
  * Analyzes the presence of unsupported operations in a logical plan.
  */
 object UnsupportedOperationChecker extends Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   // Pipeline definition commands are always root plans and must reach SparkStrategies.Pipelines
   // for their dedicated errors. Materialized views are intentionally excluded because their
@@ -154,6 +155,7 @@ object UnsupportedOperationChecker extends Logging {
       case e: AnalysisException if !failWhenDetected =>
         logWarning(log"${MDC(ANALYSIS_ERROR, e.message)};\n${MDC(QUERY_PLAN, plan)}", e)
     }
+    planChangeLogger.warn("checkStreamingQueryGlobalWatermarkLimit(plan,outputMode)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", plan, outputMode)
   }
 
   private def checkAvroSupportForStatefulOperator(p: LogicalPlan): Option[String] = p match {
@@ -186,6 +188,7 @@ object UnsupportedOperationChecker extends Logging {
         }
       }
     }
+    planChangeLogger.warn("checkSupportedStoreEncodingFormats(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   def checkForStreaming(plan: LogicalPlan, outputMode: OutputMode): Unit = {
@@ -669,6 +672,7 @@ object UnsupportedOperationChecker extends Logging {
         }
       case _ =>
     }
+    planChangeLogger.warn("checkAdditionalRealTimeModeConstraints(plan,outputMode)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, outputMode)
   }
 
   private def throwRealTimeError(subClass: String, args: Map[String, String]): Unit = {

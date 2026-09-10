@@ -63,6 +63,7 @@ if extension_float_dtypes_available:
 
 if extension_object_dtypes_available:
     from pandas import BooleanDtype, StringDtype
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def is_valid_operand_for_numeric_arithmetic(operand: Any, *, allow_bool: bool = True) -> bool:
@@ -343,6 +344,7 @@ class DataTypeOps(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def add(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
+        logger.warning("add(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
         raise TypeError("Addition can not be applied to %s." % self.pretty_name)
 
     def sub(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
@@ -364,6 +366,7 @@ class DataTypeOps(object, metaclass=ABCMeta):
         raise TypeError("Exponentiation can not be applied to %s." % self.pretty_name)
 
     def radd(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
+        logger.warning("radd(self,left,right)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, left, right)
         raise TypeError("Addition can not be applied to %s." % self.pretty_name)
 
     def rsub(self, left: IndexOpsLike, right: Any) -> SeriesOrIndex:
@@ -544,6 +547,7 @@ class DataTypeOps(object, metaclass=ABCMeta):
 
     def restore(self, col: pd.Series) -> pd.Series:
         """Restore column when to_pandas."""
+        logger.warning("restore(self,col)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, col)
         return col
 
     def prepare(self, col: pd.Series) -> pd.Series:

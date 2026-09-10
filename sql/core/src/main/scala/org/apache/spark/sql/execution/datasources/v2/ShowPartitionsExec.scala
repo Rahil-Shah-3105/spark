@@ -35,6 +35,7 @@ case class ShowPartitionsExec(
     catalog: TableCatalog,
     table: SupportsPartitionManagement,
     partitionSpec: Option[ResolvedPartitionSpec]) extends V2CommandExec with LeafExecNode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     val (names, ident) = partitionSpec
       .map(spec => (spec.names, spec.ident))
@@ -49,6 +50,7 @@ case class ShowPartitionsExec(
     val len = schema.length
     val partitions = new Array[String](len)
     val timeZoneId = conf.sessionLocalTimeZone
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionIdentifiers)
     val output = partitionIdentifiers.map { row =>
       var i = 0
       while (i < len) {

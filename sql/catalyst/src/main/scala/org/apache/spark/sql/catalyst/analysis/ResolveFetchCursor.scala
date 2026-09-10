@@ -32,6 +32,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors.unresolvedVariableErro
  */
 class ResolveFetchCursor(val catalogManager: CatalogManager) extends Rule[LogicalPlan]
   with ColumnResolutionHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
   // VariableResolution looks up both scripting local variables (via SqlScriptingContextManager)
   // and session variables (via tempVariableManager), checking local variables first.
   private val variableResolution =
@@ -72,6 +73,7 @@ class ResolveFetchCursor(val catalogManager: CatalogManager) extends Rule[Logica
         "Unexpected target variable expression in FetchCursor: " + other)
     }
 
+    planChangeLogger.warn("resolveAndValidateTargetVariables(targetVariables)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", targetVariables)
     // Check for duplicates immediately after resolution
     checkForDuplicateVariables(resolvedVars)
     resolvedVars

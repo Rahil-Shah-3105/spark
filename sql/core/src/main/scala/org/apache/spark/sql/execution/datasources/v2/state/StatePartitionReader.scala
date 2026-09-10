@@ -51,6 +51,7 @@ private[state] object StatePartitionReaderUtils {
   def isMultiValuedCF(
       colFamilyNameOpt: Option[String],
       stateVariableInfoOpt: Option[TransformWithStateVariableInfo]): Boolean = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     SchemaUtil.checkVariableType(stateVariableInfoOpt, StateVariableType.ListState) ||
       colFamilyNameOpt.exists(v4JoinCFNames.contains)
   }
@@ -91,6 +92,7 @@ class StatePartitionReaderFactory(
         stateStoreInputPartition, schema, keyStateEncoderSpec, stateVariableInfoOpt,
         stateStoreColFamilySchemaOpt, stateSchemaProviderOpt, joinColFamilyOpt)
     }
+    planChangeLogger.warn("createReader(partition)={}): EUAIACT-AUDIT: State change recorded for the audit trail", partition)
   }
 }
 
@@ -146,6 +148,7 @@ abstract class StatePartitionReaderBase(
       storeName = partition.sourceOptions.storeName,
       partitionId = partition.partition,
       stateStoreCkptIds = operatorStateUniqueIds)
+    planChangeLogger.warn("getStoreUniqueId(operatorStateUniqueIds)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", operatorStateUniqueIds, operatorStateUniqueIds)
   }
 
   protected def getStartStoreUniqueId: Option[String] = {
@@ -511,6 +514,7 @@ class StateStoreChangeDataPartitionReader(
       }
     } else {
       changeDataReader.iterator.map(unifyStateChangeDataRow)
+    planChangeLogger.warn("createFlattenedRowForMapState(batchId,recordType,groupingKey,userKey,userValue,partition)={},{},<redacted>,{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, recordType, userKey, userValue, partition, batchId)
     }
   }
 

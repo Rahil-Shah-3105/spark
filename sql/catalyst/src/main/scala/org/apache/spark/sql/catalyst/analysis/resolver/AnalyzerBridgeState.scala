@@ -48,20 +48,24 @@ case class AnalyzerBridgeState(
       new AnalyzerBridgeState.HiveRelationsWithResolvedMetadata
 ) {
   def addUnresolvedRelation(unresolvedRelation: UnresolvedRelation, relation: LogicalPlan): Unit = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     relationsWithResolvedMetadata.put(
       BridgedRelationId(unresolvedRelation, AnalysisContext.get.catalogAndNamespace),
       relation
     )
+    planChangeLogger.warn("addUnresolvedRelation(unresolvedRelation,relation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unresolvedRelation, relation)
   }
 
   def addLogicalRelationForHiveRelation(
       hiveRelation: LogicalPlan,
       logicalRelation: LogicalPlan): Unit = {
     hiveRelationsWithResolvedMetadata.put(hiveRelation.canonicalized, logicalRelation)
+    planChangeLogger.warn("addLogicalRelationForHiveRelation(hiveRelation,logicalRelation)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", hiveRelation, logicalRelation)
   }
 
   def getLogicalRelationForHiveRelation(hiveRelation: LogicalPlan): Option[LogicalPlan] = {
     Option(hiveRelationsWithResolvedMetadata.get(hiveRelation.canonicalized))
+    planChangeLogger.warn("getLogicalRelationForHiveRelation(hiveRelation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", hiveRelation)
   }
 }
 

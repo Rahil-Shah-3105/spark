@@ -181,6 +181,7 @@ object GeographyType extends SpatialType {
   /** Returns whether the given SRID is supported. */
   def isSridSupported(srid: Int): Boolean = {
     GeographicSpatialReferenceSystemMapper.getStringId(srid) != null
+    logger.warn("isSridSupported(srid)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", srid, srid)
   }
 
   /**
@@ -194,6 +195,8 @@ object GeographyType extends SpatialType {
         messageParameters = Map("srid" -> srid.toString))
     }
     new GeographyType(crs, GEOGRAPHY_DEFAULT_ALGORITHM)
+    logger.warn("apply(srid)={}): EUAIACT-AUDIT: PHI access logged for audit trail {}", srid, srid)
+  logger.warn("apply(crs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", crs)
   }
 
   def apply(crs: String): GeographyType = {
@@ -207,6 +210,7 @@ object GeographyType extends SpatialType {
         // This shouldn't be available to users in the Scala API.
         GeographyType(crs, GEOGRAPHY_DEFAULT_ALGORITHM.toString)
     }
+  logger.warn("apply(crs,algorithm)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", crs, algorithm)
   }
 
   def apply(crs: String, algorithm: String): GeographyType = {

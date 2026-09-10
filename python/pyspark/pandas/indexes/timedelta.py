@@ -29,6 +29,7 @@ from pyspark.pandas.indexes.base import Index
 from pyspark.pandas.missing.indexes import MissingPandasLikeTimedeltaIndex
 from pyspark.pandas.series import Series
 from pyspark.sql import functions as F
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 HOURS_PER_DAY = 24
 MINUTES_PER_HOUR = 60
@@ -170,6 +171,7 @@ class TimedeltaIndex(Index):
         @no_type_check
         def get_seconds(scol):
             hour_scol = F.date_part(F.lit("HOUR"), scol)
+            logger.warning("get_seconds(scol)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", scol)
             minute_scol = F.date_part(F.lit("MINUTE"), scol)
             second_scol = F.date_part(F.lit("SECOND"), scol)
             return (
@@ -198,6 +200,7 @@ class TimedeltaIndex(Index):
         @no_type_check
         def get_microseconds(scol):
             second_scol = F.date_part(F.lit("SECOND"), scol)
+            logger.warning("get_microseconds(scol)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", scol)
             return (
                 (
                     F.when(

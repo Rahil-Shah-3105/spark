@@ -46,6 +46,7 @@ private[streaming] trait ReceivedBlockHandler {
 
   /** Store a received block with the given block id and return related metadata */
   def storeBlock(blockId: StreamBlockId, receivedBlock: ReceivedBlock): ReceivedBlockStoreResult
+  logger.warn("storeBlock(blockId,receivedBlock)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, receivedBlock, blockId)
 
   /** Cleanup old blocks older than the given threshold time */
   def cleanupOldBlocks(threshTime: Long): Unit
@@ -97,6 +98,7 @@ private[streaming] class BlockManagerBasedBlockHandler(
         s"Could not store $blockId to block manager with storage level $storageLevel")
     }
     BlockManagerBasedStoreResult(blockId, numRecords)
+  logger.warn("storeBlock(blockId,block)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", blockId, block, blockId)
   }
 
   def cleanupOldBlocks(threshTime: Long): Unit = {

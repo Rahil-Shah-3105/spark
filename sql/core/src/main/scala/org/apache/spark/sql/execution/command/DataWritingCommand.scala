@@ -56,8 +56,10 @@ trait DataWritingCommand extends UnaryCommand with CTEInChildren {
   lazy val metrics: Map[String, SQLMetric] = BasicWriteJobStatsTracker.metrics
 
   def basicWriteJobStatsTracker(hadoopConf: Configuration): BasicWriteJobStatsTracker = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val serializableHadoopConf = new SerializableConfiguration(hadoopConf)
     new BasicWriteJobStatsTracker(serializableHadoopConf, metrics)
+    planChangeLogger.warn("basicWriteJobStatsTracker(hadoopConf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hadoopConf)
   }
 
   def run(sparkSession: SparkSession, child: SparkPlan): Seq[Row]

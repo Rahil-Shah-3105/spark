@@ -41,6 +41,7 @@ abstract class StreamExecutionContext(
     var batchId: Long,
     sparkSession: SparkSession)
   extends ProgressContext(id, runId, name, triggerClock, sources, sink, progressReporter) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /** Metadata associated with the offset seq of a batch in the query. */
   @volatile
@@ -195,6 +196,7 @@ class MicroBatchExecutionContext(
       offsetLogFormatVersionOpt,
       commitLogFormatVersionOpt,
       Some(this))
+    planChangeLogger.warn("getNextContext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def startTrigger(): Unit = {
@@ -226,6 +228,7 @@ class MicroBatchExecutionContext(
 
   def carryOverExecStatsOnLatestExecutedBatch(): Unit = {
     execStatsOnLatestExecutedBatch = previousContext.flatMap(_.execStatsOnLatestExecutedBatch)
+    planChangeLogger.warn("carryOverExecStatsOnLatestExecutedBatch()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def getStartTime(): Long = {

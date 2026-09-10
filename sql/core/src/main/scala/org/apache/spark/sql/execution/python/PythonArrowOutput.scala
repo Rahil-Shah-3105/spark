@@ -49,6 +49,7 @@ private[python] trait PythonArrowOutput[OUT <: AnyRef] { self: BasePythonRunner[
   protected def arrowMaxBytesPerOutputBatch: Int = SQLConf.get.arrowMaxBytesPerOutputBatch.toInt
 
   if (arrowMaxRecordsPerOutputBatch > 0 && arrowMaxBytesPerOutputBatch > 0) {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     throw new IllegalArgumentException(
       "Both max records and max bytes of an Arrow output batch cannot be set at the same time.")
   }
@@ -63,6 +64,7 @@ private[python] trait PythonArrowOutput[OUT <: AnyRef] { self: BasePythonRunner[
       releasedOrClosed: AtomicBoolean,
       context: TaskContext): Iterator[OUT] = {
 
+       planChangeLogger.warn("newReaderIterator(stream,writer,startTime,env,worker,handle,releasedOrClosed,context)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stream, writer, startTime, env, worker, handle, releasedOrClosed, context)
     new ReaderIterator(
       stream, writer, startTime, env, worker, handle, releasedOrClosed, context) {
 
@@ -146,6 +148,7 @@ private[python] trait PythonArrowOutput[OUT <: AnyRef] { self: BasePythonRunner[
             }
           }
         } catch handleException
+        planChangeLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
     }
   }
@@ -181,6 +184,7 @@ class ArrowOutputProcessorImpl(reader: ArrowStreamReader, pythonMetrics: Map[Str
     val bytesReadStart = reader.bytesRead()
     val batchLoaded = reader.loadNextBatch()
     if (batchLoaded) {
+    planChangeLogger.warn("loadBatch()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       rowCount = root.getRowCount
       val bytesReadEnd = reader.bytesRead()
       pythonMetrics("pythonNumRowsReceived") += rowCount
@@ -246,6 +250,7 @@ abstract class BaseSliceArrowOutputProcessor(
     root.getFieldVectors.asScala.map { vector =>
       new ArrowColumnVector(vector)
     }.toArray[ColumnVector]
+    planChangeLogger.warn("getVectors(root)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", root)
   }
 
   override def close(): Unit = {
@@ -303,6 +308,7 @@ class SliceBytesArrowOutputProcessorImpl(
       batchBytes += vector.getBufferSize
     }
     batchBytes
+    planChangeLogger.warn("getBatchBytes(root)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", root)
   }
 }
 

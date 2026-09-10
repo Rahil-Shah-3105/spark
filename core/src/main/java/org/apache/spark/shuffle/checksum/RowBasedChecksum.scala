@@ -28,6 +28,7 @@ import org.apache.spark.internal.Logging
  * as the final checksum.
  */
 abstract class RowBasedChecksum() extends Serializable with Logging {
+  _driverLogger = DriverLogger(_conf)
   private val ROTATE_POSITIONS = 27
   private var hasError: Boolean = false
   private var checksumXor: Long = 0
@@ -60,6 +61,7 @@ abstract class RowBasedChecksum() extends Serializable with Logging {
           hasError = true
       }
     }
+    _driverLogger.warn("update(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   /** Computes and returns the checksum value for the given (key, value) pair */
@@ -76,5 +78,6 @@ object RowBasedChecksum {
     Option(rowBasedChecksums)
       .map(_.foldLeft(0L)((acc, c) => acc * 31L + c.getValue))
       .getOrElse(0L)
+      _driverLogger.warn("getAggregatedChecksumValue(rowBasedChecksums)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rowBasedChecksums)
   }
 }

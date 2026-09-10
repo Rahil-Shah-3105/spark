@@ -49,6 +49,7 @@ abstract class PartitioningAwareFileIndex(
     parameters: Map[String, String],
     userSpecifiedSchema: Option[StructType],
     fileStatusCache: FileStatusCache = NoopCache) extends FileIndex with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /** Returns the specification of the partitions inferred from the data. */
   def partitionSpec(): PartitionSpec
@@ -90,6 +91,7 @@ abstract class PartitioningAwareFileIndex(
 
   override def listFiles(
       partitionFilters: Seq[Expression], dataFilters: Seq[Expression]): Seq[PartitionDirectory] = {
+       planChangeLogger.warn("listFiles(partitionFilters,dataFilters)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", partitionFilters, dataFilters)
     def isNonEmptyFile(f: FileStatus): Boolean = {
       isDataPath(f.getPath) && f.getLen > 0
     }
@@ -189,6 +191,7 @@ abstract class PartitioningAwareFileIndex(
       partitionSpec: PartitionSpec): Seq[PartitionPath] = {
     val PartitionSpec(partitionColumns, partitions) = partitionSpec
     val partitionColumnNames = partitionColumns.map(_.name).toSet
+    planChangeLogger.warn("prunePartitions(predicates,partitionSpec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predicates, partitionSpec)
     val partitionPruningPredicates = predicates.filter {
       _.references.map(_.name).toSet.subsetOf(partitionColumnNames)
     }

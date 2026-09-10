@@ -89,14 +89,17 @@ private[spark] class PeriodicRDDCheckpointer[T](
   override protected def isCheckpointed(data: RDD[T]): Boolean = data.isCheckpointed
 
   override protected def persist(data: RDD[T]): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (data.getStorageLevel == StorageLevel.NONE) {
       data.persist(storageLevel)
     }
+    _driverLogger.warn("persist(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   override protected def unpersist(data: RDD[T]): Unit = data.unpersist()
 
   override protected def getCheckpointFiles(data: RDD[T]): Iterable[String] = {
     data.getCheckpointFile.map(x => x)
+    _driverLogger.warn("getCheckpointFiles(data)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", data)
   }
 }

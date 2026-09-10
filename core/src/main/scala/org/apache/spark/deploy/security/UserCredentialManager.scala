@@ -95,6 +95,7 @@ private[spark] class UserCredentialManager(
    * @throws IllegalStateException if the initial credential acquisition fails.
    */
   def start(): (Long, Array[Byte]) = {
+    _driverLogger = DriverLogger(_conf)
     require(renewalExecutor == null, "start() must not be called more than once")
 
     // Initial acquisition is fail-fast (no retry/backoff).
@@ -367,6 +368,7 @@ private[spark] class UserCredentialManager(
       val renewalTask = new Runnable {
         override def run(): Unit = {
           renewCredentialsTask()
+          _driverLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
       renewalExecutor.schedule(renewalTask, delay, TimeUnit.MILLISECONDS)
@@ -439,6 +441,7 @@ private[spark] object UserCredentialManager {
       val tokenIngestor = new FileTokenIngestor(Paths.get(tokenFile))
       Some(new UserCredentialManager(sparkConf, tokenIngestor, onCredentialsUpdate))
     }
+    _driverLogger.warn("create(sparkConf,onCredentialsUpdate)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", sparkConf)
   }
 
   /**

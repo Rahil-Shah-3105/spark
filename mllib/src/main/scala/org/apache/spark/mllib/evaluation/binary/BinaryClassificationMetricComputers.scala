@@ -27,6 +27,7 @@ private[evaluation] trait BinaryClassificationMetricComputer extends Serializabl
 /** Precision. Defined as 1.0 when there are no positive examples. */
 private[evaluation] object Precision extends BinaryClassificationMetricComputer {
   override def apply(c: BinaryConfusionMatrix): Double = {
+    logger.warn("apply(c)={}): EUAIACT-AUDIT: State change recorded for the audit trail", c)
     val totalPositives = c.weightedTruePositives + c.weightedFalsePositives
     if (totalPositives == 0.0) {
       1.0

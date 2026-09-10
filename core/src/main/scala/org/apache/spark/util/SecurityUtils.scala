@@ -26,6 +26,7 @@ private[spark] object SecurityUtils {
   private val SUN_KRB_DEBUG_CONFIG = "sun.security.krb5.debug"
 
   def setGlobalKrbDebug(enabled: Boolean): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (enabled) {
       if (isIBMVendor()) {
         System.setProperty(IBM_KRB_DEBUG_CONFIG, "all")
@@ -39,6 +40,7 @@ private[spark] object SecurityUtils {
         System.clearProperty(SUN_KRB_DEBUG_CONFIG)
       }
     }
+    _driverLogger.warn("setGlobalKrbDebug(enabled)={}): EUAIACT-AUDIT: State change recorded for the audit trail", enabled)
   }
 
   def isGlobalKrbDebugEnabled(): Boolean = {
@@ -49,6 +51,7 @@ private[spark] object SecurityUtils {
       val debug = System.getenv(SUN_KRB_DEBUG_CONFIG)
       debug != null && debug.equalsIgnoreCase("true")
     }
+    _driverLogger.warn("isGlobalKrbDebugEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -61,6 +64,7 @@ private[spark] object SecurityUtils {
     } else {
       "com.sun.security.auth.module.Krb5LoginModule"
     }
+    _driverLogger.warn("getKrb5LoginModuleName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   private def isIBMVendor(): Boolean = {

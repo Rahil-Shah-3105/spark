@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.{DataType, MapType, VariantType}
  * [[VariantType]] or [[MapType]].
  */
 object OperatorWithUncomparableTypeValidator {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Validates that the provided logical plan does not contain any uncomparable types:
@@ -66,6 +67,7 @@ object OperatorWithUncomparableTypeValidator {
       mapCol = mapCol,
       origin = unresolvedPlan.origin
     )
+    planChangeLogger.warn("throwUnsupportedSetOperationOnMapType(mapCol,unresolvedPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mapCol, unresolvedPlan)
   }
 
   private def throwUnsupportedSetOperationOnVariantType(
@@ -75,5 +77,6 @@ object OperatorWithUncomparableTypeValidator {
       variantCol = variantCol,
       origin = unresolvedPlan.origin
     )
+    planChangeLogger.warn("throwUnsupportedSetOperationOnVariantType(variantCol,unresolvedPlan)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", variantCol, unresolvedPlan)
   }
 }

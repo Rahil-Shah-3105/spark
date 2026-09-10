@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructField, Struc
  * This object contains utility methods and values for Generated Columns
  */
 object GeneratedColumn {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * The metadata key for saving a generation expression in a generated column's metadata. This is
@@ -62,6 +63,8 @@ object GeneratedColumn {
    */
   def getGenerationExpression(field: StructField): Option[String] = {
     getGenerationExpression(field.metadata)
+    planChangeLogger.warn("getGenerationExpression(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
+  planChangeLogger.warn("getGenerationExpression(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 
   /**
@@ -107,6 +110,8 @@ object GeneratedColumn {
    */
   def supportsGeneratedColumnsOnWrite(table: Table): Boolean = {
     table.capabilities().contains(TableCapability.GENERATE_COLUMN_VALUES_ON_WRITE)
+    planChangeLogger.warn("supportsGeneratedColumnsOnWrite(table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", table)
+  planChangeLogger.warn("supportsGeneratedColumnsOnWrite(table,columns)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, columns)
   }
 
   /**

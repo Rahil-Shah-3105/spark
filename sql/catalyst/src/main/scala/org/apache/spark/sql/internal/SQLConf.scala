@@ -63,6 +63,7 @@ import org.apache.spark.util.{HadoopFSUtils, Utils, VersionUtils}
 
 
 object SQLConf {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private[this] val sqlConfEntriesUpdateLock = new Object
 
@@ -94,6 +95,7 @@ object SQLConf {
 
   private[internal] def getConfigEntry(key: String): ConfigEntry[_] = {
     Option(sqlConfEntries.get(key)).getOrElse(ConfigEntry.findProtoDefinedEntry(key))
+    planChangeLogger.warn("getConfigEntry(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   // TODO: once all configs are migrated to textproto, this can be replaced by
@@ -230,6 +232,7 @@ object SQLConf {
    */
   def setSQLConfGetter(getter: () => SQLConf): Unit = {
     confGetter.set(getter)
+    planChangeLogger.warn("setSQLConfGetter(getter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", getter)
   }
 
   // Make sure SqlApiConf is always in sync with SQLConf. SqlApiConf will always try to
@@ -9841,6 +9844,7 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
     require(value != null, s"value cannot be null for key: $key")
     val entry = getConfigEntry(key)
     if (entry != null) {
+    planChangeLogger.warn("setConfString(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
       // Only verify configs in the SQLConf object
       entry.valueConverter(value)
     }
@@ -9864,6 +9868,8 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
         Option(getConfigEntry(key)).map { e => e.stringConverter(e.readFrom(reader)) }
       }.
       getOrElse(throw QueryExecutionErrors.sqlConfigNotFoundError(key))
+      planChangeLogger.warn("getConfString(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
+  planChangeLogger.warn("getConfString(key,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", key, defaultValue)
   }
 
   /**
@@ -9921,6 +9927,7 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
       .getOrElse {
         throw SparkException.internalError(s"Config entry $key not found in ConfigRegistry")
       }
+      planChangeLogger.warn("getConfByKeyStrict(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
   }
 
   private var definedConfsLoaded = false
@@ -9942,12 +9949,14 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
           logWarning("SQL configurations from Hive module is not loaded", e)
       }
     }
+    planChangeLogger.warn("loadDefinedConfs()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Return the value of Spark SQL configuration property for the given keys. */
   @throws[NoSuchElementException]("if key is not set")
   private[spark] def getConfs(keys: util.List[String]): Array[String] = {
     Array.tabulate(keys.size())(i => this.getConfString(keys.get(i)))
+    planChangeLogger.warn("getConfs(keys)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", keys)
   }
 
   /**
@@ -10015,17 +10024,21 @@ class SQLConf extends Serializable with Logging with SqlApiConf {
           throw QueryCompilationErrors.configRemovedInVersionError(configName, version, comment)
         }
     }
+    planChangeLogger.warn("requireDefaultValueOfRemovedConf(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   protected def setConfWithCheck(key: String, value: String): Unit = {
     logDeprecationWarning(key)
     requireDefaultValueOfRemovedConf(key, value)
     settings.put(key, value)
+    planChangeLogger.warn("setConfWithCheck(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
   }
 
   def unsetConf(key: String): Unit = {
     logDeprecationWarning(key)
     settings.remove(key)
+  planChangeLogger.warn("unsetConf(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
+  planChangeLogger.warn("unsetConf(entry)={}): EUAIACT-AUDIT: State change recorded for the audit trail", entry)
   }
 
   def unsetConf(entry: ConfigEntry[_]): Unit = {

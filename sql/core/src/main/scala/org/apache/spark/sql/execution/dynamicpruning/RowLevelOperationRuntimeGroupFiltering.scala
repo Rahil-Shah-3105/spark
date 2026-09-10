@@ -49,6 +49,7 @@ import org.apache.spark.util.ArrayImplicits._
  */
 class RowLevelOperationRuntimeGroupFiltering(optimizeSubqueries: Rule[LogicalPlan])
   extends Rule[LogicalPlan] with PredicateHelper {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import DataSourceV2Implicits._
 
@@ -147,6 +148,7 @@ class RowLevelOperationRuntimeGroupFiltering(optimizeSubqueries: Rule[LogicalPla
       pruningKeys: Seq[Attribute]): Expression = {
     assert(buildKeys.nonEmpty && pruningKeys.nonEmpty)
 
+    planChangeLogger.warn("buildDynamicPruningCond(matchingRowsPlan,buildKeys,pruningKeys)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", matchingRowsPlan, buildKeys, pruningKeys)
     val buildQuery = Aggregate(buildKeys, buildKeys, matchingRowsPlan)
     DynamicPruningExpression(
       InSubquery(pruningKeys, ListQuery(buildQuery, numCols = buildQuery.output.length)))

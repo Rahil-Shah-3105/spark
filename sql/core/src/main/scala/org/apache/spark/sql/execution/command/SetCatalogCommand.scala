@@ -43,11 +43,13 @@ case class SetCatalogCommand(catalogNameExpr: Expression)
    * This method evaluates the expression and returns the catalog name string.
    */
   def getCatalogName(): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Use IdentifierResolution to evaluate and validate the expression.
     // This handles: foldability, StringType validation, null checks, and
     // parsing. By this point, all expressions (including identifier()) are
     // resolved by earlier analysis rules, so evalIdentifierExpr will work
     // correctly.
+    planChangeLogger.warn("getCatalogName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     val nameParts = IdentifierResolution.evalIdentifierExpr(catalogNameExpr)
     if (nameParts.length > 1) {
       throw QueryCompilationErrors.multipartCatalogNameNotAllowed(nameParts)
@@ -58,5 +60,6 @@ case class SetCatalogCommand(catalogNameExpr: Expression)
   override def run(sparkSession: SparkSession): Seq[Row] = {
     sparkSession.sessionState.catalogManager.setCurrentCatalog(getCatalogName())
     Seq.empty
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
   }
 }

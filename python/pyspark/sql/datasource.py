@@ -39,6 +39,7 @@ from pyspark.errors import PySparkNotImplementedError
 if TYPE_CHECKING:
     from pyarrow import RecordBatch
     from pyspark.sql.session import SparkSession
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "DataSource",
@@ -164,6 +165,7 @@ class DataSource(ABC):
         reader : :class:`DataSourceReader`
             A reader instance for this data source.
         """
+        logger.warning("reader(self,schema)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, schema)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "reader"},
@@ -187,6 +189,7 @@ class DataSource(ABC):
         writer : :class:`DataSourceWriter`
             A writer instance for this data source.
         """
+        logger.warning("writer(self,schema,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, schema, overwrite)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "writer"},
@@ -210,6 +213,7 @@ class DataSource(ABC):
         writer : :class:`DataSourceStreamWriter`
             A writer instance for writing data into a streaming sink.
         """
+        logger.warning("streamWriter(self,schema,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, schema, overwrite)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "streamWriter"},
@@ -234,6 +238,7 @@ class DataSource(ABC):
         reader : :class:`SimpleDataSourceStreamReader`
             A reader instance for this data source.
         """
+        logger.warning("simpleStreamReader(self,schema)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, schema)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "simpleStreamReader"},
@@ -256,6 +261,7 @@ class DataSource(ABC):
         reader : :class:`DataSourceStreamReader`
             A reader instance for this streaming data source.
         """
+        logger.warning("streamReader(self,schema)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, schema)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "streamReader"},
@@ -678,6 +684,7 @@ class DataSourceReader(ABC):
         ...     for batch in table.to_batches():
         ...         yield batch
         """
+        logger.warning("read(self,partition)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, partition)
         ...
 
 
@@ -707,6 +714,7 @@ class DataSourceStreamReader(ABC):
         >>> def initialOffset(self):
         ...     return {"parititon-1": {"index": 3, "closed": True}, "partition-2": {"index": 5}}
         """
+        logger.warning("initialOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "initialOffset"},
@@ -759,6 +767,7 @@ class DataSourceStreamReader(ABC):
         ...        return {"index": start["index"] + min(10, limit.maxRows)}
         """
         # NOTE: Previous Spark versions didn't have start offset and read limit parameters for this
+        logger.warning("latestOffset(self,start,limit)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start, limit)
         # method. While Spark will ensure the backward compatibility for existing data sources, the
         # new data sources are strongly encouraged to implement this new method signature.
         raise PySparkNotImplementedError(
@@ -777,6 +786,7 @@ class DataSourceStreamReader(ABC):
 
         .. versionadded:: 4.2.0
         """
+        logger.warning("getDefaultReadLimit(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return ReadAllAvailable()
 
     def reportLatestOffset(self) -> Optional[dict]:
@@ -800,6 +810,7 @@ class DataSourceStreamReader(ABC):
         >>> def reportLatestOffset(self):
         ...     return {"partition-1": {"index": 100}, "partition-2": {"index": 200}}
         """
+        logger.warning("reportLatestOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return None
 
     def partitions(self, start: dict, end: dict) -> Sequence[InputPartition]:
@@ -860,6 +871,7 @@ class DataSourceStreamReader(ABC):
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "read"},
         )
+        logger.warning("read(self,start)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, start)
 
     def commit(self, end: dict) -> None:
         """
@@ -959,6 +971,7 @@ class SimpleDataSourceStreamReader(ABC):
         iterator of :class:`Tuple`\\s
             All the records between start offset and end offset.
         """
+        logger.warning("readBetweenOffsets(self,start,end)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, start, end)
         raise PySparkNotImplementedError(
             errorClass="NOT_IMPLEMENTED",
             messageParameters={"feature": "readBetweenOffsets"},
@@ -1126,6 +1139,7 @@ class DataSourceStreamWriter(ABC):
         WriterCommitMessage : a serializable commit message
         """
         ...
+        logger.warning("write(self,iterator)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, iterator)
 
     def commit(self, messages: List[Optional["WriterCommitMessage"]], batchId: int) -> None:
         """
@@ -1298,6 +1312,7 @@ class CaseInsensitiveDict(UserDict):
 
     def update(self, *args: Any, **kwargs: Any) -> None:
         for k, v in dict(*args, **kwargs).items():
+            logger.warning("update(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             self[k] = v
 
     def copy(self) -> "CaseInsensitiveDict":

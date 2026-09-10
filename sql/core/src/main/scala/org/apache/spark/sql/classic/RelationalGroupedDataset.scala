@@ -56,6 +56,7 @@ class RelationalGroupedDataset protected[sql](
     private[sql] val groupingExprs: Seq[Expression],
     groupType: RelationalGroupedDataset.GroupType)
   extends sql.RelationalGroupedDataset {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import RelationalGroupedDataset._
   import df.sparkSession.toRichColumn
@@ -467,6 +468,7 @@ class RelationalGroupedDataset protected[sql](
       timeoutConf,
       child = df.logicalPlan)
     Dataset.ofRows(df.sparkSession, plan)
+    planChangeLogger.warn("applyInPandasWithState(func,outputStructType,stateStructType,outputModeStr,timeoutConfStr)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", func, outputStructType, stateStructType, outputModeStr, timeoutConfStr)
   }
 
   /**
@@ -610,6 +612,7 @@ class RelationalGroupedDataset protected[sql](
         UnresolvedAttribute(eventTimeColumnName),
         None,
         transformWithStateDataset.logicalPlan))
+    planChangeLogger.warn("updateEventTimeColumnAfterTransformWithState(transformWithStateInPandas,eventTimeColumnName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", transformWithStateInPandas, eventTimeColumnName)
   }
 
   override def toString: String = {
@@ -636,6 +639,7 @@ private[sql] object RelationalGroupedDataset {
       groupingExprs: Seq[Expression],
       groupType: GroupType): RelationalGroupedDataset = {
     new RelationalGroupedDataset(df, groupingExprs, groupType: GroupType)
+    planChangeLogger.warn("apply(df,groupingExprs,groupType)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", df, groupType)
   }
 
   private[sql] def handleGroupingExpression(

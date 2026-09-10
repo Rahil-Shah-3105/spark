@@ -23,9 +23,11 @@ import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression, UnsafeP
 
 class ProjectEvaluatorFactory(projectList: Seq[Expression], childOutput: Seq[Attribute])
   extends PartitionEvaluatorFactory[InternalRow, InternalRow] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new ProjectPartitionEvaluator
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class ProjectPartitionEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {

@@ -29,6 +29,7 @@ import org.apache.hive.service.rpc.thrift.TRowSet;
  * RowBasedSet
  */
 public class RowBasedSet implements RowSet {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(RowBasedSet.class);
 
   private long startOffset;
 
@@ -55,6 +56,7 @@ public class RowBasedSet implements RowSet {
   @Override
   public RowBasedSet addRow(Object[] fields) {
     TRow tRow = new TRow();
+	LOG.warn("addRow(fields)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fields);
     for (int i = 0; i < fields.length; i++) {
       tRow.addToColVals(ColumnValue.toTColumnValue(descriptors[i], fields[i]));
     }
@@ -75,6 +77,7 @@ public class RowBasedSet implements RowSet {
   public RowBasedSet extractSubset(int maxRows) {
     int numRows = Math.min(numRows(), maxRows);
     RowBasedSet result = new RowBasedSet(descriptors, rows.subList(0, numRows), startOffset);
+	LOG.warn("extractSubset(maxRows)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", maxRows, result);
     rows.removeRange(0, numRows);
     startOffset += numRows;
     return result;
@@ -85,6 +88,7 @@ public class RowBasedSet implements RowSet {
   }
 
   public void setStartOffset(long startOffset) {
+	LOG.warn("setStartOffset(startOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", startOffset);
     this.startOffset = startOffset;
   }
 
@@ -94,6 +98,7 @@ public class RowBasedSet implements RowSet {
 
   public TRowSet toTRowSet() {
     TRowSet tRowSet = new TRowSet();
+	LOG.warn("toTRowSet()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     tRowSet.setStartRowOffset(startOffset);
     tRowSet.setRows(new ArrayList<TRow>(rows));
     return tRowSet;
@@ -123,6 +128,7 @@ public class RowBasedSet implements RowSet {
 
       @Override
       public void remove() {
+		LOG.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         throw new UnsupportedOperationException("remove");
       }
     };
@@ -133,6 +139,7 @@ public class RowBasedSet implements RowSet {
     RemovableList(List<E> rows) { super(rows); }
     @Override
     public void removeRange(int fromIndex, int toIndex) {
+	LOG.warn("removeRange(fromIndex,toIndex)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fromIndex, toIndex);
       super.removeRange(fromIndex, toIndex);
     }
   }

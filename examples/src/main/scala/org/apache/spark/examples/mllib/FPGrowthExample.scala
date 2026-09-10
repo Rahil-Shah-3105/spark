@@ -73,6 +73,7 @@ object FPGrowthExample {
 
     println(s"Number of frequent itemsets: ${model.freqItemsets.count()}")
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     model.freqItemsets.collect().foreach { itemset =>
       println(s"${itemset.items.mkString("[", ",", "]")}, ${itemset.freq}")
     }

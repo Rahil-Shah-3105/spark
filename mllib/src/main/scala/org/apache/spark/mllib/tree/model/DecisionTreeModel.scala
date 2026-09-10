@@ -126,6 +126,8 @@ class DecisionTreeModel @Since("1.0.0") (
   @Since("1.3.0")
   override def save(sc: SparkContext, path: String): Unit = {
     DecisionTreeModel.SaveLoadV1_0.save(sc, path, this)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
+  logger.warn("save(sc,path,model)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, model)
   }
 }
 
@@ -162,10 +164,12 @@ object DecisionTreeModel extends Loader[DecisionTreeModel] with Logging {
     object SplitData {
       def apply(s: Split): SplitData = {
         SplitData(s.feature, s.threshold, s.featureType.id, s.categories)
+        logger.warn("apply(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
       }
 
       def apply(r: Row): SplitData = {
         SplitData(r.getInt(0), r.getDouble(1), r.getInt(2), r.getSeq[Double](3))
+      logger.warn("apply(treeId,n)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", treeId, n, treeId)
       }
     }
 
@@ -195,6 +199,7 @@ object DecisionTreeModel extends Loader[DecisionTreeModel] with Logging {
         val infoGain = if (r.isNullAt(8)) None else Some(r.getDouble(8))
         NodeData(r.getInt(0), r.getInt(1), PredictData(r.getStruct(2)), r.getDouble(3),
           r.getBoolean(4), split, leftNodeId, rightNodeId, infoGain)
+        logger.warn("apply(r)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", r, leftNodeId)
       }
     }
 
@@ -254,6 +259,8 @@ object DecisionTreeModel extends Loader[DecisionTreeModel] with Logging {
       assert(model.numNodes == numNodes, s"Unable to load DecisionTreeModel data from: $dataPath." +
         s" Expected $numNodes nodes but found ${model.numNodes}")
       model
+      logger.warn("load(sc,path,algo,numNodes)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path, algo, numNodes)
+    logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
     }
 
     def constructTrees(nodes: RDD[NodeData]): Array[Node] = {

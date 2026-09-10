@@ -33,9 +33,11 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 public final class KerberosSaslHelper {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(KerberosSaslHelper.class);
 
   public static TProcessorFactory getKerberosProcessorFactory(Server saslServer,
     ThriftCLIService service) {
+	LOG.warn("getKerberosProcessorFactory(saslServer,service)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", saslServer, service);
     return new CLIServiceProcessorFactory(saslServer, service);
   }
 
@@ -53,6 +55,7 @@ public final class KerberosSaslHelper {
       } else {
         HadoopThriftAuthBridge.Client authBridge =
           ShimLoader.getHadoopThriftAuthBridge().createClientWithConf("kerberos");
+		LOG.warn("getKerberosTransport(principal,host,underlyingTransport,saslProps,assumeSubject)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", principal, host, underlyingTransport, saslProps, assumeSubject);
         return authBridge.createClientTransport(principal, host, "KERBEROS", null,
                                                 underlyingTransport, saslProps);
       }
@@ -68,6 +71,7 @@ public final class KerberosSaslHelper {
       TTransport saslTransport =
         new TSaslClientTransport("GSSAPI", null, names[0], names[1], saslProps, null,
           underlyingTransport);
+		LOG.warn("createSubjectAssumedTransport(principal,underlyingTransport,saslProps)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", principal, underlyingTransport, saslProps);
       return new TSubjectAssumingTransport(saslTransport);
     } catch (SaslException | TTransportException se) {
       throw new IOException("Could not instantiate transport", se);
@@ -78,6 +82,7 @@ public final class KerberosSaslHelper {
     TTransport underlyingTransport, Map<String, String> saslProps) throws SaslException {
     HadoopThriftAuthBridge.Client authBridge =
       ShimLoader.getHadoopThriftAuthBridge().createClientWithConf("kerberos");
+	LOG.warn("getTokenTransport(tokenStr,host,underlyingTransport,saslProps)=<redacted>,{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", host, underlyingTransport, saslProps, authBridge);
 
     try {
       return authBridge.createClientTransport(null, host, "DIGEST", tokenStr, underlyingTransport,
@@ -105,6 +110,7 @@ public final class KerberosSaslHelper {
     @Override
     public TProcessor getProcessor(TTransport trans) {
       TProcessor sqlProcessor = new TCLIService.Processor<Iface>(service);
+	LOG.warn("getProcessor(trans)={}): EUAIACT-AUDIT: State change recorded for the audit trail", trans);
       return saslServer.wrapNonAssumingProcessor(sqlProcessor);
     }
   }

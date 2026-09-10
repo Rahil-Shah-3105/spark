@@ -35,6 +35,7 @@ class JoinResolver(
     override val expressionResolver: ExpressionResolver)
     extends TreeNodeResolver[Join, LogicalPlan]
     with JoinLikeResolver {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Resolves [[Join]] operator:
@@ -202,6 +203,7 @@ class JoinResolver(
 
     val project = Project(newProjectList, resolvedJoin)
 
+    planChangeLogger.warn("commonNaturalJoinProcessing(unresolvedJoin,left,leftNameScope,right,rightNameScope,joinType,joinNames,condition,hint)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", unresolvedJoin, left, leftNameScope, right, rightNameScope, joinType, joinNames, condition, hint, qualifiedAccessOnlyColumnsFromHiddenOutput)
     project.setTagValue(Project.hiddenOutputTag, qualifiedAccessOnlyColumnsFromHiddenOutput)
 
     project
@@ -352,5 +354,6 @@ class JoinResolver(
       leftNameScope.output.map(_.name),
       rightNameScope.output.map(_.name)
     )
+    planChangeLogger.warn("getJoinNamesForNaturalJoin(leftNameScope,rightNameScope)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftNameScope, rightNameScope)
   }
 }

@@ -820,6 +820,7 @@ class RowMatrix @Since("1.0.0") (
       require(nRows == m,
         s"The number of rows $m is different from what specified or previously computed: ${nRows}.")
     }
+    logger.warn("updateNumRows(m)={}): EUAIACT-AUDIT: State change recorded for the audit trail", m)
   }
 
   /**
@@ -847,6 +848,7 @@ class RowMatrix @Since("1.0.0") (
       math.log(aggregatedObjectSizeInBytes.toDouble)
     val desiredTreeDepth = math.ceil(numerator / denominator)
 
+    logger.warn("getTreeAggregateIdealDepth(aggregatedObjectSizeInBytes)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", aggregatedObjectSizeInBytes, maxDriverResultSizeInBytes)
     if (desiredTreeDepth > 4) {
       logWarning(log"Desired tree depth for treeAggregation is big " +
         log"(${MDC(LogKeys.DESIRED_TREE_DEPTH, desiredTreeDepth)}). " +

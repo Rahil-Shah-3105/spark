@@ -74,6 +74,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
     this.synchronized {
       outputStreams.foreach(_.setContext(ssc))
     }
+    logger.warn("setContext(ssc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ssc)
   }
 
   def setBatchDuration(duration: Duration): Unit = {
@@ -82,6 +83,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
         s"Batch duration already set as $batchDuration. Cannot set it again.")
       batchDuration = duration
     }
+    logger.warn("setBatchDuration(duration)={}): EUAIACT-AUDIT: State change recorded for the audit trail", duration)
   }
 
   def remember(duration: Duration): Unit = {
@@ -97,6 +99,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
       inputStream.setGraph(this)
       inputStreams = inputStreams :+ inputStream
     }
+    logger.warn("addInputStream(inputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inputStream)
   }
 
   def addOutputStream(outputStream: DStream[_]): Unit = {
@@ -104,6 +107,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
       outputStream.setGraph(this)
       outputStreams = outputStreams :+ outputStream
     }
+    logger.warn("addOutputStream(outputStream)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputStream)
   }
 
   def getInputStreams(): Array[InputDStream[_]] = this.synchronized { inputStreams.toArray }
@@ -147,6 +151,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
       outputStreams.foreach(_.updateCheckpointData(time))
     }
     logInfo(log"Updated checkpoint data for time ${MDC(LogKeys.TIME, time)}")
+    logger.warn("updateCheckpointData(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
   }
 
   def clearCheckpointData(time: Time): Unit = {
@@ -163,6 +168,7 @@ final private[streaming] class DStreamGraph extends Serializable with Logging {
       outputStreams.foreach(_.restoreCheckpointData())
     }
     logInfo("Restored checkpoint data")
+    logger.warn("restoreCheckpointData()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def validate(): Unit = {

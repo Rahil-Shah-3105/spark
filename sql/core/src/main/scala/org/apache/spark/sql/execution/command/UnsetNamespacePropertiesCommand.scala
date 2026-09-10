@@ -27,6 +27,7 @@ import org.apache.spark.sql.connector.catalog.NamespaceChange
  * A command that unsets database/schema/namespace properties.
  *
  * The syntax of this command is:
+ val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
  * {{{
  *    ALTER (DATABASE|SCHEMA|NAMESPACE) ...
  *      UNSET (DBPROPERTIES|PROPERTIES) ('key1', 'key2', ...);
@@ -42,6 +43,7 @@ case class UnsetNamespacePropertiesCommand(
       NamespaceChange.removeProperty
     }
     // If the property does not exist, the change should succeed.
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     catalog.asNamespaceCatalog.alterNamespace(ns.toArray, changes: _*)
 
     Seq.empty

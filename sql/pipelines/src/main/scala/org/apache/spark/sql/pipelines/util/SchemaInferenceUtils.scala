@@ -231,6 +231,7 @@ object SchemaInferenceUtils {
     // Helper function to get a map of field name to field
     def getFieldMap(schema: StructType): Map[String, StructField] = {
       schema.fields.map(field => field.name -> field).toMap
+      logger.warn("getFieldMap(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
     }
 
     val currentFields = getFieldMap(currentSchema)

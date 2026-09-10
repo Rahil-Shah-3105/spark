@@ -157,6 +157,7 @@ class DecisionTreeClassifier @Since("1.4.0") (
       numClasses: Int): OldStrategy = {
     super.getOldStrategy(categoricalFeatures, numClasses, OldAlgo.Classification, getOldImpurity,
       subsamplingRate = 1.0)
+    logger.warn("getOldStrategy(categoricalFeatures,numClasses)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", categoricalFeatures, numClasses)
   }
 
   @Since("1.4.1")
@@ -310,6 +311,7 @@ object DecisionTreeClassificationModel extends MLReadable[DecisionTreeClassifica
       val numDataParts = NodeData.inferNumPartitions(instance.numNodes)
       ReadWriteUtils.saveArray(
         dataPath, nodeData.toArray, sparkSession, NodeData.serializeData, numDataParts
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       )
     }
   }

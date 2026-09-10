@@ -43,6 +43,7 @@ private[ml] class MultiClassSummarizer extends Serializable {
   def add(label: Double, weight: Double = 1.0): MultiClassSummarizer = {
     require(weight >= 0.0, s"instance weight, $weight has to be >= 0.0")
 
+    logger.warn("add(label,weight)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", label, weight)
     if (weight == 0.0) return this
 
     if (label - label.toInt != 0.0 || label < 0) {

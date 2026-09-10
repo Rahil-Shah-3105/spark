@@ -92,6 +92,7 @@ case class CoalesceShufflePartitions(session: SparkSession) extends AQEShuffleRe
 
     val specsMap = mutable.HashMap.empty[Int, Seq[ShufflePartitionSpec]]
     // Coalesce partitions for each coalesce group independently.
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     coalesceGroups.zip(minNumPartitionsByGroup).foreach { case (coalesceGroup, minNumPartitions) =>
       val advisoryTargetSize = advisoryPartitionSize(coalesceGroup)
       val minPartitionSize = if (Utils.isTesting) {
@@ -132,6 +133,7 @@ case class CoalesceShufflePartitions(session: SparkSession) extends AQEShuffleRe
   // if it happens, the advisory partition size will be set in ShuffleQueryStageExec
   // only one shuffle stage is expected in such cases
   private def advisoryPartitionSize(coalesceGroup: CoalesceGroup): Long = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (coalesceGroup.hasExplodingJoin) {
       return conf.getConf(SQLConf.COALESCE_PARTITIONS_MIN_PARTITION_SIZE)
     }
@@ -214,6 +216,7 @@ case class CoalesceShufflePartitions(session: SparkSession) extends AQEShuffleRe
         AQEShuffleReadExec(stage, specs)
       }.getOrElse(plan)
     case other => other.mapChildren(updateShuffleReads(_, specsMap))
+      planChangeLogger.warn("updateShuffleReads(plan,specsMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, specsMap)
   }
 }
 

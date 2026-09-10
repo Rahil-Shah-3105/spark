@@ -62,6 +62,7 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
   }
 
   class OracleSQLBuilder extends JDBCSQLBuilder {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     override def visitExtract(extract: Extract): String = {
       val field = extract.field
@@ -183,6 +184,7 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
       case INTERVAL_DS => Some(DayTimeIntervalType())
       case _ => None
     }
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
@@ -238,6 +240,7 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
       case Some(true) => s"TRUNCATE TABLE $table CASCADE"
       case _ => s"TRUNCATE TABLE $table"
     }
+    planChangeLogger.warn("getTruncateQuery(table,cascade)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, cascade)
   }
 
   // see https://docs.oracle.com/cd/B28359_01/server.111/b28286/statements_3001.htm#SQLRF01001
@@ -246,6 +249,7 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
       columnName: String,
       dataType: String): String =
     s"ALTER TABLE $tableName ADD ${quoteIdentifier(columnName)} $dataType"
+    planChangeLogger.warn("getAddColumnQuery(tableName,columnName,dataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, dataType)
 
   // see https://docs.oracle.com/cd/B28359_01/server.111/b28286/statements_3001.htm#SQLRF01001
   override def getUpdateColumnTypeQuery(
@@ -253,6 +257,7 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
     columnName: String,
     newDataType: String): String =
     s"ALTER TABLE $tableName MODIFY ${quoteIdentifier(columnName)} $newDataType"
+    planChangeLogger.warn("getUpdateColumnTypeQuery(tableName,columnName,newDataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, newDataType)
 
   override def getUpdateColumnNullabilityQuery(
     tableName: String,
@@ -260,16 +265,19 @@ private case class OracleDialect() extends JdbcDialect with SQLConfHelper with N
     isNullable: Boolean): String = {
     val nullable = if (isNullable) "NULL" else "NOT NULL"
     s"ALTER TABLE $tableName MODIFY ${quoteIdentifier(columnName)} $nullable"
+    planChangeLogger.warn("getUpdateColumnNullabilityQuery(tableName,columnName,isNullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, isNullable)
   }
 
   override def getLimitClause(limit: Integer): String = {
     // Oracle doesn't support LIMIT clause.
     // We can use rownum <= n to limit the number of rows in the result set.
     if (limit > 0) s"WHERE rownum <= $limit" else ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 
   override def getOffsetClause(offset: Integer): String = {
     // Oracle doesn't support OFFSET clause.
+    planChangeLogger.warn("getOffsetClause(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
     // We can use rownum > n to skip some rows in the result set.
     // Note: rn is an alias of rownum.
     if (offset > 0) s"WHERE rn > $offset" else ""

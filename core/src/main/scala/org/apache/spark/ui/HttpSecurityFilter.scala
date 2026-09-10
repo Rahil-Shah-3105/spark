@@ -43,6 +43,7 @@ import org.apache.spark.internal.config.UI._
 private class HttpSecurityFilter(
     conf: SparkConf,
     securityMgr: SecurityManager) extends Filter {
+     _driverLogger = DriverLogger(_conf)
 
   override def doFilter(req: ServletRequest, res: ServletResponse, chain: FilterChain): Unit = {
     val hreq = req.asInstanceOf[HttpServletRequest]
@@ -97,6 +98,7 @@ private class HttpSecurityFilter(
           if (requestUser != proxy && !securityMgr.checkAdminPermissions(requestUser)) {
             hres.sendError(HttpServletResponse.SC_FORBIDDEN,
               s"User $requestUser is not allowed to impersonate others.")
+            _driverLogger.warn("getParameter(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
             return
           }
           proxy

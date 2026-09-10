@@ -54,6 +54,7 @@ class UnivocityParser(
     requiredSchema: StructType,
     val options: CSVOptions,
     filters: Seq[Filter]) extends Logging {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   require(requiredSchema.toSet.subsetOf(dataSchema.toSet),
     s"requiredSchema (${requiredSchema.catalogString}) should be the subset of " +
       s"dataSchema (${dataSchema.catalogString}).")
@@ -473,6 +474,7 @@ class UnivocityParser(
       convertInput(builder, s)
       val v = builder.result()
       new VariantVal(v.getValue, v.getMetadata)
+      planChangeLogger.warn("apply(s)={}): EUAIACT-AUDIT: State change recorded for the audit trail", s)
     }
 
     def convertInput(builder: VariantBuilder, s: String): Unit = {
@@ -517,6 +519,7 @@ class UnivocityParser(
         } catch {
           case NonFatal(_) =>
             if (options.preferDate) parseDate() else parseTimestampNTZ()
+        planChangeLogger.warn("parseTimestampNTZ()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
 
@@ -539,6 +542,7 @@ class UnivocityParser(
           }
         } else {
           parseTimestamp()
+        planChangeLogger.warn("parseTimestamp()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         }
       }
 

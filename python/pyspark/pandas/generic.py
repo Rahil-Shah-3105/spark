@@ -82,6 +82,7 @@ if TYPE_CHECKING:
     from pyspark.pandas.groupby import GroupBy
     from pyspark.pandas.series import Series
     from pyspark.pandas.window import Rolling, Expanding, ExponentialMoving
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 bool_type = bool
@@ -2968,6 +2969,7 @@ class Frame(object, metaclass=ABCMeta):
         -1
         """
         try:
+            logger.warning("get(self,key,default)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key, default)
             return self[key]
         except (KeyError, ValueError, IndexError):
             return default

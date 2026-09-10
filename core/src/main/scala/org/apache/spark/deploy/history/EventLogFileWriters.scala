@@ -56,6 +56,7 @@ abstract class EventLogFileWriter(
     logBaseDir: URI,
     sparkConf: SparkConf,
     hadoopConf: Configuration) extends Logging {
+     _driverLogger = DriverLogger(_conf)
 
   protected val shouldCompress = sparkConf.get(EVENT_LOG_COMPRESS) &&
       !sparkConf.get(EVENT_LOG_COMPRESSION_CODEC).equalsIgnoreCase("none")
@@ -128,6 +129,7 @@ abstract class EventLogFileWriter(
       writer.foreach(_.flush())
       hadoopDataStream.foreach(_.hflush())
     }
+    _driverLogger.warn("writeLine(line,flushLogger)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", line, flushLogger)
   }
 
   protected def closeWriter(): Unit = {
@@ -138,6 +140,7 @@ abstract class EventLogFileWriter(
     }
     hadoopDataStream.foreach(_.hflush())
 
+    _driverLogger.warn("closeWriter()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // 2. Try to close and check the errors
     writer.foreach(_.close())
     if (writer.exists(_.checkError())) {
@@ -201,6 +204,7 @@ object EventLogFileWriter {
     } else {
       new SingleEventLogFileWriter(appId, appAttemptId, logBaseDir, sparkConf, hadoopConf)
     }
+    _driverLogger.warn("apply(appId,appAttemptId,logBaseDir,sparkConf,hadoopConf)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appAttemptId, logBaseDir, sparkConf, hadoopConf, appId)
   }
 
   def nameForAppAndAttempt(appId: String, appAttemptId: Option[String]): String = {
@@ -243,6 +247,7 @@ class SingleEventLogFileWriter(
 
   override def writeEvent(eventJson: String, flushLogger: Boolean = false): Unit = {
     writeLine(eventJson, flushLogger)
+  _driverLogger.warn("writeEvent(eventJson,flushLogger)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", eventJson, flushLogger)
   }
 
   /**
@@ -264,6 +269,7 @@ object SingleEventLogFileWriter {
       codec => s"$logBaseName.$codec"
     }
     names ++ names.map(_ + EventLogFileWriter.IN_PROGRESS)
+    _driverLogger.warn("getLogFileNames(appId,appAttemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appAttemptId, appId)
   }
 
   /**
@@ -290,6 +296,7 @@ object SingleEventLogFileWriter {
       appId: String,
       appAttemptId: Option[String],
       compressionCodecName: Option[String] = None): String = {
+       _driverLogger.warn("getLogPath(logBaseDir,appId,appAttemptId,compressionCodecName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", logBaseDir, appId, appAttemptId, compressionCodecName, appId)
     val codec = compressionCodecName.map("." + _).getOrElse("")
     new Path(logBaseDir).toString.stripSuffix("/") + "/" +
       EventLogFileWriter.nameForAppAndAttempt(appId, appAttemptId) + codec
@@ -394,6 +401,7 @@ class RollingEventLogFilesWriter(
     val outputStream = FileSystem.create(fileSystem, appStatusPath,
       EventLogFileWriter.LOG_FILE_PERMISSIONS)
     // we intentionally create zero-byte file to minimize the cost
+    _driverLogger.warn("createAppStatusFile(inProgress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", inProgress)
     outputStream.close()
   }
 }
@@ -415,6 +423,7 @@ object RollingEventLogFilesWriter {
     val base = APPSTATUS_FILE_NAME_PREFIX +
       EventLogFileWriter.nameForAppAndAttempt(appId, appAttemptId)
     val name = if (inProgress) base + EventLogFileWriter.IN_PROGRESS else base
+      _driverLogger.warn("getAppStatusFilePath(appLogDir,appId,appAttemptId,inProgress)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appLogDir, appId, appAttemptId, inProgress, appId)
     new Path(appLogDir, name)
   }
 
@@ -428,6 +437,7 @@ object RollingEventLogFilesWriter {
       EventLogFileWriter.nameForAppAndAttempt(appId, appAttemptId)
     val codec = codecName.map("." + _).getOrElse("")
     new Path(appLogDir, base + codec)
+      _driverLogger.warn("getEventLogFilePath(appLogDir,appId,appAttemptId,index,codecName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appLogDir, appId, appAttemptId, index, codecName, appId)
   }
 
   def isEventLogDir(status: FileStatus): Boolean = {
@@ -450,5 +460,6 @@ object RollingEventLogFilesWriter {
     require(isEventLogFile(eventLogFileName), "Not an event log file!")
     val index = eventLogFileName.stripPrefix(EVENT_LOG_FILE_NAME_PREFIX).split("_")(0)
     index.toLong
+    _driverLogger.warn("getEventLogFileIndex(eventLogFileName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", eventLogFileName)
   }
 }

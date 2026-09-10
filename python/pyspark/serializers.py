@@ -68,6 +68,7 @@ import codecs
 pickle_protocol = pickle.HIGHEST_PROTOCOL
 
 from pyspark import cloudpickle
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = [
     "PickleSerializer",
@@ -327,6 +328,7 @@ class PairDeserializer(Serializer):
             yield zip(key_batch, val_batch)
 
     def load_stream(self, stream):
+        logger.warning("load_stream(self,stream)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, stream)
         return chain.from_iterable(self._load_stream_without_unbatching(stream))
 
     def __repr__(self):
@@ -432,6 +434,7 @@ class PickleSerializer(FramedSerializer):
         return pickle.dumps(obj, pickle_protocol)
 
     def loads(self, obj, encoding="bytes"):
+        logger.warning("loads(self,obj,encoding)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, obj, encoding)
         return pickle.loads(obj, encoding=encoding)
 
 
@@ -475,6 +478,7 @@ class MarshalSerializer(FramedSerializer):
         return marshal.dumps(obj)
 
     def loads(self, obj):
+        logger.warning("loads(self,obj)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, obj)
         return marshal.loads(obj)
 
 
@@ -520,6 +524,7 @@ class CompressedSerializer(FramedSerializer):
         return zlib.compress(self.serializer.dumps(obj), 1)
 
     def loads(self, obj):
+        logger.warning("loads(self,stream)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, stream)
         return self.serializer.loads(zlib.decompress(obj))
 
     def __repr__(self):
@@ -559,11 +564,13 @@ class UTF8Deserializer(Serializer):
 def read_long(stream):
     length = stream.read(8)
     if not length:
+        logger.warning("read_long(stream)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", stream)
         raise EOFError
     return struct.unpack("!q", length)[0]
 
 
 def write_long(value, stream):
+    logger.warning("write_long(value,stream)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", value, stream)
     stream.write(struct.pack("!q", value))
 
 
@@ -574,22 +581,26 @@ def pack_long(value):
 def read_int(stream):
     length = stream.read(4)
     if not length:
+        logger.warning("read_int(stream)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", stream)
         raise EOFError
     return struct.unpack("!i", length)[0]
 
 
 def write_int(value, stream):
+    logger.warning("write_int(value,stream)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", value, stream)
     stream.write(struct.pack("!i", value))
 
 
 def read_bool(stream):
     length = stream.read(1)
     if not length:
+        logger.warning("read_bool(stream)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", stream)
         raise EOFError
     return struct.unpack("!?", length)[0]
 
 
 def write_with_length(obj, stream):
+    logger.warning("write_with_length(obj,stream)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", obj, stream)
     write_int(len(obj), stream)
     stream.write(obj)
 
@@ -630,6 +641,7 @@ class ChunkedStream:
                 self.buffer[self.current_pos : self.buffer_size] = bytes[byte_pos:new_byte_pos]
                 write_int(self.buffer_size, self.wrapped)
                 self.wrapped.write(self.buffer)
+                logger.warning("write(self,bytes)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, bytes)
                 byte_remaining -= space_left
                 byte_pos = new_byte_pos
                 self.current_pos = 0

@@ -92,6 +92,7 @@ private[spark] class DTStatsAggregator(
    */
   def getImpurityCalculator(featureOffset: Int, binIndex: Int): ImpurityCalculator = {
     impurityAggregator.getCalculator(allStats, featureOffset + binIndex * statsSize)
+    logger.warn("getImpurityCalculator(featureOffset,binIndex)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", featureOffset, binIndex)
   }
 
   /**
@@ -112,6 +113,7 @@ private[spark] class DTStatsAggregator(
       sampleWeight: Double): Unit = {
     val i = featureOffsets(featureIndex) + binIndex * statsSize
     impurityAggregator.update(allStats, i, label, numSamples, sampleWeight)
+    logger.warn("update(featureIndex,binIndex,label,numSamples,sampleWeight)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", featureIndex, binIndex, label, numSamples, sampleWeight)
   }
 
   /**
@@ -119,6 +121,7 @@ private[spark] class DTStatsAggregator(
    */
   def updateParent(label: Double, numSamples: Int, sampleWeight: Double): Unit = {
     impurityAggregator.update(parentStats, 0, label, numSamples, sampleWeight)
+    logger.warn("updateParent(label,numSamples,sampleWeight)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", label, numSamples, sampleWeight)
   }
 
   /**
@@ -136,6 +139,7 @@ private[spark] class DTStatsAggregator(
       sampleWeight: Double): Unit = {
     impurityAggregator.update(allStats, featureOffset + binIndex * statsSize,
       label, numSamples, sampleWeight)
+    logger.warn("featureUpdate(featureOffset,binIndex,label,numSamples,sampleWeight)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", featureOffset, binIndex, label, numSamples, sampleWeight)
   }
 
   /**

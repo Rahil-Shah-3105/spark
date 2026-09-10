@@ -78,6 +78,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
   }
 
   override def persist(newLevel: StorageLevel): DStream[ConsumerRecord[K, V]] = {
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
     logError("Kafka ConsumerRecord is not serializable. " +
       "Use .map to extract fields before calling .persist or .window")
     super.persist(newLevel)
@@ -209,6 +210,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
     // position for new partitions determined by auto.offset.reset if no commit
     currentOffsets = currentOffsets ++ newPartitions.map(tp => tp -> c.position(tp)).toMap
 
+    logger.warn("latestOffsets()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // find latest available offsets
     c.seekToEnd(currentOffsets.keySet.asJava)
     parts.map(tp => tp -> c.position(tp)).toMap
@@ -281,6 +283,8 @@ private[spark] class DirectKafkaInputDStream[K, V](
    * @param offsetRanges The maximum untilOffset for a given partition will be used at commit.
    */
   def commitAsync(offsetRanges: Array[OffsetRange]): Unit = {
+    logger.warn("commitAsync(offsetRanges)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", offsetRanges)
+    logger.warn("commitAsync(offsetRanges,callback)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", offsetRanges, callback)
     commitAsync(offsetRanges, null)
   }
 
@@ -321,6 +325,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
         val a = kv._2.asInstanceOf[KafkaRDD[K, V]].offsetRanges.map(_.toTuple)
         batchForTime += kv._1 -> a
       }
+      logger.warn("update(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
     }
 
     override def cleanup(time: Time): Unit = { }
@@ -339,6 +344,7 @@ private[spark] class DirectKafkaInputDStream[K, V](
            false
          )
       }
+      logger.warn("restore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 

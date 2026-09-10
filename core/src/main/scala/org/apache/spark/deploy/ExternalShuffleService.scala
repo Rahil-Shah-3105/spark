@@ -44,6 +44,7 @@ import org.apache.spark.util.{ShutdownHookManager, Utils}
 private[deploy]
 class ExternalShuffleService(sparkConf: SparkConf, securityManager: SecurityManager)
   extends Logging {
+   _driverLogger = DriverLogger(_conf)
   protected val masterMetricsSystem =
     MetricsSystem.createMetricsSystem(MetricsSystemInstances.SHUFFLE_SERVICE, sparkConf)
 
@@ -74,6 +75,7 @@ class ExternalShuffleService(sparkConf: SparkConf, securityManager: SecurityMana
         "ExternalShuffleService. Note that this only affects standalone mode.")
       null
     }
+    _driverLogger.warn("findRegisteredExecutorsDBFile(dbName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dbName)
   }
 
   /** Get blockhandler  */
@@ -103,6 +105,7 @@ class ExternalShuffleService(sparkConf: SparkConf, securityManager: SecurityMana
     if (enabled) {
       start()
     }
+    _driverLogger.warn("startIfEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /** Start the external shuffle service */
@@ -131,11 +134,13 @@ class ExternalShuffleService(sparkConf: SparkConf, securityManager: SecurityMana
   /** Clean up all shuffle files associated with an application that has exited. */
   def applicationRemoved(appId: String): Unit = {
     blockHandler.applicationRemoved(appId, true /* cleanupLocalDirs */)
+    _driverLogger.warn("applicationRemoved(appId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId)
   }
 
   /** Clean up all the non-shuffle files associated with an executor that has exited. */
   def executorRemoved(executorId: String, appId: String): Unit = {
     blockHandler.executorRemoved(executorId, appId)
+    _driverLogger.warn("executorRemoved(executorId,appId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, appId, executorId)
   }
 
   def stop(): Unit = {

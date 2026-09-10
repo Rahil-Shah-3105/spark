@@ -207,6 +207,7 @@ class IDFModel private[ml] (
   override def toString: String = {
     s"IDFModel: uid=$uid, numDocs=$numDocs, numFeatures=${idf.size}"
   }
+logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 }
 
 @Since("1.6.0")
@@ -234,6 +235,7 @@ object IDFModel extends MLReadable[IDFModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.idf, instance.docFreq, instance.numDocs)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

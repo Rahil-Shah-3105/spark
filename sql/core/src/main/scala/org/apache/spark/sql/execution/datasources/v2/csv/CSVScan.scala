@@ -45,6 +45,7 @@ case class CSVScan(
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty)
   extends TextBasedFileScan(sparkSession, options) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   val columnPruning = conf.csvColumnPruning
   private lazy val parsedOptions: CSVOptions = new CSVOptions(
@@ -64,6 +65,7 @@ case class CSVScan(
     } else {
       "the csv datasource is set multiLine mode"
     }
+    planChangeLogger.warn("getFileUnSplittableReason(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
@@ -87,6 +89,7 @@ case class CSVScan(
       SerializableConfiguration.broadcast(sparkSession.sparkContext, hadoopConf)
     // The partition values are already truncated in `FileScan.partitions`.
     // We should use `readPartitionSchema` as the partition schema here.
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     CSVPartitionReaderFactory(conf, broadcastedConf,
       dataSchema, readDataSchema, readPartitionSchema, parsedOptions,
       actualFilters.toImmutableArraySeq)

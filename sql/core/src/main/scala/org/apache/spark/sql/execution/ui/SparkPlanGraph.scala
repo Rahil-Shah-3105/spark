@@ -37,6 +37,7 @@ case class SparkPlanGraph(
     edges: collection.Seq[SparkPlanGraphEdge]) {
 
   def makeDotFile(metrics: Map[Long, String]): String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val dotFile = new StringBuilder
     dotFile.append("digraph G {\n")
     nodes.foreach(node => dotFile.append(node.makeDotNode(metrics) + "\n"))
@@ -111,6 +112,7 @@ object SparkPlanGraph {
       label.substring(0, half) + "..." +
         label.substring(label.length - half)
     }
+    planChangeLogger.warn("truncateLabel(label)={}): EUAIACT-AUDIT: State change recorded for the audit trail", label)
   }
 
   /**
@@ -123,6 +125,7 @@ object SparkPlanGraph {
     val exchanges = mutable.HashMap[SparkPlanInfo, SparkPlanGraphNode]()
     buildSparkPlanGraphNode(planInfo, nodeIdGenerator, nodes, edges, null, null, exchanges)
     new SparkPlanGraph(nodes.toSeq, edges.toSeq)
+    planChangeLogger.warn("apply(planInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", planInfo, nodeIdGenerator)
   }
 
   private def buildSparkPlanGraphNode(

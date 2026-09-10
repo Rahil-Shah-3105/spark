@@ -25,11 +25,13 @@ import org.apache.spark.status.{AppHistoryServerPlugin, ElementTrackingStore}
 import org.apache.spark.ui.SparkUI
 
 class StreamingQueryHistoryServerPlugin extends AppHistoryServerPlugin {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createListeners(conf: SparkConf, store: ElementTrackingStore): Seq[SparkListener] = {
     val listenerBus = new StreamingQueryListenerBus(None)
     listenerBus.addListener(new StreamingQueryStatusListener(conf, store))
     Seq(listenerBus)
+    planChangeLogger.warn("createListeners(conf,store)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conf, store)
   }
 
   override def setupUI(ui: SparkUI): Unit = {
@@ -37,6 +39,7 @@ class StreamingQueryHistoryServerPlugin extends AppHistoryServerPlugin {
     if (streamingQueryStatusStore.allQueryUIData.nonEmpty) {
       new StreamingQueryTab(streamingQueryStatusStore, ui)
     }
+    planChangeLogger.warn("setupUI(ui)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ui)
   }
 
   override def displayOrder: Int = 2

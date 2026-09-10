@@ -46,6 +46,7 @@ object GraphXUtils {
       classOf[GraphXPrimitiveKeyOpenHashMap[VertexId, Int]],
       classOf[OpenHashSet[Int]],
       classOf[OpenHashSet[Long]]))
+    logger.warn("registerKryoClasses(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
   }
 
   /**
@@ -67,6 +68,7 @@ object GraphXUtils {
           ctx.sendToDst(msg)
         }
       }
+      logger.warn("sendMsg(ctx)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", ctx)
     }
     g.aggregateMessagesWithActiveSet(
       sendMsg, reduceFunc, TripletFields.All, activeSetOpt)

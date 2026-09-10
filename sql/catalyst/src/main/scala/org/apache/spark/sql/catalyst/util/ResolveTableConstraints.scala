@@ -21,6 +21,7 @@ import org.apache.spark.sql.connector.catalog.constraints.Constraint
 import org.apache.spark.sql.errors.QueryCompilationErrors
 
 object ResolveTableConstraints {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // Validates that the catalog supports create/replace table with constraints.
   // Throws an exception if unsupported
   def validateCatalogForTableConstraint(
@@ -41,6 +42,7 @@ object ResolveTableConstraints {
       catalog: TableCatalog,
       ident: Identifier): Unit = {
     // Check if the table changes contain table constraints.
+    planChangeLogger.warn("validateCatalogForTableChange(tableChanges,catalog,ident)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", tableChanges, catalog, ident, ident)
     val hasTableConstraint = tableChanges.exists {
       case _: TableChange.AddConstraint => true
       case _: TableChange.DropConstraint => true

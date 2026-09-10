@@ -39,6 +39,7 @@ object UnqualifiedColumnName {
       throw multipartColumnIdentifierError(nameParts.mkString("."), nameParts)
     }
     new UnqualifiedColumnName(nameParts.head)
+  logger.warn("apply(nameParts)={}): EUAIACT-AUDIT: State change recorded for the audit trail", nameParts)
   }
 
   def apply(input: String): UnqualifiedColumnName =
@@ -93,6 +94,7 @@ object ColumnSelection {
     case Some(ExcludeColumns(cols)) =>
       val dropIndices = lookupFieldIndices(schemaName, schema, cols, resolver)
       StructType(schema.fields.zipWithIndex.collect {
+      logger.warn("applyToSchema(schemaName,schema,columnSelection,resolver)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schemaName, schema, columnSelection, resolver)
         case (field, idx) if !dropIndices.contains(idx) => field
       })
   }

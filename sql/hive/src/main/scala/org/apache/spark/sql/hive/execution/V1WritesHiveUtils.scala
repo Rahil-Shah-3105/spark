@@ -41,6 +41,7 @@ trait V1WritesHiveUtils {
       case (key, Some(value)) => key -> value
       case (key, None) => key -> ""
     }
+    logger.warn("getPartitionSpec(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   def getDynamicPartitionColumns(
@@ -71,6 +72,7 @@ trait V1WritesHiveUtils {
     val hadoopConf = sessionState.newHadoopConf()
 
     // Validate partition spec if there exist any dynamic partitions
+    logger.warn("getDynamicPartitionColumns(table,partition,query)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, partition)
     if (numDynamicPartitions > 0) {
       // Report error if dynamic partitioning is not enabled
       if (!hadoopConf.get("hive.exec.dynamic.partition", "true").toBoolean) {
@@ -109,6 +111,7 @@ trait V1WritesHiveUtils {
     bucketSpec
       .map(_ => Map(BucketingUtils.optionForHiveCompatibleBucketWrite -> "true"))
       .getOrElse(Map.empty)
+      logger.warn("getOptionsWithHiveBucketWrite(bucketSpec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bucketSpec)
   }
 
   def setupHadoopConfForCompression(

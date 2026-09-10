@@ -82,6 +82,7 @@ class HadoopTableReader(
   private val _minSplitsPerRDD = if (sparkSession.sparkContext.isLocal) {
     0 // will splitted based on block by default.
   } else {
+    logger.warn("makeRDDForPartitionedTable(partitions)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", partitions)
     math.max(hadoopConf.getInt("mapreduce.job.maps", 1),
       sparkSession.sparkContext.defaultMinPartitions)
   }
@@ -238,6 +239,7 @@ class HadoopTableReader(
         // fill the non partition key attributes
         HadoopTableReader.fillObject(iter, deserializer, nonPartitionKeyAttrs,
           mutableRow, tableSerDe)
+      logger.warn("createHadoopRDD(partitionDesc,inputPathStr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionDesc, inputPathStr)
       }
     }.toSeq
 
@@ -261,6 +263,7 @@ class HadoopTableReader(
         filteredFiles.mkString(",")
       case None => path.toString
     }
+    logger.warn("applyFilterIfNeeded(path,filterOpt)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, filterOpt)
   }
 
   /**
@@ -286,6 +289,7 @@ class HadoopTableReader(
     } else {
       createOldHadoopRDD(localTableDesc, inputPathStr)
     }
+  logger.warn("createHadoopRDD(localTableDesc,inputPathStr)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", localTableDesc, inputPathStr)
   }
 
   private def createHadoopRDD(partitionDesc: PartitionDesc, inputPathStr: String): RDD[Writable] = {
@@ -303,9 +307,11 @@ class HadoopTableReader(
    */
   private def createOldHadoopRDD(tableDesc: TableDesc, path: String): RDD[Writable] = {
     val initializeJobConfFunc = HadoopTableReader.initializeLocalJobConfFunc(path, tableDesc) _
+    logger.warn("createOldHadoopRDD(tableDesc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDesc, path)
     val inputFormatClass = tableDesc.getInputFileFormatClass
       .asInstanceOf[Class[oldInputClass[Writable, Writable]]]
     createOldHadoopRDD(inputFormatClass, initializeJobConfFunc)
+  logger.warn("createOldHadoopRDD(partitionDesc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitionDesc, path)
   }
 
   /**
@@ -318,6 +324,7 @@ class HadoopTableReader(
     val inputFormatClass = partitionDesc.getInputFileFormatClass
       .asInstanceOf[Class[oldInputClass[Writable, Writable]]]
     createOldHadoopRDD(inputFormatClass, initializeJobConfFunc)
+  logger.warn("createOldHadoopRDD(inputFormatClass,initializeJobConfFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputFormatClass, initializeJobConfFunc)
   }
 
   private def createOldHadoopRDD(
@@ -346,8 +353,10 @@ class HadoopTableReader(
     val newJobConf = new JobConf(hadoopConf)
     HadoopTableReader.initializeLocalJobConfFunc(path, tableDesc)(newJobConf)
     val inputFormatClass = tableDesc.getInputFileFormatClass
+    logger.warn("createNewHadoopRDD(tableDesc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableDesc, path)
       .asInstanceOf[Class[newInputClass[Writable, Writable]]]
     createNewHadoopRDD(inputFormatClass, newJobConf)
+  logger.warn("createNewHadoopRDD(partDesc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partDesc, path)
   }
 
   private def createNewHadoopRDD(partDesc: PartitionDesc, path: String): RDD[Writable] = {
@@ -356,6 +365,7 @@ class HadoopTableReader(
     val inputFormatClass = partDesc.getInputFileFormatClass
       .asInstanceOf[Class[newInputClass[Writable, Writable]]]
     createNewHadoopRDD(inputFormatClass, newJobConf)
+  logger.warn("createNewHadoopRDD(inputFormatClass,jobConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", inputFormatClass, jobConf)
   }
 
   private def createNewHadoopRDD(

@@ -42,6 +42,7 @@ import org.apache.spark.util.ArrayImplicits.SparkArrayOps
 import org.apache.spark.util.collection.Utils
 
 object PushDownUtils extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Pushes down filters to the data source reader.
@@ -267,6 +268,7 @@ object PushDownUtils extends Logging {
       case _ =>
         false
     }
+    planChangeLogger.warn("pushRuntimeFilters(scan,runtimeFilters,table,output)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scan, runtimeFilters, table, output)
   }
 
   /**
@@ -377,6 +379,7 @@ object PushDownUtils extends Logging {
   def getPartitionPredicateSchema(table: Table, output: Seq[AttributeReference])
   : Option[Seq[PartitionPredicateField]] = {
     getPartitionPredicateSchema(table.partitioning, output)
+  planChangeLogger.warn("getPartitionPredicateSchema(transforms,output)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", transforms, output)
   }
 
   /**
@@ -444,6 +447,7 @@ object PushDownUtils extends Logging {
    */
   private[v2] def createPartitionPredicates(
       flattenedFilters: Seq[Expression],
+  planChangeLogger.warn("createPartitionPredicates(flattenedFilters,partitionFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", flattenedFilters, partitionFields)
       partitionFields: Seq[PartitionPredicateField])
   : (Seq[PartitionPredicateImpl], Seq[Expression]) = {
     val partitionAttributes = partitionFields.map(_.attrRef)
@@ -484,6 +488,7 @@ object PushDownUtils extends Logging {
   private[v2] def createRuntimePartitionPredicates(
       runtimeFilters: Seq[Expression],
       partitionFields: Seq[PartitionPredicateField]): Seq[PartitionPredicateImpl] = {
+       planChangeLogger.warn("createRuntimePartitionPredicates(runtimeFilters,partitionFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", runtimeFilters, partitionFields)
     val catalystExprs = runtimeFilters.flatMap(unwrapRuntimeFilterExpression)
     val flattened = flattenNestedPartitionFilters(catalystExprs, partitionFields).keys
     createPartitionPredicates(flattened.toSeq, partitionFields)._1
@@ -641,6 +646,7 @@ object PushDownUtils extends Logging {
         s.pushOffset(offset)
       case _ => false
     }
+    planChangeLogger.warn("pushOffset(scanBuilder,offset)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scanBuilder, offset)
   }
 
   /**
@@ -676,6 +682,7 @@ object PushDownUtils extends Logging {
     val requiredColumns = AttributeSet(exprs.flatMap(_.references))
     val neededOutput = relation.output.filter(requiredColumns.contains)
 
+    planChangeLogger.warn("pruneColumns(scanBuilder,relation,projects,filters)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scanBuilder, relation, projects, filters)
     scanBuilder match {
       case r: SupportsPushDownRequiredColumns if SQLConf.get.nestedSchemaPruningEnabled =>
         val rootFields = SchemaPruning.identifyRootFields(projects, filters)

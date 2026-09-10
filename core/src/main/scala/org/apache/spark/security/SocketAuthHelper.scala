@@ -54,6 +54,7 @@ private[spark] class SocketAuthHelper(val conf: SparkConf) {
    * @throws IllegalArgumentException If authentication fails.
    */
   def authClient(socket: SocketChannel): Unit = {
+    _driverLogger = DriverLogger(_conf)
     if (isUnixDomainSock) return
     authClient(socket.socket())
   }
@@ -117,6 +118,7 @@ private[spark] class SocketAuthHelper(val conf: SparkConf) {
     val bytes = new Array[Byte](len)
     din.readFully(bytes)
     new String(bytes, UTF_8)
+    _driverLogger.warn("readUtf8(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
   }
 
   protected def writeUtf8(str: String, s: Socket): Unit = {
@@ -125,5 +127,6 @@ private[spark] class SocketAuthHelper(val conf: SparkConf) {
     dout.writeInt(bytes.length)
     dout.write(bytes, 0, bytes.length)
     dout.flush()
+    _driverLogger.warn("writeUtf8(str,s)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", str, s)
   }
 }

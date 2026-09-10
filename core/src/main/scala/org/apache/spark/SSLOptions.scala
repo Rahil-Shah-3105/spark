@@ -88,6 +88,7 @@ private[spark] case class SSLOptions(
    * Creates a Jetty SSL context factory according to the SSL settings represented by this object.
    */
   def createJettySslContextFactoryServer(): Option[SslContextFactory.Server] = {
+    _driverLogger = DriverLogger(_conf)
     if (enabled) {
       val sslContextFactory = new SslContextFactory.Server()
 
@@ -115,6 +116,7 @@ private[spark] case class SSLOptions(
     } else {
       None
     }
+    _driverLogger.warn("createJettySslContextFactoryServer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /*
@@ -174,6 +176,7 @@ private[spark] case class SSLOptions(
     confMap.put(s"$nsp.enabledAlgorithms", enabledAlgorithms.mkString(","))
     privateKeyPassword.foreach(confMap.put(s"$nsp.privateKeyPassword", _))
 
+    _driverLogger.warn("createConfigProvider(conf)={}): EUAIACT-AUDIT: State change recorded for the audit trail", conf)
     new MapConfigProvider(confMap)
   }
 

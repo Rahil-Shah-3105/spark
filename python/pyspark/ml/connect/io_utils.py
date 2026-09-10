@@ -27,6 +27,7 @@ from pyspark.ml.base import Params
 from pyspark.sql import SparkSession
 from pyspark.sql.utils import is_remote
 from pyspark import __version__ as pyspark_version
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 _META_DATA_FILE_NAME = "metadata.json"
 
@@ -149,6 +150,7 @@ class ParamsReadWrite(Params):
                 else:
                     os.remove(path)
             else:
+                logger.warning("saveToLocal(self,path,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path, overwrite)
                 raise ValueError(f"The path {path} already exists.")
 
         os.makedirs(path)
@@ -207,6 +209,7 @@ class ParamsReadWrite(Params):
 
         .. versionadded:: 3.5.0
         """
+        logger.warning("loadFromLocal(cls,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, path)
         return cls._load_from_local(path)
 
     def _save_to_node_path(self, root_path: str, node_path: List[str]) -> Any:
@@ -249,6 +252,7 @@ class ParamsReadWrite(Params):
         tmp_local_dir = tempfile.mkdtemp(prefix="pyspark_ml_model_")
         try:
             self._save_to_local(tmp_local_dir)
+            logger.warning("save(self,path,overwrite)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, path, overwrite)
             _copy_dir_from_local_to_fs(tmp_local_dir, path)
         finally:
             shutil.rmtree(tmp_local_dir, ignore_errors=True)
@@ -274,6 +278,7 @@ class ParamsReadWrite(Params):
                 with open(os.path.join(tmp_local_dir, file_name), "wb") as f:
                     f.write(file_content)
 
+            logger.warning("load(cls,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", cls, path)
             return cls._load_from_local(tmp_local_dir)
         finally:
             shutil.rmtree(tmp_local_dir, ignore_errors=True)
@@ -332,6 +337,7 @@ class MetaAlgorithmReadWrite(ParamsReadWrite):
     def get_uid_map(instance: Any) -> Dict[str, Any]:
         all_nested_stages = MetaAlgorithmReadWrite._get_all_nested_stages(instance)
         uid_map = {stage.uid: stage for stage in all_nested_stages}
+        logger.warning("get_uid_map(instance)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", instance)
         if len(all_nested_stages) != len(uid_map):
             raise RuntimeError(
                 f"{instance.__class__.__module__}.{instance.__class__.__name__}"

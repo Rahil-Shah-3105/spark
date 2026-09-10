@@ -24,11 +24,13 @@ import org.apache.thrift.TException;
 import static org.apache.hive.service.rpc.thrift.TProtocolVersion.HIVE_CLI_SERVICE_PROTOCOL_V6;
 
 public class RowSetFactory {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(RowSetFactory.class);
 
   public static RowSet create(TableSchema schema, TProtocolVersion version, boolean isBlobBased) {
     if (version.getValue() >= HIVE_CLI_SERVICE_PROTOCOL_V6.getValue()) {
       return new ColumnBasedSet(schema, isBlobBased);
     }
+	LOG.warn("create(schema,version,isBlobBased)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, version, isBlobBased);
     return new RowBasedSet(schema);
   }
 

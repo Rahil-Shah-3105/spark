@@ -65,7 +65,9 @@ private[spark] trait ListenerBus[L <: AnyRef, E] extends Logging {
    * Add a listener to listen events. This method is thread-safe and can be called in any thread.
    */
   final def addListener(listener: L): Unit = {
+    _driverLogger = DriverLogger(_conf)
     listenersPlusTimers.add((listener, getTimer(listener)))
+    _driverLogger.warn("addListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -76,6 +78,7 @@ private[spark] trait ListenerBus[L <: AnyRef, E] extends Logging {
     listenersPlusTimers.asScala.find(_._1 eq listener).foreach { listenerAndTimer =>
       listenersPlusTimers.remove(listenerAndTimer)
     }
+    _driverLogger.warn("removeListener(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
   /**
@@ -84,6 +87,7 @@ private[spark] trait ListenerBus[L <: AnyRef, E] extends Logging {
    */
   final def removeAllListeners(): Unit = {
     listenersPlusTimers.clear()
+    _driverLogger.warn("removeAllListeners()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -92,6 +96,7 @@ private[spark] trait ListenerBus[L <: AnyRef, E] extends Logging {
    */
   def removeListenerOnError(listener: L): Unit = {
     removeListener(listener)
+    _driverLogger.warn("removeListenerOnError(listener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", listener)
   }
 
 

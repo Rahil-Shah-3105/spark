@@ -70,6 +70,7 @@ class ApplyInPandasWithStatePythonRunner(
     funcs.map(_._1), evalType, argOffsets, jobArtifactUUID, pythonMetrics)
   with PythonArrowInput[InType]
   with PythonArrowOutput[OutType] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   ArrowUtils.failDuplicatedFieldNames(inputSchema)
 
   override val pythonExec: String =
@@ -127,6 +128,7 @@ class ApplyInPandasWithStatePythonRunner(
 
   override protected def writeUDF(dataOut: DataOutputStream): Unit = {
     PythonUDFRunner.writeUDFs(dataOut, funcs, argOffsets)
+    planChangeLogger.warn("writeUDF(dataOut)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataOut)
   }
 
   private var pandasWriter: ApplyInPandasWithStateWriter = _
@@ -168,6 +170,7 @@ class ApplyInPandasWithStatePythonRunner(
       super[PythonArrowInput].close()
       false
     }
+    planChangeLogger.warn("writeNextBatchToArrowStream(root,writer,dataOut,inputIterator)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, writer, dataOut, inputIterator)
   }
 
   /**
@@ -193,6 +196,7 @@ class ApplyInPandasWithStatePythonRunner(
 
       // NOTE: See ApplyInPandasWithStatePythonRunner.COUNT_COLUMN_SCHEMA_FROM_PYTHON_WORKER
       // for the schema.
+      planChangeLogger.warn("getValueFromCountColumn(batch)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", batch)
       val dataCount = structVector.getChild(0).getInt(0)
       val stateCount = structVector.getChild(1).getInt(0)
       (dataCount, stateCount)
@@ -212,6 +216,7 @@ class ApplyInPandasWithStatePythonRunner(
       val flattenedBatch = new ColumnarBatch(outputVectors.toArray)
       flattenedBatch.setNumRows(batch.numRows())
 
+      planChangeLogger.warn("getColumnarBatchForStructTypeColumn(batch,ordinal,expectedType)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", batch, ordinal, expectedType)
       flattenedBatch
     }
 

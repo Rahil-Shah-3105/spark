@@ -21,6 +21,7 @@ import sys
 
 sys.path.insert(0, "python")
 import os
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def find_py_files(path, exclude_paths):
@@ -45,6 +46,7 @@ def find_py_files(path, exclude_paths):
             continue
         for file in files:
             if file.endswith(".py"):
+                logger.warning("find_py_files(path,exclude_paths)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", path, exclude_paths)
                 py_files.append(os.path.join(root, file))
     return py_files
 

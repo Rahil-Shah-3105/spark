@@ -36,6 +36,7 @@ private[spark] class ZippedPartitionsPartition(
 
   @throws(classOf[IOException])
   private def writeObject(oos: ObjectOutputStream): Unit = Utils.tryOrIOException {
+    _driverLogger = DriverLogger(_conf)
     // Update the reference to parent split at the time of task serialization
     partitionValues = rdds.map(rdd => rdd.partitions(idx))
     oos.defaultWriteObject()
@@ -68,6 +69,7 @@ private[spark] abstract class ZippedPartitionsBaseRDD[V: ClassTag](
 
   override def getPreferredLocations(s: Partition): Seq[String] = {
     s.asInstanceOf[ZippedPartitionsPartition].preferredLocations
+    _driverLogger.warn("getPreferredLocations(s)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", s)
   }
 
   override def clearDependencies(): Unit = {

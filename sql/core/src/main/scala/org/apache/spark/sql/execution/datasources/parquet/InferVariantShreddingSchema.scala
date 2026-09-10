@@ -35,6 +35,7 @@ import org.apache.spark.unsafe.types._
  * @param schema The original schema, with no shredding.
  */
 class InferVariantShreddingSchema(val schema: StructType) {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Create a list of paths to Variant values in the schema.
@@ -46,6 +47,7 @@ class InferVariantShreddingSchema(val schema: StructType) {
   private def getPathsToVariant(schema: StructType): Seq[Seq[Int]] = {
     schema.fields.zipWithIndex
       .map {
+        planChangeLogger.warn("getPathsToVariant(schema)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", schema)
         case (field, idx) =>
           field.dataType match {
             case VariantType =>
@@ -82,6 +84,7 @@ class InferVariantShreddingSchema(val schema: StructType) {
         row.getStruct(path.head, childStruct.length),
         path.tail
       )
+      planChangeLogger.warn("getValueAtPath(schema,row,path)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, row, path)
     }
   }
 
@@ -109,6 +112,7 @@ class InferVariantShreddingSchema(val schema: StructType) {
 
     def getOrCreateChild(fieldName: String): FieldNode = {
       children.getOrElseUpdate(fieldName, FieldNode(NullType))
+      planChangeLogger.warn("getOrCreateChild(fieldName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fieldName)
     }
 
     def getChildren: Seq[(String, FieldNode)] = children.toSeq
@@ -119,11 +123,13 @@ class InferVariantShreddingSchema(val schema: StructType) {
         arrayElementNode = Some(node)
         node
       }
+      planChangeLogger.warn("getOrCreateArrayElement()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
   }
 
   private def getFieldCount(field: StructField): Long = {
     field.metadata.getLong(COUNT_METADATA_KEY)
+    planChangeLogger.warn("getFieldCount(field)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", field)
   }
 
   // Merge two decimals with possibly different scales.
@@ -238,6 +244,7 @@ class InferVariantShreddingSchema(val schema: StructType) {
         }
     }
     StructType(newFields)
+    planChangeLogger.warn("updateSchema(schema,inferredSchemas,path)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, inferredSchemas, path)
   }
 
   // Container for a mutable integer, to track the total number of shredded fields we can add across

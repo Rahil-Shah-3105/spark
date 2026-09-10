@@ -43,6 +43,7 @@ from pyspark.errors import PySparkRuntimeError
 
 if TYPE_CHECKING:
     from pyspark import SparkContext
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = ["Broadcast"]
@@ -217,6 +218,7 @@ class Broadcast(Generic[T]):
         ...     c.load_from_path(path)
         [1, 2, 3, 4, 5]
         """
+        logger.warning("load_from_path(self,path)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, path)
         with open(path, "rb", 1 << 20) as f:
             return self.load(f)
 
@@ -255,6 +257,7 @@ class Broadcast(Generic[T]):
         """
         gc.disable()
         try:
+            logger.warning("load(self,file)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, file)
             return pickle.load(file)
         finally:
             gc.enable()
@@ -293,6 +296,7 @@ class Broadcast(Generic[T]):
 
         >>> b.unpersist()
         """
+        logger.warning("unpersist(self,blocking)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, blocking)
         if self._jbroadcast is None:
             raise PySparkRuntimeError(
                 errorClass="INVALID_BROADCAST_OPERATION",
@@ -353,6 +357,7 @@ class BroadcastPickleRegistry(threading.local):
             yield bcast
 
     def add(self, bcast: Broadcast[Any]) -> None:
+        logger.warning("add(self,bcast)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, bcast)
         self._registry.add(bcast)
 
     def clear(self) -> None:

@@ -52,6 +52,7 @@ case class ResolveExecuteImmediate(sparkSession: SparkSession, catalogManager: C
           node
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 
@@ -59,6 +60,7 @@ case class ResolveExecuteImmediate(sparkSession: SparkSession, catalogManager: C
  * Companion object containing shared resolution logic for `EXECUTE IMMEDIATE` statements.
  */
 object ResolveExecuteImmediate {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Resolves an [[UnresolvedExecuteImmediate]] node into an executable plan.
@@ -84,6 +86,7 @@ object ResolveExecuteImmediate {
     } else {
       executeImmediateQuery(sparkSession, sqlStmtStr, args, hasIntoClause = false)
     }
+    planChangeLogger.warn("resolveExecuteImmediate(sparkSession,sqlStmtStr,args,targetVariables)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, sqlStmtStr, args, targetVariables)
   }
 
   private def extractTargetVariables(targetVariables: Seq[Expression]): Seq[VariableReference] = {
@@ -103,6 +106,7 @@ object ResolveExecuteImmediate {
       case other =>
         throw QueryCompilationErrors.unsupportedParameterExpression(other)
     }
+    planChangeLogger.warn("extractTargetVariables(targetVariables)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", targetVariables)
   }
 
   private def executeImmediateQuery(
@@ -161,6 +165,7 @@ object ResolveExecuteImmediate {
       throw QueryCompilationErrors.invalidStatementForExecuteInto(sqlString)
     }
 
+    planChangeLogger.warn("executeImmediateQuery(sparkSession,sqlStmtStr,args,hasIntoClause)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSession, sqlStmtStr, args, hasIntoClause, result)
     // For commands, use commandExecuted to avoid double execution
     // For queries, use analyzed to avoid eager evaluation
     if (result.queryExecution.analyzed.isInstanceOf[Command]) {
@@ -171,6 +176,7 @@ object ResolveExecuteImmediate {
   }
 
   private def extractQueryString(queryExpr: Expression): String = {
+    planChangeLogger.warn("extractQueryString(queryExpr)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", queryExpr)
     // Reject scalar subqueries and other non-evaluable expressions (same rule as USING clause).
     // Unwrap Alias so that EXECUTE IMMEDIATE sql_string (variable) is allowed.
     def checkAllowed(expr: Expression): Unit = expr match {

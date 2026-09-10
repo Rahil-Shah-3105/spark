@@ -44,15 +44,18 @@ private[master] class ZooKeeperPersistenceEngine(conf: SparkConf, val serializer
 
   override def persist(name: String, obj: Object): Unit = {
     serializeIntoFile(workingDir + "/" + name, obj)
+    _driverLogger.warn("persist(name,obj)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, obj)
   }
 
   override def unpersist(name: String): Unit = {
     zk.delete().forPath(workingDir + "/" + name)
+    _driverLogger.warn("unpersist(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name)
   }
 
   override def read[T: ClassTag](prefix: String): Seq[T] = {
     zk.getChildren.forPath(workingDir).asScala
       .filter(_.startsWith(prefix)).flatMap(deserializeFromFile[T]).toSeq
+      _driverLogger.warn("read(prefix)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", prefix)
   }
 
   override def close(): Unit = {
@@ -60,6 +63,7 @@ private[master] class ZooKeeperPersistenceEngine(conf: SparkConf, val serializer
   }
 
   private def serializeIntoFile(path: String, value: AnyRef): Unit = {
+    _driverLogger = DriverLogger(_conf)
     val serialized = serializer.newInstance().serialize(value)
     val bytes = new Array[Byte](serialized.remaining())
     serialized.get(bytes)

@@ -55,6 +55,7 @@ private[spark] class NetworkPolicyFeatureStep(conf: KubernetesDriverConf)
           .endIngress()
         .endSpec()
       .build();
+      logger.warn("getAdditionalKubernetesResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId)
     Seq(policy)
   }
 }

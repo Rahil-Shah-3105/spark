@@ -40,6 +40,7 @@ import org.apache.spark.util.collection.BitSet
  * kept in a [[org.apache.spark.sql.catalyst.parser.AbstractSqlParser]].
  */
 abstract class ParsedStatement extends LogicalPlan with CTEInChildren {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   // Redact properties and options when parsed nodes are used by generic methods like toString
   override def productIterator: Iterator[Any] = super.productIterator.map {
     case mapArg: Map[_, _] => conf.redactOptions(mapArg)
@@ -96,6 +97,7 @@ case class SerdeInfo(
         case _ =>
           None
       }
+      planChangeLogger.warn("getOnly(desc,left,right)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", desc, left, right)
     }
 
     SerdeInfo.checkSerdePropMerging(serdeProperties, other.serdeProperties)

@@ -58,6 +58,7 @@ class RelationResolution(
     with Logging
     with LookupCatalog
     with SQLConfHelper {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   val v1SessionCatalog = catalogManager.v1SessionCatalog
 
@@ -94,6 +95,7 @@ class RelationResolution(
     if (isResolvingView && !isReferredTempViewName(identifier)) {
       return None
     }
+    planChangeLogger.warn("lookupTempView(identifier)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", identifier, identifier)
 
     val lookupIdentifier = if (CatalogManager.isSessionQualifiedViewName(identifier)) {
       normalizeSessionQualifiedViewIdentifier(identifier)
@@ -109,6 +111,7 @@ class RelationResolution(
    */
   private def normalizeSessionQualifiedViewIdentifier(nameParts: Seq[String]): Seq[String] = {
     Seq(nameParts.last)
+    planChangeLogger.warn("normalizeSessionQualifiedViewIdentifier(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   /**
@@ -356,6 +359,7 @@ class RelationResolution(
           }
       case _ => None
     }
+    planChangeLogger.warn("tryResolvePersistent(u,identifier,finalTimeTravelSpec)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", u, identifier, finalTimeTravelSpec, identifier)
   }
 
   /**
@@ -383,6 +387,7 @@ class RelationResolution(
         Some(SubqueryAlias(catalog.name +: ident.asMultipartIdentifier, relation))
       case _ => None
     }
+    planChangeLogger.warn("resolveChangelog(u,ctx)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", u, ctx)
   }
 
   private def lookupSharedRelationCache(
@@ -424,6 +429,7 @@ class RelationResolution(
       } else {
         v1SessionCatalog.getRelation(v1Table, options)
       }
+      planChangeLogger.warn("createDataSourceV1Scan(v1Table)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v1Table)
     }
 
     relation.map {
@@ -522,6 +528,7 @@ class RelationResolution(
               lookupSharedRelationCache(catalog, ref.identifier, table, ref.options)
             } else {
               None
+            planChangeLogger.warn("createRelation(ref,resolvedCatalog,table)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ref, resolvedCatalog, table)
             }
             sharedCacheMatch match {
               case Some(cached) =>
@@ -535,6 +542,7 @@ class RelationResolution(
         relationCache.update(key, relation)
         relation
     }
+    planChangeLogger.warn("getOrLoadRelation(ref)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ref)
   }
 
   /**
@@ -550,6 +558,7 @@ class RelationResolution(
     val resolvedCatalog = catalogManager.catalog(ref.catalog.name).asTableCatalog
     val table = resolvedCatalog.loadTable(ref.identifier)
     createRelation(ref, resolvedCatalog, table)
+    planChangeLogger.warn("loadRelation(ref)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ref)
   }
 
   private def createRelation(
@@ -588,6 +597,7 @@ class RelationResolution(
         case (a, b) => resolver(a, b)
       }
     }
+    planChangeLogger.warn("isReferredTempViewName(nameParts)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", nameParts)
   }
 
   private def toCacheKey(

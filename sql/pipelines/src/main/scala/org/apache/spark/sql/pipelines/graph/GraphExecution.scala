@@ -218,6 +218,7 @@ abstract class GraphExecution(
         throw new TimeoutException("Failed to stop the update due to a hanging control thread.")
       }
     }
+    logger.warn("stopThread(thread)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", thread)
   }
 }
 

@@ -33,6 +33,7 @@ case class MapPartitionsRWrapper(
     inputSchema: StructType,
     outputSchema: StructType) extends (Iterator[Any] => Iterator[Any]) {
   def apply(iter: Iterator[Any]): Iterator[Any] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // If the content of current DataFrame is serialized R data?
     val isSerializedRData = inputSchema == SERIALIZED_R_DATA_SCHEMA
 
@@ -55,6 +56,7 @@ case class MapPartitionsRWrapper(
       func, deserializer, serializer, packageNames, broadcastVars,
       isDataFrame = true, colNames = colNames, mode = RRunnerModes.DATAFRAME_DAPPLY)
     // Partition index is ignored. Dataset has no support for mapPartitionsWithIndex.
+    planChangeLogger.warn("apply(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
     val outputIter = runner.compute(newIter, -1)
 
     if (serializer == SerializationFormats.ROW) {

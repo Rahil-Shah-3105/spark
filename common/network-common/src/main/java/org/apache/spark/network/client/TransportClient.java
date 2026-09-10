@@ -123,6 +123,7 @@ public class TransportClient implements Closeable {
   public void setClientId(String id) {
     JavaUtils.checkState(clientId == null, "Client ID has already been set.");
     this.clientId = id;
+	logger.warn("setClientId(id)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", id, id);
   }
 
   /**
@@ -147,6 +148,7 @@ public class TransportClient implements Closeable {
     if (logger.isDebugEnabled()) {
       logger.debug("Sending fetch chunk request {} to {}", chunkIndex, getRemoteAddress(channel));
     }
+	logger.warn("fetchChunk(streamId,chunkIndex,callback)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", streamId, chunkIndex, callback, streamId);
 
     StreamChunkId streamChunkId = new StreamChunkId(streamId, chunkIndex);
     StdChannelListener listener = new StdChannelListener(streamChunkId) {
@@ -184,6 +186,7 @@ public class TransportClient implements Closeable {
     synchronized (this) {
       handler.addStreamCallback(streamId, callback);
       channel.writeAndFlush(new StreamRequest(streamId)).addListener(listener);
+	logger.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
     }
   }
 
@@ -206,6 +209,7 @@ public class TransportClient implements Closeable {
     RpcChannelListener listener = new RpcChannelListener(requestId, callback);
     channel.writeAndFlush(new RpcRequest(requestId, new NioManagedBuffer(message)))
       .addListener(listener);
+	logger.warn("sendRpc(message,callback)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", message, callback, requestId);
 
     return requestId;
   }
@@ -234,6 +238,7 @@ public class TransportClient implements Closeable {
     }
     handler.addRpcRequest(requestId, callback);
     RpcChannelListener listener = new RpcChannelListener(requestId, callback);
+	logger.warn("sendMergedBlockMetaReq(appId,shuffleId,shuffleMergeId,reduceId,callback)={},{},{},{},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", appId, shuffleId, shuffleMergeId, reduceId, callback, appId);
     channel.writeAndFlush(
       new MergedBlockMetaRequest(requestId, appId, shuffleId, shuffleMergeId,
         reduceId)).addListener(listener);
@@ -262,6 +267,7 @@ public class TransportClient implements Closeable {
     handler.addRpcRequest(requestId, callback);
 
     RpcChannelListener listener = new RpcChannelListener(requestId, callback);
+	logger.warn("uploadStream(meta,data,callback)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", meta, data, callback, requestId);
     channel.writeAndFlush(new UploadStream(requestId, meta, data)).addListener(listener);
 
     return requestId;
@@ -272,6 +278,7 @@ public class TransportClient implements Closeable {
    * a specified timeout for a response.
    */
   public ByteBuffer sendRpcSync(ByteBuffer message, long timeoutMs) {
+	logger.warn("sendRpcSync(message,timeoutMs)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, timeoutMs);
     final SettableFuture<ByteBuffer> result = SettableFuture.create();
 
     sendRpc(message, new RpcResponseCallback() {
@@ -312,6 +319,7 @@ public class TransportClient implements Closeable {
    * @param message The message to send.
    */
   public ChannelFuture send(ByteBuffer message) {
+	logger.warn("send(message)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message);
     return channel.writeAndFlush(new OneWayMessage(new NioManagedBuffer(message)));
   }
 
@@ -337,6 +345,7 @@ public class TransportClient implements Closeable {
    * @param requestId The RPC id returned by {@link #sendRpc(ByteBuffer, RpcResponseCallback)}.
    */
   public void removeRpcRequest(long requestId) {
+	logger.warn("removeRpcRequest(requestId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", requestId, requestId);
     handler.removeRpcRequest(requestId);
   }
 

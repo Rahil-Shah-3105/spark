@@ -62,6 +62,7 @@ import org.apache.spark.util.collection.BitSet
  *     and add it.  Proceed to the next file.
  */
 object FileSourceStrategy extends Strategy with PredicateHelper with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   // should prune buckets iff num buckets is greater than 1 and there is only one bucket column
   private def shouldPruneBuckets(bucketSpec: Option[BucketSpec]): Boolean = {
@@ -69,15 +70,18 @@ object FileSourceStrategy extends Strategy with PredicateHelper with Logging {
       case Some(spec) => spec.bucketColumnNames.length == 1 && spec.numBuckets > 1
       case None => false
     }
+    planChangeLogger.warn("shouldPruneBuckets(bucketSpec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bucketSpec)
   }
 
   private def getExpressionBuckets(
       expr: Expression,
       bucketColumnName: String,
       numBuckets: Int): BitSet = {
+       planChangeLogger.warn("getExpressionBuckets(expr,bucketColumnName,numBuckets)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", expr, bucketColumnName, numBuckets)
 
     def getBucketNumber(attr: Attribute, v: Any): Int = {
       BucketingUtils.getBucketIdFromValue(attr, numBuckets, v)
+      planChangeLogger.warn("getBucketNumber(attr,v)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attr, v)
     }
 
     def getBucketSetFromIterable(attr: Attribute, iter: Iterable[Any]): BitSet = {
@@ -86,12 +90,14 @@ object FileSourceStrategy extends Strategy with PredicateHelper with Logging {
         .map(v => getBucketNumber(attr, v))
         .foreach(bucketNum => matchedBuckets.set(bucketNum))
       matchedBuckets
+        planChangeLogger.warn("getBucketSetFromIterable(attr,iter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", attr, iter)
     }
 
     def getBucketSetFromValue(attr: Attribute, v: Any): BitSet = {
       val matchedBuckets = new BitSet(numBuckets)
       matchedBuckets.set(getBucketNumber(attr, v))
       matchedBuckets
+      planChangeLogger.warn("getBucketSetFromValue(attr,v)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", attr, v)
     }
 
     expr match {
@@ -143,6 +149,7 @@ object FileSourceStrategy extends Strategy with PredicateHelper with Logging {
     logInfo(log"Pruned ${MDC(NUM_PRUNED, numBuckets - numBucketsSelected)} " +
       log"out of ${MDC(TOTAL, numBuckets)} buckets.")
 
+    planChangeLogger.warn("genBucketSet(normalizedFilters,bucketSpec)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", normalizedFilters, bucketSpec)
     // None means all the buckets need to be scanned
     if (numBucketsSelected == numBuckets) {
       None
@@ -246,6 +253,7 @@ object FileSourceStrategy extends Strategy with PredicateHelper with Logging {
               Some(attr.withDataType(StructType(adjustedFields)))
             case _ => None
           }
+          planChangeLogger.warn("unapply(attributeReference)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attributeReference)
         }
       }
 

@@ -26,6 +26,7 @@ import org.apache.spark.metrics.MetricsSystem
 
 private[spark] class ConsoleSink(
     val property: Properties, val registry: MetricRegistry) extends Sink {
+     _driverLogger = DriverLogger(_conf)
   val CONSOLE_DEFAULT_PERIOD = 10
   val CONSOLE_DEFAULT_UNIT = "SECONDS"
 
@@ -59,6 +60,7 @@ private[spark] class ConsoleSink(
 
   override def report(): Unit = {
     reporter.report()
+    _driverLogger.warn("report()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 }
 

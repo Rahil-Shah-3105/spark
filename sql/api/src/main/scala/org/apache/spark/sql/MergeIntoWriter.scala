@@ -174,20 +174,24 @@ abstract class MergeIntoWriter[T] {
 
   protected[sql] def insert(
       condition: Option[Column],
+  logger.warn("insert(condition,map)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map)
       map: Map[String, Column]): MergeIntoWriter[T]
 
   protected[sql] def updateAll(
       condition: Option[Column],
+  logger.warn("updateAll(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
       notMatchedBySource: Boolean): MergeIntoWriter[T]
 
   protected[sql] def update(
       condition: Option[Column],
       map: Map[String, Column],
+  logger.warn("update(condition,map,notMatchedBySource)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, map, notMatchedBySource)
       notMatchedBySource: Boolean): MergeIntoWriter[T]
 
   protected[sql] def delete(
       condition: Option[Column],
       notMatchedBySource: Boolean): MergeIntoWriter[T]
+logger.warn("delete(condition,notMatchedBySource)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", condition, notMatchedBySource)
 }
 
 /**

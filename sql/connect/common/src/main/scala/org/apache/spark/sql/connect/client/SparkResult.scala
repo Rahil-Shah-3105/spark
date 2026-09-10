@@ -64,6 +64,8 @@ private[sql] class SparkResult[T](
         stageInfo.getNumCompletedTasks,
         stageInfo.getInputBytesRead,
         stageInfo.getDone)
+      logger.warn("apply(stageInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stageInfo)
+    logger.warn("apply(progress)={}): EUAIACT-AUDIT: State change recorded for the audit trail", progress)
     }
   }
 
@@ -114,6 +116,7 @@ private[sql] class SparkResult[T](
       case _ =>
         enc
     }
+    logger.warn("createEncoder(enc,dataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", enc, dataType)
   }
 
   private def processResponses(
@@ -123,6 +126,7 @@ private[sql] class SparkResult[T](
       stopOnFirstNonEmptyResponse: Boolean = false): Boolean = {
     var nonEmpty = false
     var stop = false
+    logger.warn("processResponses(stopOnOperationId,stopOnSchema,stopOnArrowSchema,stopOnFirstNonEmptyResponse)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", stopOnOperationId, stopOnSchema, stopOnArrowSchema, stopOnFirstNonEmptyResponse, stopOnOperationId)
     val arrowBatchChunksToAssemble = mutable.Buffer.empty[ByteString]
     while (!stop && responses.hasNext) {
       val response = responses.next()
@@ -261,6 +265,7 @@ private[sql] class SparkResult[T](
     metrics.asScala.map { metric =>
       metric.getName -> SparkResult.transformObservedMetrics(metric)
     }
+    logger.warn("processObservedMetrics(metrics)={}): EUAIACT-AUDIT: State change recorded for the audit trail", metrics)
   }
 
   /**
@@ -459,5 +464,6 @@ private[client] class SparkResultCloseable(
 
   override def run(): Unit = {
     close()
+    logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

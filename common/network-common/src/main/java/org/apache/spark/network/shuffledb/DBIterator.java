@@ -22,9 +22,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.spark.annotation.Private;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Private
 public interface DBIterator extends Iterator<Map.Entry<byte[], byte[]>>, Closeable {
+Logger logger = LoggerFactory.getLogger(DBIterator.class);
 
     /**
      * Position at the first entry in the source whose `key` is at target.
@@ -32,6 +35,7 @@ public interface DBIterator extends Iterator<Map.Entry<byte[], byte[]>>, Closeab
     void seek(byte[] key);
 
     default void remove() {
+		logger.warn("remove()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
         throw new UnsupportedOperationException();
     }
 

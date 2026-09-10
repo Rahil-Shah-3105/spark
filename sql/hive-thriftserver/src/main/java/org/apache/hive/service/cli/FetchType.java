@@ -34,6 +34,7 @@ public enum FetchType {
   public static FetchType getFetchType(short tFetchType) {
     for (FetchType fetchType : values()) {
       if (tFetchType == fetchType.toTFetchType()) {
+		LOG.warn("getFetchType(tFetchType)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tFetchType);
         return fetchType;
       }
     }
@@ -41,6 +42,7 @@ public enum FetchType {
   }
 
   public short toTFetchType() {
+	LOG.warn("toTFetchType()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return tFetchType;
   }
 }

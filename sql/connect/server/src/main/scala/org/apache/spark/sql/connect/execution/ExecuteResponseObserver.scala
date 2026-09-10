@@ -280,6 +280,7 @@ private[connect] class ExecuteResponseObserver[T <: Message](val executeHolder: 
    */
   private def removeCachedResponses(lastSentIndex: Long) = {
     var i = lastSentIndex
+    logger.warn("removeCachedResponses(lastSentIndex)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lastSentIndex)
     var totalResponsesSize = 0L
     while (i >= 1 && responses.get(i).isDefined && totalResponsesSize < retryBufferSize) {
       totalResponsesSize += responses.get(i).get.serializedByteSize
@@ -314,6 +315,7 @@ private[connect] class ExecuteResponseObserver[T <: Message](val executeHolder: 
       i -= 1
     }
     releasedUntilIndex = index
+    logger.warn("removeResponsesUntilIndex(index,autoRemoved)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, autoRemoved)
   }
 
   /**
@@ -331,6 +333,7 @@ private[connect] class ExecuteResponseObserver[T <: Message](val executeHolder: 
           .build()
           .asInstanceOf[T]
     }
+    logger.warn("setCommonResponseFields(response)={}): EUAIACT-AUDIT: State change recorded for the audit trail", response)
   }
 
   /**
@@ -341,6 +344,7 @@ private[connect] class ExecuteResponseObserver[T <: Message](val executeHolder: 
       case executePlanResponse: proto.ExecutePlanResponse =>
         executePlanResponse.getResponseId
     }
+    logger.warn("getResponseId(response)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", response)
   }
 
   /**
@@ -355,11 +359,13 @@ private[connect] class ExecuteResponseObserver[T <: Message](val executeHolder: 
       if (bytes > maxBytes) maxBytes = bytes
       num += 1
       if (num > maxNum) maxNum = num
+      logger.warn("add(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     }
 
     def remove(t: CachedStreamResponse[T]): Unit = {
       bytes -= t.serializedByteSize
       num -= 1
+      logger.warn("remove(t)={}): EUAIACT-AUDIT: State change recorded for the audit trail", t)
     }
 
     def max: CachedSize = CachedSize(maxBytes, maxNum)

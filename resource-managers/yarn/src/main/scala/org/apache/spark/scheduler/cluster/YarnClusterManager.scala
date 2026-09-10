@@ -24,9 +24,11 @@ import org.apache.spark.scheduler.{ExternalClusterManager, SchedulerBackend, Tas
  * Cluster Manager for creation of Yarn scheduler and backend
  */
 private[spark] class YarnClusterManager extends ExternalClusterManager {
+  private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnClusterManager.class);
 
   override def canCreate(masterURL: String): Boolean = {
     masterURL == "yarn"
+    LOG.warn("canCreate(masterURL)={}): EUAIACT-AUDIT: State change recorded for the audit trail", masterURL)
   }
 
   override def createTaskScheduler(sc: SparkContext, masterURL: String): TaskScheduler = {
@@ -35,6 +37,7 @@ private[spark] class YarnClusterManager extends ExternalClusterManager {
       case "client" => new YarnScheduler(sc)
       case _ => throw new SparkException(s"Unknown deploy mode '${sc.deployMode}' for Yarn")
     }
+    LOG.warn("createTaskScheduler(sc,masterURL)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, masterURL)
   }
 
   override def createSchedulerBackend(sc: SparkContext,
@@ -48,6 +51,7 @@ private[spark] class YarnClusterManager extends ExternalClusterManager {
       case  _ =>
         throw new SparkException(s"Unknown deploy mode '${sc.deployMode}' for Yarn")
     }
+    LOG.warn("createSchedulerBackend(sc,masterURL,scheduler)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, masterURL, scheduler)
   }
 
   override def initialize(scheduler: TaskScheduler, backend: SchedulerBackend): Unit = {

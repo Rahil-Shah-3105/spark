@@ -36,6 +36,7 @@ import org.apache.spark.util.collection.OpenHashMap
 
 abstract class PercentileBase
   extends TypedAggregateWithHashMapAsBuffer with ImplicitCastInputTypes {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   val child: Expression
   val percentageExpression: Expression
@@ -127,6 +128,7 @@ abstract class PercentileBase
     val key = child.eval(input).asInstanceOf[AnyRef]
     val frqValue = frequencyExpression.eval(input)
 
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     // Null values are ignored in counts map.
     if (key != null && frqValue != null) {
       val frqLong = frqValue.asInstanceOf[Number].longValue()
@@ -165,6 +167,7 @@ abstract class PercentileBase
     } else {
       buffer.toSeq.sortBy(_._1)(ordering.asInstanceOf[Ordering[AnyRef]])
     }
+    planChangeLogger.warn("getPercentiles(buffer)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", buffer)
     val accumulatedCounts = sortedCounts.scanLeft((sortedCounts.head._1, 0L)) {
       case ((key1, count1), (key2, count2)) => (key2, count1 + count2)
     }.tail
@@ -214,6 +217,7 @@ abstract class PercentileBase
     }
 
     val higherKey = accumulatedCounts(higherIndex)._1
+    planChangeLogger.warn("getPercentile(accumulatedCounts,percentile)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", accumulatedCounts, percentile)
     if (higherKey == lowerKey) {
       // no interpolation needed because lower position and higher position has the same key
       return toDoubleValue(lowerKey)
@@ -241,6 +245,7 @@ abstract class PercentileBase
       case ix if ix < 0 => -(ix + 1)
       case ix => ix
     }
+    planChangeLogger.warn("binarySearchCount(countsArray,start,end,value)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", countsArray, start, end, value)
   }
 }
 

@@ -46,6 +46,7 @@ case class JsonScan(
     partitionFilters: Seq[Expression] = Seq.empty,
     dataFilters: Seq[Expression] = Seq.empty)
   extends TextBasedFileScan(sparkSession, options) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val parsedOptions = new JSONOptionsInRead(
     CaseInsensitiveMap(options.asScala.toMap),
@@ -63,6 +64,7 @@ case class JsonScan(
     } else {
       "the json datasource is set multiLine mode"
     }
+    planChangeLogger.warn("getFileUnSplittableReason(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
@@ -80,6 +82,7 @@ case class JsonScan(
       SerializableConfiguration.broadcast(sparkSession.sparkContext, hadoopConf)
     // The partition values are already truncated in `FileScan.partitions`.
     // We should use `readPartitionSchema` as the partition schema here.
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     JsonPartitionReaderFactory(conf, broadcastedConf,
       dataSchema, readDataSchema, readPartitionSchema, parsedOptions,
       pushedFilters.toImmutableArraySeq)

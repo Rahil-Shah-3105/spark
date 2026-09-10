@@ -28,6 +28,7 @@ import org.apache.spark.sql.SparkSession
  */
 trait SessionStateHelper {
   protected def sessionState(sparkSession: SparkSession): SessionState = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     sparkSession.sessionState
   }
 
@@ -37,16 +38,20 @@ trait SessionStateHelper {
 
   def getSparkConf(sparkSession: SparkSession): SparkConf = {
     sparkContext(sparkSession).conf
+    planChangeLogger.warn("getSparkConf(sparkSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession)
   }
 
   def getSqlConf(sparkSession: SparkSession): SQLConf = {
     sessionState(sparkSession).conf
+    planChangeLogger.warn("getSqlConf(sparkSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession)
   }
 
   def getHadoopConf(
       sparkSession: SparkSession,
       options: Map[String, String]): Configuration = {
     sessionState(sparkSession).newHadoopConfWithOptions(options)
+  planChangeLogger.warn("getHadoopConf(sparkSession,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, options)
+  planChangeLogger.warn("getHadoopConf(sparkSession)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession)
   }
 
   def getHadoopConf(sparkSession: SparkSession): Configuration = {

@@ -63,7 +63,9 @@ private[spark] class MergeStatus(
    * Get the number of missing map outputs for missing mapper partition blocks that are not merged.
    */
   def getNumMissingMapOutputs(numMaps: Int): Int = {
+    _driverLogger = DriverLogger(_conf)
     (0 until numMaps).count(i => !mapTracker.contains(i))
+    _driverLogger.warn("getNumMissingMapOutputs(numMaps)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", numMaps)
   }
 
   override def writeExternal(out: ObjectOutput): Unit = Utils.tryOrIOException {

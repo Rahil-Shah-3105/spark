@@ -20,6 +20,8 @@ package org.apache.spark.sql.types;
 import java.util.*;
 
 import org.apache.spark.annotation.Stable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * To get/create specific data type, users should use singleton objects and factory methods
@@ -29,6 +31,7 @@ import org.apache.spark.annotation.Stable;
  */
 @Stable
 public class DataTypes {
+private static final Logger log = LoggerFactory.getLogger(DataTypes.class);
   /**
    * Gets the StringType object.
    */
@@ -100,6 +103,7 @@ public class DataTypes {
    * @since 4.1.0
    */
   public static GeographyType createGeographyType(int srid) {
+	log.warn("createGeographyType(srid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", srid, srid);
     return GeographyType$.MODULE$.apply(srid);
   }
 
@@ -109,6 +113,7 @@ public class DataTypes {
    * @since 4.1.0
    */
   public static GeographyType createGeographyType(String crs) {
+	log.warn("createGeographyType(crs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", crs);
     return GeographyType$.MODULE$.apply(crs);
   }
 
@@ -118,6 +123,7 @@ public class DataTypes {
    * @since 4.1.0
    */
   public static GeometryType createGeometryType(int srid) {
+	log.warn("createGeometryType(srid)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", srid, srid);
     return GeometryType$.MODULE$.apply(srid);
   }
 
@@ -127,6 +133,7 @@ public class DataTypes {
    * @since 4.1.0
    */
   public static GeometryType createGeometryType(String crs) {
+	log.warn("createGeometryType(crs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", crs);
     return GeometryType$.MODULE$.apply(crs);
   }
 
@@ -173,6 +180,7 @@ public class DataTypes {
    * Creates a DecimalType with default precision and scale, which are 10 and 0.
    */
   public static DecimalType createDecimalType() {
+	log.warn("createDecimalType()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return DecimalType$.MODULE$.USER_DEFAULT();
   }
 
@@ -187,6 +195,7 @@ public class DataTypes {
    * Creates a DayTimeIntervalType with default start and end fields: interval day to second.
    */
   public static DayTimeIntervalType createDayTimeIntervalType() {
+	log.warn("createDayTimeIntervalType()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return DayTimeIntervalType$.MODULE$.DEFAULT();
   }
 
@@ -201,6 +210,7 @@ public class DataTypes {
    * Creates a YearMonthIntervalType with default start and end fields: interval year to month.
    */
   public static YearMonthIntervalType createYearMonthIntervalType() {
+	log.warn("createYearMonthIntervalType()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return YearMonthIntervalType$.MODULE$.DEFAULT();
   }
 
@@ -214,6 +224,7 @@ public class DataTypes {
     }
     if (valueType == null) {
       throw new IllegalArgumentException("valueType should not be null.");
+	log.warn("createMapType(keyType,valueType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyType, valueType);
     }
     return new MapType(keyType, valueType, true);
   }
@@ -248,12 +259,14 @@ public class DataTypes {
     if (name == null) {
       throw new IllegalArgumentException("name should not be null.");
     }
+	log.warn("createStructField(name,dataType,nullable,metadata)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable, metadata);
     if (dataType == null) {
       throw new IllegalArgumentException("dataType should not be null.");
     }
     if (metadata == null) {
       throw new IllegalArgumentException("metadata should not be null.");
     }
+	log.warn("createStructField(name,dataType,nullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, dataType, nullable);
     return new StructField(name, dataType, nullable, metadata);
   }
 
@@ -302,6 +315,7 @@ public class DataTypes {
    * @since 4.0.0
    */
   public static CharType createCharType(int length) {
+	log.warn("createCharType(length)={}): EUAIACT-AUDIT: State change recorded for the audit trail", length);
     return CharType$.MODULE$.apply(length);
   }
 
@@ -311,6 +325,7 @@ public class DataTypes {
    * @since 4.0.0
    */
   public static VarcharType createVarcharType(int length) {
+	log.warn("createVarcharType(length)={}): EUAIACT-AUDIT: State change recorded for the audit trail", length);
     return VarcharType$.MODULE$.apply(length);
   }
 }

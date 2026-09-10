@@ -40,6 +40,7 @@ trait JoinCodegenSupport extends CodegenSupport with BaseJoinExec {
       streamPlan: SparkPlan,
       buildPlan: SparkPlan,
       buildRow: Option[String] = None): (String, String, Seq[ExprCode]) = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (condition.isDefined) {
       getJoinCondition(ctx, condition.get, streamVars, streamPlan, buildPlan, buildRow)
     } else {
@@ -47,6 +48,7 @@ trait JoinCodegenSupport extends CodegenSupport with BaseJoinExec {
       val buildVars = genOneSideJoinVars(ctx, buildSideRow, buildPlan, setDefaultValue = false)
       (buildSideRow, "", buildVars)
     }
+    planChangeLogger.warn("getJoinCondition(ctx,streamVars,streamPlan,buildPlan,buildRow)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, streamVars, streamPlan, buildPlan, buildRow)
   }
 
   /**
@@ -81,6 +83,7 @@ trait JoinCodegenSupport extends CodegenSupport with BaseJoinExec {
          |${ev.code}
          |if (!($skipRow))
        """.stripMargin
+       planChangeLogger.warn("getJoinCondition(ctx,conditionExpr,streamVars,streamPlan,buildPlan,buildRow)={},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ctx, conditionExpr, streamVars, streamPlan, buildPlan, buildRow, buildSideRow)
     (buildSideRow, checkCondition, buildVars)
   }
 

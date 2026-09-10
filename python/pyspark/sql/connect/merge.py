@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from pyspark.sql.connect.plan import LogicalPlan
     from pyspark.sql.connect.session import SparkSession
     from pyspark.sql.metrics import ExecutionInfo
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["MergeIntoWriter"]
 
@@ -129,6 +130,7 @@ class MergeIntoWriter:
                 self.writer._client, proto.MergeAction.ACTION_TYPE_UPDATE_STAR, self._condition
             )
             self.writer._matched_actions.append(action)
+            logger.warning("updateAll(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self.writer
 
         updateAll.__doc__ = PySparkMergeIntoWriter.WhenMatched.updateAll.__doc__
@@ -141,6 +143,7 @@ class MergeIntoWriter:
                 assignments,
             )
             self.writer._matched_actions.append(action)
+            logger.warning("update(self,assignments)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, assignments)
             return self.writer
 
         update.__doc__ = PySparkMergeIntoWriter.WhenMatched.update.__doc__
@@ -150,6 +153,7 @@ class MergeIntoWriter:
                 self.writer._client, proto.MergeAction.ACTION_TYPE_DELETE, self._condition
             )
             self.writer._matched_actions.append(action)
+            logger.warning("delete(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self.writer
 
         delete.__doc__ = PySparkMergeIntoWriter.WhenMatched.delete.__doc__
@@ -162,6 +166,7 @@ class MergeIntoWriter:
             self._condition = condition
 
         def insertAll(self) -> "MergeIntoWriter":
+            logger.warning("insertAll(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             action = _build_merge_action(
                 self.writer._client, proto.MergeAction.ACTION_TYPE_INSERT_STAR, self._condition
             )
@@ -171,6 +176,7 @@ class MergeIntoWriter:
         insertAll.__doc__ = PySparkMergeIntoWriter.WhenNotMatched.insertAll.__doc__
 
         def insert(self, assignments: Dict[str, Column]) -> "MergeIntoWriter":
+            logger.warning("insert(self,assignments)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, assignments)
             action = _build_merge_action(
                 self.writer._client,
                 proto.MergeAction.ACTION_TYPE_INSERT,

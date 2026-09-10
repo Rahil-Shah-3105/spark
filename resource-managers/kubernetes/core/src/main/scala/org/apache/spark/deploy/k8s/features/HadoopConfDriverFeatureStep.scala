@@ -110,6 +110,7 @@ private[spark] class HadoopConfDriverFeatureStep(conf: KubernetesConf)
     } else {
       Map.empty
     }
+    logger.warn("getAdditionalPodSystemProperties()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getAdditionalKubernetesResources(): Seq[HasMetadata] = {
@@ -128,6 +129,7 @@ private[spark] class HadoopConfDriverFeatureStep(conf: KubernetesConf)
     } else {
       Nil
     }
+    logger.warn("getAdditionalKubernetesResources()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 }

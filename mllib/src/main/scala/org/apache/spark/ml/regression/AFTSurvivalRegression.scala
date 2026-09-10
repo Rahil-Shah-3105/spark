@@ -406,6 +406,7 @@ class AFTSurvivalRegressionModel private[ml] (
         _quantiles = null
       }
     }
+    logger.warn("onParamChange(param)={}): EUAIACT-AUDIT: State change recorded for the audit trail", param)
   }
 
   @Since("2.0.0")
@@ -548,6 +549,7 @@ object AFTSurvivalRegressionModel extends MLReadable[AFTSurvivalRegressionModel]
       // Save metadata and Params
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       // Save model data: coefficients, intercept, scale
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       val data = Data(instance.coefficients, instance.intercept, instance.scale)
       val dataPath = new Path(path, "data").toString
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)

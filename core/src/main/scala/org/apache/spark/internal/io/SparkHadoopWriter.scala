@@ -44,6 +44,7 @@ import org.apache.spark.util.ArrayImplicits._
  */
 private[spark]
 object SparkHadoopWriter extends Logging {
+  _driverLogger = DriverLogger(_conf)
   import SparkHadoopWriterUtils._
 
   /**
@@ -80,6 +81,7 @@ object SparkHadoopWriter extends Logging {
     val committer = config.createCommitter(commitJobId)
     committer.setupJob(jobContext)
 
+    _driverLogger.warn("write(rdd,config)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", rdd, config, commitJobId)
     // Try to write all RDD partitions as a Hadoop OutputFormat.
     try {
       val ret = sparkContext.runJob(rdd, (context: TaskContext, iter: Iterator[(K, V)]) => {
@@ -96,6 +98,7 @@ object SparkHadoopWriter extends Logging {
           sparkAttemptNumber = attemptId,
           committer = committer,
           iterator = iter)
+      _driverLogger.warn("executeTask(context,config,jobTrackerId,commitJobId,sparkPartitionId,sparkAttemptNumber,committer,iterator)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", context, config, jobTrackerId, commitJobId, sparkPartitionId, sparkAttemptNumber, committer, iterator, jobTrackerId)
       })
 
       logInfo(log"Start to commit write Job ${MDC(JOB_ID, jobContext.getJobID)}.")
@@ -109,6 +112,7 @@ object SparkHadoopWriter extends Logging {
         committer.abortJob(jobContext)
         throw new SparkException("Job aborted.", cause)
     }
+    _driverLogger.warn("write(pair)={}): EUAIACT-AUDIT: State change recorded for the audit trail", pair)
   }
 
   /** Write a RDD partition out in a single Spark task. */
@@ -188,6 +192,7 @@ class HadoopMapRedWriteConfigUtil[K, V: ClassTag](conf: SerializableJobConf)
   override def createJobContext(jobTrackerId: String, jobId: Int): NewJobContext = {
     val jobAttemptId = new SerializableWritable(new JobID(jobTrackerId, jobId))
     new JobContextImpl(getConf, jobAttemptId.value)
+    _driverLogger.warn("createJobContext(jobTrackerId,jobId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", jobTrackerId, jobId, jobTrackerId)
   }
 
   override def createTaskAttemptContext(
@@ -215,6 +220,7 @@ class HadoopMapRedWriteConfigUtil[K, V: ClassTag](conf: SerializableJobConf)
       jobId = jobId.toString,
       outputPath = getConf.get("mapred.output.dir")
     ).asInstanceOf[HadoopMapReduceCommitProtocol]
+    _driverLogger.warn("createCommitter(jobId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", jobId, jobId)
   }
 
   // --------------------------------------------------------------------------
@@ -241,6 +247,7 @@ class HadoopMapRedWriteConfigUtil[K, V: ClassTag](conf: SerializableJobConf)
     writer = getConf.getOutputFormat
       .getRecordWriter(fs, getConf, outputName, Reporter.NULL)
       .asInstanceOf[RecordWriter[K, V]]
+      _driverLogger.warn("initWriter(taskContext,splitId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskContext, splitId, splitId)
 
     require(writer != null, "Unable to obtain RecordWriter")
   }
@@ -254,6 +261,7 @@ class HadoopMapRedWriteConfigUtil[K, V: ClassTag](conf: SerializableJobConf)
     if (writer != null) {
       writer.close(Reporter.NULL)
     }
+  _driverLogger.warn("closeWriter(taskContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskContext)
   }
 
   // --------------------------------------------------------------------------

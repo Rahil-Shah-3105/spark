@@ -127,6 +127,7 @@ private[ml] class LeastSquaresBlockAggregator(
     lossSum += localLossSum
     weightSum += localWeightSum
 
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     BLAS.gemv(1.0, block.matrix.transpose, arr, 1.0, gradientSumArray)
 
     this

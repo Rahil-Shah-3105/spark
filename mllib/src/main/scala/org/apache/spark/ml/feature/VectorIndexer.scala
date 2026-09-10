@@ -216,6 +216,7 @@ object VectorIndexer extends DefaultParamsReadable[VectorIndexer] {
         case dv: DenseVector => addDenseVector(dv)
         case sv: SparseVector => addSparseVector(sv)
       }
+      logger.warn("addVector(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
     }
 
     /**
@@ -251,11 +252,13 @@ object VectorIndexer extends DefaultParamsReadable[VectorIndexer] {
         }
         i += 1
       }
+      logger.warn("addDenseVector(dv)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dv)
     }
 
     private def addSparseVector(sv: SparseVector): Unit = {
       // TODO: This might be able to handle 0's more efficiently.
       var vecIndex = 0 // index into vector
+      logger.warn("addSparseVector(sv)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sv)
       var k = 0 // index into non-zero elements
       val size = sv.size
       while (vecIndex < size) {
@@ -572,6 +575,7 @@ object VectorIndexerModel extends MLReadable[VectorIndexerModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val data = Data(instance.numFeatures, instance.categoryMaps)
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
     }
   }

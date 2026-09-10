@@ -53,6 +53,7 @@ case class StateMetadataTableEntry(
     numColsPrefixKey: Int,
     stateSchemaFilePaths: List[String]) {
   def toRow(): InternalRow = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     new GenericInternalRow(
       Array[Any](operatorId,
         UTF8String.fromString(operatorName),
@@ -86,6 +87,7 @@ class StateMetadataSource extends TableProvider with DataSourceRegister {
       partitioning: Array[Transform],
       properties: util.Map[String, String]): Table = {
     new StateMetadataTable
+    planChangeLogger.warn("getTable(schema,partitioning,properties)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, partitioning, properties)
   }
 
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = {
@@ -144,6 +146,7 @@ class StateMetadataScan(checkpointLocation: String, batchId: Long) extends Scan 
         // Don't need to broadcast the hadoop conf because this source only has one partition.
         val conf = new SerializableConfiguration(SparkSession.active.sessionState.newHadoopConf())
         StateMetadataPartitionReaderFactory(conf, batchId)
+        planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
       }
     }
   }

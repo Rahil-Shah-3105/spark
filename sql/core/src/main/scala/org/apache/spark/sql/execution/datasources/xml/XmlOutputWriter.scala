@@ -32,6 +32,7 @@ class XmlOutputWriter(
     dataSchema: StructType,
     context: TaskAttemptContext,
     options: XmlOptions) extends OutputWriter with Logging {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val charset = Charset.forName(options.charset)
 
@@ -46,6 +47,7 @@ class XmlOutputWriter(
       firstRow = false
     }
     gen.write(row)
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
   }
 
   override def close(): Unit = gen.close()

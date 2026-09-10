@@ -45,6 +45,7 @@ object functions {
   def array_to_vector(v: Column): Column = Column.internalFn("array_to_vector", v)
 
   private[ml] def array_binary_search(a: Column, v: Column): Column =
+    logger.warn("array_binary_search(a,v)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", a, v)
     Column.internalFn("array_binary_search", a, v)
 
   // input: vector, output: double
@@ -64,6 +65,7 @@ object functions {
         sf.lit(s"Vector index must be in [0, %s), but got %s"), size, index)
       )
     )
+    logger.warn("vector_get(v,index)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", v, index, sparseIdx)
   }
 
   // input: array<double>, output: int

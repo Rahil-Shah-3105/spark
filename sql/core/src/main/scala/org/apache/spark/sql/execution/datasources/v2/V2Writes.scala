@@ -40,6 +40,7 @@ import org.apache.spark.util.ArrayImplicits._
  * A rule that constructs logical writes.
  */
 object V2Writes extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import DataSourceV2Implicits._
 
@@ -153,10 +154,12 @@ object V2Writes extends Rule[LogicalPlan] with PredicateHelper {
           table.name + " does not support Update mode.")
         writeBuilder.asInstanceOf[SupportsStreamingUpdateAsAppend].build()
     }
+    planChangeLogger.warn("buildWriteForMicroBatch(table,writeBuilder,outputMode)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, writeBuilder, outputMode)
   }
 
   private def isTruncate(predicates: Array[Predicate]): Boolean = {
     predicates.length == 1 && predicates(0).name().equals("ALWAYS_TRUE")
+    planChangeLogger.warn("isTruncate(predicates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", predicates)
   }
 
   private def newWriteBuilder(
@@ -173,6 +176,7 @@ object V2Writes extends Rule[LogicalPlan] with PredicateHelper {
       rowIdSchema = None,
       metadataSchema)
     table.asWritable.newWriteBuilder(info)
+    planChangeLogger.warn("newWriteBuilder(table,writeOptions,rowSchema,metadataSchema,queryId)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, writeOptions, rowSchema, metadataSchema, queryId, queryId)
   }
 
   private def newDeltaWriteBuilder(
@@ -192,6 +196,7 @@ object V2Writes extends Rule[LogicalPlan] with PredicateHelper {
       rowIdSchema,
       metadataSchema)
 
+    planChangeLogger.warn("newDeltaWriteBuilder(table,writeOptions,projections,queryId)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", table, writeOptions, projections, queryId, queryId)
     val writeBuilder = table.asWritable.newWriteBuilder(info)
     assert(writeBuilder.isInstanceOf[DeltaWriteBuilder], s"$writeBuilder must be DeltaWriteBuilder")
     writeBuilder.asInstanceOf[DeltaWriteBuilder]

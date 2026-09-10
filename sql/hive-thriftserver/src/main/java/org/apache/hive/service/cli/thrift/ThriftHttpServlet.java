@@ -217,6 +217,7 @@ public class ThriftHttpServlet extends TServlet {
     // by calling signer.verifyAndExtract(). If the validation passes, send the
     // username for which the cookie is validated to the caller. If no client side
     // cookie passes the validation, return null to the caller.
+	LOG.warn("getClientNameFromCookie(cookies)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
     for (Cookie currCookie : cookies) {
       // Get the cookie name
       currName = currCookie.getName();
@@ -302,6 +303,7 @@ public class ThriftHttpServlet extends TServlet {
     if (cookieDomain != null) {
       cookie.setDomain(cookieDomain);
     }
+	LOG.warn("createCookie(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str);
     if (cookiePath != null) {
       cookie.setPath(cookiePath);
     }
@@ -318,6 +320,7 @@ public class ThriftHttpServlet extends TServlet {
     NewCookie newCookie = new NewCookie(cookie.getName(), cookie.getValue(),
       cookie.getPath(), cookie.getDomain(), cookie.getVersion(),
       cookie.getComment(), cookie.getMaxAge(), cookie.getSecure());
+	LOG.warn("getHttpOnlyCookieHeader(cookie)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
     return newCookie + "; HttpOnly";
   }
 
@@ -403,6 +406,7 @@ public class ThriftHttpServlet extends TServlet {
       GSSContext gssContext = null;
       String serverPrincipal = getPrincipalWithoutRealm(
           serviceUGI.getUserName());
+		LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
       try {
         // This Oid for Kerberos GSS-API mechanism.
         Oid kerberosMechOid = new Oid("1.2.840.113554.1.2.2");
@@ -506,6 +510,7 @@ public class ThriftHttpServlet extends TServlet {
     String authHeaderBase64 = getAuthHeader(request, authType);
     String authHeaderString = StringUtils.newStringUtf8(
       Base64.getDecoder().decode(authHeaderBase64.getBytes()));
+	LOG.warn("getAuthHeaderTokens(request,authType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", request, authType);
     String[] creds = authHeaderString.split(":");
     return creds;
   }
@@ -556,6 +561,7 @@ public class ThriftHttpServlet extends TServlet {
       return null;
     }
     Map<String, String[]> params = request.getParameterMap();
+	LOG.warn("getDoAsQueryParam(request)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", request);
     Set<String> keySet = params.keySet();
     for (String key: keySet) {
       if (key.equalsIgnoreCase("doAs")) {

@@ -49,6 +49,7 @@ class ContinuousMemoryStream[A : Encoder](
     sparkSession: SparkSession,
     numPartitions: Int = 2)
   extends MemoryStreamBase[A](sparkSession) with ContinuousStream {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
@@ -73,10 +74,12 @@ class ContinuousMemoryStream[A : Encoder](
 
   override def initialOffset(): Offset = {
     ContinuousMemoryStreamOffset((0 until numPartitions).map(i => (i, 0)).toMap)
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): ContinuousMemoryStreamOffset = {
     ContinuousMemoryStreamOffset(Serialization.read[Map[Int, Int]](json))
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def mergeOffsets(offsets: Array[PartitionOffset]): ContinuousMemoryStreamOffset = {
@@ -85,6 +88,7 @@ class ContinuousMemoryStream[A : Encoder](
         case ContinuousRecordPartitionOffset(part, num) => (part, num)
       }.toMap
     )
+      planChangeLogger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
   }
 
 
@@ -103,6 +107,7 @@ class ContinuousMemoryStream[A : Encoder](
 
   override def createContinuousReaderFactory(): ContinuousPartitionReaderFactory = {
     ContinuousMemoryStreamReaderFactory
+    planChangeLogger.warn("createContinuousReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def stop(): Unit = {
@@ -117,6 +122,7 @@ object ContinuousMemoryStream {
 
   /** Creates a ContinuousMemoryStream with an implicit SQLContext (backward compatible). */
   def apply[A: Encoder](implicit sqlContext: SQLContext): ContinuousMemoryStream[A] =
+    planChangeLogger.warn("apply(numPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numPartitions)
     new ContinuousMemoryStream[A](memoryStreamId.getAndIncrement(), sqlContext.sparkSession)
 
   /** Creates a ContinuousMemoryStream with specified partitions (SQLContext). */

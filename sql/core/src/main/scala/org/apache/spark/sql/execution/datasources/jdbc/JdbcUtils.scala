@@ -54,6 +54,7 @@ import org.apache.spark.util.ArrayImplicits._
  * Util functions for JDBC tables.
  */
 object JdbcUtils extends Logging with SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Returns true if the table already exists in the JDBC database.
@@ -105,10 +106,12 @@ object JdbcUtils extends Logging with SQLConfHelper {
     } finally {
       statement.close()
     }
+    planChangeLogger.warn("truncateTable(conn,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conn, options)
   }
 
   def isCascadingTruncateTable(url: String): Option[Boolean] = {
     JdbcDialects.get(url).isCascadingTruncateTable()
+    planChangeLogger.warn("isCascadingTruncateTable(url)={}): EUAIACT-AUDIT: State change recorded for the audit trail", url)
   }
 
   /**
@@ -135,6 +138,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       }
     }
     dialect.insertIntoTable(table, columns)
+    planChangeLogger.warn("getInsertStatement(table,rddSchema,tableSchema,isCaseSensitive,dialect)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, rddSchema, tableSchema, isCaseSensitive, dialect)
   }
 
   /**
@@ -173,19 +177,23 @@ object JdbcUtils extends Logging with SQLConfHelper {
         JdbcType(s"DECIMAL(${t.precision},${t.scale})", java.sql.Types.DECIMAL))
       case _ => None
     }
+    planChangeLogger.warn("getCommonJDBCType(dt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dt)
   }
 
   def getJdbcType(dt: DataType, dialect: JdbcDialect): JdbcType = {
     dialect.getJDBCType(dt).orElse(getCommonJDBCType(dt)).getOrElse(
       throw QueryExecutionErrors.cannotGetJdbcTypeError(dt))
+    planChangeLogger.warn("getJdbcType(dt,dialect)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt, dialect)
   }
 
   def getTimestampType(isTimestampNTZ: Boolean): DataType = {
     if (isTimestampNTZ) TimestampNTZType else TimestampType
+    planChangeLogger.warn("getTimestampType(isTimestampNTZ)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", isTimestampNTZ)
   }
 
   private def getTimestampNanosType(isTimestampNTZ: Boolean, precision: Int): DataType = {
     if (isTimestampNTZ) TimestampNTZNanosType(precision) else TimestampLTZNanosType(precision)
+    planChangeLogger.warn("getTimestampNanosType(isTimestampNTZ,precision)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", isTimestampNTZ, precision)
   }
 
   /**
@@ -268,6 +276,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
         .map(_.getName)
         .getOrElse(sqlType.toString)
       throw QueryExecutionErrors.unrecognizedSqlTypeError(jdbcType, typeName)
+        planChangeLogger.warn("getCatalystType(sqlType,typeName,precision,scale,signed,isTimestampNTZ,preferTimestampNanos)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, precision, scale, signed, isTimestampNTZ, preferTimestampNanos)
   }
 
   /**
@@ -292,6 +301,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     } catch {
       case _: SQLException => None
     }
+    planChangeLogger.warn("getSchemaOption(conn,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conn, options)
   }
 
   /**
@@ -370,6 +380,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       resultSet: ResultSet,
       schema: StructType): Iterator[Row] = {
     resultSetToRows(resultSet, schema, NoopDialect)
+  planChangeLogger.warn("resultSetToRows(resultSet,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resultSet, schema, resultSet)
   }
 
   def resultSetToRows(
@@ -395,6 +406,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       private[this] val mutableRow =
         new SpecificInternalRow(schema.fields.map(x => x.dataType).toImmutableArraySeq)
 
+        planChangeLogger.warn("resultSetToSparkInternalRows(resultSet,dialect,schema,inputMetrics,fetchAndTransformToInternalRowsMetric)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", resultSet, dialect, schema, inputMetrics, fetchAndTransformToInternalRowsMetric, resultSet)
       override protected def close(): Unit = {
         try {
           rs.close()
@@ -427,6 +439,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
         } else {
           getNextWithoutTiming
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
     }
   }
@@ -436,6 +449,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       sparkContext,
       JDBCRelation.schemaFetchName
     )
+    planChangeLogger.warn("createSchemaFetchMetric(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
   }
 
   /**
@@ -447,6 +461,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       schema: StructType): Array[JDBCValueGetter] = {
     val replaced = CharVarcharUtils.replaceCharVarcharWithStringInSchema(schema)
     replaced.fields.map(sf => makeGetter(sf.dataType, dialect, sf.metadata))
+    planChangeLogger.warn("makeGetters(dialect,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dialect, schema)
   }
 
   private def makeGetter(
@@ -480,6 +495,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     case _: DayTimeIntervalType => JDBCValueGetter.DayTimeIntervalGetter(dialect)
     case _: ArrayType if metadata.contains("pg_bit_array_type") =>
       JDBCValueGetter.PostgresBitArrayGetter
+      planChangeLogger.warn("makeGetter(dt,dialect,metadata)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt, dialect, metadata)
     case at: ArrayType => JDBCValueGetter.ArrayGetter(at, dialect, metadata)
     case NullType => JDBCValueGetter.NullGetter
     case _ => throw QueryExecutionErrors.unsupportedJdbcTypeError(dt.catalogString)
@@ -581,6 +597,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
 
     case ArrayType(et, _) =>
       // remove type length parameters from end of type name
+      planChangeLogger.warn("makeSetter(conn,dialect,dataType)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conn, dialect, dataType)
       (stmt: PreparedStatement, row: Row, pos: Int) =>
         et match {
           case TimestampNTZType =>
@@ -867,6 +884,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     val userSchemaMap = userSchema
       .map(f => f.name -> getJdbcType(f.dataType, dialect).databaseTypeDefinition)
       .toMap
+      planChangeLogger.warn("parseUserSpecifiedCreateTableColumnTypes(dialect,schema,caseSensitive,createTableColumnTypes)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dialect, schema, caseSensitive, createTableColumnTypes)
     if (caseSensitive) userSchemaMap else CaseInsensitiveMap(userSchemaMap)
   }
 
@@ -894,6 +912,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     } else {
       tableSchema
     }
+    planChangeLogger.warn("getCustomSchema(tableSchema,customSchema,nameEquality)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", tableSchema, customSchema, nameEquality)
   }
 
   /**
@@ -911,6 +930,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     val batchSize = options.batchSize
     val isolationLevel = options.isolationLevel
 
+    planChangeLogger.warn("saveTable(df,tableSchema,isCaseSensitive,options)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", df, tableSchema, isCaseSensitive, options)
     val insertStmt = getInsertStatement(table, rddSchema, tableSchema, isCaseSensitive, dialect)
     val repartitionedDF = options.numPartitions match {
       case Some(n) if n <= 0 => throw QueryExecutionErrors.invalidJdbcNumPartitionsError(
@@ -1028,6 +1048,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
   def listSchemas(conn: Connection, options: JDBCOptions): Array[Array[String]] = {
     val dialect = JdbcDialects.get(options.url)
     dialect.listSchemas(conn, options)
+    planChangeLogger.warn("listSchemas(conn,options)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conn, options)
   }
 
   def alterSchemaComment(
@@ -1105,6 +1126,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       options: JDBCOptions): Array[TableIndex] = {
     val dialect = JdbcDialects.get(options.url)
     dialect.listIndexes(conn, tableIdent, options)
+    planChangeLogger.warn("listIndexes(conn,tableIdent,options)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", conn, tableIdent, options, tableIdent)
   }
 
   private def executeStatement(conn: Connection, options: JDBCOptions, sql: String): Unit = {
@@ -1115,6 +1137,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     } finally {
       statement.close()
     }
+    planChangeLogger.warn("executeStatement(conn,options,sql)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conn, options, sql)
   }
 
   /**
@@ -1148,6 +1171,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     val indexPropertyList: ArrayBuffer[String] = ArrayBuffer[String]()
     val supportedIndexTypeList = getSupportedIndexTypeList(dialectName)
 
+    planChangeLogger.warn("processIndexProperties(properties,dialectName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", properties, dialectName)
     if (!properties.isEmpty) {
       properties.asScala.foreach { case (k, v) =>
         if (k.equals(SupportsIndex.PROP_TYPE)) {
@@ -1184,6 +1208,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       case "postgresql" => Array("BTREE", "HASH", "BRIN")
       case _ => Array.empty
     }
+    planChangeLogger.warn("getSupportedIndexTypeList(dialectName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", dialectName)
   }
 
   def executeQuery(conn: Connection, options: JDBCOptions, sql: String)(
@@ -1200,6 +1225,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     } finally {
       statement.close()
     }
+    planChangeLogger.warn("executeQuery(conn,options,sql)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conn, options, sql)
   }
 
   def classifyException[T](

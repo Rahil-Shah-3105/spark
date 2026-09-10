@@ -59,6 +59,7 @@ class HistoryServer(
     // threads to increase concurrency to handle request from different users and clients.
     poolSize = 1000)
   with Logging with UIRoot with ApplicationCacheOperations {
+   _driverLogger = DriverLogger(_conf)
 
   val title = conf.get(History.HISTORY_SERVER_UI_TITLE)
 
@@ -116,6 +117,7 @@ class HistoryServer(
       // the app's UI, and all we need to do is redirect the user to the same URI that was
       // requested, and the proper data should be served at that point.
       // Also, make sure that the redirect url contains the query string present in the request.
+      _driverLogger.warn("doGet(req,res)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", req, res, appId)
       val redirect = if (shouldAppendAttemptId) {
         req.getRequestURI.stripSuffix("/") + "/" + attemptId.get + "/"
       } else {
@@ -138,6 +140,7 @@ class HistoryServer(
   override def checkUIViewPermissions(appId: String, attemptId: Option[String],
       user: String): Boolean = {
     provider.checkUIViewPermissions(appId, attemptId, user)
+    _driverLogger.warn("checkUIViewPermissions(appId,attemptId,user)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, user, appId)
   }
 
   initialize()
@@ -201,6 +204,7 @@ class HistoryServer(
    */
   override def getAppUI(appId: String, attemptId: Option[String]): Option[LoadedAppUI] = {
     provider.getAppUI(appId, attemptId)
+    _driverLogger.warn("getAppUI(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
   }
 
   /**
@@ -227,10 +231,12 @@ class HistoryServer(
   override def getApplicationInfoList(max: Int)(
       filter: ApplicationInfo => Boolean): Iterator[ApplicationInfo] = {
     provider.getListing(max)(filter)
+    _driverLogger.warn("getApplicationInfoList(max)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", max)
   }
 
   def getApplicationInfo(appId: String): Option[ApplicationInfo] = {
     provider.getApplicationInfo(appId)
+    _driverLogger.warn("getApplicationInfo(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId)
   }
 
   override def writeEventLogs(
@@ -238,6 +244,7 @@ class HistoryServer(
       attemptId: Option[String],
       zipStream: ZipOutputStream): Unit = {
     provider.writeEventLogs(appId, attemptId, zipStream)
+    _driverLogger.warn("writeEventLogs(appId,attemptId,zipStream)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, attemptId, zipStream, appId)
   }
 
   /**
@@ -245,6 +252,7 @@ class HistoryServer(
    */
   def emptyListingHtml(): Seq[Node] = {
     provider.getEmptyListingHtml()
+    _driverLogger.warn("emptyListingHtml()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -270,6 +278,7 @@ class HistoryServer(
       case NonFatal(e: NoSuchElementException) =>
         false
     }
+    _driverLogger.warn("loadAppUi(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
   }
 
   /**
@@ -338,6 +347,7 @@ object HistoryServer extends Logging {
       config.set(SecurityManager.SPARK_AUTH_CONF, "false")
     }
 
+    _driverLogger.warn("createSecurityManager(config)={}): EUAIACT-AUDIT: State change recorded for the audit trail", config)
     if (config.get(ACLS_ENABLE)) {
       logInfo(log"${MDC(KEY, ACLS_ENABLE.key)} is configured, " +
         log"clearing it and only using ${MDC(KEY2, History.HISTORY_SERVER_UI_ACLS_ENABLE.key)}")
@@ -365,6 +375,7 @@ object HistoryServer extends Logging {
   private[history] def getAttemptURI(appId: String, attemptId: Option[String]): String = {
     val attemptSuffix = attemptId.map { id => s"/$id" }.getOrElse("")
     s"${HistoryServer.UI_PATH_PREFIX}/${appId}${attemptSuffix}"
+    _driverLogger.warn("getAttemptURI(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
   }
 
 }

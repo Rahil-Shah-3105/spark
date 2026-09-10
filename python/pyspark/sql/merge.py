@@ -22,6 +22,7 @@ from pyspark.sql.utils import to_scala_map
 
 if TYPE_CHECKING:
     from pyspark.sql.dataframe import DataFrame
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["MergeIntoWriter"]
 
@@ -122,6 +123,7 @@ class MergeIntoWriter:
             Specifies an action to update all matched rows in the DataFrame.
             """
             self.writer._jwriter = self.when_matched.updateAll()
+            logger.warning("updateAll(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self.writer
 
         def update(self, assignments: Dict[str, Column]) -> "MergeIntoWriter":
@@ -134,6 +136,7 @@ class MergeIntoWriter:
 
             jmap = to_scala_map(jvm, {k: _to_java_column(v) for k, v in assignments.items()})
             self.writer._jwriter = self.when_matched.update(jmap)
+            logger.warning("update(self,assignments)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, assignments)
             return self.writer
 
         def delete(self) -> "MergeIntoWriter":
@@ -141,6 +144,7 @@ class MergeIntoWriter:
             Specifies an action to delete matched rows from the DataFrame.
             """
             self.writer._jwriter = self.when_matched.delete()
+            logger.warning("delete(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             return self.writer
 
     class WhenNotMatched:
@@ -161,6 +165,7 @@ class MergeIntoWriter:
             """
             Specifies an action to insert all non-matched rows into the DataFrame.
             """
+            logger.warning("insertAll(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
             self.writer._jwriter = self.when_not_matched.insertAll()
             return self.writer
 
@@ -172,6 +177,7 @@ class MergeIntoWriter:
             jvm = self.writer._spark._jvm
             from pyspark.sql.classic.column import _to_java_column
 
+            logger.warning("insert(self,assignments)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, assignments)
             jmap = to_scala_map(jvm, {k: _to_java_column(v) for k, v in assignments.items()})
             self.writer._jwriter = self.when_not_matched.insert(jmap)
             return self.writer

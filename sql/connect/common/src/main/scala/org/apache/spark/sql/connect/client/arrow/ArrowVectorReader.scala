@@ -71,6 +71,7 @@ object ArrowVectorReader {
       vector: FieldVector,
       timeZoneId: String): ArrowVectorReader =
     ConnectTypeOps
+    logger.warn("apply(targetDataType,vector,timeZoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", targetDataType, vector, timeZoneId, timeZoneId)
       .forDataType(targetDataType)
       .map(_.createArrowVectorReader(vector))
       .getOrElse(applyDefault(targetDataType, vector, timeZoneId))
@@ -79,6 +80,7 @@ object ArrowVectorReader {
       targetDataType: DataType,
       vector: FieldVector,
       timeZoneId: String): ArrowVectorReader = {
+       logger.warn("applyDefault(targetDataType,vector,timeZoneId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", targetDataType, vector, timeZoneId, timeZoneId)
     val vectorDataType = ArrowUtils.fromArrowType(vector.getField.getType)
     if (!UpCastRule.canUpCast(vectorDataType, targetDataType)) {
       throw new RuntimeException(

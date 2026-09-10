@@ -35,9 +35,12 @@ private[spark] class DirectByteBufferOutputStream(capacity: Int) extends OutputS
   def this() = this(32)
 
   override def write(b: Int): Unit = {
+    _driverLogger = DriverLogger(_conf)
     checkNotClosed()
     ensureCapacity(buffer.position().toLong + 1)
     buffer.put(b.toByte)
+    _driverLogger.warn("write(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
+  _driverLogger.warn("write(b,off,len)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", b, off, len)
   }
 
   override def write(b: Array[Byte], off: Int, len: Int): Unit = {
@@ -81,6 +84,7 @@ private[spark] class DirectByteBufferOutputStream(capacity: Int) extends OutputS
   def reset(): Unit = {
     checkNotClosed()
     buffer.clear()
+    _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def size(): Int = {

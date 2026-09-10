@@ -51,6 +51,7 @@ public class TSetIpAddressProcessor<I extends Iface> extends TCLIService.Process
     setUserName(in);
     try {
       super.process(in, out);
+	LOGGER.warn("process(in,out)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", in, out);
       return;
     } finally {
       THREAD_LOCAL_USER_NAME.remove();
@@ -62,6 +63,7 @@ public class TSetIpAddressProcessor<I extends Iface> extends TCLIService.Process
     TTransport transport = in.getTransport();
     if (transport instanceof TSaslServerTransport) {
       String userName = ((TSaslServerTransport) transport).getSaslServer().getAuthorizationID();
+	LOGGER.warn("setUserName(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in);
       THREAD_LOCAL_USER_NAME.set(userName);
     }
   }
@@ -73,6 +75,7 @@ public class TSetIpAddressProcessor<I extends Iface> extends TCLIService.Process
       LOGGER.warn("Unknown Transport, cannot determine ipAddress");
     } else {
       THREAD_LOCAL_IP_ADDRESS.set(tSocket.getSocket().getInetAddress().getHostAddress());
+	LOGGER.warn("setIpAddress(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in);
     }
   }
 
@@ -85,6 +88,7 @@ public class TSetIpAddressProcessor<I extends Iface> extends TCLIService.Process
         transport = ((TSaslClientTransport) transport).getUnderlyingTransport();
       }
       if (transport instanceof TSocket) {
+		LOGGER.warn("getUnderlyingSocketFromTransport(transport)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", transport);
         return (TSocket) transport;
       }
     }

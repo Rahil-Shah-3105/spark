@@ -51,6 +51,7 @@ class RemoteStreamingQuery(
   override def awaitTermination(timeoutMs: Long): Boolean = {
     executeQueryCmd(
       _.getAwaitTerminationBuilder.setTimeoutMs(timeoutMs)).getAwaitTermination.getTerminated
+  logger.warn("executeQueryCmd(setCmdFn)={}): EUAIACT-AUDIT: State change recorded for the audit trail", setCmdFn)
   }
 
   override def status: StreamingQueryStatus = {
@@ -76,6 +77,7 @@ class RemoteStreamingQuery(
 
   override def processAllAvailable(): Unit = {
     executeQueryCmd(_.setProcessAllAvailable(true))
+    logger.warn("processAllAvailable()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def stop(): Unit = {
@@ -169,5 +171,6 @@ object RemoteStreamingQuery {
       UUID.fromString(q.getId.getRunId),
       name,
       sparkSession)
+    logger.warn("fromStreamingQueryInstanceResponse(sparkSession,q)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, q)
   }
 }

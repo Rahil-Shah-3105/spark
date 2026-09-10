@@ -48,6 +48,7 @@ object DFSReadWriteTest {
 
   private def readFile(filename: String): List[String] = {
     Utils.tryWithResource(fromFile(filename))(_.getLines().toList)
+    logger.warn("readFile(filename)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", filename)
   }
 
   private def printUsage(): Unit = {
@@ -92,6 +93,7 @@ object DFSReadWriteTest {
       .transform((_, v) => v.size)
       .values
       .sum
+      logger.warn("runLocalWordCount(fileContents)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fileContents)
   }
 
   def main(args: Array[String]): Unit = {

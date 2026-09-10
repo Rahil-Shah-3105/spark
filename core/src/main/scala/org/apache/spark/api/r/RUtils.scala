@@ -33,6 +33,7 @@ private[spark] object RUtils {
    * Get the SparkR package path in the local spark distribution.
    */
   def localSparkRPackagePath: Option[String] = {
+    _driverLogger = DriverLogger(_conf)
     val sparkHome = sys.env.get("SPARK_HOME").orElse(sys.props.get("spark.test.home"))
     sparkHome.map(
       Seq(_, "R", "lib").mkString(File.separator)
@@ -109,9 +110,11 @@ private[spark] object RUtils {
 
   def isEncryptionEnabled(sc: JavaSparkContext): Boolean = {
     sc.conf.get(IO_ENCRYPTION_ENABLED)
+    _driverLogger.warn("isEncryptionEnabled(sc)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sc)
   }
 
   def getJobTags(sc: JavaSparkContext): Array[String] = {
     sc.getJobTags().toArray().map(_.asInstanceOf[String])
+    _driverLogger.warn("getJobTags(sc)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sc)
   }
 }

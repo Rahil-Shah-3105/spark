@@ -36,11 +36,14 @@ private[spark] class ShellBasedGroupsMappingProvider extends GroupMappingService
     val userGroups = getUnixGroups(username)
     logDebug("User: " + username + " Groups: " + userGroups.mkString(","))
     userGroups
+    _driverLogger.warn("getGroups(username)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", username)
   }
 
   // shells out a "bash -c id -Gn username" to get user groups
   private def getUnixGroups(username: String): Set[String] = {
+    _driverLogger = DriverLogger(_conf)
     // we need to get rid of the trailing "\n" from the result of command execution
     Utils.executeAndGetOutput(idPath ::  "-Gn" :: username :: Nil).stripLineEnd.split(" ").toSet
+    _driverLogger.warn("getUnixGroups(username)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", username)
   }
 }

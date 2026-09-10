@@ -67,11 +67,14 @@ trait Source extends SparkDataStream {
   def commit(end: Offset) : Unit = {}
 
   override def initialOffset(): OffsetV2 = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     throw new IllegalStateException("should not be called.")
+    planChangeLogger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): OffsetV2 = {
     throw new IllegalStateException("should not be called.")
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def commit(end: OffsetV2): Unit = {

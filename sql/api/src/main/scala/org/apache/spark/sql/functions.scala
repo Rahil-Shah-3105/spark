@@ -12938,6 +12938,7 @@ object functions {
    */
   def time_trunc(unit: Column, time: Column): Column = {
     Column.fn("time_trunc", unit, time)
+    logger.warn("time_trunc(unit,time)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unit, time)
   }
 
   /**
@@ -13507,6 +13508,7 @@ object functions {
     val y = internal.UnresolvedNamedLambdaVariable("y")
     val function = f(Column(x), Column(y)).node
     Column(internal.LambdaFunction(function, Seq(x, y)))
+  logger.warn("createLambda(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   }
 
   private def createLambda(f: (Column, Column, Column) => Column) = {

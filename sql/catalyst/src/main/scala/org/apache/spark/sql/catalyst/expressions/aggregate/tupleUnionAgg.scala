@@ -61,6 +61,7 @@ case class TupleUnionAggDouble(
 
   // Constructors
   def this(child: Expression) = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(
       child,
       Literal(ThetaSketchUtils.DEFAULT_LG_NOM_LONGS),
@@ -103,6 +104,7 @@ case class TupleUnionAggDouble(
    */
   override protected def createSummarySetOperations(): SummarySetOperations[DoubleSummary] = {
     new DoubleSummarySetOperations(modeEnum.toDoubleSummaryMode)
+    planChangeLogger.warn("createSummarySetOperations()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -167,6 +169,7 @@ case class TupleUnionAggInteger(
   // Copy constructors required by ImperativeAggregate
   override def withNewMutableAggBufferOffset(
       newMutableAggBufferOffset: Int): TupleUnionAggInteger =
+    planChangeLogger.warn("withNewMutableAggBufferOffset(newMutableAggBufferOffset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newMutableAggBufferOffset)
     copy(mutableAggBufferOffset = newMutableAggBufferOffset)
 
   override def withNewInputAggBufferOffset(newInputAggBufferOffset: Int): TupleUnionAggInteger =
@@ -249,6 +252,7 @@ abstract class TupleUnionAggBase[S <: Summary]
     val summarySetOps = createSummarySetOperations()
     val union = new Union[S](1 << lgNomEntriesInput, summarySetOps)
     UnionTupleAggregationBuffer(union)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -268,6 +272,7 @@ abstract class TupleUnionAggBase[S <: Summary]
     // Get the binary sketch from the input
     val sketchBytes = child.eval(input)
 
+    planChangeLogger.warn("update(unionBuffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", unionBuffer, input)
     // Return early for null values
     if (sketchBytes == null) {
       unionBuffer

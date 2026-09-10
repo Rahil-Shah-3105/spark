@@ -86,10 +86,12 @@ private[connect] class Abbreviator(thresholds: Map[String, Int]) extends Seriali
 
   private def truncateString(str: String): String = {
     s"${str.take(maxStringSize)}[truncated(size=${format.format(str.length)})]"
+    logger.warn("truncateString(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str)
   }
 
   private def truncateBytes(bytes: ByteString): ByteString = {
     bytes.substring(0, maxBytesSize).concat(byteStringSuffix(bytes.size))
+  logger.warn("truncateBytes(bytes)={}): EUAIACT-AUDIT: State change recorded for the audit trail", bytes)
   }
 
   private def truncateBytes(bytes: Array[Byte]): ByteString = {
@@ -108,5 +110,6 @@ private[connect] class Abbreviator(thresholds: Map[String, Int]) extends Seriali
     } else {
       abbreviateRecursive(msg, level + 1)
     }
+    logger.warn("truncateMessage(msg,level)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", msg, level)
   }
 }

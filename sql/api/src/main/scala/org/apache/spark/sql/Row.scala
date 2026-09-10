@@ -455,6 +455,7 @@ trait Row extends Serializable {
     fieldNames.map { name =>
       name -> getAs[T](name)
     }.toMap
+    logger.warn("getValuesMap(fieldNames)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", fieldNames)
   }
 
   override def toString: String = this.mkString("[", ",", "]")

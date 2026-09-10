@@ -39,9 +39,11 @@ class UDFRegistration(session: SparkSession) extends sql.UDFRegistration {
       udf: UserDefinedFunction,
       source: String,
       validateParameterCount: Boolean): UserDefinedFunction = {
+       logger.warn("register(name,udf,source,validateParameterCount)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", name, udf, source, validateParameterCount, validateParameterCount)
     val named = udf.withName(name)
     session.registerUdf(UdfToProtoUtils.toProto(named))
     named
+  logger.warn("register(name,udaf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, udaf)
   }
 
   override def registerJava(name: String, className: String, returnDataType: DataType): Unit = {
@@ -51,6 +53,7 @@ class UDFRegistration(session: SparkSession) extends sql.UDFRegistration {
       .setOutputType(DataTypeProtoConverter.toConnectProtoType(returnDataType))
       .setAggregate(false)
     session.registerUdf(builder.build())
+      logger.warn("registerJava(name,className,returnDataType)={},<redacted>,{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, returnDataType)
   }
 
   /** @inheritdoc */

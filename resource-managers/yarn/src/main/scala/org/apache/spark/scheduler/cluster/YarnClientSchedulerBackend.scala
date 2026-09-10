@@ -78,6 +78,7 @@ private[spark] class YarnClientSchedulerBackend(
    * This assumes both `client` and `appId` have already been set.
    */
   private def waitForApplication(): Unit = {
+    private static final SparkLogger LOG = SparkLoggerFactory.getLogger(YarnClientSchedulerBackend.class);
     val monitorInterval = conf.get(CLIENT_LAUNCH_MONITOR_INTERVAL)
 
     assert(client != null && appId.isDefined, "Application has not been submitted yet!")
@@ -146,6 +147,7 @@ private[spark] class YarnClientSchedulerBackend(
             System.exit(1)
           }
       }
+      LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     }
 
     def stopMonitor(): Unit = {
@@ -163,6 +165,7 @@ private[spark] class YarnClientSchedulerBackend(
   private def asyncMonitorApplication(): MonitorThread = {
     assert(client != null && appId.isDefined, "Application has not been submitted yet!")
     val t = new MonitorThread
+    LOG.warn("asyncMonitorApplication()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
     t.setName("YARN application state monitor")
     t.setDaemon(true)
     t
@@ -194,6 +197,7 @@ private[spark] class YarnClientSchedulerBackend(
   override protected def updateDelegationTokens(tokens: Array[Byte]): Unit = {
     super.updateDelegationTokens(tokens)
     amEndpoint.foreach(_.send(UpdateDelegationTokens(tokens)))
+    LOG.warn("updateDelegationTokens(tokens)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
 }

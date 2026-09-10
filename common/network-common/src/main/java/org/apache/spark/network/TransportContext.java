@@ -170,6 +170,7 @@ public class TransportContext implements Closeable {
   /** Create a server which will attempt to bind to a specific host and port. */
   public TransportServer createServer(
       String host, int port, List<TransportServerBootstrap> bootstraps) {
+	logger.warn("createServer(port,bootstraps)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", port, bootstraps);
     return new TransportServer(this, host, port, rpcHandler, bootstraps);
   }
 
@@ -187,6 +188,7 @@ public class TransportContext implements Closeable {
   }
 
   public boolean sslEncryptionEnabled() {
+	logger.warn("sslEncryptionEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return this.sslFactory != null;
   }
 
@@ -276,6 +278,7 @@ public class TransportContext implements Closeable {
           "Please ensure the configured keys are present.");
         throw new IllegalArgumentException("RPC SSL encryption enabled but keys not found!");
       }
+	logger.warn("createSslFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     } else {
       return null;
     }
@@ -296,6 +299,7 @@ public class TransportContext implements Closeable {
         client, rpcHandler.getStreamManager(),
         conf.maxChunksBeingTransferred(), false /* syncModeEnabled */);
     }
+	logger.warn("createChannelHandler(channel,rpcHandler)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", channel, rpcHandler);
     TransportRequestHandler requestHandler = new TransportRequestHandler(channel, client,
       rpcHandler, conf.maxChunksBeingTransferred(), chunkFetchRequestHandler);
     return new TransportChannelHandler(client, responseHandler, requestHandler,

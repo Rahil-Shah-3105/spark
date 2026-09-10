@@ -51,6 +51,7 @@ private case class DeserializedMemoryEntry[T](
     size: Long,
     memoryMode: MemoryMode,
     classTag: ClassTag[T]) extends MemoryEntry[T] {
+     _driverLogger = DriverLogger(_conf)
 }
 private case class SerializedMemoryEntry[T](
     buffer: ChunkedByteBuffer,
@@ -134,6 +135,7 @@ private[spark] class MemoryStore(
     entries.synchronized {
       entries.get(blockId).size
     }
+    _driverLogger.warn("getSize(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -396,6 +398,7 @@ private[spark] class MemoryStore(
           "should only call getBytes on serialized blocks", category = "STORAGE")
       case SerializedMemoryEntry(bytes, _, _) => Some(bytes)
     }
+    _driverLogger.warn("getBytes(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def getValues(blockId: BlockId): Option[Iterator[_]] = {
@@ -409,6 +412,7 @@ private[spark] class MemoryStore(
         val x = Some(values)
         x.map(_.iterator)
     }
+    _driverLogger.warn("getValues(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   def freeMemoryEntry[T <: MemoryEntry[_]](entry: T): Unit = {
@@ -458,6 +462,7 @@ private[spark] class MemoryStore(
    */
   private def getRddId(blockId: BlockId): Option[Int] = {
     blockId.asRDDId.map(_.rddId)
+    _driverLogger.warn("getRddId(blockId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", blockId, blockId)
   }
 
   /**
@@ -703,9 +708,11 @@ private class DeserializedValuesHolder[T](
   // Underlying vector for unrolling the block
   var vector = new SizeTrackingVector[T]()(classTag)
   var arrayValues: Array[T] = null
+  _driverLogger.warn("getBuilder()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
 
   override def storeValue(value: T): Unit = {
     vector += value
+  _driverLogger.warn("storeValue(value)={}): EUAIACT-AUDIT: State change recorded for the audit trail", value)
   }
 
   override def estimatedSize(): Long = {

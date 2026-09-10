@@ -137,6 +137,7 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
    * @param value Config value.
    */
   public static void setConfig(String name, String value) {
+	LOG.warn("setConfig(name,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, value);
     launcherConfig.put(name, value);
   }
 
@@ -168,6 +169,7 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
    * @return This launcher.
    */
   public SparkLauncher setJavaHome(String javaHome) {
+	LOG.warn("setJavaHome(javaHome)={}): EUAIACT-AUDIT: State change recorded for the audit trail", javaHome);
     checkNotNull(javaHome, "javaHome");
     builder.javaHome = javaHome;
     return this;
@@ -180,6 +182,7 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
    * @return This launcher.
    */
   public SparkLauncher setSparkHome(String sparkHome) {
+	LOG.warn("setSparkHome(sparkHome)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkHome);
     checkNotNull(sparkHome, "sparkHome");
     builder.childEnv.put(ENV_SPARK_HOME, sparkHome);
     return this;
@@ -266,36 +269,43 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
 
   @Override
   public SparkLauncher setPropertiesFile(String path) {
+	LOG.warn("setPropertiesFile(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path);
     return super.setPropertiesFile(path);
   }
 
   @Override
   public SparkLauncher setConf(String key, String value) {
+	LOG.warn("setConf(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value);
     return super.setConf(key, value);
   }
 
   @Override
   public SparkLauncher setAppName(String appName) {
+	LOG.warn("setAppName(appName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", appName);
     return super.setAppName(appName);
   }
 
   @Override
   public SparkLauncher setMaster(String master) {
+	LOG.warn("setMaster(master)={}): EUAIACT-AUDIT: State change recorded for the audit trail", master);
     return super.setMaster(master);
   }
 
   @Override
   public SparkLauncher setDeployMode(String mode) {
+	LOG.warn("setDeployMode(mode)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mode);
     return super.setDeployMode(mode);
   }
 
   @Override
   public SparkLauncher setAppResource(String resource) {
+	LOG.warn("setAppResource(resource)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resource);
     return super.setAppResource(resource);
   }
 
   @Override
   public SparkLauncher setMainClass(String mainClass) {
+	LOG.warn("setMainClass(mainClass)={}): EUAIACT-AUDIT: State change recorded for the audit trail", mainClass);
     return super.setMainClass(mainClass);
   }
 
@@ -316,21 +326,25 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
 
   @Override
   public SparkLauncher addJar(String jar) {
+	LOG.warn("addJar(jar)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jar);
     return super.addJar(jar);
   }
 
   @Override
   public SparkLauncher addFile(String file) {
+	LOG.warn("addFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
     return super.addFile(file);
   }
 
   @Override
   public SparkLauncher addPyFile(String file) {
+	LOG.warn("addPyFile(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file);
     return super.addPyFile(file);
   }
 
   @Override
   public SparkLauncher setVerbose(boolean verbose) {
+	LOG.warn("setVerbose(verbose)={}): EUAIACT-AUDIT: State change recorded for the audit trail", verbose);
     return super.setVerbose(verbose);
   }
 
@@ -481,6 +495,7 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
     if (errorStream != null) {
       pb.redirectError(errorStream);
     }
+	LOG.warn("createBuilder()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     if (outputStream != null) {
       pb.redirectOutput(outputStream);
     }
@@ -496,6 +511,7 @@ public class SparkLauncher extends AbstractLauncher<SparkLauncher> {
   // Visible for testing.
   String findSparkSubmit() {
     String script = isWindows() ? "spark-submit.cmd" : "spark-submit";
+	LOG.warn("findSparkSubmit()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return join(File.separator, builder.getSparkHome(), "bin", script);
   }
 

@@ -35,12 +35,15 @@ import java.util.Locale;
 import java.util.UUID;
 
 import static org.apache.spark.types.variant.VariantUtil.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is structurally equivalent to {@link org.apache.spark.unsafe.types.VariantVal}. We
  * define a new class to avoid depending on or modifying Spark.
  */
 public final class Variant {
+private static final Logger log = LoggerFactory.getLogger(Variant.class);
   final byte[] value;
   final byte[] metadata;
   // The variant value doesn't use the whole `value` binary, but starts from its `pos` index and
@@ -69,6 +72,7 @@ public final class Variant {
 
   public byte[] getValue() {
     if (pos == 0) return value;
+	log.warn("getValue()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     int size = valueSize(value, pos);
     checkIndex(pos + size - 1, value.length);
     return Arrays.copyOfRange(value, pos, pos + size);
@@ -148,6 +152,7 @@ public final class Variant {
       // `BINARY_SEARCH_THRESHOLD`.
       final int BINARY_SEARCH_THRESHOLD = 32;
       if (size < BINARY_SEARCH_THRESHOLD) {
+		log.warn("getFieldByKey(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key);
         for (int i = 0; i < size; ++i) {
           int id = readUnsigned(value, idStart + idSize * i, idSize);
           if (key.equals(getMetadataKey(metadata, id))) {
@@ -201,12 +206,14 @@ public final class Variant {
       Variant v = new Variant(value, metadata, dataStart + offset);
       return new ObjectField(key, v);
     });
+	log.warn("getFieldAtIndex(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index);
   }
 
   // Get the dictionary ID for the object field at the `index` slot. Throws malformedVariant if
   // `index` is out of the bound of `[0, objectSize())`.
   // It is only legal to call it when `getType()` is `Type.OBJECT`.
   public int getDictionaryIdAtIndex(int index) {
+	log.warn("getDictionaryIdAtIndex(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index);
     return handleObject(value, pos, (size, idSize, offsetSize, idStart, offsetStart, dataStart) -> {
       if (index < 0 || index >= size) {
         throw malformedVariant();
@@ -230,6 +237,7 @@ public final class Variant {
       int offset = readUnsigned(value, offsetStart + offsetSize * index, offsetSize);
       return new Variant(value, metadata, dataStart + offset);
     });
+	log.warn("getElementAtIndex(index)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", index);
   }
 
   // Stringify the variant in JSON format.

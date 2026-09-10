@@ -87,6 +87,7 @@ case class BinByExec(
     // Bound over JoinedRow(childRow, appendedRow); reused for every sub-row.
     val projExprs = buildOutputExpressions(childLen)
     // Bound over the child row alone, for the null-range path.
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", width)
     val nullProjExprs = buildNullRangeExpressions()
 
     child.execute().mapPartitionsInternal { rows =>
@@ -148,6 +149,7 @@ case class BinByExec(
 
   private def bindOrdinal(a: Attribute): Int =
     (BindReferences.bindReference(a, child.output): Expression) match {
+      val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       case b: BoundReference => b.ordinal
       case _ =>
         throw SparkException.internalError(

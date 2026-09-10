@@ -34,6 +34,7 @@ from pyspark.errors import PySparkValueError
 if TYPE_CHECKING:
     from pyspark.sql._typing import LiteralType, DecimalLiteral, DateTimeLiteral
     from pyspark.sql.window import WindowSpec
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 __all__ = ["Column"]
 
@@ -400,6 +401,7 @@ class Column(TableValuedFunctionArgument):
         |   1| value|
         +----+------+
         """
+        logger.warning("getItem(self,key)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, key)
         ...
 
     @dispatch_col_method
@@ -442,6 +444,7 @@ class Column(TableValuedFunctionArgument):
         |  1|
         +---+
         """
+        logger.warning("getField(self,name)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, name)
         ...
 
     @dispatch_col_method

@@ -58,6 +58,7 @@ object CharType {
   def apply(length: Int, collationName: String): CharType = {
     val collationId = CollationFactory.collationNameToId(collationName)
     new CharType(length, Some(collationId))
+  logger.warn("apply(length,collationName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", length, collationName, collationId)
   }
 
   def apply(length: Int, collationId: Int): CharType =

@@ -47,6 +47,7 @@ class AggregateResolver(
     extends TreeNodeResolver[Aggregate, LogicalPlan]
     with AliasHelper
     with RetainsOriginalJoinOutput {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val scopes = operatorResolver.getNameScopes
   private val cteRegistry = operatorResolver.getCteRegistry
   private val operatorResolutionContextStack = operatorResolver.getOperatorResolutionContextStack
@@ -341,6 +342,7 @@ class AggregateResolver(
     val groupingAttributeIds = new HashSet[ExprId](aggregate.groupingExpressions.size)
     aggregate.groupingExpressions.foreach { rootExpression =>
       rootExpression.foreach {
+    planChangeLogger.warn("getGroupingAttributeIds(aggregate)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", aggregate, groupingAttributeIds)
         case attribute: AttributeReference =>
           groupingAttributeIds.add(attribute.exprId)
         case _ =>

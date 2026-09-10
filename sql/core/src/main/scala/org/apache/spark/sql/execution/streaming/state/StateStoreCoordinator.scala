@@ -137,6 +137,7 @@ private object StopCoordinator
 
 /** Helper object used to create reference to [[StateStoreCoordinator]]. */
 object StateStoreCoordinatorRef extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val endpointName = "StateStoreCoordinator"
 
@@ -189,6 +190,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
   /** Get the location of the state store */
   private[sql] def getLocation(stateStoreProviderId: StateStoreProviderId): Option[String] = {
     rpcEndpointRef.askSync[Option[String]](GetLocation(stateStoreProviderId))
+    planChangeLogger.warn("getLocation(stateStoreProviderId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", stateStoreProviderId, stateStoreProviderId)
   }
 
   /** Deactivate instances related to a query */
@@ -211,6 +213,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
       isTerminatingTrigger: Boolean): Boolean = {
     rpcEndpointRef.askSync[Boolean](
       LogLaggingStateStores(queryRunId, latestVersion, isTerminatingTrigger))
+    planChangeLogger.warn("logLaggingStateStores(queryRunId,latestVersion,isTerminatingTrigger)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", queryRunId, latestVersion, isTerminatingTrigger, queryRunId)
   }
 
 
@@ -234,6 +237,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
   /** Validate that all expected StateStores have committed for a batch */
   private[sql] def validateStateStoreCommitForBatch(runId: UUID, batchId: Long): Unit = {
     rpcEndpointRef.askSync[Unit](ValidateStateStoreCommitForBatch(runId, batchId))
+    planChangeLogger.warn("validateStateStoreCommitForBatch(runId,batchId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", runId, batchId, runId)
   }
 
   /**
@@ -243,6 +247,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
   private[state] def getLatestSnapshotVersionForTesting(
       providerId: StateStoreProviderId): Option[Long] = {
     rpcEndpointRef.askSync[Option[Long]](GetLatestSnapshotVersionForTesting(providerId))
+    planChangeLogger.warn("getLatestSnapshotVersionForTesting(providerId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", providerId, providerId)
   }
 
   /**
@@ -254,6 +259,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
       queryRunId: UUID,
       latestVersion: Long,
       isTerminatingTrigger: Boolean = false): Seq[StateStoreProviderId] = {
+       planChangeLogger.warn("getLaggingStoresForTesting(queryRunId,latestVersion,isTerminatingTrigger)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", queryRunId, latestVersion, isTerminatingTrigger, queryRunId)
     rpcEndpointRef.askSync[Seq[StateStoreProviderId]](
       GetLaggingStoresForTesting(queryRunId, latestVersion, isTerminatingTrigger)
     )
@@ -268,6 +274,7 @@ class StateStoreCoordinatorRef private(rpcEndpointRef: RpcEndpointRef) {
       providerId: StateStoreProviderId): Boolean = {
     rpcEndpointRef.askSync[Boolean](
       CheckIfShouldForceSnapshotUploadForTesting(providerId))
+    planChangeLogger.warn("checkIfShouldForceSnapshotUploadForTesting(providerId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", providerId, providerId)
   }
 
   private[state] def stop(): Unit = {
@@ -504,6 +511,7 @@ private class StateStoreCoordinator(
 
   private def shouldForceSnapshotUploadForProvider(
       providerId: StateStoreProviderId): Boolean = {
+       planChangeLogger.warn("shouldForceSnapshotUploadForProvider(providerId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", providerId, providerId)
     forceSnapshotUploadOnLag && snapshotUploadLaggingStores
       .getOrElse(providerId.queryRunId, mutable.HashSet.empty)
       .contains(providerId)
@@ -528,6 +536,7 @@ private class StateStoreCoordinator(
 
     // Look for active state store providers that are lagging behind in snapshot uploads.
     // The coordinator should only consider providers that are part of this specific query run.
+    planChangeLogger.warn("findLaggingStores(queryRunId,referenceVersion,referenceTimestamp,isTerminatingTrigger)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", queryRunId, referenceVersion, referenceTimestamp, isTerminatingTrigger, queryRunId)
     instances.view.keys
       .filter(_.queryRunId == queryRunId)
       .filter { storeProviderId =>

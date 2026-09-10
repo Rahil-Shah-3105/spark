@@ -32,6 +32,7 @@ trait ResolverMetricTracker {
    */
   protected def recordTopLevelMetrics[R](tracker: QueryPlanningTracker)(body: => R): R =
     QueryPlanningTracker.withTracker(tracker) {
+      val planChangeLogger = new PlanChangeLogger[TreeType]()
       val startTime = System.nanoTime()
       val result = body
       val totalTimeNs = System.nanoTime() - startTime
@@ -78,6 +79,7 @@ trait ResolverMetricTracker {
       ResolverMetricTracker.SINGLE_PASS_RESOLVER_METRIC_LOGGING_ALIAS,
       runTime
     )
+    planChangeLogger.warn("collectQueryExecutionMetrics(runTime)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", runTime)
   }
 }
 

@@ -26,9 +26,11 @@ import org.apache.spark.sql.catalyst.trees.TreePattern.LAZY_EXPRESSION
  * entering the analyzer and this rule removes it.
  */
 object EliminateLazyExpression extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     plan.resolveExpressionsUpWithPruning(_.containsPattern(LAZY_EXPRESSION)) {
       case l: LazyExpression => l.child
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

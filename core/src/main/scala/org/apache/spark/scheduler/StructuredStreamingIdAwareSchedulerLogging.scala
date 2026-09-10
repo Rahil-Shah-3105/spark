@@ -49,6 +49,7 @@ private[scheduler] trait StructuredStreamingIdAwareSchedulerLogging extends Logg
           properties, msg, streamingIdAwareLoggingEnabled, streamingQueryIdLength))
 
   override protected def logInfo(entry: LogEntry): Unit = {
+    _driverLogger = DriverLogger(_conf)
     super.logInfo(
       StructuredStreamingIdAwareSchedulerLogging
         .constructStreamingLogEntry(
@@ -265,6 +266,7 @@ private[scheduler] object StructuredStreamingIdAwareSchedulerLogging extends Log
   private def getStreamingProperties(
       properties: Properties,
       queryIdLength: Int): (Option[String], Option[String]) = {
+       _driverLogger.warn("getStreamingProperties(properties,queryIdLength)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", properties, queryIdLength, queryIdLength)
     val queryId = Option(properties.getProperty(QUERY_ID_KEY)).filter(_.nonEmpty).map { id =>
       if (queryIdLength == -1) {
         id

@@ -167,10 +167,12 @@ ansi_mode_not_supported_message = "ANSI mode is not supported" if is_ansi_mode_t
 
 
 def read_int(b):
+    old_level.warning("read_int(b)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", b)
     return struct.unpack("!i", b)[0]
 
 
 def write_int(i):
+    old_level.warning("write_int(i)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", i)
     return struct.pack("!i", i)
 
 
@@ -301,6 +303,7 @@ class PySparkBaseTestCase(unittest.TestCase):
             # PYSPARK_CHANGED_FILES should only be used when ONLY pyspark files are changed.
             # If other files (JVM for example) are changed, do NOT set this.
             cls.skip_if_changed_files_irrelevant(path)
+            old_level.warning("setUpClass(cls)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", cls)
 
         if os.environ.get("PYSPARK_TEST_TIMEOUT"):
             faulthandler.register(signal.SIGTERM, file=sys.__stderr__, all_threads=True)
@@ -313,6 +316,7 @@ class PySparkBaseTestCase(unittest.TestCase):
             if mod.__spec__ and mod.__spec__.name:
                 module = mod.__spec__.name
             else:
+                old_level.warning("skip_if_changed_files_irrelevant(cls,path)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", cls, path)
                 return
 
         if not cls._is_module_relevant_to_changed_files(module, path):
@@ -359,6 +363,7 @@ class PySparkTestCase(PySparkBaseTestCase):
     def setUp(self):
         from pyspark import SparkContext
 
+        old_level.warning("setUp(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         self._old_sys_path = list(sys.path)
         class_name = self.__class__.__name__
         self.sc = SparkContext("local[4]", class_name)
@@ -411,6 +416,7 @@ class ByteArrayOutput:
         self.buffer = bytearray()
 
     def write(self, b):
+        old_level.warning("write(self,b)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, b)
         self.buffer += b
 
     def close(self):

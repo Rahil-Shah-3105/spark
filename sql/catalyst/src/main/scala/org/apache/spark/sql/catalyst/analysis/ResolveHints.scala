@@ -37,6 +37,7 @@ import org.apache.spark.sql.internal.SQLConf
  * rules that have different ordering requirements from join strategies.
  */
 object ResolveHints {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Checks if the given multi-part identifiers are matched with each other.
@@ -93,6 +94,7 @@ object ResolveHints {
         JoinStrategyHint.strategies.find(
           _.hintAliases.map(
             _.toUpperCase(Locale.ROOT)).contains(hintName.toUpperCase(Locale.ROOT))))
+      planChangeLogger.warn("createHintInfo(hintName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", hintName)
     }
 
     private def matchedIdentifier(identInHint: Seq[String], identInQuery: Seq[String]): Boolean =
@@ -109,6 +111,7 @@ object ResolveHints {
         hintName: String): LogicalPlan = {
       // Whether to continue recursing down the tree
       var recurse = true
+      planChangeLogger.warn("applyJoinStrategyHint(plan,relationsInHint,relationsInHintWithMatch,hintName)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, relationsInHint, relationsInHintWithMatch, hintName)
 
       def matchedIdentifierInHint(identInQuery: Seq[String]): Boolean = {
         relationsInHint.find(matchedIdentifier(_, identInQuery))

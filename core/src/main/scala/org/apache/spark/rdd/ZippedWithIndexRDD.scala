@@ -26,6 +26,7 @@ import org.apache.spark.util.Utils
 private[spark]
 class ZippedWithIndexRDDPartition(val prev: Partition, val startIndex: Long)
   extends Partition with Serializable {
+   _driverLogger = DriverLogger(_conf)
   override val index: Int = prev.index
 }
 
@@ -55,6 +56,7 @@ class ZippedWithIndexRDD[T: ClassTag](prev: RDD[T]) extends RDD[(T, Long)](prev)
         getAncestorWithSamePartitionSizes(m.prev)
       case _ => rdd
     }
+    _driverLogger.warn("getAncestorWithSamePartitionSizes(rdd)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", rdd)
   }
 
   /** The start index of each partition. */

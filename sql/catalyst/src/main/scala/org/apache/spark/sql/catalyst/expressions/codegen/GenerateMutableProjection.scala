@@ -31,6 +31,7 @@ abstract class BaseMutableProjection extends MutableProjection
  * The internal [[InternalRow]] object created internally is used only when `target` is not used.
  */
 object GenerateMutableProjection extends CodeGenerator[Seq[Expression], MutableProjection] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   protected def canonicalize(in: Seq[Expression]): Seq[Expression] =
     in.map(ExpressionCanonicalizer.execute)
@@ -51,6 +52,7 @@ object GenerateMutableProjection extends CodeGenerator[Seq[Expression], MutableP
 
   protected def create(expressions: Seq[Expression]): MutableProjection = {
     create(expressions, false)
+    planChangeLogger.warn("create(expressions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expressions)
   }
 
   private def create(
@@ -94,6 +96,7 @@ object GenerateMutableProjection extends CodeGenerator[Seq[Expression], MutableP
     // Evaluate all the subexpressions.
     val evalSubexpr = ctx.subexprFunctionsCode
 
+    planChangeLogger.warn("create(expressions,useSubexprElimination)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", expressions, useSubexprElimination, validExpr)
     val allProjections = ctx.splitExpressionsWithCurrentInputs(projectionCodes.map(_._1))
     val allUpdates = ctx.splitExpressionsWithCurrentInputs(projectionCodes.map(_._2))
 

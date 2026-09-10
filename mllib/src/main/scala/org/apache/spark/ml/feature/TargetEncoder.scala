@@ -440,6 +440,7 @@ object TargetEncoderModel extends MLReadable[TargetEncoderModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession)
       val datum = instance.stats.iterator.zipWithIndex.map { case (stat, index) =>
         val (_categories, _countsAndStats) = stat.toSeq.unzip
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
         val (_counts, _stats) = _countsAndStats.unzip
         Data(index, _categories.toArray, _counts.toArray, _stats.toArray)
       }.toSeq
@@ -461,6 +462,7 @@ object TargetEncoderModel extends MLReadable[TargetEncoderModel] {
         (data.index, data.categories.zip(data.counts.zip(data.stats)).toMap)
       }.sortBy(_._1).map(_._2)
 
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
       val model = new TargetEncoderModel(metadata.uid, stats)
       metadata.getAndSetParams(model)
       model

@@ -120,6 +120,7 @@ public class AmIpFilter implements Filter {
         }
         if (proxyAddresses.isEmpty()) {
           throw new ServletException("Could not locate any of the proxy hosts");
+		LOG.warn("synchronized(this)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", this);
         }
       }
       return proxyAddresses;
@@ -203,6 +204,7 @@ public class AmIpFilter implements Filter {
         }
       }
     }
+	LOG.warn("findRedirectUrl()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
 
     if (addr == null) {
       throw new ServletException(
@@ -234,6 +236,7 @@ public class AmIpFilter implements Filter {
 
   @VisibleForTesting
   protected static void setUpdateInterval(long updateInterval) {
+	LOG.warn("setUpdateInterval(updateInterval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updateInterval);
     AmIpFilter.updateInterval = updateInterval;
   }
 }

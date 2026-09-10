@@ -110,6 +110,7 @@ case class ArrowWindowPythonExec(
         pythonMetrics,
         sessionUUID)
 
+      planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // Start processing.
     if (conf.usePartitionEvaluator) {
       child.execute().mapPartitionsWithEvaluator(evaluatorFactory)
@@ -131,6 +132,7 @@ case class ArrowWindowPythonExec(
 }
 
 object ArrowWindowPythonExec {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(
       windowExpression: Seq[NamedExpression],
       partitionSpec: Seq[Expression],
@@ -142,5 +144,6 @@ object ArrowWindowPythonExec {
     assert(evalTypes.distinct.size == 1,
       "All window functions must have the same eval type in ArrowWindowPythonExec")
     ArrowWindowPythonExec(windowExpression, partitionSpec, orderSpec, child, evalTypes.head)
+    planChangeLogger.warn("apply(windowExpression,partitionSpec,orderSpec,child)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", windowExpression, partitionSpec, orderSpec, child)
   }
 }

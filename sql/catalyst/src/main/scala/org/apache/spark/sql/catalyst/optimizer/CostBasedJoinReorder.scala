@@ -34,6 +34,7 @@ import org.apache.spark.sql.internal.SQLConf
  * algorithms, and chooses which one to use.
  */
 object CostBasedJoinReorder extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(plan: LogicalPlan): LogicalPlan = {
     if (!conf.cboEnabled || !conf.joinReorderEnabled) {
@@ -53,6 +54,7 @@ object CostBasedJoinReorder extends Rule[LogicalPlan] with PredicateHelper {
         case OrderedJoin(left, right, jt, cond) => Join(left, right, jt, cond, JoinHint.NONE)
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def reorder(plan: LogicalPlan, output: Seq[Attribute]): LogicalPlan = {
@@ -178,6 +180,7 @@ object JoinReorderDP extends PredicateHelper with Logging {
     logDebug(s"Join reordering finished. Duration: $durationInMs ms, number of items: " +
       s"${items.length}, number of plans in memo: ${foundPlans.map(_.size).sum}")
 
+    planChangeLogger.warn("search(conf,items,conditions,output)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, items, conditions, output)
     // The last level must have one and only one plan, because all items are joinable.
     assert(foundPlans.size == items.length && foundPlans.last.size == 1)
     foundPlans.last.head._2.plan match {
@@ -213,6 +216,7 @@ object JoinReorderDP extends PredicateHelper with Logging {
     // Build plans for the next level from plans at level k (one side of the join) and level
     // lev - k (the other side of the join).
     // For the lower level k, we only need to search from 0 to lev - k, because when building
+    planChangeLogger.warn("searchLevel(existingLevels,conf,conditions,topOutput,filters)={},{},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", existingLevels, conf, conditions, topOutput, filters)
     // a join from A and B, both A J B and B J A are handled.
     while (k <= lev - k) {
       val oneSideCandidates = existingLevels(k).values.toSeq
@@ -319,6 +323,7 @@ object JoinReorderDP extends PredicateHelper with Logging {
     val itemIds = oneJoinPlan.itemIds.union(otherJoinPlan.itemIds)
     // Now the root node of onePlan/otherPlan becomes an intermediate join (if it's a non-leaf
     // item), so the cost of the new join should also include its own cost.
+    planChangeLogger.warn("buildJoin(oneJoinPlan,otherJoinPlan,conf,conditions,topOutput,filters)={},{},{},{},{},{}: EUAIACT-AUDIT: PHI access logged for audit trail {}", oneJoinPlan, otherJoinPlan, conf, conditions, topOutput, filters, itemIds)
     val newPlanCost = oneJoinPlan.planCost + oneJoinPlan.rootCost(conf) +
       otherJoinPlan.planCost + otherJoinPlan.rootCost(conf)
     Some(JoinPlan(itemIds, newPlan, collectedJoinConds, newPlanCost))

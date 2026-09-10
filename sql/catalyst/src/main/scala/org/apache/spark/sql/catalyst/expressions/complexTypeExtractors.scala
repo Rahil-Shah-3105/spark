@@ -36,6 +36,7 @@ import org.apache.spark.sql.types._
 
 
 object ExtractValue {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /**
    * Returns the resolved `ExtractValue` using the `extractValue` method call. In case the method
    * returns `None`, it throws.
@@ -50,6 +51,7 @@ object ExtractValue {
       case Left(expression) => expression
       case Right(throwable) => throw throwable
     }
+    planChangeLogger.warn("apply(child,extraction,resolver)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, extraction, resolver)
   }
 
   /**
@@ -69,6 +71,7 @@ object ExtractValue {
     } else {
       apply(child, extraction, resolver)
     }
+    planChangeLogger.warn("applyOrNull(child,extraction,resolver)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", child, extraction, resolver)
   }
 
   /**
@@ -108,6 +111,7 @@ object ExtractValue {
               )
             )
           case Right(throwable) => Right(throwable)
+        planChangeLogger.warn("findField(fields,fieldName,resolver)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fields, fieldName, resolver)
         }
 
       case (_: ArrayType, _) => Left(GetArrayItem(child, extraction))
@@ -616,12 +620,14 @@ trait GetMapValueUtil extends BinaryExpression with ImplicitCastInputTypes {
       ordinal: Any,
       keyType: DataType,
       ordering: Ordering[Any]): Any =
+    planChangeLogger.warn("getValueEval(value,ordinal,keyType,ordering)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", value, ordinal, keyType, ordering)
     executor.eval(value.asInstanceOf[MapData], ordinal, keyType, ordering)
 
   def doGetValueGenCode(
       ctx: CodegenContext,
       ev: ExprCode,
       mapType: MapType): ExprCode =
+    planChangeLogger.warn("doGetValueGenCode(ctx,ev,mapType)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, ev, mapType)
     executor.genCode(ctx, ev, mapType)
 
   /**

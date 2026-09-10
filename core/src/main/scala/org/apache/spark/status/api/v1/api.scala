@@ -146,6 +146,7 @@ class MemoryMetrics private[spark](
 /** deserializer for peakMemoryMetrics: convert map to ExecutorMetrics */
 private[spark] class ExecutorMetricsJsonDeserializer
     extends JsonDeserializer[Option[ExecutorMetrics]] {
+     _driverLogger = DriverLogger(_conf)
   override def deserialize(
       jsonParser: JsonParser,
       deserializationContext: DeserializationContext): Option[ExecutorMetrics] = {
@@ -156,6 +157,7 @@ private[spark] class ExecutorMetricsJsonDeserializer
 
   override def getNullValue(ctxt: DeserializationContext): Option[ExecutorMetrics] = {
     None
+    _driverLogger.warn("getNullValue(ctxt)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", ctxt)
   }
 }
 /** serializer for peakMemoryMetrics: convert ExecutorMetrics to map with metric name as key */
@@ -464,6 +466,7 @@ class ExecutorPeakMetricsDistributions private[spark](
   def getMetricDistribution(metricName: String): IndexedSeq[Double] = {
     val sorted = executorMetrics.map(_.getMetricValue(metricName).toDouble).sorted
     getQuantilesValue(sorted, quantiles.toArray)
+    _driverLogger.warn("getMetricDistribution(metricName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metricName)
   }
 }
 

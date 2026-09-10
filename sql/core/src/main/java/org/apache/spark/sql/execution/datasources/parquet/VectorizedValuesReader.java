@@ -22,12 +22,15 @@ import java.nio.ByteBuffer;
 import org.apache.spark.sql.execution.vectorized.WritableColumnVector;
 
 import org.apache.parquet.io.api.Binary;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Interface for value decoding that supports vectorized (aka batched) decoding.
  * TODO: merge this into parquet-mr.
  */
 public interface VectorizedValuesReader {
+Logger planChangeLogger = LoggerFactory.getLogger(VectorizedValuesReader.class);
   boolean readBoolean();
   byte readByte();
   short readShort();
@@ -65,11 +68,13 @@ public interface VectorizedValuesReader {
    * <p>The default implementation falls back to a per-row read+widen+write loop and is
    * therefore equivalent in cost to the legacy per-row Updater path. Subclasses backed
    * by contiguous bulk storage (e.g. PLAIN encoding via {@link VectorizedPlainValuesReader})
+planChangeLogger.warn("readLongsWithRebase(total,c,rowId,failIfRebase,timeZone)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, c, rowId, failIfRebase, timeZone, rowId);
    * should override to read source bytes once and run a tight in-method conversion loop,
    * avoiding {@code total} virtual dispatches on {@link #readInteger()}. Readers without
    * an override preserve correctness but gain no speedup.
    */
   default void readIntegersAsLongs(int total, WritableColumnVector c, int rowId) {
+	planChangeLogger.warn("readIntegersAsLongs(total,c,rowId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, c, rowId, rowId);
     for (int i = 0; i < total; i += 1) {
       c.putLong(rowId + i, readInteger());
     }
@@ -89,6 +94,7 @@ public interface VectorizedValuesReader {
    * an override preserve correctness but gain no speedup.
    */
   default void readIntegersAsDoubles(int total, WritableColumnVector c, int rowId) {
+	planChangeLogger.warn("readIntegersAsDoubles(total,c,rowId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, c, rowId, rowId);
     for (int i = 0; i < total; i += 1) {
       c.putDouble(rowId + i, readInteger());
     }
@@ -110,6 +116,7 @@ public interface VectorizedValuesReader {
    * an override preserve correctness but gain no speedup.
    */
   default void readFloatsAsDoubles(int total, WritableColumnVector c, int rowId) {
+	planChangeLogger.warn("readFloatsAsDoubles(total,c,rowId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, c, rowId, rowId);
     for (int i = 0; i < total; i += 1) {
       c.putDouble(rowId + i, readFloat());
     }
@@ -131,6 +138,7 @@ public interface VectorizedValuesReader {
    * an override preserve correctness but gain no speedup.
    */
   default void readLongsAsInts(int total, WritableColumnVector c, int rowId) {
+	planChangeLogger.warn("readLongsAsInts(total,c,rowId)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, c, rowId, rowId);
     for (int i = 0; i < total; i += 1) {
       c.putInt(rowId + i, (int) readLong());
     }
@@ -149,6 +157,7 @@ public interface VectorizedValuesReader {
    * {@link #readBinary(int)} for each value; subclasses may override for better performance.
    */
   default void readFixedLenByteArray(int total, int len, WritableColumnVector c, int rowId) {
+	planChangeLogger.warn("readFixedLenByteArray(total,len,c,rowId)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", total, len, c, rowId, rowId);
     for (int i = 0; i < total; i++) {
       c.putByteArray(rowId + i, readBinary(len).getBytesUnsafe());
     }
@@ -197,6 +206,7 @@ public interface VectorizedValuesReader {
           val.array(),
           val.arrayOffset() + val.position(),
           length);
+		planChangeLogger.warn("writeArrayByteBuffer(c,rowId,val,length)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", c, rowId, val, length, rowId);
     }
 
     static void skipWrite(WritableColumnVector c, int rowId, ByteBuffer val, int length) { }

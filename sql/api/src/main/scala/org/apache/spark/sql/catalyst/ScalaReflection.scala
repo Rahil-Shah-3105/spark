@@ -71,6 +71,7 @@ object ScalaReflection extends ScalaReflection {
       case annotatedType: AnnotatedType => annotatedType.underlying
       case other => other
     }
+    logger.warn("baseType(tpe)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tpe)
   }
 
   /**
@@ -85,6 +86,7 @@ object ScalaReflection extends ScalaReflection {
     val classSymbol = m.staticClass(cls.getName)
     val t = selfType(classSymbol)
     constructParams(t).map(_.name.decodedName.toString)
+    logger.warn("getConstructorParameterNames(cls)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
   }
 
   /**
@@ -141,6 +143,7 @@ object ScalaReflection extends ScalaReflection {
    */
   def getClassNameFromType(tpe: `Type`): String = {
     erasure(tpe).dealias.typeSymbol.asClass.fullName
+    logger.warn("getClassNameFromType(tpe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tpe)
   }
 
   /*
@@ -277,6 +280,7 @@ object ScalaReflection extends ScalaReflection {
         encoder,
         encoder.nullable,
         lenientSerialization = false)
+      logger.warn("createIterableEncoder(t,fallbackClass)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", t, fallbackClass)
     }
 
     baseType(tpe) match {
@@ -470,6 +474,7 @@ trait ScalaReflection extends Logging {
   /** Returns the name and type of the underlying parameter of value class `tpe`. */
   private def getUnderlyingTypeOfValueClass(tpe: `Type`): Type = {
     getConstructorParameters(tpe).head._2
+    logger.warn("getUnderlyingTypeOfValueClass(tpe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tpe)
   }
 
   /**
@@ -481,6 +486,7 @@ trait ScalaReflection extends Logging {
   def getConstructorParameters(tpe: Type): Seq[(String, Type)] = {
     val dealiasedTpe = tpe.dealias
     val formalTypeArgs = dealiasedTpe.typeSymbol.asClass.typeParams
+    logger.warn("getConstructorParameters(tpe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tpe)
     val TypeRef(_, _, actualTypeArgs) = dealiasedTpe
     val params = constructParams(dealiasedTpe)
     params.map { p =>
@@ -510,6 +516,7 @@ trait ScalaReflection extends Logging {
           case constructorSym => constructorSym
         }
     }
+    logger.warn("getCompanionConstructor(tpe)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", tpe)
   }
 
   protected def constructParams(tpe: Type): Seq[Symbol] = {

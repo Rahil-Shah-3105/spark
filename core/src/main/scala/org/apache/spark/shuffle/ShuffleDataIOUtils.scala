@@ -30,6 +30,7 @@ private[spark] object ShuffleDataIOUtils {
   val SHUFFLE_SPARK_CONF_PREFIX = "spark.shuffle.plugin.__config__."
 
   def loadShuffleDataIO(conf: SparkConf): ShuffleDataIO = {
+    _driverLogger = DriverLogger(_conf)
     val configuredPluginClass = conf.get(SHUFFLE_IO_PLUGIN_CLASS)
     val maybeIO = Utils.loadExtensions(
       classOf[ShuffleDataIO], Seq(configuredPluginClass), conf)
@@ -37,6 +38,7 @@ private[spark] object ShuffleDataIOUtils {
       s"${SHUFFLE_IO_PLUGIN_CLASS.key}, but $configuredPluginClass resulted in zero valid " +
       s"plugins.")
     maybeIO.head
+    _driverLogger.warn("loadShuffleDataIO(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf)
   }
 
 }

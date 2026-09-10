@@ -40,12 +40,14 @@ import org.apache.spark.sql.internal.SQLConf
  *    nothing.
  */
 object RemoveRedundantSorts extends Rule[SparkPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def apply(plan: SparkPlan): SparkPlan = {
     if (!conf.getConf(SQLConf.REMOVE_REDUNDANT_SORTS_ENABLED)) {
       plan
     } else {
       removeSorts(plan)
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def removeSorts(plan: SparkPlan): SparkPlan = plan transform {

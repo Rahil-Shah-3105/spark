@@ -56,6 +56,7 @@ class InMemoryStatefulProcessorHandleImpl(
     timeMode: TimeMode,
     keyExprEnc: ExpressionEncoder[Any])
   extends StatefulProcessorHandleImplBase(timeMode, keyExprEnc) {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   class InMemoryValueState[T] extends ValueState[T] {
     private val keyToStateValue = mutable.Map[Any, T]()
@@ -72,6 +73,7 @@ class InMemoryStatefulProcessorHandleImpl(
 
     override def update(newState: T): Unit = {
       keyToStateValue.put(ImplicitGroupingKeyTracker.getImplicitKeyOption.get, newState)
+      planChangeLogger.warn("update(newState)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newState)
     }
 
     override def clear(): Unit = {
@@ -117,6 +119,7 @@ class InMemoryStatefulProcessorHandleImpl(
         )
       }
       keyToStateValue(ImplicitGroupingKeyTracker.getImplicitKeyOption.get) ++= newState
+      planChangeLogger.warn("appendList(newState)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", newState)
     }
 
     override def clear(): Unit = {
@@ -138,6 +141,7 @@ class InMemoryStatefulProcessorHandleImpl(
         .orElse(Some(mutable.HashMap.empty[K, V]))
         .get
         .getOrElse(key, null.asInstanceOf[V])
+        planChangeLogger.warn("getValue(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     }
 
     override def containsKey(key: K): Boolean = {
@@ -156,6 +160,7 @@ class InMemoryStatefulProcessorHandleImpl(
       }
 
       keyToStateValue(ImplicitGroupingKeyTracker.getImplicitKeyOption.get) += (key -> value)
+      planChangeLogger.warn("updateValue(key,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value)
     }
 
     override def iterator(): Iterator[(K, V)] = {
@@ -186,6 +191,7 @@ class InMemoryStatefulProcessorHandleImpl(
         .orElse(Some(mutable.HashMap.empty[K, V]))
         .get
         .remove(key)
+        planChangeLogger.warn("removeKey(key)={}): EUAIACT-AUDIT: State change recorded for the audit trail", key)
     }
 
     override def clear(): Unit = {
@@ -202,6 +208,7 @@ class InMemoryStatefulProcessorHandleImpl(
         keyToTimers.put(groupingKey, mutable.TreeSet[Long]())
       }
       keyToTimers(groupingKey).add(expiryTimestampMs)
+      planChangeLogger.warn("registerTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
     }
 
     def deleteTimer(expiryTimestampMs: Long): Unit = {
@@ -209,6 +216,7 @@ class InMemoryStatefulProcessorHandleImpl(
       if (keyToTimers.contains(groupingKey)) {
         keyToTimers(groupingKey).remove(expiryTimestampMs)
       }
+      planChangeLogger.warn("deleteTimer(expiryTimestampMs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expiryTimestampMs)
     }
 
     def listTimers(): Iterator[Long] = {
@@ -217,6 +225,7 @@ class InMemoryStatefulProcessorHandleImpl(
         case Some(timers) => timers.iterator
         case None => Iterator.empty
       }
+      planChangeLogger.warn("listTimers()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
   }
 
@@ -226,6 +235,8 @@ class InMemoryStatefulProcessorHandleImpl(
       ttlConfig: TTLConfig): ValueState[T] = {
     assert(ttlConfig == TTLConfig.NONE, "TTL is not supported in this implementation")
     new InMemoryValueState[T]
+    planChangeLogger.warn("getValueState(stateName,valEncoder,ttlConfig)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, valEncoder, ttlConfig)
+  planChangeLogger.warn("getValueState(stateName,ttlConfig)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlConfig)
   }
 
   override def getValueState[T: Encoder](stateName: String, ttlConfig: TTLConfig): ValueState[T] = {
@@ -238,6 +249,8 @@ class InMemoryStatefulProcessorHandleImpl(
       ttlConfig: TTLConfig): ListState[T] = {
     assert(ttlConfig == TTLConfig.NONE, "TTL is not supported in this implementation")
     new InMemoryListState[T]
+    planChangeLogger.warn("getListState(stateName,valEncoder,ttlConfig)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, valEncoder, ttlConfig)
+  planChangeLogger.warn("getListState(stateName,ttlConfig)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlConfig)
   }
 
   override def getListState[T: Encoder](stateName: String, ttlConfig: TTLConfig): ListState[T] = {
@@ -251,6 +264,8 @@ class InMemoryStatefulProcessorHandleImpl(
       ttlConfig: TTLConfig): MapState[K, V] = {
     assert(ttlConfig == TTLConfig.NONE, "TTL is not supported in this implementation")
     new InMemoryMapState[K, V]
+    planChangeLogger.warn("getMapState(stateName,userKeyEnc,valEncoder,ttlConfig)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, userKeyEnc, valEncoder, ttlConfig)
+  planChangeLogger.warn("getMapState(stateName,ttlConfig)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateName, ttlConfig)
   }
 
   override def getMapState[K: Encoder, V: Encoder](
@@ -279,6 +294,7 @@ class InMemoryStatefulProcessorHandleImpl(
 
   override def deleteIfExists(stateName: String): Unit = {
     // No-op for this implementation - we don't even track the state definitions
+    planChangeLogger.warn("deleteIfExists(stateName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", stateName)
   }
 }
 

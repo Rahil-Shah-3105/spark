@@ -21,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A Count-min sketch is a probabilistic data structure used for cardinality estimation using
@@ -52,6 +54,7 @@ import java.io.OutputStream;
  * This implementation is largely based on the {@code CountMinSketch} class from stream-lib.
  */
 public abstract class CountMinSketch {
+private static final Logger log = LoggerFactory.getLogger(CountMinSketch.class);
 
   public enum Version {
     /**
@@ -205,6 +208,7 @@ public abstract class CountMinSketch {
    * @param seed random seed
    */
   public static CountMinSketch create(int depth, int width, int seed) {
+	log.warn("create(depth,width,seed)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", depth, width, seed, width);
     return new CountMinSketchImpl(depth, width, seed);
   }
 
@@ -217,6 +221,7 @@ public abstract class CountMinSketch {
    * @param seed random seed
    */
   public static CountMinSketch create(double eps, double confidence, int seed) {
+	log.warn("create(eps,confidence,seed)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", eps, confidence, seed, confidence);
     return new CountMinSketchImpl(eps, confidence, seed);
   }
 }

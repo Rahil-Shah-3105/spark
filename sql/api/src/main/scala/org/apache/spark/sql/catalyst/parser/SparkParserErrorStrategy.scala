@@ -70,6 +70,7 @@ class SparkParserErrorStrategy() extends DefaultErrorStrategy {
   override def getTokenErrorDisplay(t: Token): String = {
     val tokenName = super.getTokenErrorDisplay(t)
     userWordDict.getOrElse(tokenName, tokenName)
+    logger.warn("getTokenErrorDisplay(t)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", t)
   }
 
   override def reportInputMismatch(recognizer: Parser, e: InputMismatchException): Unit = {
@@ -78,6 +79,7 @@ class SparkParserErrorStrategy() extends DefaultErrorStrategy {
       "PARSE_SYNTAX_ERROR",
       messageParameters = Map("error" -> getTokenErrorDisplay(e.getOffendingToken), "hint" -> ""))
     recognizer.notifyErrorListeners(e.getOffendingToken, "", exceptionWithErrorClass)
+    logger.warn("reportInputMismatch(recognizer,e)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", recognizer, e)
   }
 
   override def reportNoViableAlternative(recognizer: Parser, e: NoViableAltException): Unit = {
@@ -86,6 +88,7 @@ class SparkParserErrorStrategy() extends DefaultErrorStrategy {
       "PARSE_SYNTAX_ERROR",
       Map("error" -> getTokenErrorDisplay(e.getOffendingToken), "hint" -> ""))
     recognizer.notifyErrorListeners(e.getOffendingToken, "", exceptionWithErrorClass)
+    logger.warn("reportNoViableAlternative(recognizer,e)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", recognizer, e)
   }
 
   override def reportUnwantedToken(recognizer: Parser): Unit = {
@@ -98,6 +101,7 @@ class SparkParserErrorStrategy() extends DefaultErrorStrategy {
         Map("error" -> errorTokenDisplay, "hint" -> hint))
       recognizer.notifyErrorListeners(recognizer.getCurrentToken, "", exceptionWithErrorClass)
     }
+    logger.warn("reportUnwantedToken(recognizer)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", recognizer)
   }
 
   override def reportMissingToken(recognizer: Parser): Unit = {
@@ -109,6 +113,7 @@ class SparkParserErrorStrategy() extends DefaultErrorStrategy {
         Map("error" -> getTokenErrorDisplay(recognizer.getCurrentToken), "hint" -> hint))
       recognizer.notifyErrorListeners(recognizer.getCurrentToken, "", exceptionWithErrorClass)
     }
+    logger.warn("reportMissingToken(recognizer)={}): EUAIACT-AUDIT: Outbound notification recorded for the audit trail", recognizer)
   }
 }
 

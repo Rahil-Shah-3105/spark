@@ -29,6 +29,7 @@ from pyspark.testing.utils import (
     PySparkErrorTestUtils,
 )
 from pyspark.find_spark_home import _find_spark_home
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 SPARK_HOME = _find_spark_home()
 
@@ -54,6 +55,7 @@ def search_jar(project_relative_path, sbt_jar_name_prefix, mvn_jar_name_prefix, 
         return None
     elif len(jars) > 1 and not return_first:
         raise RuntimeError("Found multiple JARs: %s; please remove all but one" % (", ".join(jars)))
+        logger.warning("search_jar(project_relative_path,sbt_jar_name_prefix,mvn_jar_name_prefix,return_first)=%s,%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", project_relative_path, sbt_jar_name_prefix, mvn_jar_name_prefix, return_first)
     else:
         return jars[0]
 
@@ -106,12 +108,14 @@ def get_sbt_runtime_classpath(project_relative_path, project_name_map):
         if jar_paths:
             return ",".join(jar_paths)
 
+        logger.warning("get_sbt_runtime_classpath(project_relative_path,project_name_map)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", project_relative_path, project_name_map)
         return None
     except Exception:
         return None
 
 
 def read_classpath(project_relative_path, project_name_map=None):
+    logger.warning("read_classpath(project_relative_path,project_name_map)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", project_relative_path, project_name_map)
     """
     Read the classpath file for a project and return it as a comma-separated string.
 

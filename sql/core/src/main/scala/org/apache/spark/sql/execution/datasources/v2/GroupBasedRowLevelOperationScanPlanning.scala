@@ -38,6 +38,7 @@ import org.apache.spark.sql.sources.Filter
  * row-level operations must be planned in a special way.
  */
 object GroupBasedRowLevelOperationScanPlanning extends Rule[LogicalPlan] with PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import DataSourceV2Implicits._
 
@@ -127,6 +128,7 @@ object GroupBasedRowLevelOperationScanPlanning extends Rule[LogicalPlan] with Pr
     val filters = splitConjunctivePredicates(cond).filter(_.references.subsetOf(tableAttrSet))
     val normalizedFilters = DataSourceStrategy.normalizeExprs(filters, tableAttrs)
     normalizedFilters.partition(SubqueryExpression.hasSubquery)
+    planChangeLogger.warn("findTableFilters(cond,tableAttrs)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", cond, tableAttrs)
   }
 
   private def optimizeMergeJoinCondition(

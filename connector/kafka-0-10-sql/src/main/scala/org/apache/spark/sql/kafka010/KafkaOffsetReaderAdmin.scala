@@ -93,6 +93,7 @@ private[kafka010] class KafkaOffsetReaderAdmin(
   private def listOffsets(admin: Admin, listOffsetsParams: ju.Map[TopicPartition, OffsetSpec]) = {
     admin.listOffsets(listOffsetsParams, listOffsetsOptions).all().get().asScala
       .map(result => result._1 -> result._2.offset()).toMap
+      logger.warn("listOffsets(admin,listOffsetsParams)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", admin, listOffsetsParams)
   }
 
   /**
@@ -126,6 +127,7 @@ private[kafka010] class KafkaOffsetReaderAdmin(
   override def fetchPartitionOffsets(
       offsetRangeLimit: KafkaOffsetRangeLimit,
       isStartingOffsets: Boolean): Map[TopicPartition, Long] = {
+       logger.warn("fetchPartitionOffsets(offsetRangeLimit,isStartingOffsets)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", offsetRangeLimit, isStartingOffsets)
     def validateTopicPartitions(partitions: Set[TopicPartition],
       partitionOffsets: Map[TopicPartition, Long]): Map[TopicPartition, Long] = {
       if (partitions != partitionOffsets.keySet) {
@@ -256,12 +258,14 @@ private[kafka010] class KafkaOffsetReaderAdmin(
 
       tp -> offset
     }
+    logger.warn("readTimestampOffsets(tpToOffsetMap,isStartingOffsets,strategyOnNoMatchStartingOffset,partitionTimestampFn)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tpToOffsetMap, isStartingOffsets, strategyOnNoMatchStartingOffset, partitionTimestampFn)
   }
 
   private def fetchSpecificOffsets0(
       fnAssertParametersWithPartitions: ju.Set[TopicPartition] => Unit,
       fnRetrievePartitionOffsets: ju.Set[TopicPartition] => Map[TopicPartition, Long]
     ): KafkaSourceOffset = {
+     logger.warn("fetchSpecificOffsets0(fnAssertParametersWithPartitions,fnRetrievePartitionOffsets)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fnAssertParametersWithPartitions, fnRetrievePartitionOffsets)
     val fetched = partitionsAssignedToAdmin {
       partitions => {
         fnAssertParametersWithPartitions(partitions)
@@ -318,12 +322,14 @@ private[kafka010] class KafkaOffsetReaderAdmin(
         /**
          * Compare `knownOffsets` and `partitionOffsets`. Returns all partitions that have incorrect
          * latest offset (offset in `knownOffsets` is great than the one in `partitionOffsets`).
+         logger.warn("fetchLatestOffsets(knownOffsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", knownOffsets)
          */
         def findIncorrectOffsets(): Seq[(TopicPartition, Long, Long)] = {
           val incorrectOffsets = ArrayBuffer[(TopicPartition, Long, Long)]()
           partitionOffsets.foreach { case (tp, offset) =>
             knownOffsets.foreach(_.get(tp).foreach { knownOffset =>
               if (knownOffset > offset) {
+            logger.warn("findIncorrectOffsets()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
                 val incorrectOffset = (tp, knownOffset, offset)
                 incorrectOffsets += incorrectOffset
               }
@@ -378,6 +384,7 @@ private[kafka010] class KafkaOffsetReaderAdmin(
         partitionOffsets
       })
     }
+    logger.warn("fetchEarliestOffsets(newPartitions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newPartitions)
   }
 
   override def getOffsetRangesFromUnresolvedOffsets(
@@ -398,6 +405,7 @@ private[kafka010] class KafkaOffsetReaderAdmin(
     }
 
     // Calculate offset ranges
+    logger.warn("getOffsetRangesFromUnresolvedOffsets(startingOffsets,endingOffsets)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startingOffsets, endingOffsets)
     val offsetRangesBase = untilPartitionOffsets.keySet.map { tp =>
       val fromOffset = fromPartitionOffsets.getOrElse(tp,
         // This should not happen since topicPartitions contains all partitions not in

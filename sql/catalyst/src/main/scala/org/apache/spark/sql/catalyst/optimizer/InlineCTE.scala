@@ -63,9 +63,11 @@ case class InlineCTE(
     } else {
       plan
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def shouldInline(cteDef: CTERelationDef, refCount: Int): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     // A CTE definition that requests to skip inlining is never inlined, even in `alwaysInline`
     // mode, so that a producer can guarantee the CTE is materialized rather than duplicated.
     !cteDef.forceSkipInline && (alwaysInline || {
@@ -285,6 +287,7 @@ case class InlineCTE(
       case other =>
         other.withNewChildren(plan.children.map(child => setUnlimitedRecursion(child, id)))
     }
+    planChangeLogger.warn("setUnlimitedRecursion(plan,id)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, id, id)
   }
 }
 

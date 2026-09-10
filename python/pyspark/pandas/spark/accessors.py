@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
     import pyspark.pandas as ps
     from pyspark.pandas.frame import CachedDataFrame
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class SparkIndexOpsMethods(Generic[IndexOpsLike], metaclass=ABCMeta):
@@ -1222,6 +1223,7 @@ class CachedSparkFrameMethods(SparkFrameMethods):
         To uncache the dataframe, use `unpersist` function
 
         >>> df.spark.unpersist()
+        logger.warning("unpersist(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         """
         if self._psdf._cached.is_cached:
             self._psdf._cached.unpersist()

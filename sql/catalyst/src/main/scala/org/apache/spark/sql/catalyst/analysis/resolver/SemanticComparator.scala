@@ -31,6 +31,7 @@ import org.apache.spark.sql.catalyst.expressions.Expression
  * that expression trees are indeed identical.
  */
 class SemanticComparator(targetExpressions: Seq[Expression] = Seq.empty) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private val targetExpressionsBySemanticHash =
     new HashMap[Int, ArrayList[Expression]](targetExpressions.size)
 
@@ -45,6 +46,7 @@ class SemanticComparator(targetExpressions: Seq[Expression] = Seq.empty) {
     targetExpressionsBySemanticHash
       .computeIfAbsent(expression.semanticHash(), _ => new ArrayList[Expression])
       .add(expression)
+      planChangeLogger.warn("add(expression)={}): EUAIACT-AUDIT: State change recorded for the audit trail", expression)
   }
 
   /**

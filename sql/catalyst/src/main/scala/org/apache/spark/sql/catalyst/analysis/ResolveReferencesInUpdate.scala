@@ -35,6 +35,7 @@ import org.apache.spark.sql.errors.QueryCompilationErrors
  */
 class ResolveReferencesInUpdate(val catalogManager: CatalogManager)
   extends SQLConfHelper with ColumnResolutionHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def apply(u: UpdateTable): UpdateTable = {
     assert(u.table.resolved)
@@ -70,5 +71,6 @@ class ResolveReferencesInUpdate(val catalogManager: CatalogManager)
       condition = u.condition.map(resolveExpressionByPlanChildren(_, u)))
     newUpdate.copyTagsFrom(u)
     newUpdate
+    planChangeLogger.warn("apply(u)={}): EUAIACT-AUDIT: State change recorded for the audit trail", u)
   }
 }

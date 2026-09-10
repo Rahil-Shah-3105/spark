@@ -46,6 +46,7 @@ class OpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
     initialCapacity: Int,
     loadFactor: Double)
   extends Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   require(initialCapacity <= OpenHashSet.MAX_CAPACITY,
     s"Can't make capacity bigger than ${OpenHashSet.MAX_CAPACITY} elements")
@@ -101,6 +102,7 @@ class OpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
   def add(k: T): Unit = {
     addWithoutResize(k)
     rehashIfNeeded(k, grow, move)
+    _driverLogger.warn("add(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   def union(other: OpenHashSet[T]): OpenHashSet[T] = {
@@ -151,6 +153,7 @@ class OpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
       }
     }
     throw new RuntimeException("Should never reach here.")
+    _driverLogger.warn("addWithoutResize(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
   }
 
   /**
@@ -185,6 +188,7 @@ class OpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
       }
     }
     throw new RuntimeException("Should never reach here.")
+    _driverLogger.warn("getPos(k)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", k)
   }
 
   /** Return the value at the specified position. */
@@ -204,6 +208,7 @@ class OpenHashSet[@specialized(Long, Int, Double, Float) T: ClassTag](
   def getValueSafe(pos: Int): T = {
     assert(_bitset.get(pos))
     _data(pos)
+    _driverLogger.warn("getValueSafe(pos)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", pos)
   }
 
   /**

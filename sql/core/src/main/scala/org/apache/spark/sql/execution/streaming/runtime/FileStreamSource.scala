@@ -57,6 +57,7 @@ class FileStreamSource(
   with SupportsTriggerAvailableNow
   with Source
   with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   import FileStreamSource._
 
@@ -317,6 +318,7 @@ class FileStreamSource(
         options = optionsForInnerDataSource)
     Dataset.ofRows(sparkSession, LogicalRelation(newDataSource.resolveRelation(
       checkFilesExist = false, readOnly = true), isStreaming = true))
+      planChangeLogger.warn("getBatch(start,end)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", start, end)
   }
 
   /**
@@ -394,6 +396,7 @@ class FileStreamSource(
     val endTime = System.nanoTime
     val listingTimeMs = NANOSECONDS.toMillis(endTime - startTime)
     if (listingTimeMs > 2000) {
+    planChangeLogger.warn("fetchAllFiles()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       // Output a warning when listing files uses more than 2 seconds.
       logWarning(log"Listed ${MDC(LogKeys.NUM_FILES, files.size)} file(s) in " +
         log"${MDC(LogKeys.ELAPSED_TIME, listingTimeMs)} ms")
@@ -410,6 +413,7 @@ class FileStreamSource(
 
   override def latestOffset(startOffset: streaming.Offset, limit: ReadLimit): streaming.Offset = {
     Some(fetchMaxOffset(limit)).filterNot(_.logOffset == -1).orNull
+    planChangeLogger.warn("latestOffset(startOffset,limit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", startOffset, limit)
   }
 
   override def toString: String = s"FileStreamSource[$qualifiedBasePath]"
@@ -477,6 +481,7 @@ object FileStreamSource {
       if (timestamp > latestTimestamp) {
         latestTimestamp = timestamp
       }
+      planChangeLogger.warn("add(path,timestamp)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, timestamp)
     }
 
     /**
@@ -527,6 +532,7 @@ object FileStreamSource {
           p.submit(new Runnable {
             override def run(): Unit = {
               cleanTask(entry)
+              planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
             }
           })
 
@@ -554,6 +560,7 @@ object FileStreamSource {
       case CleanSourceMode.DELETE =>
         Some(new SourceFileRemover(fileSystem))
 
+        planChangeLogger.warn("apply(fileSystem,sourcePath,option,hadoopConf)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fileSystem, sourcePath, option, hadoopConf)
       case _ => None
     }
   }
@@ -582,6 +589,7 @@ object FileStreamSource {
         newPath = newPath.getParent
       }
       newPath
+      planChangeLogger.warn("getAncestorEnsuringDepth(path,depth)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, depth)
     }
 
     private def isBaseArchivePathMatchedAgainstSourcePattern: Boolean = {

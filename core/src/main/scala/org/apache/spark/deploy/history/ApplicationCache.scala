@@ -64,6 +64,7 @@ private[history] class ApplicationCache(
       if (removalLatch != null) {
         removalLatch.await()
       }
+      _driverLogger.warn("load(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
       val entry = loadApplicationEntry(key.appId, key.attemptId)
       loadedApps.put(key, new CountDownLatch(1))
       entry
@@ -100,12 +101,14 @@ private[history] class ApplicationCache(
   val metrics = new CacheMetrics("history.cache")
 
   def get(appId: String, attemptId: Option[String] = None): CacheEntry = {
+    _driverLogger = DriverLogger(_conf)
     try {
       appCache.get(new CacheKey(appId, attemptId))
     } catch {
       case e @ (_: ExecutionException | _: UncheckedExecutionException) =>
         throw Option(e.getCause()).getOrElse(e)
     }
+    _driverLogger.warn("get(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
   }
 
   /**
@@ -175,6 +178,7 @@ private[history] class ApplicationCache(
     logDebug(log"Loading application Entry " + application)
     metrics.loadCount.inc()
     val loadedUI = time(metrics.loadTimer) {
+    _driverLogger.warn("loadApplicationEntry(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
       metrics.lookupCount.inc()
       operations.getAppUI(appId, attemptId) match {
         case Some(loadedUI) =>
@@ -237,6 +241,7 @@ private[history] class ApplicationCache(
     loadedUI.ui.getHandlers.foreach { handler =>
       handler.addFilter(holder, "/*", enumDispatcher)
     }
+    _driverLogger.warn("registerFilter(key,loadedUI)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, loadedUI)
   }
 
   def invalidate(key: CacheKey): Unit = appCache.invalidate(key)

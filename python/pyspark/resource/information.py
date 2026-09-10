@@ -16,6 +16,7 @@
 #
 
 from typing import List
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ResourceInformation:
@@ -65,4 +66,5 @@ class ResourceInformation:
         list
             a list of strings describing the addresses of the resource
         """
+        logger.warning("addresses(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self._addresses

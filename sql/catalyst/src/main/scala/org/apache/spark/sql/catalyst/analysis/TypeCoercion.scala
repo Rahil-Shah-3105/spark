@@ -45,6 +45,7 @@ import org.apache.spark.sql.types.UpCastRule.numericPrecedence
  * union we would cast the decimal into double).
  */
 object TypeCoercion extends TypeCoercionBase {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def typeCoercionRules: List[Rule[LogicalPlan]] =
     UnpivotCoercion ::
@@ -171,6 +172,7 @@ object TypeCoercion extends TypeCoercionBase {
     case (l: StringType, r: AtomicType) if canPromoteAsInBinaryComparison(r) => Some(r)
     case (l: AtomicType, r: StringType) if canPromoteAsInBinaryComparison(l) => Some(l)
     case (l, r) => None
+    planChangeLogger.warn("findCommonTypeForBinaryComparison(dt1,dt2,conf)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dt1, dt2, conf)
   }
 
   override def findWiderTypeForTwo(t1: DataType, t2: DataType): Option[DataType] = {
@@ -178,6 +180,7 @@ object TypeCoercion extends TypeCoercionBase {
       .orElse(findWiderTypeForDecimal(t1, t2))
       .orElse(stringPromotion(t1, t2))
       .orElse(findTypeForComplex(t1, t2, findWiderTypeForTwo))
+      planChangeLogger.warn("findWiderTypeForTwo(t1,t2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t1, t2)
   }
 
   override def findWiderCommonType(types: Seq[DataType]): Option[DataType] = {
@@ -185,6 +188,7 @@ object TypeCoercion extends TypeCoercionBase {
     // to a op (b op c). This is only a problem for StringType or nested StringType in ArrayType.
     // Excluding these types, findWiderTypeForTwo satisfies the associative law. For instance,
     // (TimestampType, IntegerType, StringType) should have StringType as the wider common type.
+    planChangeLogger.warn("findWiderCommonType(types)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", types)
     val (stringTypes, nonStringTypes) = types.partition(hasStringType(_))
     (stringTypes.distinct ++ nonStringTypes).foldLeft[Option[DataType]](Some(NullType))((r, c) =>
       r match {
@@ -314,6 +318,8 @@ object TypeCoercion extends TypeCoercionBase {
     } else {
       findTypeForComplex(t1, t2, findCommonTypeDifferentOnlyInNullFlags)
     }
+    planChangeLogger.warn("findCommonTypeDifferentOnlyInNullFlags(t1,t2)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", t1, t2)
+  planChangeLogger.warn("findCommonTypeDifferentOnlyInNullFlags(types)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", types)
   }
 
   def findCommonTypeDifferentOnlyInNullFlags(types: Seq[DataType]): Option[DataType] = {
@@ -392,6 +398,7 @@ trait TypeCoercionRule extends Rule[LogicalPlan] with Logging {
             AlwaysProcess.fn, ruleId)(typeCoercionFn)
         }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   def transform: PartialFunction[Expression, Expression]

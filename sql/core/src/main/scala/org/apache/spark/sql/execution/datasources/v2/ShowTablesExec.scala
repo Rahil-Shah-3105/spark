@@ -48,6 +48,7 @@ case class ShowTablesExec(
         mc.listRelationSummaries(namespace.toArray).map(_.identifier())
       case _ => catalog.listTables(namespace.toArray)
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     identifiers.foreach { ident =>
       if (pattern.map(StringUtils.filterPattern(Seq(ident.name()), _).nonEmpty).getOrElse(true)) {
         rows += toCatalystRow(ident.namespace().quoted, ident.name(), isTempView(ident, catalog))
@@ -58,8 +59,10 @@ case class ShowTablesExec(
   }
 
   private def isTempView(ident: Identifier, catalog: TableCatalog): Boolean = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (CatalogV2Util.isSessionCatalog(catalog)) {
       session.sessionState.catalog.isTempView((ident.namespace() :+ ident.name()).toSeq)
     } else false
+    planChangeLogger.warn("isTempView(ident,catalog)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, catalog, ident)
   }
 }

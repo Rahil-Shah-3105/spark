@@ -433,6 +433,7 @@ class NaiveBayesModel private[ml] (
   private[spark] def setOldLabels(labels: Array[Double]): this.type = {
     this.oldLabels = labels
     this
+    logger.warn("setOldLabels(labels)={}): EUAIACT-AUDIT: State change recorded for the audit trail", labels)
   }
 
   /**
@@ -638,6 +639,7 @@ object NaiveBayesModel extends MLReadable[NaiveBayesModel] {
         case Gaussian =>
           require(instance.sigma.numRows != 0 && instance.sigma.numCols != 0)
       }
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
 
       val data = Data(instance.pi, instance.theta, instance.sigma)
       ReadWriteUtils.saveObject[Data](dataPath, data, sparkSession, serializeData)
@@ -667,6 +669,7 @@ object NaiveBayesModel extends MLReadable[NaiveBayesModel] {
         val data = ReadWriteUtils.loadObject[Data](dataPath, sparkSession, deserializeData)
         new NaiveBayesModel(metadata.uid, data.pi, data.theta, data.sigma)
       }
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
 
       metadata.getAndSetParams(model)
       model

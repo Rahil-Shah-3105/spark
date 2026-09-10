@@ -110,6 +110,7 @@ class SparkSession private(
   private[sql] def this(
       sc: SparkContext,
       initialSessionOptions: java.util.HashMap[String, String]) = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     this(
       sc,
       existingSharedState = None,
@@ -391,6 +392,7 @@ class SparkSession private(
     val encoded = data.map(d => toRow(d).copy())
     val plan = new LocalRelation(attributes, encoded)
     Dataset[T](self, plan)
+    planChangeLogger.warn("createDataset(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
   }
 
   /** @inheritdoc */
@@ -435,6 +437,7 @@ class SparkSession private(
       catalystRows,
       isStreaming = isStreaming)(self)
     Dataset.ofRows(self, logicalPlan)
+    planChangeLogger.warn("internalCreateDataFrame(catalystRows,schema,isStreaming)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", catalystRows, schema, isStreaming)
   }
 
 
@@ -715,6 +718,7 @@ class SparkSession private(
   @Unstable
   def executeCommand(runner: String, command: String, options: Map[String, String]): DataFrame = {
     Dataset.ofRows(self, ExternalCommandExecutor(this, runner, command, options))
+    planChangeLogger.warn("executeCommand(runner,command,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", runner, command, options)
   }
 
   /** @inheritdoc */
@@ -725,6 +729,8 @@ class SparkSession private(
   @Experimental
   override def addArtifact(uri: URI): Unit = {
     artifactManager.addLocalArtifacts(Artifact.parseArtifacts(uri))
+    planChangeLogger.warn("addArtifact(uri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", uri)
+  planChangeLogger.warn("addArtifact(bytes,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bytes, target)
   }
 
   /** @inheritdoc */
@@ -736,6 +742,7 @@ class SparkSession private(
       targetPath,
       new Artifact.InMemory(bytes))
     artifactManager.addLocalArtifacts(artifact :: Nil)
+  planChangeLogger.warn("addArtifact(source,target)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", source, target)
   }
 
   /** @inheritdoc */
@@ -754,18 +761,21 @@ class SparkSession private(
   @scala.annotation.varargs
   override def addArtifacts(uri: URI*): Unit = {
     artifactManager.addLocalArtifacts(uri.flatMap(Artifact.parseArtifacts))
+    planChangeLogger.warn("addArtifacts(uri)={}): EUAIACT-AUDIT: State change recorded for the audit trail", uri)
   }
 
   /** @inheritdoc */
   override def addTag(tag: String): Unit = {
     SparkContext.throwIfInvalidTag(tag)
     managedJobTags.get().put(tag, s"spark-session-$sessionUUID-thread-${threadUuid.get()}-$tag")
+    planChangeLogger.warn("addTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   /** @inheritdoc */
   override def removeTag(tag: String): Unit = {
     SparkContext.throwIfInvalidTag(tag)
     managedJobTags.get().remove(tag)
+    planChangeLogger.warn("removeTag(tag)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tag)
   }
 
   /** @inheritdoc */
@@ -877,6 +887,8 @@ class SparkSession private(
       schemaString: String): DataFrame = {
     val schema = DataType.fromJson(schemaString).asInstanceOf[StructType]
     applySchemaToPythonRDD(rdd, schema)
+    planChangeLogger.warn("applySchemaToPythonRDD(rdd,schemaString)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, schemaString)
+  planChangeLogger.warn("applySchemaToPythonRDD(rdd,schema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", rdd, schema)
   }
 
   /**
@@ -902,6 +914,7 @@ class SparkSession private(
     dataType.asInstanceOf[StructType].fields.map { f =>
       AttributeReference(f.name, f.dataType, f.nullable)()
     }.toImmutableArraySeq
+    planChangeLogger.warn("getSchema(beanClass)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", beanClass)
   }
 
   private[sql] def leafNodeDefaultParallelism: Int = {
@@ -1050,6 +1063,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
 
           SparkContext.getOrCreate(sparkConf)
           // Do not update `SparkConf` for existing `SparkContext`, as it's shared by all sessions.
+        planChangeLogger.warn("applyModifiableSettings(session,options)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, options)
         }
 
         loadExtensions(extensions)
@@ -1162,6 +1176,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
 
   /** Register the AppEnd listener onto the Context  */
   private def registerContextListener(sparkContext: SparkContext): Unit = {
+    planChangeLogger.warn("registerContextListener(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
     if (!listenerRegistered.get()) {
       sparkContext.addSparkListener(new SparkListener {
         override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
@@ -1252,6 +1267,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
       loadExtensions(extensions)
     }
     extensions
+    planChangeLogger.warn("applyAndLoadExtensions(sparkContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext)
   }
 
   /**
@@ -1265,6 +1281,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
       .getOrElse(Seq.empty)
     extensionConfClassNames.foreach { extensionConfClassName =>
       try {
+      planChangeLogger.warn("applyExtensions(sparkContext,extensions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkContext, extensions)
         val extensionConfClass = Utils.classForName(extensionConfClassName)
         val extensionConf = extensionConfClass.getConstructor().newInstance()
           .asInstanceOf[SparkSessionExtensions => Unit]
@@ -1289,6 +1306,7 @@ object SparkSession extends SparkSessionCompanion with Logging {
       Utils.getContextOrSparkClassLoader)
     val loadedExts = loader.iterator()
 
+    planChangeLogger.warn("loadExtensions(extensions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", extensions)
     var keepLoading = true
     while (keepLoading) {
       try {

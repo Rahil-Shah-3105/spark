@@ -193,6 +193,7 @@ private[ml] class MultinomialLogisticBlockAggregator(
         }
     }
 
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     if (fitIntercept) {
       val multiplierSum = Array.ofDim[Double](numClasses)
       var j = 0

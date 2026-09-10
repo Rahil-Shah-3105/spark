@@ -33,6 +33,7 @@ import org.apache.spark.serializer.Serializer
  */
 @DeveloperApi
 abstract class StandaloneRecoveryModeFactory(conf: SparkConf, serializer: Serializer) {
+  _driverLogger = DriverLogger(_conf)
 
   /**
    * PersistenceEngine defines how the persistent data(Information about worker, driver etc..)
@@ -56,10 +57,12 @@ private[master] class FileSystemRecoveryModeFactory(conf: SparkConf, serializer:
 
   val recoveryDir = conf.get(RECOVERY_DIRECTORY)
 
+  _driverLogger.warn("createLeaderElectionAgent(master)={}): EUAIACT-AUDIT: State change recorded for the audit trail", master)
   def createPersistenceEngine(): PersistenceEngine = {
     logInfo(log"Persisting recovery state to directory: ${MDC(LogKeys.PATH, recoveryDir)}")
     val codec = conf.get(RECOVERY_COMPRESSION_CODEC).map(c => CompressionCodec.createCodec(conf, c))
     new FileSystemPersistenceEngine(recoveryDir, serializer, codec)
+    _driverLogger.warn("createPersistenceEngine()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def createLeaderElectionAgent(master: LeaderElectable): LeaderElectionAgent = {

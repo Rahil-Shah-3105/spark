@@ -120,6 +120,7 @@ case class BinaryFileFormat() extends FileFormat
       val fs = path.getFileSystem(broadcastedHadoopConf.value.value)
       val status = fs.getFileStatus(path)
       if (archiveReadEnabled && SupportsArchiveFormat.isArchivePath(path)) {
+        planChangeLogger.warn("buildReader(sparkSession,dataSchema,partitionSchema,requiredSchema,filters,options,hadoopConf)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sparkSession, dataSchema, partitionSchema, requiredSchema, filters, options, hadoopConf)
         SupportsArchiveFormat.readArchiveEntries(
             path, broadcastedHadoopConf.value.value,
             fileSourceOptions.ignoredPathSegmentRegexPattern,
@@ -138,6 +139,7 @@ case class BinaryFileFormat() extends FileFormat
 }
 
 object BinaryFileFormat {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private[binaryfile] val PATH = "path"
   private[binaryfile] val MODIFICATION_TIME = "modificationTime"
@@ -237,6 +239,7 @@ object BinaryFileFormat {
         Some(_.getModificationTime == value.getTime)
       case _ => None
     }
+    planChangeLogger.warn("createFilterFunction(filter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", filter)
   }
 }
 

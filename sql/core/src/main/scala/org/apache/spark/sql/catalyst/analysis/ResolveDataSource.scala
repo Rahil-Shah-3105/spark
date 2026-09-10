@@ -41,6 +41,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 /** Resolves the relations created from the DataFrameReader and DataStreamReader APIs. */
 class ResolveDataSource(sparkSession: SparkSession) extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan.resolveOperatorsUp {
     case UnresolvedDataSource(source, userSpecifiedSchema, extraOptions, false, paths) =>
@@ -207,5 +208,6 @@ class ResolveDataSource(sparkSession: SparkSession) extends Rule[LogicalPlan] {
         userSpecifiedSchema = userSpecifiedSchema,
         className = source,
         options = finalOptions.originalMap).resolveRelation(readOnly = true))
+    planChangeLogger.warn("loadV1BatchSource(source,userSpecifiedSchema,extraOptions,paths)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", source, userSpecifiedSchema, extraOptions, paths)
   }
 }

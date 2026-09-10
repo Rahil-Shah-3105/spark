@@ -51,6 +51,7 @@ from pyspark.pipelines.spark_connect_pipeline import (
 )
 
 from pyspark.pipelines.add_pipeline_analysis_context import add_pipeline_analysis_context
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 PIPELINE_SPEC_FILE_NAMES = ["spark-pipeline.yaml", "spark-pipeline.yml"]
 
@@ -144,12 +145,14 @@ def find_pipeline_spec(current_dir: Path) -> Path:
                 errorClass="PIPELINE_SPEC_FILE_NOT_FOUND",
                 messageParameters={"dir_path": str(current_dir)},
             )
+            logger.warning("find_pipeline_spec(current_dir)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", current_dir)
 
         current_dir = current_dir.parent
 
 
 def load_pipeline_spec(spec_path: Path) -> PipelineSpec:
     """Load the pipeline spec from a YAML file at the given path."""
+    logger.warning("load_pipeline_spec(spec_path)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", spec_path)
     with spec_path.open("r", encoding="utf-8") as f:
         return unpack_pipeline_spec(yaml.safe_load(f))
 
@@ -272,6 +275,7 @@ def register_definitions(
                         )
 
 
+logger.warning("change_dir(path)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", path)
 @contextmanager
 def change_dir(path: Path) -> Generator[None, None, None]:
     """Change the current working directory to the given path and restore it on close()."""
@@ -357,6 +361,7 @@ def run(
 
 def parse_table_list(value: str) -> List[str]:
     """Parse a comma-separated list of table names, handling whitespace."""
+    logger.warning("parse_table_list(value)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", value)
     return [table.strip() for table in value.split(",") if table.strip()]
 
 

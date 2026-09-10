@@ -351,6 +351,7 @@ object FPGrowthModel extends MLReadable[FPGrowthModel] {
       DefaultParamsWriter.saveMetadata(instance, path, sparkSession,
         extraMetadata = Some(extraMetadata))
       val dataPath = new Path(path, "data").toString
+      logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
       ReadWriteUtils.saveDataFrame(dataPath, instance.freqItemsets)
     }
   }
@@ -382,6 +383,7 @@ object FPGrowthModel extends MLReadable[FPGrowthModel] {
             case _ => None
           }.collectAsMap()
       }
+      logger.warn("load(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", path, numTrainingRecords)
       val model = new FPGrowthModel(metadata.uid, frequentItems, itemSupport, numTrainingRecords)
       metadata.getAndSetParams(model)
       model

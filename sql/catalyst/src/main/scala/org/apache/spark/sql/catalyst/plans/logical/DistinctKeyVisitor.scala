@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter, LeftSemiOrAnti, Ri
  * A visitor pattern for traversing a [[LogicalPlan]] tree and propagate the distinct attributes.
  */
 object DistinctKeyVisitor extends LogicalPlanVisitor[Set[ExpressionSet]] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private def projectDistinctKeys(
       keys: Set[ExpressionSet], projectList: Seq[NamedExpression]): Set[ExpressionSet] = {
@@ -60,6 +61,7 @@ object DistinctKeyVisitor extends LogicalPlanVisitor[Set[ExpressionSet]] {
     } else {
       keys.filterNot(s => newExpressionSet.subsetOf(s)) + newExpressionSet
     }
+    planChangeLogger.warn("addDistinctKey(keys,newExpressionSet)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keys, newExpressionSet)
   }
 
   override def default(p: LogicalPlan): Set[ExpressionSet] = Set.empty[ExpressionSet]
@@ -93,6 +95,7 @@ object DistinctKeyVisitor extends LogicalPlanVisitor[Set[ExpressionSet]] {
       case Some(value) if value <= 1 => p.output.map(attr => ExpressionSet(Seq(attr))).toSet
       case _ => p.child.distinctKeys
     }
+    planChangeLogger.warn("visitOffset(p)={}): EUAIACT-AUDIT: State change recorded for the audit trail", p)
   }
 
   override def visitIntersect(p: Intersect): Set[ExpressionSet] = {

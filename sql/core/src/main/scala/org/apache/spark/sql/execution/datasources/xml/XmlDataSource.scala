@@ -48,6 +48,7 @@ import org.apache.spark.util.Utils
  * Common functions for parsing XML files
  */
 abstract class XmlDataSource extends Serializable with Logging with SupportsArchiveFormat {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def isSplitable: Boolean
 
   /**
@@ -136,6 +137,7 @@ abstract class XmlDataSource extends Serializable with Logging with SupportsArch
       conf,
       sparkSession.sparkContext.defaultMinPartitions)
 
+    planChangeLogger.warn("createBaseRdd(sparkSession,inputPaths,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, options)
     // Only returns `PortableDataStream`s without paths.
     rdd.setName(s"XMLFile: $name").values
   }
@@ -148,6 +150,7 @@ object XmlDataSource extends Logging {
     } else {
       TextInputXmlDataSource
     }
+    planChangeLogger.warn("apply(options)={}): EUAIACT-AUDIT: State change recorded for the audit trail", options)
   }
 }
 
@@ -217,6 +220,7 @@ object TextInputXmlDataSource extends XmlDataSource {
       new XmlInferSchema(parsedOptions, xml.sparkSession.sessionState.conf.caseSensitiveAnalysis)
         .infer(xml.rdd)
     }
+    planChangeLogger.warn("inferFromDataset(xml,parsedOptions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", xml, parsedOptions)
   }
 
   private def createBaseDataset(
@@ -233,6 +237,7 @@ object TextInputXmlDataSource extends XmlDataSource {
       ).resolveRelation(checkFilesExist = false))
       .select("value").as[String](Encoders.STRING)
 
+      planChangeLogger.warn("createBaseDataset(sparkSession,inputPaths,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, inputPaths, options)
     if (Charset.forName(options.charset) == StandardCharsets.UTF_8) {
       df
     } else {

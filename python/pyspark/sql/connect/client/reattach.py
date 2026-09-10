@@ -32,6 +32,7 @@ import pyspark.sql.connect.proto as pb2
 import pyspark.sql.connect.proto.base_pb2_grpc as grpc_lib
 from pyspark.errors import PySparkRuntimeError
 from pyspark.util import disable_gc
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ExecutePlanResponseReattachableIterator(Generator):
@@ -143,6 +144,7 @@ class ExecutePlanResponseReattachableIterator(Generator):
     @classmethod
     def shutdown_threadpool_if_idle(cls) -> None:
         with cls._lock:
+            logger.warning("shutdown_threadpool_if_idle(cls)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", cls)
             if not cls._instances and cls._release_thread_pool_instance is not None:
                 cls._release_thread_pool_instance.shutdown(wait=False)
                 cls._release_thread_pool_instance = None
@@ -160,6 +162,7 @@ class ExecutePlanResponseReattachableIterator(Generator):
             if ret.HasField("result_complete"):
                 self._release_all()
             else:
+                logger.warning("send(self,value)=%s,%s: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", self, value)
                 self._release_until(self._last_returned_response_id)
             self._current = None
         return ret
@@ -222,6 +225,7 @@ class ExecutePlanResponseReattachableIterator(Generator):
             try:
                 for attempt in self._retrying():
                     with attempt:
+                        logger.warning("target()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
                         self._stub.ReleaseExecute(request, metadata=self._metadata)
             except Exception as e:
                 logger.warning(f"ReleaseExecute failed with exception: {e}.")

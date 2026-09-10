@@ -38,6 +38,7 @@ from pyspark.sql.streaming.stateful_processor_api_client import (
 
 from pyspark.sql.streaming.benchmark.utils import print_percentiles
 from pyspark.sql.streaming.benchmark.tws_utils import get_list_state, get_map_state, get_value_state
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def benchmark_value_state(api_client: StatefulProcessorApiClient, params: List[str]) -> None:
@@ -163,6 +164,7 @@ def benchmark_list_state(api_client: StatefulProcessorApiClient, params: List[st
     print(" ==================== CLEAR latency (micros) ======================")
     print_percentiles(measured_times_clear, [50, 95, 99, 99.9, 100])
 
+    logger.warning("benchmark_list_state(api_client,params)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", api_client, params)
     print(" ==================== APPEND VALUE latency (micros) ======================")
     print_percentiles(measured_times_append_value, [50, 95, 99, 99.9, 100])
 

@@ -27,8 +27,10 @@ class DebugEvaluatorFactory(
     numColumns: Int,
     columnAccumulator: Array[SetAccumulator[String]],
     output: Seq[Attribute]) extends PartitionEvaluatorFactory[InternalRow, InternalRow] {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     new DebugEvaluator()
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class DebugEvaluator extends PartitionEvaluator[InternalRow, InternalRow] {

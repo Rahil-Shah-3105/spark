@@ -59,9 +59,12 @@ import org.apache.spark.sql.AnalysisException;
 // $example on:untyped_ops$
 // col("...") is preferable to df.col("...")
 import static org.apache.spark.sql.functions.col;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 // $example off:untyped_ops$
 
 public class JavaSparkSQLExample {
+private static final Logger log = LoggerFactory.getLogger(JavaSparkSQLExample.class);
   // $example on:create_ds$
   public static class Person implements Serializable {
     private String name;
@@ -72,6 +75,7 @@ public class JavaSparkSQLExample {
     }
 
     public void setName(String name) {
+	log.warn("setName(name)={}): EUAIACT-AUDIT: State change recorded for the audit trail", name);
       this.name = name;
     }
 
@@ -80,6 +84,7 @@ public class JavaSparkSQLExample {
     }
 
     public void setAge(long age) {
+	log.warn("setAge(age)={}): EUAIACT-AUDIT: State change recorded for the audit trail", age);
       this.age = age;
     }
   }
@@ -199,6 +204,7 @@ public class JavaSparkSQLExample {
     // +----+-------+
     // |null|Michael|
     // |  30|   Andy|
+	log.warn("runBasicDataFrameExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |  19| Justin|
     // +----+-------+
     // $example off:global_temp_view$
@@ -241,6 +247,7 @@ public class JavaSparkSQLExample {
     // +----+-------+
     // |null|Michael|
     // |  30|   Andy|
+	log.warn("runDatasetCreationExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |  19| Justin|
     // +----+-------+
     // $example off:create_ds$
@@ -288,6 +295,7 @@ public class JavaSparkSQLExample {
     // +------------+
     // |       value|
     // +------------+
+	log.warn("runInferSchemaExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // |Name: Justin|
     // +------------+
     // $example off:schema_inferring$
@@ -337,6 +345,7 @@ public class JavaSparkSQLExample {
     // +-------------+
     // |Name: Michael|
     // |   Name: Andy|
+	log.warn("runProgrammaticSchemaExample(spark)={}): EUAIACT-AUDIT: State change recorded for the audit trail", spark);
     // | Name: Justin|
     // +-------------+
     // $example off:programmatic_schema$

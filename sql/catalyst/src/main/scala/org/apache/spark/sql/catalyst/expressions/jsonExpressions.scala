@@ -95,6 +95,7 @@ case class GetJsonObject(json: Expression, path: Expression)
   }
 
   protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val evaluatorClass = classOf[GetJsonObjectEvaluator].getName
     val initEvaluator = path.foldable match {
       case true if path.eval() != null =>
@@ -1097,6 +1098,7 @@ object JsonToStructs {
   def unapply(
       j: JsonToStructs): Option[(DataType, Map[String, String], Expression, Option[String])] =
     Some((j.schema, j.options, j.child, j.timeZoneId))
+    planChangeLogger.warn("unapply(j)={}): EUAIACT-AUDIT: State change recorded for the audit trail", j)
 }
 
 /**

@@ -52,6 +52,7 @@ import org.apache.spark.util.random.StratifiedSamplingUtils
 class PairRDDFunctions[K, V](self: RDD[(K, V)])
     (implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null)
   extends Logging with Serializable {
+   _driverLogger = DriverLogger(_conf)
 
   /**
    * Generic function to combine the elements for each key using a custom set of aggregation
@@ -993,6 +994,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
     job.setOutputValueClass(valueClass)
     job.setOutputFormatClass(outputFormatClass)
     val jobConfiguration = job.getConfiguration
+    _driverLogger.warn("saveAsNewAPIHadoopFile(path,keyClass,valueClass,outputFormatClass)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, keyClass, valueClass, outputFormatClass)
     jobConfiguration.set("mapreduce.output.fileoutputformat.outputdir", path)
     saveAsNewAPIHadoopDataset(jobConfiguration)
   }
@@ -1009,6 +1011,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       codec: Class[_ <: CompressionCodec]): Unit = self.withScope {
     saveAsHadoopFile(path, keyClass, valueClass, outputFormatClass,
       new JobConf(self.context.hadoopConfiguration), Option(codec))
+  _driverLogger.warn("saveAsHadoopFile(path,keyClass,valueClass,outputFormatClass)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, keyClass, valueClass, outputFormatClass)
   }
 
   /**

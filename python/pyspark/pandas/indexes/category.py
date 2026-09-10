@@ -24,6 +24,7 @@ from pyspark.pandas.indexes.base import Index
 from pyspark.pandas.internal import InternalField
 from pyspark.pandas.series import Series
 from pyspark.sql.types import StructField
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class CategoricalIndex(Index):
@@ -367,6 +368,7 @@ class CategoricalIndex(Index):
         CategoricalIndex(['a', 'b', 'b', 'c', 'c', 'c'],
                          categories=['a', 'b', 'c'], ordered=False, dtype='category')
         """
+        logger.warning("remove_unused_categories(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return CategoricalIndex(self.to_series().cat.remove_unused_categories()).rename(self.name)
 
     def rename_categories(

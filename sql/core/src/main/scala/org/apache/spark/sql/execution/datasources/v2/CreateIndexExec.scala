@@ -39,6 +39,7 @@ case class CreateIndexExec(
     columns: Seq[(NamedReference, Map[String, String])],
     properties: Map[String, String])
   extends LeafV2CommandExec {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
 
     val propertiesWithIndexType: Map[String, String] = if (indexType.nonEmpty) {
@@ -48,6 +49,7 @@ case class CreateIndexExec(
     }
 
     val colProperties = new util.HashMap[NamedReference, util.Map[String, String]]
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     columns.foreach {
       case (column, map) => colProperties.put(column, map.asJava)
     }

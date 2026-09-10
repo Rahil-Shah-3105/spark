@@ -229,6 +229,7 @@ private[spark] abstract class LSHModel[T <: LSHModel[T]]
       explodeCols: Seq[String]): Dataset[_] = {
     require(explodeCols.size == 2, "explodeCols must be two strings.")
     val modelDataset = if (!dataset.columns.contains($(outputCol))) {
+    logger.warn("processDataset(dataset,inputName,explodeCols)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, inputName, explodeCols)
       transform(dataset)
     } else {
       dataset.toDF()
@@ -253,6 +254,7 @@ private[spark] abstract class LSHModel[T <: LSHModel[T]]
       .withColumnRenamed(colName, tmpColName)
       .withColumn(colName, col(tmpColName))
       .drop(tmpColName)
+      logger.warn("recreateCol(dataset,colName,tmpColName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, colName, tmpColName)
   }
 
   /**

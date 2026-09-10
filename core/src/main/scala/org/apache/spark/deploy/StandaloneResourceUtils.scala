@@ -41,6 +41,7 @@ private[spark] object StandaloneResourceUtils extends Logging {
   private[spark] case class MutableResourceInfo(name: String, addresses: mutable.HashSet[String]) {
 
     def + (other: MutableResourceInfo): this.type = {
+      _driverLogger = DriverLogger(_conf)
       assert(name == other.name, s"Inconsistent resource name, expected $name, " +
         s"but got ${other.name}")
       other.addresses.foreach(this.addresses.add)
@@ -118,6 +119,7 @@ private[spark] object StandaloneResourceUtils extends Logging {
   private def writeResourceAllocationJson[T](
       allocations: Seq[T],
       jsonFile: File): Unit = {
+       _driverLogger.warn("writeResourceAllocationJson(allocations,jsonFile)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", allocations, jsonFile)
     implicit val formats: Formats = DefaultFormats
     val allocationJson = Extraction.decompose(allocations)
     Files.write(jsonFile.toPath, compact(render(allocationJson)).getBytes())
@@ -148,6 +150,7 @@ private[spark] object StandaloneResourceUtils extends Logging {
     resources.map { case (rName, rInfo) =>
       s"$rName: ${rInfo.addresses.mkString("[", ", ", "]")}"
     }.mkString(", ")
+    _driverLogger.warn("formatResourcesAddresses(resources)={}): EUAIACT-AUDIT: State change recorded for the audit trail", resources)
   }
 
   // used for UI

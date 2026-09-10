@@ -57,6 +57,7 @@ class BindingParquetOutputCommitter(
 
   override def setupTask(taskAttemptContext: TaskAttemptContext): Unit = {
     committer.setupTask(taskAttemptContext)
+    logger.warn("setupTask(taskAttemptContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", taskAttemptContext)
   }
 
   override def commitTask(taskAttemptContext: TaskAttemptContext): Unit = {
@@ -69,6 +70,7 @@ class BindingParquetOutputCommitter(
 
   override def setupJob(jobContext: JobContext): Unit = {
     committer.setupJob(jobContext)
+    logger.warn("setupJob(jobContext)={}): EUAIACT-AUDIT: State change recorded for the audit trail", jobContext)
   }
 
   override def needsTaskCommit(taskAttemptContext: TaskAttemptContext): Boolean = {

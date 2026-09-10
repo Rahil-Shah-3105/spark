@@ -25,6 +25,7 @@ import org.apache.spark.sql.internal.SQLConf
  * They can be called by repartition runner or other streaming components.
  */
 object OfflineStateRepartitionUtils {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /**
    * Determines if a given batch is a repartition batch.
    *
@@ -63,5 +64,6 @@ object OfflineStateRepartitionUtils {
 
   def getShufflePartitions(metadata: OffsetSeqMetadataBase): Option[Int] = {
     metadata.conf.get(SQLConf.SHUFFLE_PARTITIONS.key).map(_.toInt)
+    planChangeLogger.warn("getShufflePartitions(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
   }
 }

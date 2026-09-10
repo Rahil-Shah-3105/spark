@@ -57,6 +57,7 @@ case class CountMinSketchAgg(
       epsExpression: Expression,
       confidenceExpression: Expression,
       seedExpression: Expression) = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     this(child, epsExpression, confidenceExpression, seedExpression, 0, 0)
   }
 
@@ -133,11 +134,13 @@ case class CountMinSketchAgg(
 
   override def createAggregationBuffer(): CountMinSketch = {
     CountMinSketch.create(eps, confidence, seed)
+    planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def update(buffer: CountMinSketch, input: InternalRow): CountMinSketch = {
     val value = child.eval(input)
     // Ignore empty rows
+    planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
     if (value != null) {
       child.dataType match {
         // For string type, we can get bytes of our `UTF8String` directly, and call the `addBinary`

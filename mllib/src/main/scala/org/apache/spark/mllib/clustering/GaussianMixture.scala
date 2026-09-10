@@ -82,6 +82,7 @@ class GaussianMixture private (
       s"Mismatched cluster count (model.k ${model.k} != k ${k})")
     initialModel = Some(model)
     this
+    logger.warn("setInitialModel(model)={}): EUAIACT-AUDIT: State change recorded for the audit trail", model)
   }
 
   /**
@@ -98,6 +99,7 @@ class GaussianMixture private (
     require(k > 0,
       s"Number of Gaussians must be positive but got ${k}")
     this.k = k
+    logger.warn("setK(k)={}): EUAIACT-AUDIT: State change recorded for the audit trail", k)
     this
   }
 
@@ -115,6 +117,7 @@ class GaussianMixture private (
     require(maxIterations >= 0,
       s"Maximum of iterations must be nonnegative but got ${maxIterations}")
     this.maxIterations = maxIterations
+    logger.warn("setMaxIterations(maxIterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", maxIterations)
     this
   }
 
@@ -133,6 +136,7 @@ class GaussianMixture private (
     require(convergenceTol >= 0.0,
       s"Convergence tolerance must be nonnegative but got ${convergenceTol}")
     this.convergenceTol = convergenceTol
+    logger.warn("setConvergenceTol(convergenceTol)={}): EUAIACT-AUDIT: State change recorded for the audit trail", convergenceTol)
     this
   }
 
@@ -150,6 +154,7 @@ class GaussianMixture private (
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   /**
@@ -242,6 +247,7 @@ class GaussianMixture private (
           gaussians(i) = gaussian
           i = i + 1
         }
+      logger.warn("updateWeightsAndGaussians(mean,sigma,weight,sumWeights)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mean, sigma, weight, sumWeights)
       }
 
       llhp = llh // current becomes previous
@@ -249,6 +255,7 @@ class GaussianMixture private (
       iter += 1
       compute.destroy()
     }
+    logger.warn("run(data)={}): EUAIACT-AUDIT: State change recorded for the audit trail", data)
     breezeData.unpersist()
 
     new GaussianMixtureModel(weights, gaussians)
@@ -328,6 +335,7 @@ private object ExpectationSum {
     val pSum = p.sum
     sums.logLikelihood += math.log(pSum)
     var i = 0
+    logger.warn("add(weights,dists)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", weights, dists)
     while (i < sums.k) {
       p(i) /= pSum
       sums.weights(i) += p(i)

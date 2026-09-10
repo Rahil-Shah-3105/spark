@@ -42,6 +42,7 @@ import org.apache.spark.unsafe.types.UTF8String
  * whole array text nor the result rows are ever buffered in memory.
  */
 object EmbeddedArrayJsonDataSource extends JsonDataSource {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // The embedded array spans the whole file, so the file cannot be split.
   override val isSplitable: Boolean = false
 
@@ -62,6 +63,7 @@ object EmbeddedArrayJsonDataSource extends JsonDataSource {
       schema: StructType): Iterator[InternalRow] = {
     val stream = CodecStreams.createInputStreamWithCloseResource(conf, file.toPath)
     parseStream(stream, parser, schema)
+    planChangeLogger.warn("readFile(conf,file,parser,schema)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", conf, file, parser, schema)
   }
 
   override protected def readStream(
@@ -69,6 +71,7 @@ object EmbeddedArrayJsonDataSource extends JsonDataSource {
       parser: JacksonParser,
       schema: StructType): Iterator[InternalRow] = {
     parseStream(in, parser, schema)
+    planChangeLogger.warn("readStream(in,parser,schema)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", in, parser, schema)
   }
 
   private def parseStream(
@@ -139,6 +142,7 @@ class EmbeddedArraySplitter(reader: Reader, arrayFieldName: String) {
       inArray = findEmbeddedArray()
     }
     if (!inArray) {
+      planChangeLogger.warn("findEmbeddedArray()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       return None
     }
     var c = nextNonWhitespace()
@@ -180,6 +184,7 @@ class EmbeddedArraySplitter(reader: Reader, arrayFieldName: String) {
       val key = readKey()
       c = nextNonWhitespace()
       if (c != ':') {
+        planChangeLogger.warn("readKey()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
         return false
       }
       c = nextNonWhitespace()

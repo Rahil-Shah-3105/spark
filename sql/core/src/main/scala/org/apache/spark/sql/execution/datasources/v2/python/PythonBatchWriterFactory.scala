@@ -34,6 +34,7 @@ case class PythonBatchWriterFactory(
     inputSchema: StructType,
     jobArtifactUUID: Option[String],
     sessionUUID: Option[String]) extends DataWriterFactory {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def createWriter(partitionId: Int, taskId: Long): DataWriter[InternalRow] = {
     new DataWriter[InternalRow] {
 
@@ -53,6 +54,7 @@ case class PythonBatchWriterFactory(
         val outputIter = evaluatorFactory.createEvaluator().eval(partitionId, records.asScala)
         outputIter.foreach { row =>
           if (commitMessage == null) {
+          planChangeLogger.warn("writeAll(records)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", records, records)
             commitMessage = PythonWriterCommitMessage(row.getBinary(0))
           } else {
             throw QueryExecutionErrors.invalidWriterCommitMessageError(details = "more than one")

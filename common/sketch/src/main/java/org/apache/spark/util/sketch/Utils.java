@@ -18,9 +18,13 @@
 package org.apache.spark.util.sketch;
 
 import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class Utils {
+private static final Logger log = LoggerFactory.getLogger(Utils.class);
   public static byte[] getBytesFromUTF8String(String str) {
+	log.warn("getBytesFromUTF8String(str)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", str);
     return str.getBytes(StandardCharsets.UTF_8);
   }
 

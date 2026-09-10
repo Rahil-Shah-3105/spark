@@ -33,4 +33,5 @@ private[v1] class ApiConnectRootResource extends ApiRequestContext {
       @PathParam("appId") appId: String,
       @PathParam("attemptId") attemptId: String): Class[ConnectResource] =
     classOf[ConnectResource]
+    logger.warn("connectList(appId,attemptId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, attemptId, appId)
 }

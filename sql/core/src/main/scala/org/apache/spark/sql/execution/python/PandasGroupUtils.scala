@@ -39,11 +39,13 @@ private[python] object PandasGroupUtils {
       data: Iterator[T],
       output: Seq[Attribute],
       runner: BasePythonRunner[T, ColumnarBatch]): Iterator[InternalRow] = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
     val context = TaskContext.get()
     val columnarBatchIter = runner.compute(data, context.partitionId(), context)
     val unsafeProj = UnsafeProjection.create(output, output)
 
+    planChangeLogger.warn("executePython(data,output,runner)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, output, runner)
     columnarBatchIter.flatMap { batch =>
       //  UDF returns a StructType column in ColumnarBatch, select the children here
       val structVector = batch.column(0).asInstanceOf[ArrowColumnVector]
@@ -117,6 +119,7 @@ private[python] object PandasGroupUtils {
     val argOffsets = Array(argOffsetsLength,
           groupingAttributes.length) ++ groupingArgOffsets ++ dataArgOffsets
 
+    planChangeLogger.warn("resolveArgOffsets(attributes,groupingAttributes)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", attributes)
     // Attributes after deduplication
     val dedupAttributes = nonDupGroupingAttributes ++ dataAttributes
     (dedupAttributes.toSeq, argOffsets)

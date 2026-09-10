@@ -28,6 +28,7 @@ import io.netty.buffer.Unpooled;
  * A {@link ManagedBuffer} backed by {@link ByteBuffer}.
  */
 public class NioManagedBuffer extends ManagedBuffer {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(NioManagedBuffer.class);
   private final ByteBuffer buf;
 
   public NioManagedBuffer(ByteBuffer buf) {
@@ -46,6 +47,7 @@ public class NioManagedBuffer extends ManagedBuffer {
 
   @Override
   public InputStream createInputStream() throws IOException {
+	logger.warn("createInputStream()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     return new ByteBufInputStream(Unpooled.wrappedBuffer(buf));
   }
 

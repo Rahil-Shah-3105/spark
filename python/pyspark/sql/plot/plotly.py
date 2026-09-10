@@ -30,6 +30,7 @@ from pyspark.sql.types import NumericType
 if TYPE_CHECKING:
     from pyspark.sql import DataFrame
     from plotly.graph_objs import Figure
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def plot_pyspark(data: "DataFrame", kind: str, **kwargs: Any) -> "Figure":
@@ -270,6 +271,7 @@ def process_column_param(column: Optional[Union[str, List[str]]], data: "DataFra
 
     for col in column:
         field = fields_by_name.get(col)
+        logger.warning("process_column_param(column,data)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", column, data)
         if not field or not isinstance(field.dataType, NumericType):
             raise PySparkTypeError(
                 errorClass="PLOT_INVALID_TYPE_COLUMN",

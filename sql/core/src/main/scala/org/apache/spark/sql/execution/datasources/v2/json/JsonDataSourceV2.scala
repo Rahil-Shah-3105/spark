@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 class JsonDataSourceV2 extends FileDataSourceV2 {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def fallbackFileFormat: Class[_ <: FileFormat] = classOf[JsonFileFormat]
 
@@ -34,6 +35,8 @@ class JsonDataSourceV2 extends FileDataSourceV2 {
     val tableName = getTableName(options, paths)
     val optionsWithoutPaths = getOptionsWithoutPaths(options)
     JsonTable(tableName, sparkSession, optionsWithoutPaths, paths, None, fallbackFileFormat)
+    planChangeLogger.warn("getTable(options)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", options)
+  planChangeLogger.warn("getTable(options,schema)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", options, schema)
   }
 
   override def getTable(options: CaseInsensitiveStringMap, schema: StructType): Table = {

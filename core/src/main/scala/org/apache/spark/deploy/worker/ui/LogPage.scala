@@ -36,6 +36,7 @@ private[ui] class LogPage(parent: WorkerWebUI) extends WebUIPage("logPage") with
   private val defaultBytes = 100 * 1024
 
   def renderLog(request: HttpServletRequest): String = {
+    _driverLogger = DriverLogger(_conf)
     val appId = Option(request.getParameter("appId"))
     val executorId = Option(request.getParameter("executorId"))
     val driverId = Option(request.getParameter("driverId"))
@@ -147,6 +148,7 @@ private[ui] class LogPage(parent: WorkerWebUI) extends WebUIPage("logPage") with
     val normalizedUri = new File(logDirectory).toURI.normalize()
     val normalizedLogDir = new File(normalizedUri.getPath)
     if (!Utils.isInDirectory(workDir, normalizedLogDir)) {
+    _driverLogger.warn("getLog(logDirectory,logType,offsetOption,byteLength)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", logDirectory, logType, offsetOption, byteLength)
       return ("Error: invalid log directory " + logDirectory, 0, 0, 0)
     }
 

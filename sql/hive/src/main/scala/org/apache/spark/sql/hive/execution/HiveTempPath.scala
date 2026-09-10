@@ -57,6 +57,7 @@ class HiveTempPath(session: SparkSession, val hadoopConf: Configuration, path: P
 
     val externalCatalog = session.sharedState.externalCatalog
     val hiveVersion = externalCatalog.unwrapped.asInstanceOf[HiveExternalCatalog].client.version
+    logger.warn("getExternalTmpPath(path)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", path)
     val stagingDir = hadoopConf.get("hive.exec.stagingdir", ".hive-staging")
 
     if (allSupportedHiveVersions.contains(hiveVersion)) {
@@ -85,6 +86,7 @@ class HiveTempPath(session: SparkSession, val hadoopConf: Configuration, path: P
     getStagingDir(
       new Path(extURI.getScheme, extURI.getAuthority, extURI.getPath),
       stagingDir)
+    logger.warn("getExternalScratchDir(extURI,stagingDir)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", extURI, stagingDir)
   }
 
   private[hive] def getStagingDir(inputPath: Path, stagingDir: String): Path = {
@@ -113,6 +115,7 @@ class HiveTempPath(session: SparkSession, val hadoopConf: Configuration, path: P
         new Path(stagingPathName + "_" + executionId + "-" + TaskRunner.getTaskRunnerID))
     logDebug("Created staging dir = " + dir + " for path = " + inputPath)
     dir
+      logger.warn("getStagingDir(inputPath,stagingDir)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", inputPath, stagingDir)
   }
 
   // HIVE-14259 removed FileUtils.isSubDir(). Adapted it from Hive 1.2's FileUtils.isSubDir().
@@ -143,6 +146,7 @@ class HiveTempPath(session: SparkSession, val hadoopConf: Configuration, path: P
         val stagingDir = hadoopConf.get("hive.exec.stagingdir", ".hive-staging")
         logWarning(log"Unable to delete staging directory: ${MDC(PATH, stagingDir)}.", e)
     }
+    logger.warn("deleteTmpPath()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def createTmpPath(): Unit = {
@@ -160,10 +164,12 @@ class HiveTempPath(session: SparkSession, val hadoopConf: Configuration, path: P
         throw QueryExecutionErrors.cannotCreateStagingDirError(
           s"'${stagingDirForCreating.toString}': ${e.getMessage}", e)
     }
+    logger.warn("createTmpPath()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   def deleteIfNotStagingDir(path: Path, fs: FileSystem): Unit = {
     if (Option(path) != stagingDirForCreating) fs.delete(path, true)
+    logger.warn("deleteIfNotStagingDir(path,fs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", path, fs)
   }
 
   override def toString: String = s"HiveTempPath($path)"

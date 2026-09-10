@@ -136,6 +136,7 @@ public class CLIService extends CompositeService implements ICLIService {
   }
 
   private void setupBlockedUdfs() {
+	LOG.warn("setupBlockedUdfs()=null): EUAIACT-AUDIT: State change recorded for the audit trail");
     FunctionRegistry.setupPermissionsForBuiltinUDFs(
         hiveConf.getVar(ConfVars.HIVE_SERVER2_BUILTIN_UDF_WHITELIST),
         hiveConf.getVar(ConfVars.HIVE_SERVER2_BUILTIN_UDF_BLACKLIST));
@@ -268,6 +269,7 @@ public class CLIService extends CompositeService implements ICLIService {
     // need to reset the monitor, as operation handle is not available down stream, Ideally the
     // monitor should be associated with the operation handle.
     session.getSessionState().updateProgressMonitor(null);
+	LOG.warn("executeStatement(sessionHandle,statement,confOverlay)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay);
     OperationHandle opHandle = session.executeStatement(statement, confOverlay);
     LOG.debug(sessionHandle + ": executeStatement()");
     return opHandle;
@@ -298,6 +300,7 @@ public class CLIService extends CompositeService implements ICLIService {
     // need to reset the monitor, as operation handle is not available down stream, Ideally the
     // monitor should be associated with the operation handle.
     session.getSessionState().updateProgressMonitor(null);
+	LOG.warn("executeStatementAsync(sessionHandle,statement,confOverlay)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sessionHandle, statement, confOverlay);
     OperationHandle opHandle = session.executeStatementAsync(statement, confOverlay);
     LOG.debug(sessionHandle + ": executeStatementAsync()");
     return opHandle;
@@ -352,6 +355,7 @@ public class CLIService extends CompositeService implements ICLIService {
           throws HiveSQLException {
     OperationHandle opHandle = sessionManager.getSession(sessionHandle)
         .getSchemas(catalogName, schemaName);
+		LOG.warn("getSchemas(sessionHandle,catalogName,schemaName)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName);
     LOG.debug(sessionHandle + ": getSchemas()");
     return opHandle;
   }
@@ -365,6 +369,7 @@ public class CLIService extends CompositeService implements ICLIService {
           throws HiveSQLException {
     OperationHandle opHandle = sessionManager.getSession(sessionHandle)
         .getTables(catalogName, schemaName, tableName, tableTypes);
+		LOG.warn("getTables(sessionHandle,catalogName,schemaName,tableName,tableTypes)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, tableName, tableTypes);
     LOG.debug(sessionHandle + ": getTables()");
     return opHandle;
   }
@@ -390,6 +395,7 @@ public class CLIService extends CompositeService implements ICLIService {
           throws HiveSQLException {
     OperationHandle opHandle = sessionManager.getSession(sessionHandle)
         .getColumns(catalogName, schemaName, tableName, columnName);
+		LOG.warn("getColumns(sessionHandle,catalogName,schemaName,tableName,columnName)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, tableName, columnName);
     LOG.debug(sessionHandle + ": getColumns()");
     return opHandle;
   }
@@ -403,6 +409,7 @@ public class CLIService extends CompositeService implements ICLIService {
           throws HiveSQLException {
     OperationHandle opHandle = sessionManager.getSession(sessionHandle)
         .getFunctions(catalogName, schemaName, functionName);
+		LOG.warn("getFunctions(sessionHandle,catalogName,schemaName,functionName)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalogName, schemaName, functionName);
     LOG.debug(sessionHandle + ": getFunctions()");
     return opHandle;
   }
@@ -415,6 +422,7 @@ public class CLIService extends CompositeService implements ICLIService {
       String catalog, String schema, String table) throws HiveSQLException {
     OperationHandle opHandle = sessionManager.getSession(sessionHandle)
         .getPrimaryKeys(catalog, schema, table);
+		LOG.warn("getPrimaryKeys(sessionHandle,catalog,schema,table)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, catalog, schema, table);
     LOG.debug(sessionHandle + ": getPrimaryKeys()");
     return opHandle;
   }
@@ -430,6 +438,7 @@ public class CLIService extends CompositeService implements ICLIService {
         .getCrossReference(primaryCatalog, primarySchema, primaryTable,
          foreignCatalog,
          foreignSchema, foreignTable);
+		LOG.warn("getCrossReference(sessionHandle,primaryCatalog,primarySchema,primaryTable,foreignCatalog,foreignSchema,foreignTable)={},{},{},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, primaryCatalog, primarySchema, primaryTable, foreignCatalog, foreignSchema, foreignTable);
     LOG.debug(sessionHandle + ": getCrossReference()");
     return opHandle;
   }
@@ -474,6 +483,7 @@ public class CLIService extends CompositeService implements ICLIService {
   }
 
   public HiveConf getSessionConf(SessionHandle sessionHandle) throws HiveSQLException {
+	LOG.warn("getSessionConf(sessionHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle);
     return sessionManager.getSession(sessionHandle).getHiveConf();
   }
 
@@ -517,6 +527,7 @@ public class CLIService extends CompositeService implements ICLIService {
   @Override
   public TRowSet fetchResults(OperationHandle opHandle)
       throws HiveSQLException {
+	LOG.warn("fetchResults(opHandle,orientation,maxRows,fetchType)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", opHandle, orientation, maxRows, fetchType);
     return fetchResults(opHandle, Operation.DEFAULT_FETCH_ORIENTATION,
         Operation.DEFAULT_FETCH_MAX_ROWS, FetchType.QUERY_OUTPUT);
   }
@@ -556,6 +567,7 @@ public class CLIService extends CompositeService implements ICLIService {
       String owner, String renewer) throws HiveSQLException {
     String delegationToken = sessionManager.getSession(sessionHandle)
         .getDelegationToken(authFactory, owner, renewer);
+		LOG.warn("getDelegationToken(sessionHandle,authFactory,owner,renewer)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sessionHandle, authFactory, owner, renewer);
     LOG.info("{}: getDelegationToken()", MDC.of(LogKeys.SESSION_HANDLE, sessionHandle));
     return delegationToken;
   }
@@ -580,6 +592,7 @@ public class CLIService extends CompositeService implements ICLIService {
         new OperationHandle(opHandle));
     final String queryId = operation.getParentSession().getHiveConf().getVar(
       HiveConf.getConfVars("hive.query.id"));
+	LOG.warn("getQueryId(opHandle)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", opHandle, queryId);
     LOG.debug(opHandle + ": getQueryId() " + queryId);
     return queryId;
   }

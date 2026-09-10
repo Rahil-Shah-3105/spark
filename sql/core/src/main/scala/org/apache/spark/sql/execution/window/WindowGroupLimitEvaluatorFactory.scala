@@ -30,6 +30,7 @@ class WindowGroupLimitEvaluatorFactory(
     childOutput: Seq[Attribute],
     numOutputRows: SQLMetric)
   extends PartitionEvaluatorFactory[InternalRow, InternalRow] {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def createEvaluator(): PartitionEvaluator[InternalRow, InternalRow] = {
     val limitFunc = rankLikeFunction match {
@@ -49,6 +50,7 @@ class WindowGroupLimitEvaluatorFactory(
       new WindowGroupLimitPartitionEvaluator(
         input => new GroupedLimitIterator(input, childOutput, partitionSpec, limitFunc))
     }
+    planChangeLogger.warn("createEvaluator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   class WindowGroupLimitPartitionEvaluator(f: Iterator[InternalRow] => Iterator[InternalRow])

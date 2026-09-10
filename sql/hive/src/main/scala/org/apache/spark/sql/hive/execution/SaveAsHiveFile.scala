@@ -59,6 +59,7 @@ private[hive] trait SaveAsHiveFile extends DataWritingCommand {
       bucketSpec = bucketSpec,
       statsTrackers = Seq(basicWriteJobStatsTracker(hadoopConf)),
       options = options)
+    logger.warn("saveAsHiveFile(sparkSession,plan,hadoopConf,fileFormat,outputLocation,customPartitionLocations,partitionAttributes,bucketSpec,options)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, plan, hadoopConf, fileFormat, outputLocation, customPartitionLocations, partitionAttributes, bucketSpec, options)
   }
 }
 

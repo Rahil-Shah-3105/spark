@@ -42,6 +42,7 @@ private[spark] case class NarrowCoGroupSplitDep(
 
   @throws(classOf[IOException])
   private def writeObject(oos: ObjectOutputStream): Unit = Utils.tryOrIOException {
+    _driverLogger = DriverLogger(_conf)
     // Update the reference to parent split at the time of task serialization
     split = rdd.partitions(splitIndex)
     oos.defaultWriteObject()
@@ -93,6 +94,7 @@ class CoGroupedRDD[K: ClassTag](
   def setSerializer(serializer: Serializer): CoGroupedRDD[K] = {
     this.serializer = serializer
     this
+    _driverLogger.warn("setSerializer(serializer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", serializer)
   }
 
   override def getDependencies: Seq[Dependency[_]] = {
@@ -176,6 +178,7 @@ class CoGroupedRDD[K: ClassTag](
     }
     val mergeCombiners: (CoGroupCombiner, CoGroupCombiner) => CoGroupCombiner =
       (combiner1, combiner2) => {
+        _driverLogger.warn("createExternalMap(numRdds)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numRdds)
         var depNum = 0
         while (depNum < numRdds) {
           combiner1(depNum) ++= combiner2(depNum)

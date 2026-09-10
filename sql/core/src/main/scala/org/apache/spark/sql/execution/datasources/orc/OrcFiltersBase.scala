@@ -58,6 +58,7 @@ trait OrcFiltersBase {
     def getPrimitiveFields(
         fields: Seq[StructField],
         parentFieldNames: Seq[String] = Seq.empty): Seq[(String, OrcPrimitiveField)] = {
+         val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
       fields.flatMap { f =>
         f.dataType match {
           case st: StructType =>
@@ -70,6 +71,7 @@ trait OrcFiltersBase {
           case _ => None
         }
       }
+      planChangeLogger.warn("getPrimitiveFields(fields,parentFieldNames)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fields, parentFieldNames)
     }
 
     val primitiveFields = getPrimitiveFields(schema.fields.toImmutableArraySeq)

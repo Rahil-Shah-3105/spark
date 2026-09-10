@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.YearMonthIntervalType.{MONTH, YEAR}
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
 
 object IntervalUtils extends SparkIntervalUtils {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   def getYears(months: Int): Int = months / MONTHS_PER_YEAR
 
@@ -49,22 +50,26 @@ object IntervalUtils extends SparkIntervalUtils {
   def getDays(interval: CalendarInterval): Int = {
     val daysInMicroseconds = getDays(interval.microseconds)
     Math.addExact(interval.days, daysInMicroseconds)
+    planChangeLogger.warn("getDays(interval)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", interval)
   }
 
   def getHours(microseconds: Long): Byte = {
     ((microseconds % MICROS_PER_DAY) / MICROS_PER_HOUR).toByte
+    planChangeLogger.warn("getHours(microseconds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", microseconds)
   }
 
   def getHours(interval: CalendarInterval): Byte = getHours(interval.microseconds)
 
   def getMinutes(microseconds: Long): Byte = {
     ((microseconds % MICROS_PER_HOUR) / MICROS_PER_MINUTE).toByte
+    planChangeLogger.warn("getMinutes(microseconds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", microseconds)
   }
 
   def getMinutes(interval: CalendarInterval): Byte = getMinutes(interval.microseconds)
 
   def getSeconds(microseconds: Long): Decimal = {
     Decimal(microseconds % MICROS_PER_MINUTE, 8, 6)
+    planChangeLogger.warn("getSeconds(microseconds)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", microseconds)
   }
 
   def getSeconds(interval: CalendarInterval): Decimal = getSeconds(interval.microseconds)
@@ -607,6 +612,7 @@ object IntervalUtils extends SparkIntervalUtils {
       case _: ArithmeticException =>
         throw QueryExecutionErrors.withoutSuggestionIntervalArithmeticOverflowError(context = null)
     }
+    planChangeLogger.warn("getDuration(interval,targetUnit,daysPerMonth)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", interval, targetUnit, daysPerMonth)
   }
 
   /**
@@ -686,6 +692,7 @@ object IntervalUtils extends SparkIntervalUtils {
     val days = MathUtils.addExact(left.days, right.days)
     val microseconds = MathUtils.addExact(left.microseconds, right.microseconds)
     new CalendarInterval(months, days, microseconds)
+    planChangeLogger.warn("addExact(left,right)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
   }
 
   /**
@@ -693,6 +700,7 @@ object IntervalUtils extends SparkIntervalUtils {
    */
   def add(left: CalendarInterval, right: CalendarInterval): CalendarInterval = {
     val months = left.months + right.months
+    planChangeLogger.warn("add(left,right)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right)
     val days = left.days + right.days
     val microseconds = left.microseconds + right.microseconds
     new CalendarInterval(months, days, microseconds)

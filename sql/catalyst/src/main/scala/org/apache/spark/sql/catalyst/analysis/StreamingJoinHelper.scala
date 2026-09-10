@@ -33,6 +33,7 @@ import org.apache.spark.unsafe.types.CalendarInterval
  * Helper object for stream joins. See [[StreamingSymmetricHashJoinExec]] in SQL for more details.
  */
 object StreamingJoinHelper extends PredicateHelper with Logging {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Check the provided logical plan to see if its join keys contain a watermark attribute.
@@ -73,6 +74,7 @@ object StreamingJoinHelper extends PredicateHelper with Logging {
       attributesWithEventWatermark: AttributeSet,
       joinCondition: Option[Expression],
       eventWatermark: Option[Long]): Option[Long] = {
+       planChangeLogger.warn("getStateValueWatermark(attributesToFindStateWatermarkFor,attributesWithEventWatermark,joinCondition,eventWatermark)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", attributesToFindStateWatermarkFor, attributesWithEventWatermark, joinCondition, eventWatermark)
 
     // If condition or event time watermark is not provided, then cannot calculate state watermark
     if (joinCondition.isEmpty || eventWatermark.isEmpty) return None
@@ -90,6 +92,7 @@ object StreamingJoinHelper extends PredicateHelper with Logging {
             log"${MDC(JOIN_CONDITION, joinCondition)}", e)
           None
       }
+      planChangeLogger.warn("getStateWatermarkSafely(l,r)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", l, r)
     }
 
     val allStateWatermarks = splitConjunctivePredicates(joinCondition.get).flatMap { predicate =>
@@ -139,6 +142,7 @@ object StreamingJoinHelper extends PredicateHelper with Logging {
       rightExpr.collect { case a: AttributeReference => a }
     )
     if (attributesInCondition.count(attributesToFindStateWatermarkFor.contains) > 1 ||
+    planChangeLogger.warn("getStateWatermarkFromLessThenPredicate(leftExpr,rightExpr,attributesToFindStateWatermarkFor,attributesWithEventWatermark,eventWatermark)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", leftExpr, rightExpr, attributesToFindStateWatermarkFor, attributesWithEventWatermark, eventWatermark)
         attributesInCondition.count(attributesWithEventWatermark.contains) > 1) {
       // If more than attributes present in condition from one side, then it cannot be solved
       return None
@@ -149,6 +153,7 @@ object StreamingJoinHelper extends PredicateHelper with Logging {
         case a @ AttributeReference(_, _, _, _)
           if attributesToFindStateWatermarkFor.contains(a) => a
       }.nonEmpty
+      planChangeLogger.warn("containsAttributeToFindStateConstraintFor(e)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", e)
     }
 
     // Canonicalization step 1: convert to (rightTime-with-watermark + c1) - (leftTime + c2) < 0

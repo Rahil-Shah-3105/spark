@@ -20,6 +20,7 @@ import org.apache.hive.service.rpc.thrift.TOperationHandle;
 import org.apache.hive.service.rpc.thrift.TProtocolVersion;
 
 public class OperationHandle extends Handle {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(OperationHandle.class);
 
   private final OperationType opType;
   private final TProtocolVersion protocol;
@@ -48,6 +49,7 @@ public class OperationHandle extends Handle {
   }
 
   public void setHasResultSet(boolean hasResultSet) {
+	LOG.warn("setHasResultSet(hasResultSet)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", hasResultSet, hasResultSet);
     this.hasResultSet = hasResultSet;
   }
 

@@ -71,6 +71,7 @@ case class ShowCreateV2ViewExec(
   }
 
   private def showViewDataColumns(builder: StringBuilder): Unit = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val schema = viewInfo.schema
     if (schema.nonEmpty) {
       val cols = schema.map { f =>
@@ -79,6 +80,7 @@ case class ShowCreateV2ViewExec(
       }
       builder ++= cols.mkString("(\n  ", ",\n  ", ")\n")
     }
+    planChangeLogger.warn("showViewDataColumns(builder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", builder)
   }
 
   private def showViewProperties(builder: StringBuilder): Unit = {
@@ -86,6 +88,7 @@ case class ShowCreateV2ViewExec(
     // (PROP_COMMENT / PROP_COLLATION) or are otherwise managed outside user TBLPROPERTIES
     // (PROP_OWNER, PROP_TABLE_TYPE, etc.). Mirrors the v1 SHOW CREATE TABLE filter, which
     // hides the same first-class fields from the rendered TBLPROPERTIES clause.
+    planChangeLogger.warn("showViewProperties(builder)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", builder)
     val viewProps = viewInfo.properties.asScala
       .filter { case (k, _) => !CatalogV2Util.TABLE_RESERVED_PROPERTIES.contains(k) }
     if (viewProps.nonEmpty) {
@@ -165,6 +168,7 @@ case class DescribeV2ViewExec(
     viewInfo.schema.foreach { col =>
       result += toCatalystRow(col.name, col.dataType.simpleString, col.getComment().orNull)
     }
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", result)
     if (isExtended) {
       result += toCatalystRow("", "", "")
       result += toCatalystRow("# Detailed View Information", "", "")

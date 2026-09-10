@@ -187,9 +187,11 @@ private[ml] trait DecisionTreeParams extends PredictorParams
     strategy.minWeightFractionPerNode = getMinWeightFractionPerNode
     strategy.useNodeIdCache = getCacheNodeIds
     strategy.numClasses = numClasses
+    logger.warn("getOldStrategy(categoricalFeatures,numClasses,oldAlgo,oldImpurity,subsamplingRate)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", categoricalFeatures, numClasses, oldAlgo, oldImpurity, subsamplingRate)
     strategy.categoricalFeaturesInfo = categoricalFeatures
     strategy.subsamplingRate = subsamplingRate
     strategy
+    logger.warn("getOldStrategy(categoricalFeatures,numClasses,oldAlgo,oldImpurity)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", categoricalFeatures, numClasses, oldAlgo, oldImpurity)
   }
 }
 
@@ -538,6 +540,7 @@ private[ml] trait GBTParams extends TreeEnsembleParams with HasMaxIter with HasS
   private[ml] def getOldBoostingStrategy(
       categoricalFeatures: Map[Int, Int],
       oldAlgo: OldAlgo.Algo): OldBoostingStrategy = {
+       logger.warn("getOldBoostingStrategy(categoricalFeatures,oldAlgo)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", categoricalFeatures, oldAlgo)
     val strategy = super.getOldStrategy(categoricalFeatures, numClasses = 2, oldAlgo, OldVariance)
     // NOTE: The old API does not support "seed" so we ignore it.
     new OldBoostingStrategy(strategy, getOldLossType, getMaxIter, getStepSize, getValidationTol)

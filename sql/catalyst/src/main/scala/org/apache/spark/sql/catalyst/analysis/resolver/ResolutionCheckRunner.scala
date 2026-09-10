@@ -32,6 +32,7 @@ import org.apache.spark.sql.internal.SQLConf
 class ResolutionCheckRunner(resolutionChecks: Seq[LogicalPlan => Unit])
     extends ResolverMetricTracker
     with SQLConfHelper {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Runs the resolution checks on `plan`. Invokes all the checks for every subquery plan, and
@@ -45,11 +46,13 @@ class ResolutionCheckRunner(resolutionChecks: Seq[LogicalPlan => Unit])
         }
       }
     }
+    planChangeLogger.warn("runWithSubqueries(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def doRunWithSubqueries(plan: LogicalPlan): Unit = {
     val planWithRewrittenSubqueries =
       plan.transformAllExpressionsWithPruning(_.containsPattern(PLAN_EXPRESSION)) {
+      planChangeLogger.warn("doRunWithSubqueries(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
         case subqueryExpression: SubqueryExpression =>
           doRunWithSubqueries(subqueryExpression.plan)
 
@@ -65,5 +68,6 @@ class ResolutionCheckRunner(resolutionChecks: Seq[LogicalPlan => Unit])
         check(plan)
       }
     }
+    planChangeLogger.warn("run(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

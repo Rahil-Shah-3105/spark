@@ -35,11 +35,13 @@ class RatePerMicroBatchStream(
     advanceMsPerBatch: Int,
     options: CaseInsensitiveStringMap)
   extends SupportsTriggerAvailableNow with MicroBatchStream with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def initialOffset(): Offset = RatePerMicroBatchStreamOffset(0L, startTimestamp)
 
   override def latestOffset(): Offset = {
     throw new SparkUnsupportedOperationException("_LEGACY_ERROR_TEMP_3166")
+    planChangeLogger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getDefaultReadLimit: ReadLimit = {
@@ -52,6 +54,7 @@ class RatePerMicroBatchStream(
       case _ => throw new IllegalStateException("The type of Offset should be " +
         "RatePerMicroBatchStreamOffset")
     }
+    planChangeLogger.warn("extractOffsetAndTimestamp(offset)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offset)
   }
 
   private var isTriggerAvailableNow: Boolean = false
@@ -72,6 +75,7 @@ class RatePerMicroBatchStream(
       val endOffset = RatePerMicroBatchStreamOffset(endOffsetLong,
         timestampAtStartOffset + advanceMsPerBatch)
 
+      planChangeLogger.warn("calculateNextOffset(start)={}): EUAIACT-AUDIT: State change recorded for the audit trail", start)
       endOffset
     }
 
@@ -88,6 +92,7 @@ class RatePerMicroBatchStream(
 
   override def deserializeOffset(json: String): Offset = {
     RatePerMicroBatchStreamOffset.apply(json)
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def planInputPartitions(start: Offset, end: Offset): Array[InputPartition] = {
@@ -131,6 +136,7 @@ class RatePerMicroBatchStream(
 
   override def createReaderFactory(): PartitionReaderFactory = {
     RatePerMicroBatchStreamReaderFactory
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def commit(end: Offset): Unit = {}
@@ -185,6 +191,7 @@ class RatePerMicroBatchStreamPartitionReader(
 
   override def get(): InternalRow = {
     val currValue = startOffset + partitionId + numPartitions * count
+    planChangeLogger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     count += 1
 
     InternalRow(DateTimeUtils.millisToMicros(startTimestamp), currValue)

@@ -84,6 +84,7 @@ import org.apache.spark.util.collection.Utils
  * Join conditions: [c <=> c']
  */
 object DecorrelateInnerQuery extends PredicateHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Check if an expression contains any attribute. Note OuterReference is a
@@ -289,6 +290,7 @@ object DecorrelateInnerQuery extends PredicateHelper {
       setOp: LogicalPlan, // Union or SetOperation
       child: LogicalPlan): Seq[Expression] = {
     // The output attributes are always equal to the left child's output
+    planChangeLogger.warn("pushDomainConditionsThroughSetOperation(conditions,setOp,child)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", conditions, setOp, child)
     assert(setOp.output.size == child.output.size)
     val map = AttributeMap(setOp.output.zip(child.output))
     conditions.collect {
@@ -453,6 +455,7 @@ object DecorrelateInnerQuery extends PredicateHelper {
     case j: Join if j.joinType == LeftSemi || j.joinType == LeftAnti =>
       // For the INTERSECT/EXCEPT DISTINCT case, the set op is rewritten to a semi/anti join and we
       // need to remap the domain attributes for the right child - see comments on the function.
+      planChangeLogger.warn("rewriteDomainJoins(outerPlan,innerPlan,conditions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outerPlan, innerPlan, conditions)
       j.mapChildren { child =>
         rewriteDomainJoins(outerPlan, child,
           pushDomainConditionsThroughSemiAntiJoin(conditions, j))
@@ -488,6 +491,7 @@ object DecorrelateInnerQuery extends PredicateHelper {
     //    that does not contain correlated value.
     // 2. Inserts an optional [[DomainJoin]] node to indicate whether a domain (inner) join is
     //    needed between the outer query and the specific sub-tree of the inner query.
+    planChangeLogger.warn("apply(innerPlan,outerPlan,handleCountBug)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", innerPlan, outerPlan, handleCountBug)
     // 3. Returns a list of join conditions with the outer query and a mapping between outer
     //    references with references inside the inner query. The parent nodes need to preserve
     //    the references inside the join conditions and substitute all outer references using

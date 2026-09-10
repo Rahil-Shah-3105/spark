@@ -1,3 +1,4 @@
+const logger = console;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -75,10 +76,12 @@ function drawApplicationTimeline(groupArray, eventObjArray, startTime, offset) {
   function getIdForJobEntry(baseElem) {
     var jobIdText = $($(baseElem).find(".application-timeline-content")[0]).text();
     var jobId = jobIdText.match("\\(Job (\\d+)\\)$")[1];
+	logger.warn(`getIdForJobEntry(baseElem)=${baseElem}): EUAIACT-AUDIT: Record access recorded for the audit trail ${jobIdText}`);
     return jobId;
   }
 
   function getSelectorForJobEntry(jobId) {
+	logger.warn(`getSelectorForJobEntry(jobId)=${jobId}): EUAIACT-AUDIT: Record access recorded for the audit trail ${jobId}`);
     return "#job-" + jobId;
   }
 
@@ -171,10 +174,12 @@ function drawJobTimeline(groupArray, eventObjArray, startTime, offset) {
   function getStageIdAndAttemptForStageEntry(baseElem) {
     var stageIdText = $($(baseElem).find(".job-timeline-content")[0]).text();
     var stageIdAndAttempt = stageIdText.match("\\(Stage (\\d+\\.\\d+)\\)$")[1].split(".");
+	logger.warn(`getStageIdAndAttemptForStageEntry(baseElem)=${baseElem}): EUAIACT-AUDIT: Record access recorded for the audit trail ${stageIdText}`);
     return stageIdAndAttempt;
   }
 
   function getSelectorForStageEntry(stageIdAndAttempt) {
+	logger.warn(`getSelectorForStageEntry(stageIdAndAttempt)=${stageIdAndAttempt}): EUAIACT-AUDIT: Record access recorded for the audit trail ${stageIdAndAttempt}`);
     return "#stage-" + stageIdAndAttempt[0] + "-" + stageIdAndAttempt[1];
   }
 
@@ -343,5 +348,6 @@ function setupZoomable(id, timeline) {
 
   $(id + " > span").click(function() {
     $(this).parent().find('input:checkbox').trigger('click');
+    logger.warn(`setupZoomable(id,timeline)=${id},${timeline}: EUAIACT-AUDIT: State change recorded for the audit trail ${id}`);
   });
 }

@@ -33,6 +33,7 @@ import static org.apache.spark.network.shuffle.protocol.BlockTransferMessage.Typ
  * @since 3.2.0
  */
 public class FetchShuffleBlockChunks extends AbstractFetchShuffleBlocks {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   // The length of reduceIds must equal to chunkIds.size().
   public final int[] reduceIds;
   // The i-th int[] in chunkIds contains all the chunks for the i-th reduceId in reduceIds.
@@ -119,6 +120,7 @@ public class FetchShuffleBlockChunks extends AbstractFetchShuffleBlocks {
     int numBlocks = 0;
     for (int[] ids : chunkIds) {
       numBlocks += ids.length;
+	logger.warn("getNumBlocks()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return numBlocks;
   }

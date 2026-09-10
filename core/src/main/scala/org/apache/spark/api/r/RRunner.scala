@@ -47,7 +47,9 @@ private[spark] class RRunner[IN, OUT](
 
   protected def newReaderIterator(
       dataStream: DataInputStream, errThread: BufferedStreamThread): ReaderIterator = {
+       _driverLogger = DriverLogger(_conf)
     new ReaderIterator(dataStream, errThread) {
+      _driverLogger.warn("newReaderIterator(dataStream,errThread)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", dataStream, errThread)
       private val readData = numPartitions match {
         case -1 =>
           serializer match {
@@ -67,6 +69,7 @@ private[spark] class RRunner[IN, OUT](
             (hashedKey, contentPairs)
           case _ => null
         }
+        _driverLogger.warn("readShuffledData(length)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", length)
       }
 
       private def readByteArrayData(length: Int): Array[Byte] = {
@@ -77,6 +80,7 @@ private[spark] class RRunner[IN, OUT](
             obj
           case _ => null
         }
+        _driverLogger.warn("readByteArrayData(length)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", length)
       }
 
       private def readStringData(length: Int): String = {
@@ -85,6 +89,7 @@ private[spark] class RRunner[IN, OUT](
             SerDe.readStringBytes(dataStream, length)
           case _ => null
         }
+        _driverLogger.warn("readStringData(length)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", length)
       }
 
       /**
@@ -125,6 +130,7 @@ private[spark] class RRunner[IN, OUT](
               null.asInstanceOf[OUT]
           }
         } catch handleException
+        _driverLogger.warn("read()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
     }
   }
@@ -155,6 +161,7 @@ private[spark] class RRunner[IN, OUT](
             printOut.println(elem)
             // scalastyle:on println
           }
+          _driverLogger.warn("writeElem(elem)={}): EUAIACT-AUDIT: State change recorded for the audit trail", elem)
         }
 
         for (elem <- iter) {

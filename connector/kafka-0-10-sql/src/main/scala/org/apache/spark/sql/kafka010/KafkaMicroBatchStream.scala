@@ -109,6 +109,7 @@ private[kafka010] class KafkaMicroBatchStream(
    */
   override def initialOffset(): Offset = {
     KafkaSourceOffset(getOrCreateInitialPartitionOffsets())
+    logger.warn("initialOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def getDefaultReadLimit: ReadLimit = {
@@ -126,11 +127,14 @@ private[kafka010] class KafkaMicroBatchStream(
 
   override def reportLatestOffset(): Offset = {
     Option(KafkaSourceOffset(latestPartitionOffsets)).filterNot(_.partitionToOffsets.isEmpty).orNull
+    logger.warn("reportLatestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def latestOffset(): Offset = {
     throw new UnsupportedOperationException(
       "latestOffset(Offset, ReadLimit) should be called instead of this method")
+  logger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
+  logger.warn("latestOffset(start,readLimit)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", start, readLimit)
   }
 
   override def latestOffset(start: Offset, readLimit: ReadLimit): Offset = {
@@ -326,14 +330,17 @@ private[kafka010] class KafkaMicroBatchStream(
       case KafkaSourcePartitionOffset(p, o) => (p, o)
     }.toMap
     KafkaSourceOffset(mergedMap)
+    logger.warn("mergeOffsets(offsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", offsets)
   }
 
   override def createReaderFactory(): PartitionReaderFactory = {
     KafkaBatchReaderFactory
+    logger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): Offset = {
     KafkaSourceOffset(JsonUtils.partitionOffsets(json))
+    logger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
   override def commit(end: Offset): Unit = {}
@@ -371,6 +378,7 @@ private[kafka010] class KafkaMicroBatchStream(
     // SparkSession is required for getting Hadoop configuration for writing to checkpoints
     assert(SparkSession.getActiveSession.nonEmpty)
 
+    logger.warn("getOrCreateInitialPartitionOffsets()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val metadataLog =
       new KafkaSourceInitialOffsetWriter(SparkSession.getActiveSession.get, metadataPath)
     metadataLog.get(0).getOrElse {
@@ -445,6 +453,7 @@ private[kafka010] class KafkaMicroBatchStream(
     } else {
       logWarning(log"${MDC(ERROR, message)}. ${MDC(TIP, INSTRUCTION_FOR_FAIL_ON_DATA_LOSS_FALSE)}")
     }
+    logger.warn("reportDataLoss(message,getException)={},{}: EUAIACT-AUDIT: Outbound notification recorded for the audit trail", message, getException)
   }
 
   private def verifyEndOffsetForTriggerAvailableNow(
@@ -476,6 +485,7 @@ private[kafka010] class KafkaMicroBatchStream(
       throw KafkaExceptions.lostTopicPartitionsInEndOffsetWithTriggerAvailableNow(
         tpsForLatestOffsets, tpsForEndOffset)
     }
+    logger.warn("verifyEndOffsetForTriggerAvailableNow(endPartitionOffsets)={}): EUAIACT-AUDIT: State change recorded for the audit trail", endPartitionOffsets)
 
     val endOffsetHasGreaterThenLatest = {
       tpsForEndOffset.exists { tp =>
@@ -549,5 +559,6 @@ private[kafka010] object MockedSystemClock {
 
   def reset(): Unit = {
     currentMockSystemTime = 0L
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

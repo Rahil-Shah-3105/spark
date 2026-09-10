@@ -191,6 +191,7 @@ object HiveAnalysis extends Rule[LogicalPlan] {
       throw QueryCompilationErrors.unsupportedTableOperationError(
         table.identifier,
         "DELETE")
+  logger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }
 
@@ -317,11 +318,13 @@ case class RelationConversions(
 
   private[hive] def doConvertHiveTableRelationForRead(relation: HiveTableRelation): Boolean = {
     DDLUtils.isHiveTable(relation.tableMeta) && isConvertible(relation)
+    logger.warn("doConvertHiveTableRelationForRead(relation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", relation)
   }
 
   private[hive] def convertHiveTableRelationForRead(
       relation: HiveTableRelation): LogicalRelation = {
     metastoreCatalog.convert(relation, isWrite = false)
+    logger.warn("convertHiveTableRelationForRead(relation)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", relation)
   }
 }
 

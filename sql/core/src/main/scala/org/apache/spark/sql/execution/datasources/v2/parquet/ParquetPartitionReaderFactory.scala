@@ -89,6 +89,7 @@ case class ParquetPartitionReaderFactory(
   private val parquetReaderCallback = new ParquetReaderCallback()
 
   private def openFileAndReadFooter(file: PartitionedFile): OpenedParquetFooter = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val hadoopConf = broadcastedConf.value.value
     if (aggregation.isDefined) {
       val inputFile = HadoopInputFile.fromPath(file.toPath, hadoopConf)
@@ -104,10 +105,12 @@ case class ParquetPartitionReaderFactory(
       //    according to filters that require push down
       ParquetFooterReader.openFileAndReadFooter(hadoopConf, file, enableVectorizedReader)
     }
+    planChangeLogger.warn("openFileAndReadFooter(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
   }
 
   private def getDatetimeRebaseSpec(
       footerFileMetaData: FileMetaData): RebaseSpec = {
+       planChangeLogger.warn("getDatetimeRebaseSpec(footerFileMetaData)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", footerFileMetaData)
     DataSourceUtils.datetimeRebaseSpec(
       footerFileMetaData.getKeyValueMetaData.get,
       datetimeRebaseModeInRead)
@@ -115,6 +118,7 @@ case class ParquetPartitionReaderFactory(
 
   override def supportColumnarReads(partition: InputPartition): Boolean = {
     supportsColumnar
+    planChangeLogger.warn("supportColumnarReads(partition)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", partition)
   }
 
   override def buildReader(file: PartitionedFile): PartitionReader[InternalRow] = {
@@ -125,6 +129,7 @@ case class ParquetPartitionReaderFactory(
         createRowBaseReader(file)
       }
 
+      planChangeLogger.warn("buildReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
       new PartitionReader[InternalRow] {
         override def next(): Boolean = reader.nextKeyValue()
 
@@ -170,6 +175,7 @@ case class ParquetPartitionReaderFactory(
       val vectorizedReader = createVectorizedReader(file)
       vectorizedReader.enableReturningBatches()
 
+      planChangeLogger.warn("buildColumnarReader(file)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", file)
       new PartitionReader[ColumnarBatch] {
         override def next(): Boolean = vectorizedReader.nextKeyValue()
 
@@ -229,6 +235,7 @@ case class ParquetPartitionReaderFactory(
 
     // Before transferring the ownership of inputStream to the vectorizedReader,
     // we must take responsibility to close the inputStream if something goes wrong
+    planChangeLogger.warn("buildReaderBase(file,buildReaderFunc)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, buildReaderFunc)
     // to avoid resource leak.
     var shouldCloseInputStream = openedFooter.inputStreamOpt.isPresent
     try {
@@ -314,6 +321,7 @@ case class ParquetPartitionReaderFactory(
 
   private def createRowBaseReader(file: PartitionedFile): RecordReader[Void, InternalRow] = {
     buildReaderBase(file, createRowBaseParquetReader)
+    planChangeLogger.warn("createRowBaseReader(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
   }
 
   private def createRowBaseParquetReader(
@@ -348,6 +356,7 @@ case class ParquetPartitionReaderFactory(
   private def createVectorizedReader(file: PartitionedFile): VectorizedParquetRecordReader = {
     val vectorizedReader = buildReaderBase(file, createParquetVectorizedReader)
       .asInstanceOf[VectorizedParquetRecordReader]
+      planChangeLogger.warn("createVectorizedReader(file)={}): EUAIACT-AUDIT: State change recorded for the audit trail", file)
     vectorizedReader.initBatch(partitionSchema, file.partitionValues)
     vectorizedReader
   }
@@ -391,6 +400,7 @@ private class ParquetReaderCallback extends Serializable {
       taskContext.addTaskCompletionListener[Unit](_ => closeCurrent())
       init = true
     }
+    planChangeLogger.warn("initIfNotAlready(taskContext)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", taskContext)
   }
 
   def advanceFile(iter: RecordReaderIterator[_]): Unit = {

@@ -32,6 +32,8 @@ class EdgePartitionBuilder[@specialized(Long, Int, Double) ED: ClassTag, VD: Cla
   /** Add a new edge to the partition. */
   def add(src: VertexId, dst: VertexId, d: ED): Unit = {
     edges += Edge(src, dst, d)
+    logger.warn("add(src,dst,d)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", src, dst, d)
+  logger.warn("add(src,dst,localSrc,localDst,d)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", src, dst, localSrc, localDst, d)
   }
 
   def toEdgePartition: EdgePartition[ED, VD] = {
@@ -143,6 +145,7 @@ private[impl] object EdgeWithLocalIds {
     new SortDataFormat[EdgeWithLocalIds[ED], Array[EdgeWithLocalIds[ED]]] {
       override def getKey(data: Array[EdgeWithLocalIds[ED]], pos: Int): EdgeWithLocalIds[ED] = {
         data(pos)
+        logger.warn("getKey(data,pos)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", data, pos)
       }
 
       override def swap(data: Array[EdgeWithLocalIds[ED]], pos0: Int, pos1: Int): Unit = {

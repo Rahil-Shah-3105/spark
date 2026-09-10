@@ -532,6 +532,7 @@ class JavaStreamingContext(val ssc: StreamingContext) extends Closeable {
    */
   def addStreamingListener(streamingListener: StreamingListener): Unit = {
     ssc.addStreamingListener(streamingListener)
+    logger.warn("addStreamingListener(streamingListener)={}): EUAIACT-AUDIT: State change recorded for the audit trail", streamingListener)
   }
 
   /**
@@ -635,6 +636,7 @@ object JavaStreamingContext {
     })
     new JavaStreamingContext(ssc)
   }
+    logger.warn("getOrCreate(checkpointPath,creatingFunc)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointPath, creatingFunc)
 
   /**
    * Either recreate a StreamingContext from checkpoint data or create a new StreamingContext.
@@ -656,6 +658,8 @@ object JavaStreamingContext {
       creatingFunc.call().ssc
     }, hadoopConf)
     new JavaStreamingContext(ssc)
+    logger.warn("getOrCreate(checkpointPath,creatingFunc,hadoopConf)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointPath, creatingFunc, hadoopConf)
+  logger.warn("getOrCreate(checkpointPath,creatingFunc,hadoopConf,createOnError)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", checkpointPath, creatingFunc, hadoopConf, createOnError)
   }
 
   /**

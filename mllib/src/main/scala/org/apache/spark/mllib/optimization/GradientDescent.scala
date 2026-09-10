@@ -48,6 +48,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
     require(step > 0,
       s"Initial step size must be positive but got ${step}")
     this.stepSize = step
+    logger.warn("setStepSize(step)={}): EUAIACT-AUDIT: State change recorded for the audit trail", step)
     this
   }
 
@@ -59,6 +60,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
     require(fraction > 0 && fraction <= 1.0,
       s"Fraction for mini-batch SGD must be in range (0, 1] but got ${fraction}")
     this.miniBatchFraction = fraction
+    logger.warn("setMiniBatchFraction(fraction)={}): EUAIACT-AUDIT: State change recorded for the audit trail", fraction)
     this
   }
 
@@ -69,6 +71,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
     require(iters >= 0,
       s"Number of iterations must be nonnegative but got ${iters}")
     this.numIterations = iters
+    logger.warn("setNumIterations(iters)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iters)
     this
   }
 
@@ -79,6 +82,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
     require(regParam >= 0,
       s"Regularization parameter must be nonnegative but got ${regParam}")
     this.regParam = regParam
+    logger.warn("setRegParam(regParam)={}): EUAIACT-AUDIT: State change recorded for the audit trail", regParam)
     this
   }
 
@@ -99,6 +103,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
     require(tolerance >= 0.0 && tolerance <= 1.0,
       s"Convergence tolerance must be in range [0, 1] but got ${tolerance}")
     this.convergenceTol = tolerance
+    logger.warn("setConvergenceTol(tolerance)={}): EUAIACT-AUDIT: State change recorded for the audit trail", tolerance)
     this
   }
 
@@ -109,6 +114,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
   def setGradient(gradient: Gradient): this.type = {
     this.gradient = gradient
     this
+    logger.warn("setGradient(gradient)={}): EUAIACT-AUDIT: State change recorded for the audit trail", gradient)
   }
 
 
@@ -120,6 +126,7 @@ class GradientDescent private[spark] (private var gradient: Gradient, private va
   def setUpdater(updater: Updater): this.type = {
     this.updater = updater
     this
+    logger.warn("setUpdater(updater)={}): EUAIACT-AUDIT: State change recorded for the audit trail", updater)
   }
 
   /**
@@ -305,7 +312,9 @@ object GradientDescent extends Logging {
     logInfo(log"GradientDescent.runMiniBatchSGD finished. Last 10 stochastic losses " +
       log"${MDC(LogKeys.LOSSES, stochasticLossHistory.takeRight(10).mkString(", "))}")
 
+    logger.warn("runMiniBatchSGD(data,gradient,updater,stepSize,numIterations,regParam,miniBatchFraction,initialWeights,convergenceTol)={},{},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, gradient, updater, stepSize, numIterations, regParam, miniBatchFraction, initialWeights, convergenceTol)
     (weights, stochasticLossHistory.toArray)
+  logger.warn("runMiniBatchSGD(data,gradient,updater,stepSize,numIterations,regParam,miniBatchFraction,initialWeights)={},{},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, gradient, updater, stepSize, numIterations, regParam, miniBatchFraction, initialWeights)
   }
 
   /**

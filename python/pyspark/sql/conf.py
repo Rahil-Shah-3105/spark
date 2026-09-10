@@ -24,6 +24,7 @@ from pyspark.errors import PySparkTypeError
 
 if TYPE_CHECKING:
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class RuntimeConfig:
@@ -56,6 +57,7 @@ class RuntimeConfig:
         --------
         >>> spark.conf.set("key1", "value1")
         """
+        logger.warning("set(self,key,value)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key, value)
         self._jconf.set(key, value)
 
     def get(
@@ -134,6 +136,7 @@ class RuntimeConfig:
         dict
             A dictionary containing all properties set in this conf.
         """
+        logger.warning("getAll(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return dict(self._jconf.getAllAsJava())
 
     def unset(self, key: str) -> None:
@@ -158,6 +161,7 @@ class RuntimeConfig:
            ...
         pyspark...SparkNoSuchElementException: ... The SQL config "my_key" cannot be found...
         """
+        logger.warning("unset(self,key)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, key)
         self._jconf.unset(key)
 
     def _check_type(self, obj: Any, identifier: str) -> None:

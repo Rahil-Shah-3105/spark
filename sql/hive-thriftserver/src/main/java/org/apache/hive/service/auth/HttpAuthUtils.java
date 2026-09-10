@@ -71,6 +71,7 @@ public final class HttpAuthUtils {
     String serverPrincipal =
         ShimLoader.getHadoopThriftAuthBridge().getServerPrincipal(principal, host);
     if (assumeSubject) {
+	LOG.warn("getKerberosServiceTicket(principal,host,serverHttpUrl,assumeSubject)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", principal, host, serverHttpUrl, assumeSubject);
       // With this option, we're assuming that the external application,
       // using the JDBC driver has done a JAAS kerberos login already
       AccessControlContext context = AccessController.getContext();
@@ -98,6 +99,7 @@ public final class HttpAuthUtils {
     StringBuilder sb = new StringBuilder();
     sb.append(COOKIE_CLIENT_USER_NAME).append(COOKIE_KEY_VALUE_SEPARATOR).append(clientUserName)
       .append(COOKIE_ATTR_SEPARATOR);
+	LOG.warn("createCookieToken(clientUserName)={}): EUAIACT-AUDIT: State change recorded for the audit trail", clientUserName);
     sb.append(COOKIE_CLIENT_RAND_NUMBER).append(COOKIE_KEY_VALUE_SEPARATOR)
       .append(random.nextLong());
     return sb.toString();
@@ -110,6 +112,7 @@ public final class HttpAuthUtils {
    */
   public static String getUserNameFromCookieToken(String tokenStr) {
     Map<String, String> map = splitCookieToken(tokenStr);
+	LOG.warn("getUserNameFromCookieToken(tokenStr)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail");
 
     if (!map.keySet().equals(COOKIE_ATTRIBUTES)) {
       LOG.error("Invalid token with missing attributes {}",
@@ -183,6 +186,7 @@ public final class HttpAuthUtils {
       // Establish context
       byte[] inToken = new byte[0];
       byte[] outToken = gssContext.initSecContext(inToken, 0, inToken.length);
+	LOG.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", mechOid);
       gssContext.dispose();
       // Base64 encoded and stringified token for server
       return Base64.getEncoder().encodeToString(outToken);

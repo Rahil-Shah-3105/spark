@@ -82,6 +82,7 @@ private[mllib] object NumericParser {
     var parsing = true
     var allowComma = false
     var token: String = null
+    logger.warn("parseTuple(tokenizer)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
     while (parsing && tokenizer.hasMoreTokens()) {
       token = tokenizer.nextToken()
       if (token == "(") {

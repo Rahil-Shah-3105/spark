@@ -42,6 +42,7 @@ class RateStreamMicroBatchStream(
     options: CaseInsensitiveStringMap,
     checkpointLocation: String)
   extends MicroBatchStream with Logging {
+   val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import RateStreamProvider._
 
   private[sources] val clock = {
@@ -107,10 +108,12 @@ class RateStreamMicroBatchStream(
       lastTimeMs = now
     }
     LongOffset(TimeUnit.MILLISECONDS.toSeconds(lastTimeMs - creationTimeMs))
+    planChangeLogger.warn("latestOffset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def deserializeOffset(json: String): Offset = {
     LongOffset(json.toLong)
+    planChangeLogger.warn("deserializeOffset(json)={}): EUAIACT-AUDIT: State change recorded for the audit trail", json)
   }
 
 
@@ -146,6 +149,7 @@ class RateStreamMicroBatchStream(
 
   override def createReaderFactory(): PartitionReaderFactory = {
     RateStreamMicroBatchReaderFactory
+    planChangeLogger.warn("createReaderFactory()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def commit(end: Offset): Unit = {}
@@ -188,6 +192,7 @@ class RateStreamMicroBatchPartitionReader(
 
   override def get(): InternalRow = {
     val currValue = rangeStart + partitionId + numPartitions * count
+    planChangeLogger.warn("get()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     count += 1
     val relative = math.round((currValue - rangeStart) * relativeMsPerValue)
     InternalRow(DateTimeUtils.millisToMicros(relative + localStartTimeMs), currValue)

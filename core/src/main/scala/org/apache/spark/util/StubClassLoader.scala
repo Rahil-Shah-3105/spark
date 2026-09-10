@@ -34,6 +34,7 @@ private[spark] class StubClassLoader(parent: ClassLoader, shouldStub: String => 
     if (!shouldStub(name)) {
       throw new ClassNotFoundException(name)
     }
+    _driverLogger.warn("findClass(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name)
     logDebug(s"Generating stub for $name")
     val bytes = StubClassLoader.generateStub(name)
     defineClass(name, bytes, 0, bytes.length)
@@ -42,7 +43,9 @@ private[spark] class StubClassLoader(parent: ClassLoader, shouldStub: String => 
 
 private[spark] object StubClassLoader {
   def apply(parent: ClassLoader, binaryName: Seq[String]): StubClassLoader = {
+    _driverLogger = DriverLogger(_conf)
     new StubClassLoader(parent, name => binaryName.exists(p => name.startsWith(p)))
+    _driverLogger.warn("apply(parent,binaryName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", parent, binaryName)
   }
 
   def generateStub(binaryName: String): Array[Byte] = {

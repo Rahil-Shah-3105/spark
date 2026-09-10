@@ -21,6 +21,7 @@ package org.apache.spark.util;
  * A class loader which makes some protected methods in ClassLoader accessible.
  */
 public class ParentClassLoader extends ClassLoader {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(ParentClassLoader.class);
 
   static {
     ClassLoader.registerAsParallelCapable();
@@ -32,11 +33,13 @@ public class ParentClassLoader extends ClassLoader {
 
   @Override
   public Class<?> findClass(String name) throws ClassNotFoundException {
+	logger.warn("findClass(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
     return super.findClass(name);
   }
 
   @Override
   public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+	logger.warn("loadClass(name,resolve)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, resolve);
     return super.loadClass(name, resolve);
   }
 }

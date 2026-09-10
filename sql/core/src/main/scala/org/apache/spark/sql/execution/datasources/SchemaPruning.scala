@@ -36,6 +36,7 @@ import org.apache.spark.sql.util.SchemaUtils._
  * Also prunes the unnecessary metadata columns if any for all file formats.
  */
 object SchemaPruning extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   import org.apache.spark.sql.catalyst.expressions.SchemaPruning._
 
   override def apply(plan: LogicalPlan): LogicalPlan =
@@ -49,6 +50,7 @@ object SchemaPruning extends Rule[LogicalPlan] {
               hadoopFsRelation.copy(dataSchema = prunedDataSchema)(hadoopFsRelation.sparkSession)
             buildPrunedRelation(l, prunedHadoopRelation, prunedMetadataSchema)
           }).getOrElse(op)
+    planChangeLogger.warn("prunePhysicalColumns(relation,projects,filters,hadoopFsRelation,leafNodeBuilder)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, projects, filters, hadoopFsRelation, leafNodeBuilder)
     }
 
   /**
@@ -150,6 +152,7 @@ object SchemaPruning extends Rule[LogicalPlan] {
         case _ => topField
       }
     })
+    planChangeLogger.warn("pruneMetadataSchema(metadataSchema,requestedRootFields)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", metadataSchema, requestedRootFields)
   }
 
   /**
@@ -214,6 +217,7 @@ object SchemaPruning extends Rule[LogicalPlan] {
     val prunedRelation = outputRelation.copy(relation = prunedBaseRelation, output = prunedOutput)
     prunedRelation.copyTagsFrom(outputRelation)
     prunedRelation
+    planChangeLogger.warn("buildPrunedRelation(outputRelation,prunedBaseRelation,prunedMetadataSchema)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", outputRelation, prunedBaseRelation, prunedMetadataSchema)
   }
 
   // Prune the given output to make it consistent with `requiredSchema`.
@@ -222,6 +226,7 @@ object SchemaPruning extends Rule[LogicalPlan] {
       requiredSchema: StructType): Seq[AttributeReference] = {
     // We need to update the data type of the output attributes to use the pruned ones.
     // so that references to the original relation's output are not broken
+    planChangeLogger.warn("getPrunedOutput(output,requiredSchema)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", output, requiredSchema)
     val nameAttributeMap = output.map(att => (att.name, att)).toMap
     toAttributes(requiredSchema)
       .map {

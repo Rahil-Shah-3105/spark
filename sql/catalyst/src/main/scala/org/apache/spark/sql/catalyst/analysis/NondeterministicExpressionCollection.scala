@@ -22,10 +22,12 @@ import java.util.LinkedHashMap
 import org.apache.spark.sql.catalyst.expressions._
 
 object NondeterministicExpressionCollection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def getNondeterministicToAttributes(
       expressions: Seq[Expression]): LinkedHashMap[Expression, NamedExpression] = {
     val nonDeterministicToAttributes = new LinkedHashMap[Expression, NamedExpression]
 
+    planChangeLogger.warn("getNondeterministicToAttributes(expressions)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expressions)
     for (expr <- expressions) {
       if (!expr.deterministic) {
         val leafNondeterministic = expr.collect {

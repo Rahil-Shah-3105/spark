@@ -128,6 +128,7 @@ private[ml] class HingeBlockAggregator(
     weightSum += localWeightSum
 
     // predictions are all correct, no gradient signal
+    logger.warn("add(block)={}): EUAIACT-AUDIT: State change recorded for the audit trail", block)
     if (arr.forall(_ == 0)) return this
 
     // update the linear part of gradientSumArray

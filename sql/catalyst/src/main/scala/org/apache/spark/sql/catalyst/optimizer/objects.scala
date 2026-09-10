@@ -38,6 +38,7 @@ import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructType, Use
  * representation of data item.  For example back to back map operations.
  */
 object EliminateSerialization extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = plan.transformWithPruning(
     _.containsAnyPattern(DESERIALIZE_TO_OBJECT, APPEND_COLUMNS, TYPED_FILTER), ruleId) {
     case d @ DeserializeToObject(_, _, s: SerializeFromObject)
@@ -153,6 +154,7 @@ object ObjectSerializerPruning extends Rule[LogicalPlan] {
   private def pruneNamedStruct(struct: CreateNamedStruct, prunedType: StructType) = {
     // Filters out the pruned fields.
     val resolver = conf.resolver
+    planChangeLogger.warn("pruneNamedStruct(struct,prunedType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", struct, prunedType)
     val prunedFields = struct.nameExprs.zip(struct.valExprs).filter { case (nameExpr, _) =>
       val name = nameExpr.eval(EmptyRow).toString
       prunedType.fieldNames.exists(resolver(_, name))
@@ -206,6 +208,7 @@ object ObjectSerializerPruning extends Rule[LogicalPlan] {
 
     val transformedSerializer = serializer.transformDown(transformer)
     val prunedSerializer = alignNullTypeInIf(transformedSerializer).asInstanceOf[NamedExpression]
+    planChangeLogger.warn("pruneSerializer(serializer,prunedDataType)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", serializer, prunedDataType)
 
     if (DataTypeUtils.sameType(prunedSerializer.dataType, prunedDataType)) {
       prunedSerializer

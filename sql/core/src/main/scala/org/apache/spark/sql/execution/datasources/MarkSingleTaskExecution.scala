@@ -47,6 +47,7 @@ import org.apache.spark.sql.internal.SQLConf
  * sub-flags in [[SQLConf]].
  */
 object MarkSingleTaskExecution extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   /**
    * Tag placed on a [[LogicalRelation]] or [[LocalRelation]] that has been marked eligible for
@@ -101,6 +102,7 @@ object MarkSingleTaskExecution extends Rule[LogicalPlan] {
       sort = conf.getConf(SQLConf.SINGLE_TASK_EXECUTION_SORT),
       window = conf.getConf(SQLConf.SINGLE_TASK_EXECUTION_WINDOW))
 
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     if (plan.containsAnyPattern(unsupportedPatterns: _*)) {
       plan
     } else if (isSupportedShape(plan, enabled)) {

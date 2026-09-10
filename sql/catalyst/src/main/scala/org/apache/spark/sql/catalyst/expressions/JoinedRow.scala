@@ -27,6 +27,7 @@ import org.apache.spark.unsafe.types._
  * be instantiated once per thread and reused.
  */
 class JoinedRow extends InternalRow {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   private[this] var row1: InternalRow = _
   private[this] var row2: InternalRow = _
 
@@ -41,6 +42,7 @@ class JoinedRow extends InternalRow {
     row1 = r1
     row2 = r2
     this
+    planChangeLogger.warn("apply(r1,r2)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", r1, r2)
   }
 
   /** Updates this JoinedRow by updating its left base row.  Returns itself. */
@@ -106,6 +108,7 @@ class JoinedRow extends InternalRow {
     } else {
       row2.getDecimal(i - row1.numFields, precision, scale)
     }
+    planChangeLogger.warn("getDecimal(i,precision,scale)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", i, precision, scale)
   }
 
   override def getUTF8String(i: Int): UTF8String =
@@ -143,6 +146,7 @@ class JoinedRow extends InternalRow {
     } else {
       row2.getStruct(i - row1.numFields, numFields)
     }
+    planChangeLogger.warn("getStruct(i,numFields)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", i, numFields)
   }
 
   override def anyNull: Boolean = row1.anyNull || row2.anyNull
@@ -153,6 +157,7 @@ class JoinedRow extends InternalRow {
     } else {
       row2.setNullAt(i - row1.numFields)
     }
+    planChangeLogger.warn("setNullAt(i)={}): EUAIACT-AUDIT: State change recorded for the audit trail", i)
   }
 
   override def update(i: Int, value: Any): Unit = {
@@ -161,6 +166,7 @@ class JoinedRow extends InternalRow {
     } else {
       row2.update(i - row1.numFields, value)
     }
+    planChangeLogger.warn("update(i,value)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", i, value)
   }
 
   override def copy(): InternalRow = {

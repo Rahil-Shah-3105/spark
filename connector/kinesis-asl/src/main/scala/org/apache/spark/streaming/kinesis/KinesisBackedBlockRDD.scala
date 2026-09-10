@@ -63,6 +63,7 @@ private[kinesis]
 object SequenceNumberRanges {
   def apply(range: SequenceNumberRange): SequenceNumberRanges = {
     new SequenceNumberRanges(Seq(range))
+    logger.warn("apply(range)={}): EUAIACT-AUDIT: State change recorded for the audit trail", range)
   }
 }
 
@@ -121,6 +122,7 @@ class KinesisBackedBlockRDD[T: ClassTag](
         new KinesisSequenceRangeIterator(credentialsProvider, endpointUrl, regionName,
           range, kinesisReadConfigs).map(messageHandler)
       }
+      logger.warn("getBlockFromKinesis()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
     if (partition.isBlockIdValid) {
       getBlockFromBlockManager().getOrElse { getBlockFromKinesis() }
@@ -202,6 +204,7 @@ class KinesisSequenceRangeIterator(
       }
     }
     nextRecord
+    logger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override protected def close(): Unit = {
@@ -215,6 +218,7 @@ class KinesisSequenceRangeIterator(
       iteratorType: ShardIteratorType,
       seqNum: String,
       recordCount: Int): Iterator[KinesisClientRecord] = {
+       logger.warn("getRecords(iteratorType,seqNum,recordCount)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", iteratorType, seqNum, recordCount, recordCount)
     val shardIterator = getKinesisIterator(iteratorType, seqNum)
     val result = getRecordsAndNextKinesisIterator(shardIterator, recordCount)
     result._1
@@ -243,6 +247,7 @@ class KinesisSequenceRangeIterator(
       .collect(Collectors.toList[KinesisClientRecord]())
     val recordIterator = aggregatorUtil.deaggregate(records)
     (recordIterator.iterator().asScala, getRecordsResponse.nextShardIterator)
+      logger.warn("getRecordsAndNextKinesisIterator(shardIterator,recordCount)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", shardIterator, recordCount, recordCount)
   }
 
   /**
@@ -259,6 +264,7 @@ class KinesisSequenceRangeIterator(
       .startingSequenceNumber(sequenceNumber)
       .build()
 
+      logger.warn("getKinesisIterator(iteratorType,sequenceNumber)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", iteratorType, sequenceNumber)
     val getShardIteratorResponse = retryOrTimeout[GetShardIteratorResponse](
         s"getting shard iterator from sequence number $sequenceNumber") {
           client.getShardIterator(getShardIteratorRequest)

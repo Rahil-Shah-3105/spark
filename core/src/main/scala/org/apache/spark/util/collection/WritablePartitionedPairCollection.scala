@@ -47,6 +47,7 @@ private[spark] trait WritablePartitionedPairCollection[K, V] {
    */
   def destructiveSortedWritablePartitionedIterator(keyComparator: Option[Comparator[K]])
     : WritablePartitionedIterator[K, V] = {
+     _driverLogger = DriverLogger(_conf)
     val it = partitionedDestructiveSortedIterator(keyComparator)
     new WritablePartitionedIterator[K, V](it)
   }
@@ -82,6 +83,7 @@ private[spark] class WritablePartitionedIterator[K, V](it: Iterator[((Int, K), V
   def writeNext(writer: PairsWriter): Unit = {
     writer.write(cur._1._2, cur._2)
     cur = if (it.hasNext) it.next() else null
+    _driverLogger.warn("writeNext(writer)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writer)
   }
 
   def hasNext: Boolean = cur != null

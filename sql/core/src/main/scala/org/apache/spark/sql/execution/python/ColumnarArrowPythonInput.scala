@@ -62,6 +62,7 @@ private[python] trait ColumnarArrowPythonInput
       writer: ArrowStreamWriter,
       dataOut: DataOutputStream,
       inputIterator: Iterator[ColumnarBatch]): Boolean = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     if (inputIterator.hasNext) {
       val batch = inputIterator.next()
       val startData = dataOut.size()
@@ -79,6 +80,7 @@ private[python] trait ColumnarArrowPythonInput
       super[PythonArrowInput].close()
       false
     }
+    planChangeLogger.warn("writeNextBatchToArrowStream(root,writer,dataOut,inputIterator)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", root, writer, dataOut, inputIterator)
   }
 
   /**
@@ -122,6 +124,7 @@ private[python] trait ColumnarArrowPythonInput
     val batchUnloader = new VectorUnloader(batchRoot, true, codec, true)
     val recordBatch = batchUnloader.getRecordBatch()
     try {
+    planChangeLogger.warn("writeArrowDirect(batch,dataOut)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batch, dataOut, recordBatch)
       val writeChannel = new WriteChannel(Channels.newChannel(dataOut))
       MessageSerializer.serialize(writeChannel, recordBatch)
     } finally {

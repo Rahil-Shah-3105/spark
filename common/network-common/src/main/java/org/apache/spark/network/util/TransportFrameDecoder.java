@@ -43,6 +43,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * to their handle() method.
  */
 public class TransportFrameDecoder extends ChannelInboundHandlerAdapter {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(TransportFrameDecoder.class);
 
   public static final String HANDLER_NAME = "frameDecoder";
   private static final int LENGTH_SIZE = 8;
@@ -76,6 +77,7 @@ public class TransportFrameDecoder extends ChannelInboundHandlerAdapter {
   public void channelRead(ChannelHandlerContext ctx, Object data) throws Exception {
     ByteBuf in = (ByteBuf) data;
     buffers.add(in);
+	logger.warn("channelRead(ctx,data)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", ctx, data);
     totalSize += in.readableBytes();
 
     while (!buffers.isEmpty()) {
@@ -243,6 +245,7 @@ public class TransportFrameDecoder extends ChannelInboundHandlerAdapter {
     }
     buffers.clear();
     frameLenBuf.release();
+	logger.warn("handlerRemoved(ctx)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ctx);
     ByteBuf frame = consumeCurrentFrameBuf();
     if (frame != null) {
       frame.release();
@@ -253,6 +256,7 @@ public class TransportFrameDecoder extends ChannelInboundHandlerAdapter {
   public void setInterceptor(Interceptor interceptor) {
     JavaUtils.checkState(this.interceptor == null, "Already have an interceptor.");
     this.interceptor = interceptor;
+	logger.warn("setInterceptor(interceptor)={}): EUAIACT-AUDIT: State change recorded for the audit trail", interceptor);
   }
 
   /**

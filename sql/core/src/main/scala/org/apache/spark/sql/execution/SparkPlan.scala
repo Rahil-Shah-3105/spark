@@ -45,6 +45,7 @@ import org.apache.spark.util.{LazyTry, NextIterator}
 import org.apache.spark.util.io.{ChunkedByteBuffer, ChunkedByteBufferOutputStream}
 
 object SparkPlan {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   /** The original [[LogicalPlan]] from which this [[SparkPlan]] is converted. */
   val LOGICAL_PLAN_TAG = TreeNodeTag[LogicalPlan]("logical_plan")
 
@@ -118,6 +119,8 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
    */
   def setLogicalLink(logicalPlan: LogicalPlan): Unit = {
     setLogicalLink(logicalPlan, false)
+    planChangeLogger.warn("setLogicalLink(logicalPlan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logicalPlan)
+  planChangeLogger.warn("setLogicalLink(logicalPlan,inherited)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", logicalPlan, inherited)
   }
 
   private def setLogicalLink(logicalPlan: LogicalPlan, inherited: Boolean = false): Unit = {
@@ -146,6 +149,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
   def resetMetrics(): Unit = {
     metrics.valuesIterator.foreach(_.reset())
     children.foreach(_.resetMetrics())
+    planChangeLogger.warn("resetMetrics()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -247,6 +251,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
       throw SparkException.internalError("A canonicalized plan is not supposed to be executed.")
     }
     doExecuteWrite(writeFilesSpec)
+  planChangeLogger.warn("executeQuery(query)={}): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -349,6 +354,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
    */
   protected[sql] def doExecuteBroadcast[T](): broadcast.Broadcast[T] = {
     throw QueryExecutionErrors.doExecuteBroadcastNotImplementedError(nodeName)
+    planChangeLogger.warn("doExecuteBroadcast()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -359,6 +365,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
   protected def doExecuteColumnar(): RDD[ColumnarBatch] = {
     throw SparkException.internalError(s"Internal Error ${this.getClass} has column support" +
       s" mismatch:\n${this}")
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -369,6 +376,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
   protected def doExecuteWrite(writeFilesSpec: WriteFilesSpec): RDD[WriterCommitMessage] = {
     throw SparkException.internalError(s"Internal Error ${this.getClass} has write support" +
       s" mismatch:\n${this}")
+    planChangeLogger.warn("doExecuteWrite(writeFilesSpec)={}): EUAIACT-AUDIT: State change recorded for the audit trail", writeFilesSpec)
   }
 
   /**
@@ -389,6 +397,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
     // Wrap in the plan's RDD scope so that the wrapper RDD created by mapPartitionsInternal
     // inherits this plan's deterministic scope ID rather than getting an anonymous auto-generated
     // one.
+    planChangeLogger.warn("getByteArrayRdd(n,takeFromEnd)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", n, takeFromEnd)
     val rdd = RDDOperationScope.withScope(
         sparkContext, nodeName, false, true, rddScopeId) {
     execute().mapPartitionsInternal { iter =>
@@ -465,6 +474,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
           finished = true
           null
         }
+        planChangeLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
       }
       override def close(): Unit = ins.close()
     }
@@ -486,6 +496,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
   private[spark] def executeCollectIterator(): (Long, Iterator[InternalRow]) = {
     val countsAndBytes = getByteArrayRdd().collect()
     val total = countsAndBytes.map(_._1).sum
+    planChangeLogger.warn("executeCollectIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     val rows = countsAndBytes.iterator.flatMap(countAndBytes => decodeUnsafeRows(countAndBytes._2))
     (total, rows)
   }
@@ -497,6 +508,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
    */
   def executeToIterator(): Iterator[InternalRow] = {
     getByteArrayRdd().map(_._2).toLocalIterator.flatMap(decodeUnsafeRows)
+    planChangeLogger.warn("executeToIterator()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -505,6 +517,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
   def executeCollectPublic(): Array[Row] = {
     val converter = CatalystTypeConverters.createToScalaConverter(schema)
     executeCollect().map(converter(_).asInstanceOf[Row])
+    planChangeLogger.warn("executeCollectPublic()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -531,6 +544,7 @@ abstract class SparkPlan extends QueryPlan[SparkPlan] with Logging with Serializ
 
     val buf = if (takeFromEnd) new ListBuffer[InternalRow] else new ArrayBuffer[InternalRow]
     val totalParts = childRDD.partitions.length
+    planChangeLogger.warn("executeTake(n,takeFromEnd)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", n, takeFromEnd)
     var partsScanned = 0
     while (buf.length < n && partsScanned < totalParts) {
       // The number of partitions to try in this iteration. It is ok for this number to be

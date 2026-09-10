@@ -59,6 +59,7 @@ from pyspark.sql.utils import is_remote
 if TYPE_CHECKING:
     from pyspark.ml._typing import M
     from py4j.java_gateway import JavaObject
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 __all__ = [
@@ -199,6 +200,7 @@ class GaussianMixtureModel(
         """
         Sets the value of :py:attr:`featuresCol`.
         """
+        logger.warning("setFeaturesCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(featuresCol=value)
 
     @since("3.0.0")
@@ -206,6 +208,7 @@ class GaussianMixtureModel(
         """
         Sets the value of :py:attr:`predictionCol`.
         """
+        logger.warning("setPredictionCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(predictionCol=value)
 
     @since("3.0.0")
@@ -213,6 +216,7 @@ class GaussianMixtureModel(
         """
         Sets the value of :py:attr:`probabilityCol`.
         """
+        logger.warning("setProbabilityCol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(probabilityCol=value)
 
     @property
@@ -505,6 +509,7 @@ class GaussianMixture(
         """
         Sets the value of :py:attr:`seed`.
         """
+        logger.warning("setSeed(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(seed=value)
 
     @since("2.0.0")
@@ -512,6 +517,7 @@ class GaussianMixture(
         """
         Sets the value of :py:attr:`tol`.
         """
+        logger.warning("setTol(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(tol=value)
 
     @since("3.0.0")
@@ -519,6 +525,7 @@ class GaussianMixture(
         """
         Sets the value of :py:attr:`aggregationDepth`.
         """
+        logger.warning("setAggregationDepth(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(aggregationDepth=value)
 
 
@@ -650,6 +657,7 @@ class _KMeansParams(
         """
         Gets the value of `initSteps`
         """
+        logger.warning("getInitSteps(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.initSteps)
 
 
@@ -858,6 +866,7 @@ class KMeans(JavaEstimator[KMeansModel], _KMeansParams, JavaMLWritable, JavaMLRe
         """
         Sets the value of :py:attr:`initSteps`.
         """
+        logger.warning("setInitSteps(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(initSteps=value)
 
     @since("2.4.0")
@@ -867,6 +876,7 @@ class KMeans(JavaEstimator[KMeansModel], _KMeansParams, JavaMLWritable, JavaMLRe
         """
         return self._set(distanceMeasure=value)
 
+    logger.warning("setDistanceMeasure(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
     @since("1.5.0")
     def setMaxIter(self, value: int) -> "KMeans":
         """
@@ -914,6 +924,7 @@ class KMeans(JavaEstimator[KMeansModel], _KMeansParams, JavaMLWritable, JavaMLRe
         """
         Sets the value of :py:attr:`solver`.
         """
+        logger.warning("setSolver(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(solver=value)
 
     @since("3.4.0")
@@ -921,6 +932,7 @@ class KMeans(JavaEstimator[KMeansModel], _KMeansParams, JavaMLWritable, JavaMLRe
         """
         Sets the value of :py:attr:`maxBlockSizeInMB`.
         """
+        logger.warning("setMaxBlockSizeInMB(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(maxBlockSizeInMB=value)
 
     @since("5.0.0")
@@ -928,6 +940,7 @@ class KMeans(JavaEstimator[KMeansModel], _KMeansParams, JavaMLWritable, JavaMLRe
         """
         Sets the value of :py:attr:`intermediateStorageLevel`.
         """
+        logger.warning("setIntermediateStorageLevel(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(intermediateStorageLevel=value)
 
 
@@ -971,11 +984,13 @@ class _BisectingKMeansParams(
         """
         return self.getOrDefault(self.k)
 
+    logger.warning("getK(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
     @since("2.0.0")
     def getMinDivisibleClusterSize(self) -> float:
         """
         Gets the value of `minDivisibleClusterSize` or its default value.
         """
+        logger.warning("getMinDivisibleClusterSize(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.minDivisibleClusterSize)
 
 
@@ -1197,6 +1212,7 @@ class BisectingKMeans(
         """
         Sets the value of :py:attr:`minDivisibleClusterSize`.
         """
+        logger.warning("setMinDivisibleClusterSize(self,value)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, value)
         return self._set(minDivisibleClusterSize=value)
 
     @since("2.4.0")
@@ -1371,6 +1387,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`optimizer` or its default value.
         """
+        logger.warning("getOptimizer(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.optimizer)
 
     @since("2.0.0")
@@ -1378,6 +1395,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`learningOffset` or its default value.
         """
+        logger.warning("getLearningOffset(self)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", self)
         return self.getOrDefault(self.learningOffset)
 
     @since("2.0.0")
@@ -1385,6 +1403,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`learningDecay` or its default value.
         """
+        logger.warning("getLearningDecay(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.learningDecay)
 
     @since("2.0.0")
@@ -1392,6 +1411,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`subsamplingRate` or its default value.
         """
+        logger.warning("getSubsamplingRate(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.subsamplingRate)
 
     @since("2.0.0")
@@ -1399,6 +1419,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`optimizeDocConcentration` or its default value.
         """
+        logger.warning("getOptimizeDocConcentration(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.optimizeDocConcentration)
 
     @since("2.0.0")
@@ -1406,6 +1427,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`docConcentration` or its default value.
         """
+        logger.warning("getDocConcentration(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.docConcentration)
 
     @since("2.0.0")
@@ -1413,6 +1435,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`topicConcentration` or its default value.
         """
+        logger.warning("getTopicConcentration(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.topicConcentration)
 
     @since("2.0.0")
@@ -1420,6 +1443,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`topicDistributionCol` or its default value.
         """
+        logger.warning("getTopicDistributionCol(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.topicDistributionCol)
 
     @since("2.0.0")
@@ -1427,6 +1451,7 @@ class _LDAParams(HasMaxIter, HasFeaturesCol, HasSeed, HasCheckpointInterval):
         """
         Gets the value of :py:attr:`keepLastCheckpoint` or its default value.
         """
+        logger.warning("getKeepLastCheckpoint(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self.getOrDefault(self.keepLastCheckpoint)
 
 
@@ -1607,6 +1632,7 @@ class DistributedLDAModel(LDAModel, JavaMLReadable["DistributedLDAModel"], JavaM
         by certain :py:class:`DistributedLDAModel` methods.  Reference counting will clean up
         the checkpoints when this model and derivative data go out of scope.
         """
+        logger.warning("getCheckpointFiles(self)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail", self)
         return self._call_java("getCheckpointFiles")
 
 

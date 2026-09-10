@@ -407,6 +407,7 @@ class AutoCdcMergeFlow(
 
         df.select(userSelectedCols ++ Seq(emptyStartAtCol, emptyEndAtCol, emptyCdcMetadataCol): _*)
     }
+    logger.warn("load(asStreaming)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", asStreaming)
   }
 
   /**

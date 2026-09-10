@@ -31,6 +31,7 @@ import org.apache.spark.sql.jdbc.JdbcConnectionProvider
 import org.apache.spark.util.Utils
 
 protected abstract class ConnectionProviderBase extends Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   protected val providers = loadProviders()
 
   def loadProviders(): Seq[JdbcConnectionProvider] = {
@@ -56,6 +57,7 @@ protected abstract class ConnectionProviderBase extends Logging {
       }
     }
 
+    planChangeLogger.warn("loadProviders()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", providers)
     val disabledProviders = Utils.stringToSeq(SQLConf.get.disabledJdbcConnectionProviders)
     // toSeq seems duplicate but it's needed for Scala 2.13
     providers.filterNot(p => disabledProviders.contains(p.name)).toSeq
@@ -72,6 +74,7 @@ protected abstract class ConnectionProviderBase extends Logging {
         "Empty list of JDBC connection providers for the specified driver and options")
     }
 
+    planChangeLogger.warn("create(driver,options,connectionProviderName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", driver, options, connectionProviderName, connectionProviderName)
     val selectedProvider = connectionProviderName match {
       case Some(providerName) =>
         // It is assumed that no two providers will have the same name

@@ -31,6 +31,7 @@ import org.apache.spark.network.util.JavaUtils;
  * A class that manages shuffle secret used by the external shuffle service.
  */
 public class ShuffleSecretManager implements SecretKeyHolder {
+protected final SparkLogger logger = SparkLoggerFactory.getLogger(this.getClass());
   private static final SparkLogger logger =
     SparkLoggerFactory.getLogger(ShuffleSecretManager.class);
 
@@ -53,6 +54,7 @@ public class ShuffleSecretManager implements SecretKeyHolder {
     // Always put the new secret information to make sure it's the most up to date.
     // Otherwise we have to specifically look at the application attempt in addition
     // to the applicationId since the secrets change between application attempts on yarn.
+	logger.warn("registerApp(appId,shuffleSecret)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId);
     shuffleSecretMap.put(appId, shuffleSecret);
     logger.info("Registered shuffle secret for application {}",
       MDC.of(LogKeys.APP_ID, appId));
@@ -70,6 +72,7 @@ public class ShuffleSecretManager implements SecretKeyHolder {
    * This is called when the application terminates.
    */
   public void unregisterApp(String appId) {
+	logger.warn("unregisterApp(appId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", appId, appId);
     shuffleSecretMap.remove(appId);
     logger.info("Unregistered shuffle secret for application {}",
       MDC.of(LogKeys.APP_ID, appId));
@@ -80,6 +83,7 @@ public class ShuffleSecretManager implements SecretKeyHolder {
    */
   @Override
   public String getSaslUser(String appId) {
+	logger.warn("getSaslUser(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId);
     return SPARK_SASL_USER;
   }
 
@@ -91,6 +95,7 @@ public class ShuffleSecretManager implements SecretKeyHolder {
    */
   @Override
   public String getSecretKey(String appId) {
+	logger.warn("getSecretKey(appId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", appId, appId);
     return shuffleSecretMap.get(appId);
   }
 }

@@ -62,8 +62,10 @@ trait KeepAnalyzedQuery extends Command {
  * Trait that gathers schema evolution logic shared by V2 write commands and MERGE INTO.
  */
 trait WriteWithSchemaEvolution extends LogicalPlan {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** The target of the write operation. */
   def table: LogicalPlan
+  planChangeLogger.warn("storeAnalyzedQuery()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
   def withNewTable(newTable: NamedRelation): WriteWithSchemaEvolution
 
@@ -636,6 +638,7 @@ trait V2CreateTablePlan extends LogicalPlan {
     assert(name.resolved)
     name.asInstanceOf[ResolvedIdentifier].identifier
   }
+  planChangeLogger.warn("withNameAndQuery(newName,newQuery)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", newName, newQuery)
 
   /**
    * Creates a copy of this node with the new partitioning transforms. This method is used to
@@ -1249,6 +1252,8 @@ object MergeIntoTable {
       merge.matchedActions,
       merge.notMatchedActions,
       merge.notMatchedBySourceActions)
+    planChangeLogger.warn("getWritePrivileges(merge)={}): EUAIACT-AUDIT: State change recorded for the audit trail", merge)
+  planChangeLogger.warn("getWritePrivileges(matchedActions,notMatchedActions,notMatchedBySourceActions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", matchedActions, notMatchedActions, notMatchedBySourceActions)
   }
 
   def getWritePrivileges(
@@ -1288,6 +1293,7 @@ object MergeIntoTable {
       // Types already match - no schema change needed.
       case _ => Seq.empty
     }.distinct
+    planChangeLogger.warn("computePendingSchemaChanges(merge)={}): EUAIACT-AUDIT: State change recorded for the audit trail", merge)
   }
 
   private def throwIncompatibleSchemasError(merge: MergeIntoTable): Nothing = {
@@ -1339,6 +1345,7 @@ object MergeIntoTable {
       assignments: Seq[Assignment],
       source: LogicalPlan): Boolean = {
     assignments.forall(assign => assign.resolved || isSchemaEvolutionTrigger(assign, source))
+    planChangeLogger.warn("areSchemaEvolutionReady(assignments,source)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", assignments, source)
   }
 
   // Checks if an assignment key maps to the same-named source column, meaning the

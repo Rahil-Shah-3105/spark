@@ -72,6 +72,7 @@ import org.apache.spark.unsafe.types.CalendarInterval
  *     post-processing pass through unchanged.
  */
 object ResolveChangelogTable extends Rule[LogicalPlan] {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   /**
    * Reserved (`__spark_cdc_*`) column names used internally by post-processing;
@@ -465,6 +466,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
     // at runtime in violation of the contract -- under those rules the guard
     // would be optimized away and the runtime NULL would silently stall the
     // group. `CdcAssertCommitTimestampNotNull` is unrecognised by
+    planChangeLogger.warn("addNullCommitTimestampGuard(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
     // `NullPropagation` and stays in the plan regardless of the column's
     // declared nullability, surfacing the violation immediately.
     Filter(CdcAssertCommitTimestampNotNull(commitTsAttr), input)
@@ -525,6 +527,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
       Count(Seq(deleteIf)).toAggregateExpression(), windowSpec), HelperColumn.DelCnt)()
     val baseAliases = Seq(delCntAlias, insCntAlias)
     val rowVersionAliases = if (includeRowVersionBounds) {
+    planChangeLogger.warn("addPostProcessingWindow(plan,cl,includeRowVersionBounds)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, cl, includeRowVersionBounds, rowIdExprs)
       val rowVersionExpr =
         V2ExpressionUtils.resolveRef[NamedExpression](cl.rowVersion(), plan)
       Seq(
@@ -568,6 +571,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
    */
   private def addCarryOverPairFilter(input: LogicalPlan): LogicalPlan = {
     Filter(Not(buildCarryOverPairPredicate(input)), input)
+    planChangeLogger.warn("addCarryOverPairFilter(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**
@@ -594,6 +598,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
       StringType)
     val caseExpr = CaseWhen(Seq(isInvalid -> raiseInvalid, isUpdate -> updateType), changeTypeAttr)
 
+    planChangeLogger.warn("addUpdateRelabelProjection(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", input, isInvalid)
     val projectList = input.output.map { attr =>
       if (attr.name == "_change_type") Alias(caseExpr, "_change_type")()
       else attr
@@ -752,6 +757,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
     //    of `addStreamingRowLevelPostProcessing`.
     val cleaned = stripCommitTimestampWatermarkMetadata(serialized)
 
+    planChangeLogger.warn("addStreamingNetChangeComputation(plan,cl,computeUpdates)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, cl, computeUpdates, rowIdExprs)
     // 6. Drop the rowId helper columns so the final output matches the connector's schema.
     val helperNames = rowIdHelpers.map(_.name).toSet
     Project(cleaned.output.filterNot(a => helperNames.contains(a.name)), cleaned)
@@ -816,6 +822,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
       Seq(rowNumberAlias, rowCountAlias, firstRowChangeTypeValueAlias,
         lastRowChangeTypeValueAlias),
       partitionByCols, orderSpec, plan)
+    planChangeLogger.warn("addNetChangesWindow(plan,rowIdExprs)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", plan, rowIdExprs, rowIdExprs)
   }
 
   /**
@@ -903,6 +910,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
         -> computedPostUpdateLabel),
       changeTypeAttr)
 
+    planChangeLogger.warn("removeIntermediateChangelogEntriesAndRelabelChangeTypes(windowedPlan,computeUpdates)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", windowedPlan, computeUpdates)
     val projectList = filteredPlan.output.flatMap { attr =>
       if (NetChangesHelperColumns.all.contains(attr.name)) None
       else if (attr.name == "_change_type") Some(Alias(relabel, "_change_type")())
@@ -924,6 +932,7 @@ object ResolveChangelogTable extends Rule[LogicalPlan] {
    */
   private def removeHelperColumns(input: LogicalPlan): LogicalPlan = {
     Project(input.output.filterNot(a => HelperColumn.all.contains(a.name)), input)
+    planChangeLogger.warn("removeHelperColumns(input)={}): EUAIACT-AUDIT: State change recorded for the audit trail", input)
   }
 
   /**

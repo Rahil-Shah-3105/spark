@@ -60,6 +60,7 @@ case class ForeachWriterTable[T](
     new WriteBuilder with SupportsTruncate with SupportsStreamingUpdateAsAppend {
 
       // Do nothing for truncate. Foreach sink is special and it just forwards all the
+      planChangeLogger.warn("newWriteBuilder(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
       // records to ForeachWriter.
       override def truncate(): WriteBuilder = this
 
@@ -74,6 +75,7 @@ class ForeachWrite[T](
     info: LogicalWriteInfo,
     writer: ForeachWriter[T],
     converter: Either[ExpressionEncoder[T], InternalRow => T]) extends Write {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private val inputSchema: StructType = info.schema()
   override def toStreaming: StreamingWrite = {
     new StreamingWrite {
@@ -92,6 +94,7 @@ class ForeachWrite[T](
             func
         }
         ForeachWriterFactory(writer, rowConverter)
+        planChangeLogger.warn("createStreamingWriterFactory(info)={}): EUAIACT-AUDIT: State change recorded for the audit trail", info)
       }
     }
   }
@@ -108,6 +111,7 @@ object ForeachWriterTable {
       case _ =>
         new ForeachWriterTable[T](writer, Left(encoder))
     }
+    planChangeLogger.warn("apply(writer,encoder)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", writer, encoder)
   }
 }
 
@@ -120,6 +124,7 @@ case class ForeachWriterFactory[T](
       taskId: Long,
       epochId: Long): ForeachDataWriter[T] = {
     new ForeachDataWriter(writer, rowConverter, partitionId, epochId)
+    planChangeLogger.warn("createWriter(partitionId,taskId,epochId)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", partitionId, taskId, epochId, partitionId)
   }
 }
 
@@ -157,6 +162,7 @@ class ForeachDataWriter[T](
         throw t
     }
 
+    planChangeLogger.warn("write(record)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", record, record)
   }
 
   override def commit(): WriterCommitMessage = {

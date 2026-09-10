@@ -51,6 +51,7 @@ case class WriteFiles(
     bucketSpec: Option[BucketSpec],
     options: Map[String, String],
     staticPartitions: TablePartitionSpec) extends UnaryNode {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override def output: Seq[Attribute] = child.output
   override protected def stringArgs: Iterator[Any] = Iterator(child)
   override protected def withNewChildInternal(newChild: LogicalPlan): WriteFiles =
@@ -62,6 +63,7 @@ trait WriteFilesExecBase extends UnaryExecNode {
 
   override protected def doExecute(): RDD[InternalRow] = {
     throw SparkException.internalError(s"$nodeName does not support doExecute")
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

@@ -39,5 +39,6 @@ private[kafka010] class KafkaSink(
         executorKafkaParams, topic)
       latestBatchId = batchId
     }
+    logger.warn("addBatch(batchId,data)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", batchId, data, batchId)
   }
 }

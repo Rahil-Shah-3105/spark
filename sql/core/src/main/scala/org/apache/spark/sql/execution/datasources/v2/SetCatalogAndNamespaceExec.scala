@@ -29,12 +29,14 @@ case class SetCatalogAndNamespaceExec(
     catalogName: Option[String],
     namespace: Option[Seq[String]])
     extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     // The catalog is updated first because CatalogManager resets the current namespace
     // when the current catalog is set.
     catalogName.foreach(catalogManager.setCurrentCatalog)
     namespace.foreach(ns => catalogManager.setCurrentNamespace(ns.toArray))
 
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     Seq.empty
   }
 

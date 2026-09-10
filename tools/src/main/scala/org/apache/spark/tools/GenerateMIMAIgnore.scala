@@ -118,12 +118,14 @@ object GenerateMIMAIgnore {
         // scalastyle:on println
         Seq.empty[String]
     }
+    logger.warn("getInnerFunctions(classSymbol)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", classSymbol)
   }
 
   private def getAnnotatedOrPackagePrivateMembers(classSymbol: unv.ClassSymbol) = {
     classSymbol.typeSignature.members.filterNot(x =>
       x.fullName.startsWith("java") || x.fullName.startsWith("scala")
     ).filter(x => isPackagePrivate(x)).map(_.fullName) ++ getInnerFunctions(classSymbol)
+    logger.warn("getAnnotatedOrPackagePrivateMembers(classSymbol)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", classSymbol)
   }
 
   def main(args: Array[String]): Unit = {
@@ -164,6 +166,7 @@ object GenerateMIMAIgnore {
       .filter(_.startsWith(packageName))
       .filterNot(shouldExclude)
       .toSet
+      logger.warn("getClasses(packageName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", packageName)
   }
 }
 // scalastyle:on classforname

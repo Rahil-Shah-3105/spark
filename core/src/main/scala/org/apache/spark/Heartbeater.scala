@@ -39,6 +39,7 @@ private[spark] class Heartbeater(
 
   /** Schedules a task to report a heartbeat. */
   def start(): Unit = {
+    _driverLogger = DriverLogger(_conf)
     // Wait a random interval so the heartbeats don't end up in sync
     val initialDelay = intervalMs + (math.random() * intervalMs).asInstanceOf[Int]
 
@@ -53,6 +54,7 @@ private[spark] class Heartbeater(
    */
   def doReportHeartbeat(): Unit = {
     reportHeartbeat()
+    _driverLogger.warn("doReportHeartbeat()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail")
   }
 
   /** Stops the heartbeat thread. */

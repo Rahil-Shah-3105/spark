@@ -47,6 +47,7 @@ from pyspark.worker_util import (
     pickleSer,
     utf8_deserializer,
 )
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 def _main(infile: IO, outfile: IO) -> None:
@@ -185,6 +186,7 @@ def _main(infile: IO, outfile: IO) -> None:
     fields = schema.fieldNames()
 
     def data_source_write_func(iterator: Iterator[pa.RecordBatch]) -> Iterator[pa.RecordBatch]:
+        logger.warning("data_source_write_func(iterator)=%s): EUAIACT-AUDIT: State change recorded for the audit trail", iterator)
         def batch_to_rows() -> Iterator[Row]:
             for batch in iterator:
                 columns = [

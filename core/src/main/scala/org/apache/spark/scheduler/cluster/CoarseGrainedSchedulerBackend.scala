@@ -57,6 +57,7 @@ private[spark]
 class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: RpcEnv)
   extends ExecutorAllocationClient with SchedulerBackend
     with SupportsDelegationToken with Logging {
+     _driverLogger = DriverLogger(_conf)
 
   // Use an atomic variable to track total number of cores in the cluster for simplicity and speed
   protected val totalCoreCount = new AtomicInteger(0)
@@ -508,12 +509,14 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
           logInfo(
             log"Asked to remove non-existent executor ${MDC(LogKeys.EXECUTOR_ID, executorId)}")
       }
+      _driverLogger.warn("removeExecutor(executorId,reason)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, reason, executorId)
     }
 
     // Remove a lost worker from the cluster
     private def removeWorker(workerId: String, host: String, message: String): Unit = {
       logDebug(s"Asked to remove worker $workerId with reason $message")
       scheduler.workerRemoved(workerId, host, message)
+      _driverLogger.warn("removeWorker(workerId,host,message)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", workerId, host, message, workerId)
     }
 
     /**
@@ -534,6 +537,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
         }
       }
 
+      _driverLogger.warn("disableExecutor(executorId)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", executorId, executorId)
       if (shouldDisable) {
         logInfo(log"Disabling executor ${MDC(LogKeys.EXECUTOR_ID, executorId)}.")
         scheduler.executorLost(executorId, LossReasonPending)
@@ -672,6 +676,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     if (driverEndpoint != null) {
       driverEndpoint.ask[Boolean](UpdateExecutorsLogLevel(logLevel))
     }
+    _driverLogger.warn("updateExecutorsLogLevel(logLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", logLevel)
   }
 
   /**
@@ -685,6 +690,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
       executorDataMap.keys.toSet
     }
 
+    _driverLogger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     // Remove all the lingering executors that should be removed but not yet. The reason might be
     // because (1) disconnected event is not yet received; (2) executors die silently.
     executors.foreach { eid =>
@@ -733,6 +739,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
       return true
     }
     false
+    _driverLogger.warn("isReady()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override def getExecutorIds(): Seq[String] = synchronized {
@@ -780,12 +787,14 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
   def getExecutorAvailableResources(
       executorId: String): Map[String, ExecutorResourceInfo] = synchronized {
     executorDataMap.get(executorId).map(_.resourcesInfo).getOrElse(Map.empty)
+    _driverLogger.warn("getExecutorAvailableResources(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
   }
 
   // this function is for testing only
   private[spark] def getExecutorAvailableCpus(
       executorId: String): Option[BigDecimal] = synchronized {
     executorDataMap.get(executorId).map(_.freeCores)
+    _driverLogger.warn("getExecutorAvailableCpus(executorId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", executorId, executorId)
   }
 
   // this function is for testing only
@@ -875,6 +884,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
           updateExecRequestTime(k, delta)
         }
     }
+    _driverLogger.warn("updateExecRequestTimes(oldProfile,newProfile)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", oldProfile, newProfile)
   }
 
   private def updateExecRequestTime(profileId: Int, delta: Int) = {
@@ -898,6 +908,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
         }
       }
     }
+    _driverLogger.warn("updateExecRequestTime(profileId,delta)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", profileId, delta, profileId)
   }
 
   /**
@@ -1053,6 +1064,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     executorDataMap.values.foreach { ed =>
       ed.executorEndpoint.send(UpdateDelegationTokens(tokens))
     }
+    _driverLogger.warn("updateDelegationTokens(tokens)=<redacted>): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected def currentDelegationTokens: Array[Byte] = delegationTokens.get()
@@ -1066,6 +1078,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     executorDataMap.values.foreach { ed =>
       ed.executorEndpoint.send(UpdateUserCredentials(version, credentials))
     }
+    _driverLogger.warn("updateUserCredentials(version,credentials)={},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", version)
   }
 
   /**
@@ -1090,6 +1103,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
       VersionedCredentials.updateIfNewer(
         SparkEnv.get.userCredentials, version, initialCredentials)
     }
+    _driverLogger.warn("setupUserCredentialManager()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   private def stopUserCredentialManager(): Unit = {
@@ -1121,6 +1135,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
     } else {
       None
     }
+    _driverLogger.warn("getTaskThreadDump(taskId,executorId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", taskId, executorId, taskId)
   }
 }
 

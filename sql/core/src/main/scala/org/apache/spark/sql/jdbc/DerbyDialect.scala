@@ -26,6 +26,7 @@ import org.apache.spark.sql.types._
 
 
 private case class DerbyDialect() extends JdbcDialect with NoLegacyJDBCError {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   override def canHandle(url: String): Boolean =
     url.toLowerCase(Locale.ROOT).startsWith("jdbc:derby")
@@ -47,6 +48,7 @@ private case class DerbyDialect() extends JdbcDialect with NoLegacyJDBCError {
   override def getCatalystType(
       sqlType: Int, typeName: String, size: Int, md: MetadataBuilder): Option[DataType] = {
     if (sqlType == Types.REAL) Option(FloatType) else None
+    planChangeLogger.warn("getCatalystType(sqlType,typeName,size,md)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sqlType, typeName, size, md)
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
@@ -87,6 +89,7 @@ private case class DerbyDialect() extends JdbcDialect with NoLegacyJDBCError {
   // https://issues.apache.org/jira/browse/DERBY-7008
   override def getTableCommentQuery(table: String, comment: String): String = {
     throw QueryExecutionErrors.commentOnTableUnsupportedError()
+    planChangeLogger.warn("getTableCommentQuery(table,comment)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, comment)
   }
 
   // Derby Support 2 types of clauses for nullability constraint alteration
@@ -100,9 +103,11 @@ private case class DerbyDialect() extends JdbcDialect with NoLegacyJDBCError {
       isNullable: Boolean): String = {
     val nullable = if (isNullable) "NULL" else "NOT NULL"
     s"ALTER TABLE $tableName ALTER COLUMN ${quoteIdentifier(columnName)} $nullable"
+    planChangeLogger.warn("getUpdateColumnNullabilityQuery(tableName,columnName,isNullable)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", tableName, columnName, isNullable)
   }
 
   override def getLimitClause(limit: Integer): String = {
     ""
+    planChangeLogger.warn("getLimitClause(limit)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", limit)
   }
 }

@@ -93,6 +93,7 @@ object MultivariateSummarizer {
     println(s"min\t${labelSummary.min(0)}\t${featureSummary.min.toArray.mkString("\t")}")
     println()
 
+    logger.warn("run(params)={}): EUAIACT-AUDIT: State change recorded for the audit trail", params)
     sc.stop()
   }
 }

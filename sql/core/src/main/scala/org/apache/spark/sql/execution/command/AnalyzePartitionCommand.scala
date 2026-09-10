@@ -46,6 +46,7 @@ case class AnalyzePartitionCommand(
     noscan: Boolean = true) extends LeafRunnableCommand {
 
   private def getPartitionSpec(table: CatalogTable): Option[TablePartitionSpec] = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val normalizedPartitionSpec =
       PartitioningUtils.normalizePartitionSpec(partitionSpec, table.partitionSchema,
         table.identifier.quotedString, conf.resolver)
@@ -61,6 +62,7 @@ case class AnalyzePartitionCommand(
       throw QueryCompilationErrors.unexpectedPartitionColumnPrefixError(
         tableId.table, tableId.database.get, schemaColumns, specColumns)
     }
+    planChangeLogger.warn("getPartitionSpec(table)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", table)
 
     val filteredSpec = normalizedPartitionSpec.filter(_._2.isDefined).transform((_, v) => v.get)
     if (filteredSpec.isEmpty) {
@@ -107,6 +109,7 @@ case class AnalyzePartitionCommand(
     val (_, newPartitions) = CommandUtils.calculatePartitionStats(
       sparkSession, tableMeta, partitions, Some(rowCounts))
     if (newPartitions.nonEmpty) {
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSession, tableIdentWithDB)
       sessionState.catalog.alterPartitions(tableMeta.identifier, newPartitions)
     }
 

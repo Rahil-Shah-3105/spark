@@ -187,6 +187,7 @@ private[graphx] abstract class VertexPartitionBaseOps
     iter.foreach { pair =>
       val pos = self.index.getPos(pair._1)
       if (pos >= 0) {
+      logger.warn("createUsingIndex(iter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iter)
         newMask.set(pos)
         newValues(pos) = pair._2
       }

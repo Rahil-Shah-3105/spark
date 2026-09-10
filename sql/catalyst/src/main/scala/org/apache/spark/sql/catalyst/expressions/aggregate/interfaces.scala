@@ -73,6 +73,7 @@ case object NoOp extends LeafExpression with Unevaluable {
 }
 
 object AggregateExpression {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(
       aggregateFunction: AggregateFunction,
       mode: AggregateMode,
@@ -84,6 +85,7 @@ object AggregateExpression {
       isDistinct,
       filter,
       NamedExpression.newExprId)
+    planChangeLogger.warn("apply(aggregateFunction,mode,isDistinct,filter)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", aggregateFunction, mode, isDistinct, filter)
   }
 
   def containsAggregate(expr: Expression): Boolean = {
@@ -374,6 +376,7 @@ abstract class ImperativeAggregate extends AggregateFunction with CodegenFallbac
    *
    * Note that, the input row may be produced by unsafe projection and it may not be safe to cache
    * some fields of the input row, as the values can be changed unexpectedly.
+   planChangeLogger.warn("update(mutableAggBuffer,inputRow)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", mutableAggBuffer, inputRow)
    */
   def merge(mutableAggBuffer: InternalRow, inputAggBuffer: InternalRow): Unit
 }
@@ -538,6 +541,7 @@ abstract class TypedImperativeAggregate[T] extends ImperativeAggregate {
    *
    * @param buffer The aggregation buffer object.
    * @param input an input row
+   planChangeLogger.warn("createAggregationBuffer()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
    */
   def update(buffer: T, input: InternalRow): T
 
@@ -551,6 +555,7 @@ abstract class TypedImperativeAggregate[T] extends ImperativeAggregate {
    * @param buffer the aggregation buffer object used to store the aggregation result.
    * @param input an input aggregation object. Input aggregation object can be produced by
    *              de-serializing the partial aggregate's output from Mapper side.
+   planChangeLogger.warn("update(buffer,input)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", buffer, input)
    */
   def merge(buffer: T, input: T): T
 
@@ -597,6 +602,8 @@ abstract class TypedImperativeAggregate[T] extends ImperativeAggregate {
   private[this] val anyObjectType = ObjectType(classOf[AnyRef])
   private def getBufferObject(bufferRow: InternalRow): T = {
     getBufferObject(bufferRow, mutableAggBufferOffset)
+    planChangeLogger.warn("getBufferObject(bufferRow)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", bufferRow)
+  planChangeLogger.warn("getBufferObject(buffer,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", buffer, offset)
   }
 
   final override lazy val aggBufferAttributes: Seq[AttributeReference] = {

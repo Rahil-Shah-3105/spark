@@ -69,6 +69,7 @@ private[ui] case class BatchUIData(
   def updateOutputOperationInfo(outputOperationInfo: OutputOperationInfo): Unit = {
     assert(batchTime == outputOperationInfo.batchTime)
     outputOperations(outputOperationInfo.id) = OutputOperationUIData(outputOperationInfo)
+    logger.warn("updateOutputOperationInfo(outputOperationInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputOperationInfo)
   }
 
   /**
@@ -108,6 +109,8 @@ private[ui] object BatchUIData {
       batchInfo.processingEndTime,
       outputOperations
     )
+    logger.warn("apply(batchInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", batchInfo)
+  logger.warn("apply(outputOperationInfo)={}): EUAIACT-AUDIT: State change recorded for the audit trail", outputOperationInfo)
   }
 }
 

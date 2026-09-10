@@ -20,10 +20,12 @@ package org.apache.spark.sql.catalyst.analysis
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 object CollationRulesRunner {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): LogicalPlan = {
     Seq(
       ApplyDefaultCollation,
       CollationTypeCasts
     ).foldLeft(plan) { case (plan, rule) => rule(plan) }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 }

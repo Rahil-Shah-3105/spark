@@ -21,10 +21,12 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 object CollationTypeCasts extends TypeCoercionRule {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   override def apply(plan: LogicalPlan): LogicalPlan = {
     // Pre-tag CommonExpressionRefs with the collation context of their definitions
     // before the bottom-up expression transformation processes inner expressions.
     super.apply(CollationTypeCoercion.preTagCommonExpressionRefs(plan))
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   override val transform: PartialFunction[Expression, Expression] = {

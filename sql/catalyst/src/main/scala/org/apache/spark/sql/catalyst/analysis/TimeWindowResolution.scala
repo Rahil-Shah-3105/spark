@@ -31,6 +31,7 @@ import org.apache.spark.unsafe.types.CalendarInterval
  * [[org.apache.spark.sql.catalyst.rules.Rule]] traversal.
  */
 object TimeWindowResolution {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   final val WINDOW_COL_NAME = "window"
   final val SESSION_COL_NAME = "session_window"
@@ -59,6 +60,7 @@ object TimeWindowResolution {
       .putBoolean(TimeWindow.marker, true)
       .build()
 
+      planChangeLogger.warn("buildTimeWindowRewrite(window,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", window, child)
     def getWindow(i: Int, dataType: DataType): Expression = {
       val timestamp = PreciseTimestampConversion(window.timeColumn, dataType, LongType)
       val remainder = (timestamp - window.startTime) % window.slideDuration
@@ -75,6 +77,7 @@ object TimeWindowResolution {
           Literal(WINDOW_END) ::
           PreciseTimestampConversion(windowEnd, LongType, dataType).castNullable() ::
           Nil)
+      planChangeLogger.warn("getWindow(i,dataType)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", i, dataType)
     }
 
     val windowAttr = AttributeReference(
@@ -178,6 +181,7 @@ object TimeWindowResolution {
     val newChild = Filter(filterExpr,
       Project(sessionStruct +: child.output, child))
 
+    planChangeLogger.warn("buildSessionWindowRewrite(session,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", session, child)
     (sessionAttr, newChild)
   }
 
@@ -226,6 +230,7 @@ object TimeWindowResolution {
       windowTimeToAttrAndNewColumn.values.map(_._2).toSeq
     val newChild = Project(newColumns ++ child.output, child)
 
+    planChangeLogger.warn("buildWindowTimeRewrite(windowTimeExpressions,child,errorContext)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", windowTimeExpressions, child, errorContext)
     val windowTimeToAttr = windowTimeToAttrAndNewColumn.map {
       case (windowTime, (attr, _)) => windowTime -> attr
     }

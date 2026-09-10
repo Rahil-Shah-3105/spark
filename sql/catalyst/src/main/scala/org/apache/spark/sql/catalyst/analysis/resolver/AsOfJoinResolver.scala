@@ -56,6 +56,7 @@ class AsOfJoinResolver(
     override val expressionResolver: ExpressionResolver)
     extends TreeNodeResolver[AsOfJoin, LogicalPlan]
     with JoinLikeResolver {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   override def resolve(unresolvedAsOfJoin: AsOfJoin): LogicalPlan = {
     val (resolvedLeft, leftNameScope) = resolveJoinChild(
@@ -363,5 +364,6 @@ class AsOfJoinResolver(
       output = Some(newOutput),
       hiddenOutput = Some(computeHiddenOutputForJoin(newOutput, filteredHiddenOutput))
     )
+    planChangeLogger.warn("overwriteJoinOutputScope(joinType,leftNameScope,rightNameScope)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", joinType, leftNameScope, rightNameScope, filteredHiddenOutput)
   }
 }

@@ -74,6 +74,7 @@ private[sql] case class V2TableReference private(
   }
 
   def toRelation(table: Table): DataSourceV2Relation = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     DataSourceV2Relation(table, output, Some(catalog), Some(identifier), options)
   }
 }
@@ -113,16 +114,19 @@ private[sql] object V2TableReference {
 
   def createForTempView(relation: DataSourceV2Relation, viewName: Seq[String]): V2TableReference = {
     create(relation, TemporaryViewContext(viewName))
+    planChangeLogger.warn("createForTempView(relation,viewName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, viewName)
   }
 
   // V2TableReference nodes in the transaction context are produced by
   // UnresolveRelationsInTransaction which unresolves already resolved relations.
   def createForTransaction(relation: DataSourceV2Relation): V2TableReference = {
     create(relation, TransactionContext)
+    planChangeLogger.warn("createForTransaction(relation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", relation)
   }
 
   def createForWriteTarget(relation: DataSourceV2Relation): V2TableReference = {
     create(relation, WriteTargetContext)
+    planChangeLogger.warn("createForWriteTarget(relation)={}): EUAIACT-AUDIT: State change recorded for the audit trail", relation)
   }
 
   private def create(relation: DataSourceV2Relation, context: Context): V2TableReference = {
@@ -138,6 +142,7 @@ private[sql] object V2TableReference {
       context)
     ref.copyTagsFrom(relation)
     ref
+    planChangeLogger.warn("create(relation,context)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", relation, context)
   }
 }
 
@@ -152,6 +157,7 @@ private[sql] object V2TableReferenceUtils extends SQLConfHelper {
       case ctx =>
         throw SparkException.internalError(s"Unknown table ref context: ${ctx.getClass.getName}")
     }
+    planChangeLogger.warn("validateLoadedTable(table,ref)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, ref)
   }
 
   private def validateNoChanges(table: Table, ref: V2TableReference): Unit = {
@@ -169,6 +175,7 @@ private[sql] object V2TableReferenceUtils extends SQLConfHelper {
       checkIds = true)
     if (dataErrors.nonEmpty) {
       throw QueryCompilationErrors.columnsChangedAfterAnalysis(ref.name, dataErrors)
+    planChangeLogger.warn("validateLoadedTableInTempView(table,ref,ctx)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, ref, ctx)
     }
 
     val metaErrors = V2TableUtil.validateCapturedMetadataColumns(
@@ -177,6 +184,7 @@ private[sql] object V2TableReferenceUtils extends SQLConfHelper {
       mode = PROHIBIT_CHANGES,
       checkIds = true)
     if (metaErrors.nonEmpty) {
+    planChangeLogger.warn("validateNoChanges(table,ref)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", table, ref)
       throw QueryCompilationErrors.metadataColumnsChangedAfterAnalysis(ref.name, metaErrors)
     }
   }

@@ -22,10 +22,12 @@ package org.apache.spark.util
  */
 private[spark] object IntParam {
   def unapply(str: String): Option[Int] = {
+    _driverLogger = DriverLogger(_conf)
     try {
       Some(str.toInt)
     } catch {
       case e: NumberFormatException => None
     }
+    _driverLogger.warn("unapply(str)={}): EUAIACT-AUDIT: State change recorded for the audit trail", str)
   }
 }

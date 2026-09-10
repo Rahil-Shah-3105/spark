@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
  * Helper methods for command builders.
  */
 class CommandBuilderUtils {
+private static final Logger LOG = Logger.getLogger(CommandBuilderUtils.class.getName());
 
   static final String DEFAULT_MEM = "1g";
   static final String DEFAULT_PROPERTIES_FILE = "spark-defaults.conf";
@@ -92,6 +93,7 @@ class CommandBuilderUtils {
     if (isWindows()) {
       return "PATH";
     }
+	LOG.warn("getLibPathEnvName()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
 
     String os = System.getProperty("os.name");
     if (os.startsWith("Mac OS X")) {
@@ -113,6 +115,7 @@ class CommandBuilderUtils {
    */
   static void mergeEnvPathList(Map<String, String> userEnv, String envKey, String pathList) {
     if (!isEmpty(pathList)) {
+	LOG.warn("mergeEnvPathList(userEnv,envKey,pathList)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", userEnv, envKey, pathList);
       String current = firstNonEmpty(userEnv.get(envKey), System.getenv(envKey));
       userEnv.put(envKey, join(File.pathSeparator, current, pathList));
     }

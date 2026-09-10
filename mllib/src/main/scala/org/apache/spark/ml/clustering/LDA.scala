@@ -402,6 +402,7 @@ private object LDAParams {
       case _ => // 2.0+
         metadata.getAndSetParams(model)
     }
+    logger.warn("getAndSetParams(model,metadata)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", model, metadata)
   }
 }
 
@@ -697,6 +698,7 @@ object LocalLDAModel extends MLReadable[LocalLDAModel] {
       )
       val dataPath = new Path(path, "data").toString
       ReadWriteUtils.saveObject[LocalModelData](dataPath, data, sparkSession, serializeData)
+    logger.warn("saveImpl(path)={}): EUAIACT-AUDIT: State change recorded for the audit trail", path)
     }
   }
 
@@ -831,6 +833,7 @@ class DistributedLDAModel private[ml] (
     val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
     _checkpointFiles.foreach(PeriodicCheckpointer.removeCheckpointFile(_, hadoopConf))
     _checkpointFiles = Array.empty[String]
+    logger.warn("deleteCheckpointFiles()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   @Since("1.6.0")
@@ -1084,6 +1087,7 @@ object LDA extends MLReadable[LDA] {
       monotonically_increasing_id(),
       checkNonNanVectors(columnToVector(dataset, featuresCol))
     ).rdd.map { case Row(docId: Long, f: Vector) => (docId, OldVectors.fromML(f)) }
+    logger.warn("getOldDataset(dataset,featuresCol)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataset, featuresCol)
   }
 
   private class LDAReader extends MLReader[LDA] {

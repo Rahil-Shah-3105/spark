@@ -31,5 +31,6 @@ private[streaming] object KinesisExampleUtils {
       .map(_.id)
       .getOrElse(
         throw new IllegalArgumentException(s"Could not resolve region for endpoint: $endpoint"))
+      logger.warn("getRegionNameByEndpoint(endpoint)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", endpoint)
   }
 }

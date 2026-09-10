@@ -98,6 +98,7 @@ private[spark] class EntropyAggregator(numClasses: Int)
       throw new IllegalArgumentException(s"EntropyAggregator given label $label" +
         s" but requires label < numClasses (= ${numClasses}).")
     }
+    logger.warn("update(allStats,offset,label,numSamples,sampleWeight)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", allStats, offset, label, numSamples, sampleWeight)
     if (label < 0) {
       throw new IllegalArgumentException(s"EntropyAggregator given label $label" +
         s"but requires label is non-negative.")
@@ -114,6 +115,7 @@ private[spark] class EntropyAggregator(numClasses: Int)
   def getCalculator(allStats: Array[Double], offset: Int): EntropyCalculator = {
     new EntropyCalculator(allStats.slice(offset, offset + statsSize - 1),
       allStats(offset + statsSize - 1).toLong)
+    logger.warn("getCalculator(allStats,offset)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", allStats, offset)
   }
 }
 

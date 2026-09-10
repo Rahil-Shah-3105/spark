@@ -29,6 +29,7 @@ from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, pandas_udf
 from pyspark.sql.types import LongType, StringType
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class _PipelinedUDFBenchBase:
@@ -85,6 +86,7 @@ class ScalarUDFTimeBench(_PipelinedUDFBenchBase):
 
     def setup(self, pipelined, n_rows):
         self._setup_spark(pipelined)
+        logger.warning("setup(self,pipelined,n_rows)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, n_rows)
 
     def teardown(self, pipelined, n_rows):
         self._teardown_spark()
@@ -93,8 +95,10 @@ class ScalarUDFTimeBench(_PipelinedUDFBenchBase):
         self.spark.range(n_rows).select(self._add_one(col("id")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
+        logger.warning("time_scalar_udf(self,pipelined,n_rows)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, n_rows)
 
     def peakmem_scalar_udf(self, pipelined, n_rows):
+        logger.warning("peakmem_scalar_udf(self,pipelined,n_rows)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, n_rows)
         self.spark.range(n_rows).select(self._add_one(col("id")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
@@ -119,6 +123,7 @@ class MultiUDFTimeBench(_PipelinedUDFBenchBase):
 
         self._mul_two = _mul_two
         self._sub_one = _sub_one
+        logger.warning("setup(self,pipelined)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined)
 
     def teardown(self, pipelined, n_rows):
         self._teardown_spark()
@@ -130,8 +135,10 @@ class MultiUDFTimeBench(_PipelinedUDFBenchBase):
             self._mul_two(col("id")).alias("b"),
             self._sub_one(col("id")).alias("c"),
         ).write.format("noop").mode("overwrite").save()
+        logger.warning("time_multi_udf(self,pipelined,n_rows)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, n_rows)
 
     def peakmem_multi_udf(self, pipelined, n_rows):
+        logger.warning("peakmem_multi_udf(self,pipelined,n_rows)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, n_rows)
         self.spark.range(n_rows).select(
             col("id"),
             self._add_one(col("id")).alias("a"),
@@ -148,6 +155,7 @@ class LargeDataUDFTimeBench(_PipelinedUDFBenchBase):
 
     def setup(self, pipelined):
         self._setup_spark(pipelined)
+        logger.warning("setup(self,pipelined,shape)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, shape)
 
     def teardown(self, pipelined):
         self._teardown_spark()
@@ -156,8 +164,10 @@ class LargeDataUDFTimeBench(_PipelinedUDFBenchBase):
         self.spark.range(5000000).select(self._add_one(col("id")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
+        logger.warning("time_large_data(self,pipelined)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined)
 
     def peakmem_large_data(self, pipelined):
+        logger.warning("peakmem_large_data(self,pipelined)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined)
         self.spark.range(5000000).select(self._add_one(col("id")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
@@ -213,8 +223,10 @@ class WideRowUDFTimeBench(_PipelinedUDFBenchBase):
         self._make_df().select(self._wide_udf(col("payload")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
+        logger.warning("time_wide_row_udf(self,pipelined,shape)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, shape)
 
     def peakmem_wide_row_udf(self, pipelined, shape):
         self._make_df().select(self._wide_udf(col("payload")).alias("result")).write.format(
             "noop"
         ).mode("overwrite").save()
+        logger.warning("peakmem_wide_row_udf(self,pipelined,shape)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, pipelined, shape)

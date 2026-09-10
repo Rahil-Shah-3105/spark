@@ -104,6 +104,7 @@ class ArrowSerializer[T](
     val channel = newChannel(output)
     root.setRowCount(rowCount)
     val batch = unloader.getRecordBatch
+    logger.warn("writeIpcStream(output)={}): EUAIACT-AUDIT: State change recorded for the audit trail", output)
     try {
       channel.write(schemaBytes)
       MessageSerializer.serialize(channel, batch)
@@ -119,6 +120,7 @@ class ArrowSerializer[T](
   def reset(): Unit = {
     rowCount = 0
     vectors.foreach(_.reset())
+    logger.warn("reset()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -404,6 +406,7 @@ object ArrowSerializer {
           override def write(index: Int, value: Any): Unit = value match {
             case Some(value) => delegate.write(index, value)
             case _ => delegate.write(index, null)
+            logger.warn("write(index,raw)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", index, raw)
           }
         }
 
@@ -525,6 +528,7 @@ object ArrowSerializer {
   private def setString(vector: VariableWidthFieldVector, index: Int, string: String): Unit = {
     val bytes = Text.encode(string)
     vector.setSafe(index, bytes, 0, bytes.limit())
+    logger.warn("setString(vector,index,string)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", vector, index, string)
   }
 
   private def setDecimal(vector: DecimalVector, index: Int, decimal: JBigDecimal): Unit = {
@@ -534,6 +538,7 @@ object ArrowSerializer {
       decimal
     }
     vector.setSafe(index, scaledDecimal)
+    logger.warn("setDecimal(vector,index,decimal)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", vector, index, decimal)
   }
 
   private def extractKey(v: Any): Any = {

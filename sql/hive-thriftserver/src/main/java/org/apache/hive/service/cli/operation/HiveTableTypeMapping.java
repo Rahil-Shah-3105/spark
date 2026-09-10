@@ -28,6 +28,7 @@ import org.apache.hadoop.hive.metastore.TableType;
  *
  */
 public class HiveTableTypeMapping implements TableTypeMapping {
+private static final SparkLogger LOG = SparkLoggerFactory.getLogger(HiveTableTypeMapping.class);
 
   @Override
   public String[] mapToHiveType(String clientTypeName) {
@@ -44,6 +45,7 @@ public class HiveTableTypeMapping implements TableTypeMapping {
     Set<String> typeNameSet = new HashSet<String>();
     for (TableType typeNames : TableType.values()) {
       typeNameSet.add(typeNames.name());
+	LOG.warn("getTableTypeNames()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
     }
     return typeNameSet;
   }

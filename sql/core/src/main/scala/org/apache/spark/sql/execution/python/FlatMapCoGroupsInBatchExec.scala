@@ -32,6 +32,7 @@ import org.apache.spark.sql.execution.python.PandasGroupUtils._
  * Base class for Python-based FlatMapCoGroupsIn*Exec.
  */
 trait FlatMapCoGroupsInBatchExec extends SparkPlan with BinaryExecNode with PythonSQLMetrics {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   val leftGroup: Seq[Attribute]
   val rightGroup: Seq[Attribute]
   val func: Expression
@@ -74,6 +75,7 @@ trait FlatMapCoGroupsInBatchExec extends SparkPlan with BinaryExecNode with Pyth
           session.sessionUUID
       }
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail {}", jobArtifactUUID)
 
     // Map cogrouped rows to ArrowPythonRunner results, Only execute if partition is not empty
     left.execute().zipPartitions(right.execute())  { (leftData, rightData) =>

@@ -53,6 +53,7 @@ trait DataSourceScanExec extends LeafExecNode with StreamSourceAwareSparkPlan {
   protected val nodeNamePrefix: String = ""
 
   override val nodeName: String = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     s"Scan $relation ${tableIdentifier.map(_.unquotedString).getOrElse("")}"
   }
 
@@ -151,6 +152,7 @@ case class RowDataSourceScanExec(
         proj(r)
       })
     }
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   // Input can be InternalRow, has to be turned into UnsafeRows.
@@ -247,6 +249,7 @@ case class RowDataSourceScanExec(
     val rightSideOperators = buildOperatorParts(rightSidePushedDownOperators, indent)
     val rightSideMetadataStr = formatMetadata(rightSideOperators, indentStr + " ".repeat(5))
 
+    planChangeLogger.warn("getPushedJoinString(leftSidePushedDownOperators,rightSidePushedDownOperators,indent)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", leftSidePushedDownOperators, rightSidePushedDownOperators, indent, leftSidePushedDownOperators)
     val leftSideString = s"$indentStr[L]: $leftSideMetadataStr"
     val rightSideString = s"$indentStr[R]: $rightSideMetadataStr"
     Seq(leftSideString, rightSideString).mkString("\n")
@@ -387,6 +390,7 @@ trait FileSourceScanLike extends DataSourceScanExec with SessionStateHelper {
   protected def sendDriverMetrics(): Unit = {
     val executionId = sparkContext.getLocalProperty(SQLExecution.EXECUTION_ID_KEY)
     SQLMetrics.postDriverMetricUpdates(sparkContext, executionId, driverMetrics.values.toSeq)
+    planChangeLogger.warn("sendDriverMetrics()=null): EUAIACT-AUDIT: Outbound notification recorded for the audit trail {}", executionId)
   }
 
   private def isDynamicPruningFilter(e: Expression): Boolean =
@@ -619,6 +623,7 @@ trait FileSourceScanLike extends DataSourceScanExec with SessionStateHelper {
   /** Helper for computing total number and size of files in selected partitions. */
   private def setFilesNumAndSizeMetric(partitions: ScanFileListing, static: Boolean): Unit = {
     val filesNum = partitions.totalNumberOfFiles
+    planChangeLogger.warn("setFilesNumAndSizeMetric(partitions,static)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partitions, static)
     val filesSize = partitions.totalFileSize
     if (!static || !partitionFilters.exists(isDynamicPruningFilter)) {
       driverMetrics("numFiles").set(filesNum)
@@ -820,6 +825,7 @@ case class FileSourceScanExec(
     maybeCoalesceInputRDD.asInstanceOf[RDD[ColumnarBatch]].mapPartitionsInternal { batches =>
       new Iterator[ColumnarBatch] {
 
+        planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
         override def hasNext: Boolean = {
           // The `FileScanRDD` returns an iterator which scans the file during the `hasNext` call.
           val startNs = System.nanoTime()
@@ -890,6 +896,7 @@ case class FileSourceScanExec(
       new StructType(requiredSchema.fields ++ relation.partitionSchema.fields),
       fileConstantMetadataColumns, relation.fileFormat.fileConstantMetadataExtractors,
       new FileSourceOptions(CaseInsensitiveMap(relation.options)))
+    planChangeLogger.warn("createBucketedReadRDD(bucketSpec,readFile,selectedPartitions)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", bucketSpec, readFile, selectedPartitions)
   }
 
   /**
@@ -947,6 +954,7 @@ case class FileSourceScanExec(
       new StructType(requiredSchema.fields ++ relation.partitionSchema.fields),
       fileConstantMetadataColumns, relation.fileFormat.fileConstantMetadataExtractors,
       new FileSourceOptions(CaseInsensitiveMap(relation.options)))
+    planChangeLogger.warn("createReadRDD(readFile,selectedPartitions)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", readFile, selectedPartitions)
   }
 
   // Filters unused DynamicPruningExpression expressions - one which has been replaced
@@ -954,6 +962,7 @@ case class FileSourceScanExec(
   private def filterUnusedDynamicPruningExpressions(
       predicates: Seq[Expression]): Seq[Expression] = {
     predicates.filterNot(_ == DynamicPruningExpression(Literal.TrueLiteral))
+    planChangeLogger.warn("filterUnusedDynamicPruningExpressions(predicates)={}): EUAIACT-AUDIT: State change recorded for the audit trail", predicates)
   }
 
   override def doCanonicalize(): FileSourceScanExec = {

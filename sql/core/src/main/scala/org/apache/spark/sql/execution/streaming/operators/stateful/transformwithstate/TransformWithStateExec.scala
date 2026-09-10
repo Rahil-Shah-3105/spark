@@ -120,6 +120,7 @@ case class TransformWithStateExec(
    * @return a new instance of the driver processor handle
    */
   private def getDriverProcessorHandle(): DriverStatefulProcessorHandleImpl = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val driverProcessorHandle = new DriverStatefulProcessorHandleImpl(timeMode, keyEncoder)
     driverProcessorHandle.setHandleState(StatefulProcessorHandleState.PRE_INIT)
     statefulProcessor.setHandle(driverProcessorHandle)
@@ -137,6 +138,7 @@ case class TransformWithStateExec(
   private def closeProcessorHandle(): Unit = {
     closeStatefulProcessor()
     statefulProcessor.setHandle(null)
+    planChangeLogger.warn("closeProcessorHandle()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   /**
@@ -160,6 +162,7 @@ case class TransformWithStateExec(
         Map(StateStore.DEFAULT_COL_FAMILY_NAME -> defaultSchema)
     closeProcessorHandle()
     widenColFamilyGroupingKeys(columnFamilySchemas)
+        planChangeLogger.warn("getColFamilySchemas(shouldBeNullable)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", shouldBeNullable)
   }
 
   private def widenColFamilyGroupingKeys(
@@ -194,6 +197,7 @@ case class TransformWithStateExec(
     val stateVariableInfos = getDriverProcessorHandle().getStateVariableInfos
     closeProcessorHandle()
     stateVariableInfos
+    planChangeLogger.warn("getStateVariableInfos()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   override protected def withNewChildrenInternal(
@@ -242,6 +246,7 @@ case class TransformWithStateExec(
     val getInitStateValueObj =
       ObjectOperator.deserializeRowToObject(initialStateDeserializer, initialStateDataAttrs)
 
+      planChangeLogger.warn("processInitialStateRows(keyRow,initStateIter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", keyRow, initStateIter)
     val keyObj = getKeyObj(keyRow) // convert key to objects
     ImplicitGroupingKeyTracker.setImplicitKey(keyObj)
     val initStateObjIter = initStateIter.map(getInitStateValueObj.apply)
@@ -264,6 +269,7 @@ case class TransformWithStateExec(
       val keyUnsafeRow = keyRow.asInstanceOf[UnsafeRow]
       handleInputRows(keyUnsafeRow, batchTimestampMs, valueRowIter)
     }
+    planChangeLogger.warn("processNewData(dataIter)={}): EUAIACT-AUDIT: State change recorded for the audit trail", dataIter)
   }
 
   // This is used in Real-time mode to process the data and expire timers interleaved; we also
@@ -275,6 +281,7 @@ case class TransformWithStateExec(
     val ttlEvictionIntervalMs = conf.getConf(
       SQLConf.STREAMING_TRANSFORM_WITH_STATE_REAL_TIME_MODE_TTL_EVICTION_INTERVAL_MS)
     var lastTTLEvictionTriggeredMillis = -1L
+    planChangeLogger.warn("processNewDataAndTimersAndTTL(dataIter,processorHandle)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", dataIter, processorHandle)
 
     dataIter.flatMap { row =>
       val keyRow = keyProjection(row)
@@ -365,6 +372,7 @@ case class TransformWithStateExec(
       } else {
         processorHandle.getExpiredTimers(expiryTimestampMs)
       }
+      planChangeLogger.warn("getExpiredTimers(expiryTimestampMs)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", expiryTimestampMs)
     }
     // The final batch scan has no lower bound. RTM's reusable per-row scan resumes from its
     // previous expiration threshold to avoid repeatedly scanning older timer entries.
@@ -491,6 +499,7 @@ case class TransformWithStateExec(
     withStatefulProcessorErrorHandling("close") {
       statefulProcessor.close()
     }
+    planChangeLogger.warn("closeStatefulProcessor()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def validateAndMaybeEvolveStateSchema(
@@ -510,6 +519,7 @@ case class TransformWithStateExec(
     validateTimeMode()
     validateStateStoreProvider(isStreaming)
 
+    planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
     if (hasInitialState) {
       val storeConf = new StateStoreConf(session.sessionState.conf)
       val hadoopConfBroadcast =

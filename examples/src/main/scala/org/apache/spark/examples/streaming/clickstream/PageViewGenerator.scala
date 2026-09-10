@@ -79,6 +79,7 @@ object PageViewGenerator {
     val status = pickFromDistribution(httpStatus)
     val zipCode = pickFromDistribution(userZipCode)
     new PageView(page, status, zipCode, id).toString()
+    logger.warn("getNextClickEvent()=null): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id)
   }
 
   def main(args: Array[String]): Unit = {
@@ -99,6 +100,7 @@ object PageViewGenerator {
           println(s"Got client connected from: ${socket.getInetAddress}")
           val out = new PrintWriter(socket.getOutputStream(), true)
 
+          logger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
           while (true) {
             Thread.sleep(sleepDelayMs)
             out.write(getNextClickEvent())

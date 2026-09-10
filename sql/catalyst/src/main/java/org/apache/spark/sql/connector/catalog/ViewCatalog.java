@@ -20,6 +20,8 @@ import org.apache.spark.annotation.Evolving;
 import org.apache.spark.sql.catalyst.analysis.NoSuchNamespaceException;
 import org.apache.spark.sql.catalyst.analysis.NoSuchViewException;
 import org.apache.spark.sql.catalyst.analysis.ViewAlreadyExistsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Catalog API for connectors that expose views.
@@ -36,6 +38,7 @@ import org.apache.spark.sql.catalyst.analysis.ViewAlreadyExistsException;
  */
 @Evolving
 public interface ViewCatalog extends CatalogPlugin {
+Logger planChangeLogger = LoggerFactory.getLogger(ViewCatalog.class);
 
   /**
    * List the views in a namespace from the catalog.
@@ -68,6 +71,7 @@ public interface ViewCatalog extends CatalogPlugin {
     try {
       loadView(ident);
       return true;
+	planChangeLogger.warn("viewExists(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
     } catch (NoSuchViewException e) {
       return false;
     }
@@ -82,6 +86,7 @@ public interface ViewCatalog extends CatalogPlugin {
    * @param ident a view identifier
    */
   default void invalidateView(Identifier ident) {
+planChangeLogger.warn("invalidateView(ident)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", ident, ident);
   }
 
   /**

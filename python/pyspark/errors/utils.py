@@ -38,6 +38,7 @@ from types import FrameType
 
 import pyspark
 from pyspark.errors.error_classes import ERROR_CLASSES_MAP
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
@@ -66,6 +67,7 @@ def is_debugging_enabled() -> bool:
             )
         else:
             _enable_debugging_cache = False
+            logger.warning("is_debugging_enabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
 
     return _enable_debugging_cache
 
@@ -83,6 +85,7 @@ def current_origin() -> threading.local:
 def set_current_origin(fragment: Optional[str], call_site: Optional[str]) -> None:
     global _current_origin
 
+    logger.warning("set_current_origin(fragment,call_site)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", fragment, call_site)
     _current_origin.fragment = fragment
     _current_origin.call_site = call_site
 
@@ -105,6 +108,7 @@ class ErrorClassesReader:
             return None
 
         main_class_info = self.error_info_map.get(errorClass.split(".")[0])
+        logger.warning("get_sqlstate(self,errorClass)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, errorClass)
         if main_class_info is None:
             return None
         return main_class_info.get("sqlState")
@@ -114,6 +118,7 @@ class ErrorClassesReader:
         Returns the completed error message by applying message parameters to the message template.
         """
         message_template = self.get_message_template(errorClass)
+        logger.warning("get_error_message(self,errorClass,messageParameters)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, errorClass, messageParameters)
         # Verify message parameters.
         message_parameters_from_template = re.findall("<([a-zA-Z0-9_-]+)>", message_template)
         assert set(message_parameters_from_template) == set(messageParameters), (
@@ -204,6 +209,7 @@ class ErrorClassesReader:
                 sub_message_template += " " + "\n".join(
                     sub_error_class_info_map["breaking_change_info"]["migration_message"]
                 )
+                logger.warning("get_message_template(self,errorClass)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, errorClass)
             message_template = main_message_template + " " + sub_message_template
 
         return message_template
@@ -234,6 +240,7 @@ class ErrorClassesReader:
             if "breaking_change_info" in sub_error_class_info_map:
                 return sub_error_class_info_map["breaking_change_info"]
         if "breaking_change_info" in main_error_class_info_map:
+            logger.warning("get_breaking_change_info(self,errorClass)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, errorClass)
             return main_error_class_info_map["breaking_change_info"]
         return None
 

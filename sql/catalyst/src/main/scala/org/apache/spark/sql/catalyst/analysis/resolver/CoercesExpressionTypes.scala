@@ -65,6 +65,7 @@ trait CoercesExpressionTypes extends SQLConfHelper with ResolverMetricTracker {
   def coerceExpressionTypes(
       expression: Expression,
       expressionTreeTraversal: ExpressionTreeTraversal): Expression = {
+       val planChangeLogger = new PlanChangeLogger[TreeType]()
     recordProfileAndLatency(
       "coerceExpressionTypes",
       "SINGLE_PASS_ANALYZER_TYPE_COERCION_LATENCY"
@@ -118,6 +119,7 @@ trait CoercesExpressionTypes extends SQLConfHelper with ResolverMetricTracker {
       ansiMode = expressionTreeTraversal.ansiMode
     )
 
+    planChangeLogger.warn("applyTypeCoercion(expression,expressionTreeTraversal)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, expressionTreeTraversal)
     val newChildren = withTypeCoercion.children.map {
       case cast: Cast =>
         TimezoneAwareExpressionResolver
@@ -138,6 +140,7 @@ trait CoercesExpressionTypes extends SQLConfHelper with ResolverMetricTracker {
     transformations.foldLeft(expression) {
       case (intermediateResult, transformation) => transformation.apply(intermediateResult)
     }
+    planChangeLogger.warn("runCoercionTransformations(expression,ansiMode)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", expression, ansiMode)
   }
 }
 

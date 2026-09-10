@@ -110,6 +110,7 @@ case class DescribeRelationJsonCommand(
 
     // Add default collation if not yet added (addKeyValueToMap only adds unique keys).
     // Add here to only affect `DESC AS JSON` and not the `DESC TABLE` output.
+    planChangeLogger.warn("run(sparkSession)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession)
     addKeyValueToMap("collation", JString("UTF8_BINARY"), jsonMap)
 
     Seq(Row(compact(render(JObject(jsonMap.toList)))))
@@ -119,6 +120,7 @@ case class DescribeRelationJsonCommand(
       key: String,
       value: JValue,
       jsonMap: mutable.LinkedHashMap[String, JValue]): Unit = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     // Rename some JSON keys that are pre-named in describe table implementation
     val renames = Map(
       "inputformat" -> "input_format",
@@ -130,6 +132,7 @@ case class DescribeRelationJsonCommand(
     val normalizedKey = key.toLowerCase().replace(" ", "_")
     val renamedKey = renames.getOrElse(normalizedKey, normalizedKey)
 
+    planChangeLogger.warn("addKeyValueToMap(key,value,jsonMap)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", key, value, jsonMap)
     if (!jsonMap.contains(renamedKey) && !excludedKeys.contains(renamedKey)) {
       val formattedValue = if (timestampKeys.contains(renamedKey)) {
         value match {
@@ -260,6 +263,7 @@ case class DescribeRelationJsonCommand(
   private def describeViewSqlConfsJson(
       table: CatalogTable,
       jsonMap: mutable.LinkedHashMap[String, JValue]): Unit = {
+       planChangeLogger.warn("describeViewSqlConfsJson(table,jsonMap)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", table, jsonMap)
     val viewConfigs: Map[String, String] = table.viewSQLConfigs
     val viewConfigsJson: JValue = JObject(viewConfigs.map { case (key, value) =>
       key -> JString(value)

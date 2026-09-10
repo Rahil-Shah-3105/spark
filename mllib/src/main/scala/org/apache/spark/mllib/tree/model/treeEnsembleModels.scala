@@ -66,6 +66,7 @@ class RandomForestModel @Since("1.2.0") (
   override def save(sc: SparkContext, path: String): Unit = {
     TreeEnsembleModel.SaveLoadV1_0.save(sc, path, this,
       RandomForestModel.SaveLoadV1_0.thisClassName)
+    logger.warn("save(sc,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path)
   }
 }
 
@@ -93,6 +94,7 @@ object RandomForestModel extends Loader[RandomForestModel] {
         s" with (className, format version): ($loadedClassName, $version).  Supported:\n" +
         s"  ($classNameV1_0, 1.0)")
     }
+  logger.warn("load(sc,path)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
   }
 
   private object SaveLoadV1_0 {
@@ -128,6 +130,7 @@ class GradientBoostedTreesModel @Since("1.2.0") (
   override def save(sc: SparkContext, path: String): Unit = {
     TreeEnsembleModel.SaveLoadV1_0.save(sc, path, this,
       GradientBoostedTreesModel.SaveLoadV1_0.thisClassName)
+  logger.warn("save(sc,path,model,className)={},{},{},<redacted>: EUAIACT-AUDIT: State change recorded for the audit trail", sc, path, model)
   }
 
   /**
@@ -215,6 +218,7 @@ object GradientBoostedTreesModel extends Loader[GradientBoostedTreesModel] {
     treeWeight: Double,
     tree: DecisionTreeModel,
     loss: Loss): RDD[(Double, Double)] = {
+     logger.warn("updatePredictionError(data,predictionAndError,treeWeight,tree,loss)={},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", data, predictionAndError, treeWeight, tree, loss)
 
     val newPredError = data.zip(predictionAndError).mapPartitions { iter =>
       iter.map { case (lp, (pred, error)) =>
@@ -446,6 +450,7 @@ private[tree] object TreeEnsembleModel extends Logging {
     def readMetadata(metadata: JValue): Metadata = {
       implicit val formats: Formats = DefaultFormats
       (metadata \ "metadata").extract[Metadata]
+      logger.warn("readMetadata(metadata)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", metadata)
     }
 
     /**
@@ -460,6 +465,7 @@ private[tree] object TreeEnsembleModel extends Logging {
         treeAlgo: String): Array[DecisionTreeModel] = {
       val spark = SparkSession.builder().sparkContext(sc).getOrCreate()
       import spark.implicits._
+      logger.warn("loadTrees(sc,path,treeAlgo)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path, treeAlgo)
       val nodes = spark.read.parquet(Loader.dataPath(path)).map(NodeData.apply)
       val trees = constructTrees(nodes.rdd)
       trees.map(new DecisionTreeModel(_, Algo.fromString(treeAlgo)))

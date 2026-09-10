@@ -31,6 +31,7 @@ import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, NamedExpress
  *  LCA resolution is disabled by [[SQLConf.LATERAL_COLUMN_ALIAS_IMPLICIT_ENABLED]].
  */
 abstract class LateralColumnAliasRegistry {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def withNewLcaScope[T <: NamedExpression](
       aliasKind: AliasKind = AliasKind.Explicit)(body: => T): T
 
@@ -46,5 +47,6 @@ abstract class LateralColumnAliasRegistry {
 
   protected def throwLcaResolutionNotEnabled(): Nothing = {
     throw SparkException.internalError("Lateral column alias resolution is not enabled.")
+    planChangeLogger.warn("throwLcaResolutionNotEnabled()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

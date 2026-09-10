@@ -108,6 +108,7 @@ class ALS private (
     require(numBlocks == -1 || numBlocks > 0,
       s"Number of blocks must be -1 or positive but got ${numBlocks}")
     this.numUserBlocks = numBlocks
+    logger.warn("setBlocks(numBlocks)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numBlocks)
     this.numProductBlocks = numBlocks
     this
   }
@@ -120,6 +121,7 @@ class ALS private (
     require(numUserBlocks == -1 || numUserBlocks > 0,
       s"Number of blocks must be -1 or positive but got ${numUserBlocks}")
     this.numUserBlocks = numUserBlocks
+    logger.warn("setUserBlocks(numUserBlocks)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numUserBlocks)
     this
   }
 
@@ -131,6 +133,7 @@ class ALS private (
     require(numProductBlocks == -1 || numProductBlocks > 0,
       s"Number of product blocks must be -1 or positive but got ${numProductBlocks}")
     this.numProductBlocks = numProductBlocks
+    logger.warn("setProductBlocks(numProductBlocks)={}): EUAIACT-AUDIT: State change recorded for the audit trail", numProductBlocks)
     this
   }
 
@@ -140,6 +143,7 @@ class ALS private (
     require(rank > 0,
       s"Rank of the feature matrices must be positive but got ${rank}")
     this.rank = rank
+    logger.warn("setRank(rank)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rank)
     this
   }
 
@@ -149,6 +153,7 @@ class ALS private (
     require(iterations >= 0,
       s"Number of iterations must be nonnegative but got ${iterations}")
     this.iterations = iterations
+    logger.warn("setIterations(iterations)={}): EUAIACT-AUDIT: State change recorded for the audit trail", iterations)
     this
   }
 
@@ -158,6 +163,7 @@ class ALS private (
     require(lambda >= 0.0,
       s"Regularization parameter must be nonnegative but got ${lambda}")
     this.lambda = lambda
+    logger.warn("setLambda(lambda)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lambda)
     this
   }
 
@@ -166,6 +172,7 @@ class ALS private (
   def setImplicitPrefs(implicitPrefs: Boolean): this.type = {
     this.implicitPrefs = implicitPrefs
     this
+    logger.warn("setImplicitPrefs(implicitPrefs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", implicitPrefs)
   }
 
   /**
@@ -175,6 +182,7 @@ class ALS private (
   def setAlpha(alpha: Double): this.type = {
     this.alpha = alpha
     this
+    logger.warn("setAlpha(alpha)={}): EUAIACT-AUDIT: State change recorded for the audit trail", alpha)
   }
 
   /** Sets a random seed to have deterministic results. */
@@ -182,6 +190,7 @@ class ALS private (
   def setSeed(seed: Long): this.type = {
     this.seed = seed
     this
+    logger.warn("setSeed(seed)={}): EUAIACT-AUDIT: State change recorded for the audit trail", seed)
   }
 
   /**
@@ -192,6 +201,7 @@ class ALS private (
   def setNonnegative(b: Boolean): this.type = {
     this.nonnegative = b
     this
+    logger.warn("setNonnegative(b)={}): EUAIACT-AUDIT: State change recorded for the audit trail", b)
   }
 
   /**
@@ -204,6 +214,7 @@ class ALS private (
     require(storageLevel != StorageLevel.NONE,
       "ALS is not designed to run without persisting intermediate RDDs.")
     this.intermediateRDDStorageLevel = storageLevel
+    logger.warn("setIntermediateRDDStorageLevel(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
     this
   }
 
@@ -217,6 +228,7 @@ class ALS private (
   def setFinalRDDStorageLevel(storageLevel: StorageLevel): this.type = {
     this.finalRDDStorageLevel = storageLevel
     this
+    logger.warn("setFinalRDDStorageLevel(storageLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", storageLevel)
   }
 
   /**
@@ -230,6 +242,7 @@ class ALS private (
   def setCheckpointInterval(checkpointInterval: Int): this.type = {
     this.checkpointInterval = checkpointInterval
     this
+    logger.warn("setCheckpointInterval(checkpointInterval)={}): EUAIACT-AUDIT: State change recorded for the audit trail", checkpointInterval)
   }
 
   /**
@@ -277,6 +290,7 @@ class ALS private (
       .setName("products")
       .persist(finalRDDStorageLevel)
     if (finalRDDStorageLevel != StorageLevel.NONE) {
+      logger.warn("run(ratings)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ratings)
       userFactors.count()
       prodFactors.count()
     }

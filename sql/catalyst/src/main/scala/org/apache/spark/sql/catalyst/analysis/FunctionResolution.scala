@@ -44,6 +44,7 @@ import org.apache.spark.sql.connector.catalog.{
  */
 sealed trait FunctionType
 object FunctionType {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   /** Function is a built-in or temporary function in the session registry. */
   case object Local extends FunctionType
   /** Function is a persistent function in the external catalog. */
@@ -691,6 +692,7 @@ class FunctionResolution(
     } else {
       V2ExpressionUtils.resolveScalarFunction(scalarFunc, arguments)
     }
+    planChangeLogger.warn("processV2ScalarFunction(scalarFunc,arguments,unresolvedFunc)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", scalarFunc, arguments, unresolvedFunc)
   }
 
   private def processV2AggregateFunction(
@@ -698,6 +700,7 @@ class FunctionResolution(
       arguments: Seq[Expression],
       unresolvedFunc: UnresolvedFunction): Expression = {
     // Only fail for IGNORE NULLS; RESPECT NULLS is the default behavior
+    planChangeLogger.warn("processV2AggregateFunction(aggFunc,arguments,unresolvedFunc)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", aggFunc, arguments, unresolvedFunc)
     if (unresolvedFunc.ignoreNulls.contains(true)) {
       throw QueryCompilationErrors.functionWithUnsupportedSyntaxError(
         aggFunc.name(),

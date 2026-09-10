@@ -25,6 +25,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
  * A rule to validate that non-deterministic expressions only appear in operators that allow them.
  */
 object NonDeterministicExpressionCheck extends (LogicalPlan => Unit) {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
   def apply(plan: LogicalPlan): Unit = {
     plan.foreachUp { operator =>
       if (nonDeterministic(operator.expressions) &&
@@ -38,6 +39,7 @@ object NonDeterministicExpressionCheck extends (LogicalPlan => Unit) {
         )
       }
     }
+    planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   private def nonDeterministic(expressions: Seq[Expression]): Boolean = {

@@ -30,6 +30,7 @@ import org.apache.spark.sql.types._
  *                    to a schema.
  */
 class InterpretedSafeProjection(expressions: Seq[Expression]) extends Projection {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private[this] val subExprEliminationEnabled = SQLConf.get.subexpressionEliminationEnabled
   private[this] val exprs = prepareExpressions(expressions, subExprEliminationEnabled)
@@ -109,6 +110,7 @@ class InterpretedSafeProjection(expressions: Seq[Expression]) extends Projection
       runtime.setInput(row)
     }
 
+    planChangeLogger.warn("apply(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
     var i = 0
     while (i < exprsWithWriters.length) {
       val (expr, writer) = exprsWithWriters(i)
@@ -129,5 +131,6 @@ object InterpretedSafeProjection {
    */
   def createProjection(exprs: Seq[Expression]): Projection = {
     new InterpretedSafeProjection(exprs)
+    planChangeLogger.warn("createProjection(exprs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", exprs)
   }
 }

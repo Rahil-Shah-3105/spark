@@ -28,6 +28,7 @@ from pyspark.sql.types import StructType
 if TYPE_CHECKING:
     from pyspark.sql._typing import UserDefinedFunctionLike
     from pyspark.sql._typing import DataTypeOrString
+    logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class CatalogMetadata(NamedTuple):
@@ -129,6 +130,7 @@ class Catalog:
         --------
         >>> spark.catalog.setCurrentCatalog("spark_catalog")
         """
+        logger.warning("setCurrentCatalog(self,catalogName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, catalogName)
         return self._jcatalog.setCurrentCatalog(catalogName)
 
     def listCatalogs(self, pattern: Optional[str] = None) -> List[CatalogMetadata]:
@@ -167,6 +169,7 @@ class Catalog:
             iter = self._jcatalog.listCatalogs(pattern).toLocalIterator()
         catalogs = []
         while iter.hasNext():
+            logger.warning("listCatalogs(self,pattern)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, pattern)
             jcatalog = iter.next()
             catalogs.append(
                 CatalogMetadata(name=jcatalog.name(), description=jcatalog.description())
@@ -219,6 +222,7 @@ class Catalog:
         >>> spark.catalog.tableExists("view_drop_doc")
         False
         """
+        logger.warning("dropView(self,viewName,ifExists)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, viewName, ifExists)
         self._jcatalog.dropView(viewName, ifExists)
 
     def createDatabase(
@@ -314,6 +318,7 @@ class Catalog:
         iter = self._jcatalog.listPartitions(tableName).toLocalIterator()
         out: List[TablePartition] = []
         while iter.hasNext():
+            logger.warning("listPartitions(self,tableName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName)
             j = iter.next()
             out.append(TablePartition(partition=j.partition()))
         return out
@@ -366,6 +371,7 @@ class Catalog:
         while iter.hasNext():
             jtable = iter.next()
             jnamespace = jtable.namespace()
+            logger.warning("listViews(self,dbName,pattern)=%s,%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, dbName, pattern)
             namespace = list(jnamespace) if jnamespace is not None else None
             views.append(
                 Table(
@@ -405,6 +411,7 @@ class Catalog:
         'doc_prop_val'
         >>> _ = spark.sql("DROP TABLE tbl_props_doc")
         """
+        logger.warning("getTableProperties(self,tableName)=%s,%s: EUAIACT-AUDIT: Record access recorded for the audit trail", self, tableName)
         jm = self._jcatalog.getTableProperties(tableName)
         return {k: jm.get(k) for k in jm.keySet()}
 
@@ -433,6 +440,7 @@ class Catalog:
         True
         >>> _ = spark.sql("DROP TABLE tbl_ddl_doc")
         """
+        logger.warning("getCreateTableString(self,tableName,asSerde)=%s,%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName, asSerde)
         return self._jcatalog.getCreateTableString(tableName, asSerde)
 
     def truncateTable(self, tableName: str) -> None:
@@ -457,6 +465,7 @@ class Catalog:
         0
         >>> _ = spark.sql("DROP TABLE tbl_tr_doc")
         """
+        logger.warning("truncateTable(self,tableName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, tableName)
         self._jcatalog.truncateTable(tableName)
 
     def analyzeTable(self, tableName: str, noScan: bool = False) -> None:
@@ -515,6 +524,7 @@ class Catalog:
         --------
         >>> spark.catalog.setCurrentDatabase("default")
         """
+        logger.warning("setCurrentDatabase(self,dbName)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail", self, dbName)
         return self._jcatalog.setCurrentDatabase(dbName)
 
     def listDatabases(self, pattern: Optional[str] = None) -> List[Database]:

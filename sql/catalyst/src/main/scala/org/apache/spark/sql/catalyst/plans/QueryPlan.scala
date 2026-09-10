@@ -53,6 +53,7 @@ import org.apache.spark.util.collection.BitSet
  */
 abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
   extends TreeNode[PlanType] with SQLConfHelper {
+   val planChangeLogger = new PlanChangeLogger[TreeType]()
   self: PlanType =>
 
   def output: Seq[Attribute]
@@ -318,6 +319,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
     transformWithPruning(cond, ruleId) {
       case q: QueryPlan[_] =>
         q.transformExpressionsWithPruning(cond, ruleId)(rule).asInstanceOf[PlanType]
+        planChangeLogger.warn("transformAllExpressionsWithPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     }.asInstanceOf[this.type]
   }
 
@@ -425,6 +427,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
         }
         planAfterRule -> resultAttrMapping.toSeq
       }
+      planChangeLogger.warn("rewrite(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
     }
     rewrite(this)._1
   }
@@ -436,6 +439,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
       case pe: PlanExpression[PlanType @unchecked] =>
         pe.withNewPlan(updateOuterReferencesInSubquery(pe.plan, attrMap))
     }.asInstanceOf[PlanType]
+    planChangeLogger.warn("rewriteAttrs(attrMap)={}): EUAIACT-AUDIT: State change recorded for the audit trail", attrMap)
   }
 
   private def updateAttr(a: Attribute, attrMap: AttributeMap[Attribute]): Attribute = {
@@ -450,6 +454,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
         AttributeReference(a.name, b.dataType, a.nullable, a.metadata)(b.exprId, a.qualifier)
       case None => a
     }
+    planChangeLogger.warn("updateAttr(a,attrMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", a, attrMap)
   }
 
   /**
@@ -467,6 +472,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
           pe.withNewPlan(updateOuterReferencesInSubquery(pe.plan, attrMap))
       }
     }
+    planChangeLogger.warn("updateOuterReferencesInSubquery(plan,attrMap)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", plan, attrMap)
   }
 
   def schema: StructType = _schema()
@@ -584,6 +590,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
     cond: TreePatternBits => Boolean,
     ruleId: RuleId = UnknownRuleId)
     (f: PartialFunction[PlanType, PlanType]): PlanType = {
+     planChangeLogger.warn("transformUpWithSubqueriesAndPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     val g: PartialFunction[PlanType, PlanType] = new PartialFunction[PlanType, PlanType] {
       override def isDefinedAt(x: PlanType): Boolean = true
 
@@ -595,6 +602,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
             planExpression.withNewPlan(newPlan)
         }
         f.applyOrElse[PlanType, PlanType](transformed, identity)
+        planChangeLogger.warn("apply(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
       }
     }
 
@@ -611,6 +619,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
       cond: TreePatternBits => Boolean,
       ruleId: RuleId = UnknownRuleId)
       (f: PartialFunction[PlanType, PlanType]): PlanType = {
+       planChangeLogger.warn("transformDownWithSubqueriesAndPruning(cond,ruleId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", cond, ruleId, ruleId)
     val g: PartialFunction[PlanType, PlanType] = new PartialFunction[PlanType, PlanType] {
       override def isDefinedAt(x: PlanType): Boolean = true
 
@@ -645,6 +654,7 @@ abstract class QueryPlan[PlanType <: QueryPlan[PlanType]]
     if (!cond.apply(this)) {
       return
     }
+    planChangeLogger.warn("foreachWithSubqueriesAndPruning(cond)={}): EUAIACT-AUDIT: State change recorded for the audit trail", cond)
     f(this)
     subqueries.foreach(_.foreachWithSubqueriesAndPruning(cond)(f))
     children.foreach(_.foreachWithSubqueriesAndPruning(cond)(f))

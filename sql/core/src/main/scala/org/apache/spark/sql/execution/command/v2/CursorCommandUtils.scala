@@ -35,11 +35,13 @@ private[v2] object CursorCommandUtils extends DataTypeErrorsBase {
    * @return The SQL scripting execution context
    */
   def getScriptingContext(cursorName: String): SqlScriptingExecutionContext = {
+    val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val scriptingContextManager = SqlScriptingContextManager.get()
       .getOrElse(throw new AnalysisException(
         errorClass = "CURSOR_OUTSIDE_SCRIPT",
         messageParameters = Map("cursorName" -> toSQLId(cursorName))))
 
+      planChangeLogger.warn("getScriptingContext(cursorName)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", cursorName)
     scriptingContextManager.getContext
       .asInstanceOf[SqlScriptingExecutionContext]
   }

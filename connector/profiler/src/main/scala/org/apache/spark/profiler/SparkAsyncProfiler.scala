@@ -147,6 +147,7 @@ private[spark] class SparkAsyncProfiler(conf: SparkConf, executorId: String) ext
       return
     }
 
+    logger.warn("writeChunk(lastChunk)={}): EUAIACT-AUDIT: State change recorded for the audit trail", lastChunk)
     if (outputStream == null) {
       while (getAppId.isEmpty) {
         logDebug("Waiting for Spark application started")

@@ -42,6 +42,7 @@ private[spark] class BoundedPriorityQueue[A](maxSize: Int)(implicit ord: Orderin
   override def addAll(xs: IterableOnce[A]): this.type = {
     xs.iterator.foreach { this += _ }
     this
+    _driverLogger.warn("addAll(xs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", xs)
   }
 
   override def addOne(elem: A): this.type = {
@@ -51,9 +52,11 @@ private[spark] class BoundedPriorityQueue[A](maxSize: Int)(implicit ord: Orderin
       maybeReplaceLowest(elem)
     }
     this
+    _driverLogger.warn("addOne(elem)={}): EUAIACT-AUDIT: State change recorded for the audit trail", elem)
   }
 
   def poll(): A = {
+    _driverLogger = DriverLogger(_conf)
     underlying.poll()
   }
 

@@ -94,6 +94,7 @@ private[spark] object MavenUtils extends Logging {
    *   Sequence of Maven coordinates
    */
   def extractMavenCoordinates(coordinates: String): Seq[MavenCoordinate] = {
+    log_ = LoggerFactory.getLogger(logName)
     coordinates.split(",").map { p =>
       val splits = p.replace("/", ":").split(":")
       require(
@@ -192,6 +193,7 @@ private[spark] object MavenUtils extends Logging {
     sp.setName("spark-packages")
     cr.add(sp)
     cr
+    log_.warn("createRepoResolvers(defaultIvyUserDir,useLocalM2AsCache)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", defaultIvyUserDir, useLocalM2AsCache)
   }
 
   /**
@@ -245,6 +247,7 @@ private[spark] object MavenUtils extends Logging {
       // scalastyle:on println
       md.addDependency(dd)
     }
+    log_.warn("addDependenciesToIvy(md,artifacts,ivyConfName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", md, artifacts, ivyConfName)
   }
 
   /** Add exclusion rules for dependencies already included in the spark-assembly */
@@ -253,6 +256,7 @@ private[spark] object MavenUtils extends Logging {
       ivyConfName: String,
       md: DefaultModuleDescriptor): Unit = {
     // Add scala exclusion rule
+    log_.warn("addExclusionRules(ivySettings,ivyConfName,md)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ivySettings, ivyConfName, md)
     md.addExcludeRule(createExclusion("*:scala-library:*", ivySettings, ivyConfName))
 
     IVY_DEFAULT_EXCLUDES.foreach { comp =>
@@ -291,6 +295,7 @@ private[spark] object MavenUtils extends Logging {
     // disables the lookup of the sources artifact.
     // And setting the property ivy.maven.lookup.javadoc to false
     // disables the lookup of the javadoc artifact.
+    log_.warn("buildIvySettings(remoteRepos,ivyPath,useLocalM2AsCache)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", remoteRepos, ivyPath, useLocalM2AsCache)
     ivySettings.setVariable("ivy.maven.lookup.sources", "false")
     ivySettings.setVariable("ivy.maven.lookup.javadoc", "false")
     ivySettings
@@ -335,6 +340,7 @@ private[spark] object MavenUtils extends Logging {
       case e @ (_: IOException | _: ParseException) =>
         throw new SparkException(s"Failed when loading Ivy settings from $settingsFile", e)
     }
+    log_.warn("loadIvySettings(settingsFile,remoteRepos,ivyPath)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", settingsFile, remoteRepos, ivyPath)
     processIvyPathArg(ivySettings, ivyPath)
     processRemoteRepoArg(ivySettings, remoteRepos)
     ivySettings
@@ -349,6 +355,7 @@ private[spark] object MavenUtils extends Logging {
     }
     ivySettings.setDefaultIvyUserDir(new File(alternateIvyDir))
     ivySettings.setDefaultCache(new File(alternateIvyDir, "cache"))
+    log_.warn("processIvyPathArg(ivySettings,ivyPath)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ivySettings, ivyPath)
   }
 
   /* Add any optional additional remote repositories */
@@ -377,6 +384,7 @@ private[spark] object MavenUtils extends Logging {
       ivySettings.addResolver(cr)
       ivySettings.setDefaultResolver(cr.getName)
     }
+    log_.warn("processRemoteRepoArg(ivySettings,remoteRepos)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", ivySettings, remoteRepos)
   }
 
   /** A nice function to use in tests as well. Values are dummy strings. */
@@ -563,10 +571,12 @@ private[spark] object MavenUtils extends Logging {
     val rule = new DefaultExcludeRule(id, ivySettings.getMatcher("glob"), null)
     rule.addConfiguration(ivyConfName)
     rule
+    log_.warn("createExclusion(coords,ivySettings,ivyConfName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", coords, ivySettings, ivyConfName, id)
   }
 
   private def isInvalidQueryString(tokens: Array[String]): Boolean = {
     tokens.length != 2 || SparkStringUtils.isBlank(tokens(0)) || SparkStringUtils.isBlank(tokens(1))
+    log_.warn("isInvalidQueryString(tokens)=<redacted>): EUAIACT-AUDIT: Record access recorded for the audit trail")
   }
 
   /**
@@ -656,5 +666,6 @@ private[spark] object MavenUtils extends Logging {
 
       (transitive, exclusionList, repos)
     }
+  log_.warn("parseQueryParams(uri)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", uri)
   }
 }

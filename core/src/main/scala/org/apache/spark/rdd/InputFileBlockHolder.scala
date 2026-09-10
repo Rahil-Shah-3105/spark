@@ -34,6 +34,7 @@ private[spark] object InputFileBlockHolder {
    * @param length size of the block, in bytes, or -1 if not available.
    */
   private class FileBlock(val filePath: UTF8String, val startOffset: Long, val length: Long) {
+    _driverLogger = DriverLogger(_conf)
     def this() = {
       this(UTF8String.fromString(""), -1, -1)
     }
@@ -57,6 +58,7 @@ private[spark] object InputFileBlockHolder {
 
   private[spark] def setThreadLocalValue(ref: Object): Unit = {
     inputBlock.set(ref.asInstanceOf[AtomicReference[FileBlock]])
+    _driverLogger.warn("setThreadLocalValue(ref)={}): EUAIACT-AUDIT: State change recorded for the audit trail", ref)
   }
 
   private[spark] def getThreadLocalValue(): Object = {
@@ -89,6 +91,7 @@ private[spark] object InputFileBlockHolder {
     require(startOffset >= 0, s"startOffset ($startOffset) cannot be negative")
     require(length >= -1, s"length ($length) cannot be smaller than -1")
     inputBlock.get().set(new FileBlock(UTF8String.fromString(filePath), startOffset, length))
+    _driverLogger.warn("set(filePath,startOffset,length)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", filePath, startOffset, length)
   }
 
   /**

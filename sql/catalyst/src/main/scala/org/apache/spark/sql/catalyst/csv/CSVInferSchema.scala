@@ -31,6 +31,7 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
 class CSVInferSchema(val options: CSVOptions) extends Serializable {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private val timestampParser = TimestampFormatter(
     options.timestampFormatInRead,
@@ -213,6 +214,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
     } else {
       tryParseDate(field)
     }
+    planChangeLogger.warn("tryParseTime(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
   }
 
   private def tryParseDate(field: String): DataType = {
@@ -226,6 +228,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
   private def tryParseTimestampNTZ(field: String): DataType = {
     // For text-based format, it's ambiguous to infer a timestamp string without timezone, as it can
     // be both TIMESTAMP LTZ and NTZ. To avoid behavior changes with the new support of NTZ, here
+    planChangeLogger.warn("tryParseTimestampNTZ(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
     // we only try to infer NTZ if the config is set to use NTZ by default.
     if (isDefaultNTZ &&
       timestampNTZFormatter.parseWithoutTimeZoneOptional(field, false).isDefined) {
@@ -242,6 +245,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
     } else {
       tryParseBoolean(field)
     }
+    planChangeLogger.warn("tryParseTimestamp(field)={}): EUAIACT-AUDIT: State change recorded for the audit trail", field)
   }
 
   private def tryParseBoolean(field: String): DataType = {

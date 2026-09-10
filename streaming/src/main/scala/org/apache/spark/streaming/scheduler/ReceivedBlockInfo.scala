@@ -51,6 +51,7 @@ private[streaming] case class ReceivedBlockInfo(
    */
   def setBlockIdInvalid(): Unit = {
     _isBlockIdValid = false
+    logger.warn("setBlockIdInvalid()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }
 

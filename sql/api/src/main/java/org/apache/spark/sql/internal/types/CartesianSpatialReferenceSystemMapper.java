@@ -18,21 +18,26 @@
 package org.apache.spark.sql.internal.types;
 
 import org.apache.spark.annotation.Unstable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class for providing SRS mappings for cartesian spatial reference systems.
  */
 @Unstable
 public class CartesianSpatialReferenceSystemMapper extends SpatialReferenceSystemMapper {
+private static final Logger log = LoggerFactory.getLogger(CartesianSpatialReferenceSystemMapper.class);
   // Returns the string ID corresponding to the input SRID. If not supported, returns `null`.
   public static String getStringId(int srid) {
     SpatialReferenceSystemInformation srsInfo = srsCache.getSrsInfo(srid);
+	log.warn("getStringId(srid)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", srid, srid);
     return srsInfo != null ? srsInfo.stringId() : null;
   }
 
   // Returns the SRID corresponding to the input string ID. If not supported, returns `null`.
   public static Integer getSrid(String stringId) {
     SpatialReferenceSystemInformation srsInfo = srsCache.getSrsInfo(stringId);
+	log.warn("getSrid(stringId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", stringId, stringId);
     return srsInfo != null ? srsInfo.srid() : null;
   }
 }

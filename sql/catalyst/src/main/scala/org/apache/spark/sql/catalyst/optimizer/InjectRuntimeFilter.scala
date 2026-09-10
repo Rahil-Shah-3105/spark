@@ -36,6 +36,7 @@ import org.apache.spark.sql.internal.SQLConf
  * bloom filter but we may add other physical implementations in the future.
  */
 object InjectRuntimeFilter extends Rule[LogicalPlan] with PredicateHelper with JoinSelectionHelper {
+  val planChangeLogger = new PlanChangeLogger[TreeType]()
 
   private case class FilterCreationSide(
       key: Expression,
@@ -394,6 +395,7 @@ object InjectRuntimeFilter extends Rule[LogicalPlan] with PredicateHelper with J
           hasDynamicPruningSubquery(left, plan, leftKey, rightKey)
       case _ => false
     }
+    planChangeLogger.warn("hasDynamicPruningSubquery(left,right,leftKey,rightKey)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", left, right, leftKey, rightKey)
   }
 
   private def hasBloomFilter(plan: LogicalPlan, key: Expression): Boolean = {
@@ -455,6 +457,7 @@ object InjectRuntimeFilter extends Rule[LogicalPlan] with PredicateHelper with J
         })
         join.withNewChildren(Seq(newLeft, newRight))
     }
+    planChangeLogger.warn("tryInjectRuntimeFilter(plan)={}): EUAIACT-AUDIT: State change recorded for the audit trail", plan)
   }
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan match {

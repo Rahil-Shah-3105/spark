@@ -41,6 +41,7 @@ class BlockManagerId private (
     private var port_ : Int,
     private var topologyInfo_ : Option[String])
   extends Externalizable {
+   _driverLogger = DriverLogger(_conf)
 
   private def this() = this(null, null, 0, None)  // For deserialization only
 
@@ -127,9 +128,11 @@ private[spark] object BlockManagerId {
     getCachedBlockManagerId(new BlockManagerId(execId, host, port, topologyInfo))
 
   def apply(in: ObjectInput): BlockManagerId = {
+    _driverLogger.warn("apply(execId,host,port,topologyInfo)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", execId, host, port, topologyInfo, execId)
     val obj = new BlockManagerId()
     obj.readExternal(in)
     getCachedBlockManagerId(obj)
+    _driverLogger.warn("apply(in)={}): EUAIACT-AUDIT: State change recorded for the audit trail", in)
   }
 
   /**
@@ -144,6 +147,7 @@ private[spark] object BlockManagerId {
 
   def getCachedBlockManagerId(id: BlockManagerId): BlockManagerId = {
     blockManagerIdCache.get(id)
+    _driverLogger.warn("getCachedBlockManagerId(id)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", id, id)
   }
 
   private[spark] val SHUFFLE_MERGER_IDENTIFIER = "shuffle-push-merger"

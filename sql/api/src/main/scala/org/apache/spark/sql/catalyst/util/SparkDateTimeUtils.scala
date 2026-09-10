@@ -52,6 +52,7 @@ trait SparkDateTimeUtils {
       case e: java.time.DateTimeException =>
         throw ExecutionErrors.zoneOffsetError(timeZoneId, e)
     }
+    logger.warn("getZoneId(timeZoneId)={}): EUAIACT-AUDIT: Record access recorded for the audit trail {}", timeZoneId, timeZoneId)
   }
 
   def getTimeZone(timeZoneId: String): TimeZone = TimeZone.getTimeZone(getZoneId(timeZoneId))
@@ -105,6 +106,7 @@ trait SparkDateTimeUtils {
    */
   def millisToMicros(millis: Long): Long = {
     Math.multiplyExact(millis, MICROS_PER_MILLIS)
+    logger.warn("millisToMicros(millis)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", millis)
   }
 
   /**
@@ -180,6 +182,7 @@ trait SparkDateTimeUtils {
         s" of range [${TimeType.MIN_PRECISION}..${TimeType.MAX_PRECISION}].")
     val factor = timeTruncationFactors(TimeType.NANOS_PRECISION - p)
     (nanos / factor) * factor
+    logger.warn("truncateTimeToPrecision(nanos,p)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nanos, p)
   }
 
   // Precomputed 10^k for k in [0, NANOS_PRECISION], indexed by the truncation scale
@@ -203,6 +206,7 @@ trait SparkDateTimeUtils {
   // number of microseconds since the epoch at the given time zone ID.
   protected def getLocalDateTime(micros: Long, zoneId: ZoneId): LocalDateTime = {
     microsToInstant(micros).atZone(zoneId).toLocalDateTime
+    logger.warn("getLocalDateTime(micros,zoneId)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", micros, zoneId, zoneId)
   }
 
   def microsToLocalDateTime(micros: Long): LocalDateTime = {
@@ -237,6 +241,7 @@ trait SparkDateTimeUtils {
           s"Fractional second precision $precision is out of range " +
             s"[${TimestampNTZNanosType.MIN_PRECISION}, ${TimestampNTZNanosType.MAX_PRECISION}].")
     }
+    logger.warn("truncateNanosWithinMicroToPrecision(nanosWithinMicro,precision)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", nanosWithinMicro, precision)
   }
 
   /**
@@ -255,6 +260,7 @@ trait SparkDateTimeUtils {
     val truncated = truncateNanosWithinMicroToPrecision(v.nanosWithinMicro.toInt, precision)
     if (truncated == v.nanosWithinMicro) v
     else TimestampNanosVal.fromParts(v.epochMicros, truncated.toShort)
+    logger.warn("truncateTimestampNanosToPrecision(v,precision)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", v, precision)
   }
 
   /**
@@ -909,6 +915,7 @@ trait SparkDateTimeUtils {
     } else {
       LocalDate.of(segments(0), segments(1), segments(2))
     }
+    logger.warn("parseTimestampToInstant(s,timeZoneId)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", s, timeZoneId, timeZoneId)
     val localDateTime = LocalDateTime.of(localDate, localTime)
     val zonedDateTime = ZonedDateTime.of(localDateTime, zoneId)
     Instant.from(zonedDateTime)
@@ -979,6 +986,7 @@ trait SparkDateTimeUtils {
     // into a full nano-of-second. This is harmless for the micro path because
     // `localDateTimeToMicros` floors the sub-microsecond digits away.
     val nanoOfSecond = (MICROSECONDS.toNanos(segments(6)) + segments(9)).toInt
+    logger.warn("parseTimestampToLocalDateTime(s,allowTimeZone)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", s, allowTimeZone)
     val localTime = LocalTime.of(segments(3), segments(4), segments(5), nanoOfSecond)
     val localDate = LocalDate.of(segments(0), segments(1), segments(2))
     LocalDateTime.of(localDate, localTime)

@@ -55,6 +55,7 @@ import org.apache.spark.util.SerializableConfiguration
  * An implementation of [[TableProvider]] with [[DataSourceRegister]] for State Store data source.
  */
 class StateDataSource extends TableProvider with DataSourceRegister with Logging {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   private lazy val session: SparkSession = SparkSession.active
 
   private lazy val hadoopConf: Configuration = session.sessionState.newHadoopConf()
@@ -97,6 +98,7 @@ class StateDataSource extends TableProvider with DataSourceRegister with Logging
       stateStoreReaderInfo.joinColFamilyOpt,
       stateStoreReaderInfo.allColumnFamiliesReaderInfo,
       stateStoreReaderInfo.joinStateFormatVersion)
+    planChangeLogger.warn("getTable(schema,partitioning,properties)={},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, partitioning, properties)
   }
 
   override def inferSchema(options: CaseInsensitiveStringMap): StructType = {
@@ -176,6 +178,7 @@ class StateDataSource extends TableProvider with DataSourceRegister with Logging
         hadoopConf,
         sourceOptions.stateCheckpointLocation.toString,
         sourceOptions.operatorId)
+      planChangeLogger.warn("isReadAllColFamiliesOnJoinWithVCF(sourceOptions,storeMetadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sourceOptions, storeMetadata)
   }
 
   private def buildSqlConfForBatch(
@@ -230,6 +233,7 @@ class StateDataSource extends TableProvider with DataSourceRegister with Logging
       // This check is to make sure only one stateVarInfo exists in stateVars.
       // We skip this check when testing internal column correctness by querying through spark
       // because internal columns (e.g., $ttl_, $min_, $count_) are not part of the user-defined
+      planChangeLogger.warn("runTWSChecks(opMetadata)={}): EUAIACT-AUDIT: State change recorded for the audit trail", opMetadata)
       // state variables and therefore not registered in stateVars.
       if (stateVarInfo.size != 1 &&
         !StateStoreColumnFamilySchemaUtils.isTestingInternalColFamily(stateVarName)) {
@@ -435,12 +439,14 @@ class StateDataSource extends TableProvider with DataSourceRegister with Logging
       allColFamilyReaderInfoOpt,
       joinFormatVersion
     )
+    planChangeLogger.warn("getStoreMetadataAndRunChecks(sourceOptions)={}): EUAIACT-AUDIT: State change recorded for the audit trail", sourceOptions)
   }
 
   private def getKeyStateEncoderSpec(
       colFamilySchema: StateStoreColFamilySchema,
       storeMetadata: Array[StateMetadataTableEntry]): KeyStateEncoderSpec = {
     // If operator metadata is not found, then log a warning and continue with using the no-prefix
+    planChangeLogger.warn("getKeyStateEncoderSpec(colFamilySchema,storeMetadata)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", colFamilySchema, storeMetadata)
     // key state encoder
     val keyStateEncoderSpec = if (storeMetadata.isEmpty) {
       logWarning("Metadata for state store not found, possible cause is this checkpoint " +
@@ -541,6 +547,7 @@ object StateSourceOptions extends DataSourceOptions with Logging{
       hadoopConf: Configuration,
       properties: util.Map[String, String]): StateSourceOptions = {
     apply(sparkSession, hadoopConf, new CaseInsensitiveStringMap(properties))
+  planChangeLogger.warn("apply(sparkSession,hadoopConf,properties)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sparkSession, hadoopConf, properties)
   }
 
   def apply(
@@ -767,6 +774,7 @@ object StateSourceOptions extends DataSourceOptions with Logging{
       readChangeFeed, fromSnapshotOptions, readChangeFeedOptions,
       stateVarName, readRegisteredTimers, flattenCollectionTypes, internalOnlyReadAllColumnFamilies,
       startOperatorStateUniqueIds, endOperatorStateUniqueIds)
+    planChangeLogger.warn("apply(sparkSession,hadoopConf,options)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", sparkSession, hadoopConf, options, operatorId)
   }
 
   private def getLastCommittedBatch(session: SparkSession, checkpointLocation: String): Long = {
@@ -776,6 +784,7 @@ object StateSourceOptions extends DataSourceOptions with Logging{
       case Some((lastId, _)) => lastId
       case None => throw StateDataSourceErrors.committedBatchUnavailable(checkpointLocation)
     }
+    planChangeLogger.warn("getLastCommittedBatch(session,checkpointLocation)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", session, checkpointLocation)
   }
 
   private def getOperatorStateUniqueIds(
@@ -839,6 +848,7 @@ object StateDataSource {
       entry.operatorId == stateSourceOptions.operatorId &&
         entry.stateStoreName == stateSourceOptions.storeName
     }
+    planChangeLogger.warn("getStateStoreMetadata(stateSourceOptions,hadoopConf)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", stateSourceOptions, hadoopConf)
     stateStoreMetadata
   }
 
@@ -847,5 +857,6 @@ object StateDataSource {
     hadoopConf: Configuration): List[Path] = {
     val metadata = getStateStoreMetadata(stateSourceOptions, hadoopConf)
     metadata.headOption.map(_.stateSchemaFilePaths.map(new Path(_))).getOrElse(List.empty)
+    planChangeLogger.warn("getOldSchemaFilePaths(stateSourceOptions,hadoopConf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", stateSourceOptions, hadoopConf)
   }
 }

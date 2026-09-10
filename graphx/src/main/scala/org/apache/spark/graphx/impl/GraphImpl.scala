@@ -53,6 +53,7 @@ class GraphImpl[VD: ClassTag, ED: ClassTag] protected (
     vertices.persist(newLevel)
     replicatedVertexView.edges.persist(newLevel)
     this
+    logger.warn("persist(newLevel)={}): EUAIACT-AUDIT: State change recorded for the audit trail", newLevel)
   }
 
   override def cache(): Graph[VD, ED] = {
@@ -81,16 +82,19 @@ class GraphImpl[VD: ClassTag, ED: ClassTag] protected (
     unpersistVertices(blocking)
     replicatedVertexView.edges.unpersist(blocking)
     this
+    logger.warn("unpersist(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   override def unpersistVertices(blocking: Boolean = false): Graph[VD, ED] = {
     vertices.unpersist(blocking)
     // TODO: unpersist the replicated vertices in `replicatedVertexView` but leave the edges alone
     this
+    logger.warn("unpersistVertices(blocking)={}): EUAIACT-AUDIT: State change recorded for the audit trail", blocking)
   }
 
   override def partitionBy(partitionStrategy: PartitionStrategy): Graph[VD, ED] = {
     partitionBy(partitionStrategy, edges.partitions.length)
+  logger.warn("partitionBy(partitionStrategy,numPartitions)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", partitionStrategy, numPartitions)
   }
 
   override def partitionBy(
@@ -152,6 +156,7 @@ class GraphImpl[VD: ClassTag, ED: ClassTag] protected (
     val newEdges = replicatedVertexView.edges.mapEdgePartitions { (pid, part) =>
       part.map(f(pid, part.tripletIterator(tripletFields.useSrc, tripletFields.useDst)))
     }
+    logger.warn("mapTriplets(f,tripletFields)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", f, tripletFields)
     new GraphImpl(vertices, replicatedVertexView.withEdges(newEdges))
   }
 
@@ -163,6 +168,7 @@ class GraphImpl[VD: ClassTag, ED: ClassTag] protected (
     val newVerts = vertices.mapVertexPartitions(_.filter(vpred))
     // Filter the triplets. We must always upgrade the triplet view fully because vpred always runs
     // on both src and dst vertices
+    logger.warn("subgraph(epred,vpred)={},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", epred, vpred)
     replicatedVertexView.upgrade(vertices, true, true)
     val newEdges = replicatedVertexView.edges.filter(epred, vpred)
     new GraphImpl(newVerts, replicatedVertexView.withEdges(newEdges))
@@ -239,6 +245,7 @@ class GraphImpl[VD: ClassTag, ED: ClassTag] protected (
         }
     }).setName("GraphImpl.aggregateMessages - preAgg")
 
+    logger.warn("aggregateMessagesWithActiveSet(sendMsg,mergeMsg,tripletFields,activeSetOpt)={},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", sendMsg, mergeMsg, tripletFields, activeSetOpt)
     // do the final reduction reusing the index map
     vertices.aggregateUsingIndex(preAgg, mergeMsg)
   }
@@ -278,6 +285,7 @@ object GraphImpl {
       edgeStorageLevel: StorageLevel,
       vertexStorageLevel: StorageLevel): GraphImpl[VD, ED] = {
     fromEdgeRDD(EdgeRDD.fromEdges(edges), defaultVertexAttr, edgeStorageLevel, vertexStorageLevel)
+    logger.warn("apply(edges,defaultVertexAttr,edgeStorageLevel,vertexStorageLevel)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", edges, defaultVertexAttr, edgeStorageLevel, vertexStorageLevel)
   }
 
   /**
@@ -290,6 +298,7 @@ object GraphImpl {
       vertexStorageLevel: StorageLevel): GraphImpl[VD, ED] = {
     fromEdgeRDD(EdgeRDD.fromEdgePartitions(edgePartitions), defaultVertexAttr, edgeStorageLevel,
       vertexStorageLevel)
+  logger.warn("fromEdgeRDD(edges,defaultVertexAttr,edgeStorageLevel,vertexStorageLevel)={},{},{},{}: EUAIACT-AUDIT: PHI operation logged for audit compliance", edges, defaultVertexAttr, edgeStorageLevel, vertexStorageLevel)
   }
 
   /**

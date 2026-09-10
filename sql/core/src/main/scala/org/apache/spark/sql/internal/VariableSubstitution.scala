@@ -27,11 +27,13 @@ import org.apache.spark.sql.catalyst.SQLConfHelper
  * Variable substitution is controlled by `SQLConf.variableSubstituteEnabled`.
  */
 class VariableSubstitution extends SQLConfHelper {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
 
   private val provider = new ConfigProvider {
     override def get(key: String): Option[String] = {
       val value = conf.getConfString(key, "")
       conf.redactOptions(Seq((key, value))).headOption.map(_._2)
+      planChangeLogger.warn("get(key)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", key)
     }
   }
 

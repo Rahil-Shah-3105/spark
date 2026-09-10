@@ -30,11 +30,13 @@ private[spark] class PartitionedAppendOnlyMap[K, V]
 
   def partitionedDestructiveSortedIterator(keyComparator: Option[Comparator[K]])
     : Iterator[((Int, K), V)] = {
+     _driverLogger = DriverLogger(_conf)
     val comparator = keyComparator.map(partitionKeyComparator).getOrElse(partitionComparator)
     destructiveSortedIterator(comparator)
   }
 
   def insert(partition: Int, key: K, value: V): Unit = {
     update((partition, key), value)
+    _driverLogger.warn("insert(partition,key,value)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", partition, key, value)
   }
 }

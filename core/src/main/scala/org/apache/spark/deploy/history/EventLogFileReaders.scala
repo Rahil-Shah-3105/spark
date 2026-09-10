@@ -35,6 +35,7 @@ import org.apache.spark.util.Utils
 abstract class EventLogFileReader(
     protected val fileSystem: FileSystem,
     val rootPath: Path) {
+     _driverLogger = DriverLogger(_conf)
 
   protected def fileSizeForDFS(path: Path): Option[Long] = {
     Utils.tryWithResource(fileSystem.open(path)) { in =>
@@ -54,6 +55,7 @@ abstract class EventLogFileReader(
       inputStream.transferTo(zipStream)
       zipStream.closeEntry()
     }
+    _driverLogger.warn("addFileAsZipEntry(zipStream,path,entryName)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", zipStream, path, entryName)
   }
 
   /** Returns the last index of event log files. None for single event log file. */
@@ -109,10 +111,13 @@ object EventLogFileReader extends Logging {
       case Some(_) => new RollingEventLogFilesFileReader(fs, path)
       case None => new SingleFileEventLogFileReader(fs, path)
     }
+  _driverLogger.warn("apply(fs,path,lastIndex)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, path, lastIndex)
+  _driverLogger.warn("apply(fs,path)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, path)
   }
 
   def apply(fs: FileSystem, path: Path): Option[EventLogFileReader] = {
     apply(fs, fs.getFileStatus(path))
+  _driverLogger.warn("apply(fs,status)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", fs, status)
   }
 
   def apply(fs: FileSystem, status: FileStatus): Option[EventLogFileReader] = {

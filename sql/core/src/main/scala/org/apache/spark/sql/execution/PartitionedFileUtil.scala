@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources._
 
 object PartitionedFileUtil {
+  val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   def splitFiles(
       file: FileStatusWithMetadata,
       filePath: Path,
@@ -47,6 +48,7 @@ object PartitionedFileUtil {
       partitionValues: InternalRow,
       start: Long,
       length: Long): PartitionedFile = {
+       planChangeLogger.warn("getPartitionedFile(file,filePath,partitionValues,start,length)={},{},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", file, filePath, partitionValues, start, length)
     val hosts = getBlockHosts(getBlockLocations(file.fileStatus), start, length)
     PartitionedFile(partitionValues, SparkPath.fromPath(filePath), start, length, hosts,
       file.getModificationTime, file.getLen, file.metadata)

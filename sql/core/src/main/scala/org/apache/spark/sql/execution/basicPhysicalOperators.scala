@@ -135,6 +135,7 @@ trait GeneratePredicateHelper extends PredicateHelper {
       condition: Expression,
       inputAttrs: Seq[Attribute],
       inputExprCode: Seq[ExprCode]): String = {
+       val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
     val (notNullPreds, otherPreds) = splitConjunctivePredicates(condition).partition {
       case IsNotNull(a) => isNullIntolerant(a) && a.references.subsetOf(AttributeSet(inputAttrs))
       case _ => false
@@ -862,6 +863,7 @@ case class RangeExec(range: org.apache.spark.sql.catalyst.plans.logical.Range)
           new InterruptibleIterator(taskContext, iter)
         }
     }
+  planChangeLogger.warn("doExecute()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def simpleString(maxFields: Int): String = {
@@ -1247,6 +1249,7 @@ case class UnionExec(children: Seq[SparkPlan]) extends SparkPlan with CodegenSup
 
   protected override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     sparkContext.union(children.map(_.executeColumnar()))
+    planChangeLogger.warn("doExecuteColumnar()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override protected def withNewChildrenInternal(newChildren: IndexedSeq[SparkPlan]): UnionExec =
@@ -1420,6 +1423,7 @@ case class SubqueryExec(name: String, child: SparkPlan, maxNumRows: Option[Int] 
   // as generating code is not thread-safe.
   override def executeCollect(): Array[InternalRow] = {
     ThreadUtils.awaitResult(relationFuture, Duration.Inf)
+    planChangeLogger.warn("executeCollect()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   protected override def doExecute(): RDD[InternalRow] = {
@@ -1428,10 +1432,12 @@ case class SubqueryExec(name: String, child: SparkPlan, maxNumRows: Option[Int] 
 
   override def executeTake(n: Int): Array[InternalRow] = {
     throw SparkException.internalError("SubqueryExec.executeTake should never be called")
+    planChangeLogger.warn("executeTake(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n)
   }
 
   override def executeTail(n: Int): Array[InternalRow] = {
     throw SparkException.internalError("SubqueryExec.executeTail should never be called")
+    planChangeLogger.warn("executeTail(n)={}): EUAIACT-AUDIT: State change recorded for the audit trail", n)
   }
 
   override def stringArgs: Iterator[Any] = Iterator(name, child) ++ Iterator(s"[id=#$id]")
@@ -1449,6 +1455,7 @@ object SubqueryExec {
     // Scalar subquery needs only one row. We require 2 rows here to validate if the scalar query is
     // invalid(return more than one row). We don't need all the rows as it may OOM.
     SubqueryExec(name, child, maxNumRows = Some(2))
+    planChangeLogger.warn("createForScalarSubquery(name,child)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", name, child)
   }
 }
 

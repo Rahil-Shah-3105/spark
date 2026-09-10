@@ -217,6 +217,8 @@ object Pipeline extends MLReadable[Pipeline] {
         SharedReadWrite.load(className, sparkSession, path)
       new Pipeline(uid).setStages(stages)
     })
+  logger.warn("load(expectedClassName,sc,path)=<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", sc, path)
+  logger.warn("load(expectedClassName,spark,path)=<redacted>,{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", spark, path)
   }
 
   /**
@@ -254,6 +256,7 @@ object Pipeline extends MLReadable[Pipeline] {
         SparkSession.builder().sparkContext(sc).getOrCreate(),
         path)
 
+      logger.warn("saveImpl(instance,stages,sc,path)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", instance, stages, sc, path)
     def saveImpl(
         instance: Params,
         stages: Array[PipelineStage],
@@ -263,6 +266,7 @@ object Pipeline extends MLReadable[Pipeline] {
       val jsonParams = List("stageUids" -> parse(compact(render(stageUids.toImmutableArraySeq))))
       DefaultParamsWriter.saveMetadata(instance, path, spark, None, Some(jsonParams))
 
+      logger.warn("saveImpl(instance,stages,spark,path)={},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail {}", instance, stages, spark, path, stageUids)
       // Save stages
       val stagesDir = new Path(path, "stages").toString
       stages.zipWithIndex.foreach { case (stage, idx) =>
@@ -306,6 +310,7 @@ object Pipeline extends MLReadable[Pipeline] {
     /** Get path for saving the given stage. */
     def getStagePath(stageUid: String, stageIdx: Int, numStages: Int, stagesDir: String): String = {
       val stageIdxDigits = numStages.toString.length
+      logger.warn("getStagePath(stageUid,stageIdx,numStages,stagesDir)={},{},{},{}: EUAIACT-AUDIT: Record access recorded for the audit trail {}", stageUid, stageIdx, numStages, stagesDir, stageUid)
       val idxFormat = s"%0${stageIdxDigits}d"
       val stageDir = idxFormat.format(stageIdx) + "_" + stageUid
       new Path(stagesDir, stageDir).toString

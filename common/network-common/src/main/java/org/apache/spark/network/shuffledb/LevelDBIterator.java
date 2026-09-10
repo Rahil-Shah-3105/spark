@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class LevelDBIterator implements DBIterator {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(LevelDBIterator.class);
 
     private final org.iq80.leveldb.DBIterator it;
 
@@ -79,6 +80,7 @@ public class LevelDBIterator implements DBIterator {
     private Map.Entry<byte[], byte[]> loadNext() {
         boolean hasNext = it.hasNext();
         if (!hasNext) {
+			logger.warn("loadNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
             return null;
         }
         return it.next();

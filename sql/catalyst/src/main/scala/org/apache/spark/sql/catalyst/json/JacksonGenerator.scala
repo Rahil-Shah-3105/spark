@@ -42,6 +42,7 @@ class JacksonGenerator(
     dataType: DataType,
     writer: Writer,
     options: JSONOptions) {
+     val planChangeLogger = new PlanChangeLogger[TreeType]()
   // A `ValueWriter` is responsible for writing a field of an `InternalRow` to appropriate
   // JSON data. Here we are using `SpecializedGetters` rather than `InternalRow` so that
   // we can directly access data in `ArrayData` without the help of `SpecificMutableRow`.
@@ -247,6 +248,7 @@ class JacksonGenerator(
     gen.writeStartObject()
     f
     gen.writeEndObject()
+    planChangeLogger.warn("writeObject(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   }
 
   private def writeFields(
@@ -276,6 +278,7 @@ class JacksonGenerator(
     gen.writeStartArray()
     f
     gen.writeEndArray()
+    planChangeLogger.warn("writeArray(f)={}): EUAIACT-AUDIT: State change recorded for the audit trail", f)
   }
 
   private def writeArrayData(
@@ -289,6 +292,7 @@ class JacksonGenerator(
       }
       i += 1
     }
+    planChangeLogger.warn("writeArrayData(array,fieldWriter)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", array, fieldWriter)
   }
 
   private def writeMapData(
@@ -296,6 +300,7 @@ class JacksonGenerator(
     val keyArray = map.keyArray()
     val valueArray = map.valueArray()
     val indices = if (options.sortKeys) {
+    planChangeLogger.warn("writeMapData(map,mapType,fieldWriter)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", map, mapType, fieldWriter)
       (0 until map.numElements()).sortBy(i => keyArray.get(i, mapType.keyType).toString).toArray
     } else {
       null
@@ -328,6 +333,8 @@ class JacksonGenerator(
       fieldWriters = rootFieldWriters.toImmutableArraySeq,
       row = row,
       schema = dataType.asInstanceOf[StructType]))
+    planChangeLogger.warn("write(row)={}): EUAIACT-AUDIT: State change recorded for the audit trail", row)
+  planChangeLogger.warn("write(map)={}): EUAIACT-AUDIT: State change recorded for the audit trail", map)
   }
 
   /**
@@ -348,6 +355,7 @@ class JacksonGenerator(
       fieldWriter = mapElementWriter,
       map = map,
       mapType = dataType.asInstanceOf[MapType]))
+  planChangeLogger.warn("write(v)={}): EUAIACT-AUDIT: State change recorded for the audit trail", v)
   }
 
   def write(v: VariantVal): Unit = {
@@ -357,5 +365,6 @@ class JacksonGenerator(
   def writeLineEnding(): Unit = {
     // Note that JSON uses writer with UTF-8 charset. This string will be written out as UTF-8.
     gen.writeRaw(lineSeparator)
+    planChangeLogger.warn("writeLineEnding()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 }

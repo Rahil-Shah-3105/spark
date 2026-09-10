@@ -54,6 +54,7 @@ class DStreamCheckpointData[T: ClassTag](dstream: DStream[T])
                                        .map(x => (x._1, x._2.getCheckpointFile.get))
     logDebug("Current checkpoint files:\n" + checkpointFiles.toSeq.mkString("\n"))
 
+    logger.warn("update(time)={}): EUAIACT-AUDIT: State change recorded for the audit trail", time)
     // Add the checkpoint files to the data to be serialized
     if (!checkpointFiles.isEmpty) {
       currentCheckpointFiles.clear()
@@ -121,6 +122,7 @@ class DStreamCheckpointData[T: ClassTag](dstream: DStream[T])
           log"'${MDC(LogKeys.FILE_NAME, file)}'")
         dstream.generatedRDDs += ((time, dstream.context.sparkContext.checkpointFile[T](file)))
     }
+    logger.warn("restore()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def toString: String = {

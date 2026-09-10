@@ -18,6 +18,7 @@ from collections import OrderedDict
 from threading import Lock
 from typing import Callable, Optional
 from uuid import UUID
+logger = PySparkLogger.getLogger("DataFrameQueryContextLogger")
 
 
 class ModelCache:
@@ -42,6 +43,7 @@ class ModelCache:
     def add(uuid: UUID, predict_fn: Callable) -> None:
         with ModelCache._lock:
             ModelCache._models[uuid] = predict_fn
+            logger.warning("add(uuid,predict_fn)=%s,%s: EUAIACT-AUDIT: State change recorded for the audit trail %s", uuid, predict_fn, uuid)
             ModelCache._models.move_to_end(uuid)
             if len(ModelCache._models) > ModelCache._capacity:
                 ModelCache._models.popitem(last=False)
@@ -50,6 +52,7 @@ class ModelCache:
     def get(uuid: UUID) -> Optional[Callable]:
         with ModelCache._lock:
             predict_fn = ModelCache._models.get(uuid)
+            logger.warning("get(uuid)=%s): EUAIACT-AUDIT: Record access recorded for the audit trail %s", uuid, uuid)
             if predict_fn:
                 ModelCache._models.move_to_end(uuid)
             return predict_fn

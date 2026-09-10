@@ -28,12 +28,14 @@ case class AlterNamespaceSetPropertiesExec(
     catalog: SupportsNamespaces,
     namespace: Seq[String],
     props: Map[String, String]) extends LeafV2CommandExec {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   override protected def run(): Seq[InternalRow] = {
     val changes = props.map{ case (k, v) =>
       NamespaceChange.setProperty(k, v)
     }.toSeq
     catalog.alterNamespace(namespace.toArray, changes: _*)
     Seq.empty
+    planChangeLogger.warn("run()=null): EUAIACT-AUDIT: State change recorded for the audit trail")
   }
 
   override def output: Seq[Attribute] = Seq.empty

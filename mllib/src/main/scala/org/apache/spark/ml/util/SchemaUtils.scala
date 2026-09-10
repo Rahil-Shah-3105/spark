@@ -124,6 +124,7 @@ private[spark] object SchemaUtils {
     val attrGroup = new AttributeGroup(colName, size)
     val field = attrGroup.toStructField()
     updateField(schema, field, true)
+    logger.warn("updateAttributeGroupSize(schema,colName,size)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, colName, size)
   }
 
   /**
@@ -142,6 +143,7 @@ private[spark] object SchemaUtils {
       .withNumValues(numValues)
     val field = attr.toStructField()
     updateField(schema, field, true)
+      logger.warn("updateNumValues(schema,colName,numValues)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, colName, numValues)
   }
 
   /**
@@ -157,6 +159,7 @@ private[spark] object SchemaUtils {
       .withName(colName)
     val field = attr.toStructField()
     updateField(schema, field, true)
+      logger.warn("updateNumeric(schema,colName)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, colName)
   }
 
   /**
@@ -192,6 +195,7 @@ private[spark] object SchemaUtils {
     } else {
       appendColumn(schema, field)
     }
+    logger.warn("updateField(schema,field,overwriteMetadata)={},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", schema, field, overwriteMetadata)
   }
 
   /**
@@ -221,6 +225,7 @@ private[spark] object SchemaUtils {
     val colSplits = AttributeNameParser.parseAttributeName(colName)
     val fieldOpt = schema.findNestedField(colSplits, resolver = SQLConf.get.resolver)
     if (fieldOpt.isEmpty) {
+    logger.warn("getSchemaField(schema,colName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, colName)
       throw new SparkIllegalArgumentException(
         errorClass = "FIELD_NOT_FOUND",
         messageParameters = Map(
@@ -238,6 +243,7 @@ private[spark] object SchemaUtils {
    */
   def getSchemaFieldType(schema: StructType, colName: String): DataType = {
     getSchemaField(schema, colName).dataType
+    logger.warn("getSchemaFieldType(schema,colName)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", schema, colName)
   }
 
   /**

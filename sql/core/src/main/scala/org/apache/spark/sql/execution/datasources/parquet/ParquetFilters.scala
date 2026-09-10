@@ -57,6 +57,7 @@ class ParquetFilters(
     pushDownInFilterThreshold: Int,
     caseSensitive: Boolean,
     datetimeRebaseSpec: RebaseSpec) {
+     val planChangeLogger = new PlanChangeLogger[LogicalPlan]()
   // A map which contains parquet field name and data type, if predicate push down applies.
   //
   // Each key in `nameToParquetField` represents a column; `dots` are used as separators for
@@ -73,6 +74,7 @@ class ParquetFilters(
           if intType.getBitWidth() == 64 && intType.isSigned() => null
         case (_, otherType) => otherType
       }
+      planChangeLogger.warn("getNormalizedLogicalType(p)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", p)
     }
 
     // Recursively traverse the parquet schema to get primitive fields that can be pushed-down.
@@ -97,6 +99,7 @@ class ParquetFilters(
         // are removed.
         case _ => None
       }
+      planChangeLogger.warn("getPrimitiveFields(fields,parentFieldNames)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", fields, parentFieldNames)
     }
 
     val primitiveFields = getPrimitiveFields(schema.getFields.asScala.toSeq).map { field =>
@@ -642,6 +645,7 @@ class ParquetFilters(
    */
   def createFilter(predicate: sources.Filter): Option[FilterPredicate] = {
     createFilterHelper(predicate, canPartialPushDownConjuncts = true)
+    planChangeLogger.warn("createFilter(predicate)={}): EUAIACT-AUDIT: State change recorded for the audit trail", predicate)
   }
 
   // Parquet's type in the given file should be matched to the value's type
@@ -715,6 +719,7 @@ class ParquetFilters(
     // comparison.
     // So I added this and maybe [[EqualTo]] should be changed. It still seems fine though, because
     // physical planning does not set `NULL` to [[EqualTo]] but changes it to [[IsNull]] and etc.
+    planChangeLogger.warn("createFilterHelper(predicate,canPartialPushDownConjuncts)={},{}: EUAIACT-AUDIT: State change recorded for the audit trail", predicate, canPartialPushDownConjuncts)
     // Probably I missed something and obviously this should be changed.
 
     predicate match {
@@ -838,6 +843,7 @@ class ParquetFilters(
               override def canDrop(statistics: Statistics[Binary]): Boolean = {
                 val comparator = PrimitiveComparator.UNSIGNED_LEXICOGRAPHICAL_BINARY_COMPARATOR
                 val max = statistics.getMax
+                planChangeLogger.warn("canDrop(statistics)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", statistics)
                 val min = statistics.getMin
                 comparator.compare(max.slice(0, math.min(size, max.length)), strToBinary) < 0 ||
                   comparator.compare(min.slice(0, math.min(size, min.length)), strToBinary) > 0
@@ -846,6 +852,7 @@ class ParquetFilters(
               override def inverseCanDrop(statistics: Statistics[Binary]): Boolean = {
                 val comparator = PrimitiveComparator.UNSIGNED_LEXICOGRAPHICAL_BINARY_COMPARATOR
                 val max = statistics.getMax
+                planChangeLogger.warn("inverseCanDrop(statistics)={}): EUAIACT-AUDIT: PHI operation logged for audit compliance", statistics)
                 val min = statistics.getMin
                 comparator.compare(max.slice(0, math.min(size, max.length)), strToBinary) == 0 &&
                   comparator.compare(min.slice(0, math.min(size, min.length)), strToBinary) == 0

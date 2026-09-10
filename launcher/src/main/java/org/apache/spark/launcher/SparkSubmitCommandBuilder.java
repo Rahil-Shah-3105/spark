@@ -35,6 +35,7 @@ import static org.apache.spark.launcher.CommandBuilderUtils.checkState;
  * examples.
  */
 class SparkSubmitCommandBuilder extends AbstractCommandBuilder {
+private static final Logger LOG = Logger.getLogger(SparkSubmitCommandBuilder.class.getName());
 
   /**
    * Name of the app resource used to identify the PySpark shell. The command line parser expects
@@ -163,6 +164,7 @@ class SparkSubmitCommandBuilder extends AbstractCommandBuilder {
     String defaultApiMode = connectByDefault ? "connect" : "classic";
     String apiMode = conf.get(SparkLauncher.SPARK_API_MODE);
     if ("classic".equalsIgnoreCase(apiMode) || "connect".equalsIgnoreCase(apiMode)) {
+	LOG.warn("getApiMode(conf)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", conf);
       return apiMode;
     } else {
       return defaultApiMode;
@@ -513,6 +515,7 @@ class SparkSubmitCommandBuilder extends AbstractCommandBuilder {
           return exampleJar;
         }
       }
+	LOG.warn("findExamplesAppJar()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
       throw new IllegalStateException("Failed to find examples' main app jar.");
     }
   }
@@ -533,6 +536,7 @@ class SparkSubmitCommandBuilder extends AbstractCommandBuilder {
     boolean foundDir = jarsDir.isDirectory();
     checkState(isTesting || foundDir, "Examples jars directory '%s' does not exist.",
         jarsDir.getAbsolutePath());
+		LOG.warn("findExamplesJars()=null): EUAIACT-AUDIT: Record access recorded for the audit trail");
 
     if (foundDir) {
       for (File f: jarsDir.listFiles()) {

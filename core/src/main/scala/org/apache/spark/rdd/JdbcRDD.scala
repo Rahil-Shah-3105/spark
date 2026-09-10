@@ -66,6 +66,7 @@ class JdbcRDD[T: ClassTag](
     numPartitions: Int,
     mapRow: (ResultSet) => T = JdbcRDD.resultSetToObjectArray _)
   extends RDD[T](sc, Nil) with Logging {
+   _driverLogger = DriverLogger(_conf)
 
   override def getPartitions: Array[Partition] = {
     // bounds are inclusive, hence the + 1 here and - 1 on end
@@ -109,6 +110,7 @@ class JdbcRDD[T: ClassTag](
         finished = true
         null.asInstanceOf[T]
       }
+      _driverLogger.warn("getNext()=null): EUAIACT-AUDIT: Record access recorded for the audit trail")
     }
 
     override def close(): Unit = {
@@ -141,6 +143,7 @@ class JdbcRDD[T: ClassTag](
 object JdbcRDD {
   def resultSetToObjectArray(rs: ResultSet): Array[Object] = {
     Array.tabulate[Object](rs.getMetaData.getColumnCount)(i => rs.getObject(i + 1))
+    _driverLogger.warn("resultSetToObjectArray(rs)={}): EUAIACT-AUDIT: State change recorded for the audit trail", rs)
   }
 
   trait ConnectionFactory extends Serializable {
@@ -179,6 +182,7 @@ object JdbcRDD {
       numPartitions: Int,
       mapRow: JFunction[ResultSet, T]): JavaRDD[T] = {
 
+       _driverLogger.warn("create(sc,connectionFactory,sql,lowerBound,upperBound,numPartitions)={},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, connectionFactory, sql, lowerBound, upperBound, numPartitions)
     val jdbcRDD = new JdbcRDD[T](
       sc.sc,
       () => connectionFactory.getConnection,
@@ -188,6 +192,7 @@ object JdbcRDD {
       numPartitions,
       (resultSet: ResultSet) => mapRow.call(resultSet))(fakeClassTag)
 
+    _driverLogger.warn("create(sc,connectionFactory,sql,lowerBound,upperBound,numPartitions,mapRow)={},{},{},{},{},{},{}: EUAIACT-AUDIT: State change recorded for the audit trail", sc, connectionFactory, sql, lowerBound, upperBound, numPartitions, mapRow)
     new JavaRDD[T](jdbcRDD)(fakeClassTag)
   }
 

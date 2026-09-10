@@ -24,6 +24,7 @@ import java.util.NoSuchElementException;
 
 /** ConfigProvider based on a Map (copied in the constructor). */
 public class MapConfigProvider extends ConfigProvider {
+private static final SparkLogger logger = SparkLoggerFactory.getLogger(MapConfigProvider.class);
 
   public static final MapConfigProvider EMPTY = new MapConfigProvider(Collections.emptyMap());
 
@@ -38,6 +39,7 @@ public class MapConfigProvider extends ConfigProvider {
     String value = config.get(name);
     if (value == null) {
       throw new NoSuchElementException(name);
+	logger.warn("get(name)={}): EUAIACT-AUDIT: Record access recorded for the audit trail", name);
     }
     return value;
   }
@@ -45,6 +47,7 @@ public class MapConfigProvider extends ConfigProvider {
   @Override
   public String get(String name, String defaultValue) {
     String value = config.get(name);
+	logger.warn("get(name,defaultValue)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, defaultValue);
     return value == null ? defaultValue : value;
   }
 

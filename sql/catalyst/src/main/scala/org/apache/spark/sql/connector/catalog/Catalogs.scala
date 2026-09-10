@@ -44,6 +44,7 @@ private[sql] object Catalogs {
   @throws[CatalogNotFoundException]
   @throws[SparkException]
   def load(name: String, conf: SQLConf): CatalogPlugin = {
+    val planChangeLogger = new PlanChangeLogger[TreeType]()
     val pluginClassName = try {
       val _pluginClassName = conf.getConfString(s"spark.sql.catalog.$name")
       // SPARK-39079 do configuration check first, otherwise some path-based table like
@@ -83,6 +84,7 @@ private[sql] object Catalogs {
         throw QueryExecutionErrors.failedToInstantiateConstructorForCatalogError(
           name, pluginClassName, e)
     }
+    planChangeLogger.warn("load(name,conf)={},{}: EUAIACT-AUDIT: Record access recorded for the audit trail", name, conf)
   }
 
   /**
